@@ -1,0 +1,17 @@
+{
+  "canisters": {
+    "identity_manager": {
+      "build": "src/identity_manager/build.sh",
+      "candid": "src/identity_manager/identity_manager.did",
+      "wasm": "target/wasm32-unknown-unknown/release/identity_manager.wasm",
+      "type": "custom"
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  },
+  "version": 1
+}
