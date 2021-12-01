@@ -3,12 +3,13 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk_macros::{update};
-
+use ic_cdk_macros::{update, query};
 
 type Topic = String;
 type Message = String;
-
+type PhoneNumber = String;
+type Token = String;
+type Error = String;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 struct MessageHttpResponse {
@@ -16,10 +17,16 @@ struct MessageHttpResponse {
     body: Option<Vec<Message>>,
 }
 
+#[derive(Clone, Debug, CandidType, Deserialize)]
+struct HttpResponse<T> {
+    data: Option<T>,
+    error: Option<Error>,
+    status_code: u16,
+}
+
 thread_local! {
     static MESSAGE_STORAGE: RefCell<HashMap<Topic, Vec<Message>>> = RefCell::new(HashMap::default());
 }
-
 
 #[update]
 async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpResponse {
@@ -80,6 +87,17 @@ async fn delete_topic(topic: Topic) -> MessageHttpResponse {
             }
         }
     })
+}
+
+#[query]
+async fn verify_phone_number(phone_number: PhoneNumber) -> HttpResponse<bool> {
+    HttpResponse { status_code: 200, data: Some(true), error: None }
+}
+
+#[query]
+async fn verify_token(token: Token) -> HttpResponse<bool> {
+    let message: String = String::from("Incorrect token.");
+    HttpResponse { status_code: 400, data: None, error: Some(message) }
 }
 
 fn main() {
