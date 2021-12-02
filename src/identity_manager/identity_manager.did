@@ -1,16 +1,25 @@
 type Topic = text;
 type Message = text;
-
+type PhoneNumber = text;
+type Token = text;
+type Error = text;
 
 type MessageHttpResponse = record {
     status_code: nat16;
     body: opt vec Message;
 };
 
+type BoolHttpResponse = record {
+    data: opt bool;
+    error: opt Error;
+    status_code: nat16;
+}
 
 service : () -> {
   post_messages: (Topic, vec Message) -> (MessageHttpResponse);
   get_messages: (Topic) -> (MessageHttpResponse);
   create_topic: (Topic) -> (MessageHttpResponse);
   delete_topic: (Topic) -> (MessageHttpResponse);
+  verify_phone_number: (PhoneNumber) -> (BoolHttpResponse);
+  verify_token: (Token) -> (BoolHttpResponse);
 }
