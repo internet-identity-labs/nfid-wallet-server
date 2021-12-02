@@ -13,13 +13,36 @@ type BoolHttpResponse = record {
     data: opt bool;
     error: opt Error;
     status_code: nat16;
-}
+};
+
+type Account = record {
+    principal_id: text;
+    name: text;
+    phone_number: text;
+    email: text;
+};
+
+type HTTPAccountResponse = record {
+    data: opt Account;
+    error: opt Error;
+    status_code: nat16;
+};
+
+type HTTPAccountRequest = record {
+    name: text;
+    phone_number: text;
+    email: text;
+};
 
 service : () -> {
+  get_account: () -> (HTTPAccountResponse) query;
+  create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
+
+  verify_phone_number: (PhoneNumber) -> (BoolHttpResponse);
+  verify_token: (Token) -> (BoolHttpResponse);
+
   post_messages: (Topic, vec Message) -> (MessageHttpResponse);
   get_messages: (Topic) -> (MessageHttpResponse);
   create_topic: (Topic) -> (MessageHttpResponse);
   delete_topic: (Topic) -> (MessageHttpResponse);
-  verify_phone_number: (PhoneNumber) -> (BoolHttpResponse);
-  verify_token: (Token) -> (BoolHttpResponse);
 }
