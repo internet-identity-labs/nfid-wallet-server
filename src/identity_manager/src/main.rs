@@ -1,20 +1,30 @@
-use std::cell::{RefCell};
+use std::cell::RefCell;
+use std::collections::{BTreeMap, HashMap};
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk_macros::{update, query};
+use ic_cdk::storage;
+use ic_cdk_macros::*;
 
 type Topic = String;
 type Message = String;
 type PhoneNumber = String;
 type Token = String;
 type Error = String;
+type Accounts = BTreeMap<String, Account>;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 struct MessageHttpResponse {
     status_code: u16,
     body: Option<Vec<Message>>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+struct Account {
+    principal_id: String,
+    name: String,
+    phone_number: String,
+    email: String,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -24,9 +34,70 @@ struct HttpResponse<T> {
     status_code: u16,
 }
 
+#[derive(Clone, Debug, CandidType, Deserialize)]
+struct HTTPAccountRequest {
+    name: String,
+    phone_number: String,
+    email: String,
+}
+
 thread_local! {
     static MESSAGE_STORAGE: RefCell<HashMap<Topic, Vec<Message>>> = RefCell::new(HashMap::default());
 }
+
+#[update]
+async fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Account> {
+    let princ = &ic_cdk::api::caller().to_text();
+    let acc = Account {
+        principal_id: princ.clone(),
+        name: account_request.name,
+        phone_number: account_request.phone_number,
+        email: account_request.email,
+    };
+    let accounts = storage::get_mut::<Accounts>();
+    accounts.insert(princ.clone(), acc);
+    HttpResponse {
+        data: None,
+        error: None,
+        status_code: 200,
+    }
+}
+
+#[query]
+async fn get_account() -> HttpResponse<Account> {
+    let princ = &ic_cdk::api::caller().to_text();
+    let accounts = storage::get_mut::<Accounts>();
+    match accounts.get(princ) {
+        Some(content) => HttpResponse {
+            data: Some(content.clone()),
+            error: None,
+            status_code: 200,
+        },
+        None => HttpResponse {
+            data: None,
+            error: Some(String::from("Unable to find Account.")),
+            status_code: 404,
+        },
+    }
+}
+
+#[pre_upgrade]
+fn pre_upgrade() {
+    let mut vec = Vec::new();
+    for p in storage::get_mut::<Accounts>().iter() {
+        vec.push(p.1.clone());
+    }
+    storage::stable_save((vec, )).unwrap();
+}
+
+#[post_upgrade]
+fn post_upgrade() {
+    let (old_users, ): (Vec<Account>, ) = storage::stable_restore().unwrap();
+    for u in old_users {
+        storage::get_mut::<Accounts>().insert(u.clone().principal_id, u.clone());
+    }
+}
+
 
 #[update]
 async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpResponse {
