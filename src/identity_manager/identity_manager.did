@@ -34,9 +34,16 @@ type HTTPAccountRequest = record {
     email: text;
 };
 
+type HTTPAccountUpdateRequest = record {
+    name: opt text;
+    phone_number: opt text;
+    email: opt text;
+};
+
 service : () -> {
   get_account: () -> (HTTPAccountResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
+  update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
 
   verify_phone_number: (PhoneNumber) -> (BoolHttpResponse);
   verify_token: (Token) -> (BoolHttpResponse);
