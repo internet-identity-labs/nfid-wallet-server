@@ -5,9 +5,6 @@ set -ex
 # Enter temporary directory.
 pushd /tmp
 
-# Install rustup.
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
 # Install Node.
 wget --output-document install-node.sh "https://deb.nodesource.com/setup_14.x"
 sudo bash install-node.sh

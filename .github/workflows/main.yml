@@ -19,6 +19,12 @@ jobs:
       - name: DFX SETUP  | Provision Linux
         run: bash .github/workflows/dfx-provision-linux.sh
 
+      - name: Install Rust
+        run: |
+          rustup update 1.51.0 --no-self-update
+          rustup default 1.51.0
+          rustup target add wasm32-unknown-unknown
+
       - name: IDENITY MANAGER | Deploy to production
         run: |
           dfx identity use gh_mp_admin
