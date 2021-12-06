@@ -7,6 +7,9 @@
 .DS_Store
 **/.DS_Store
 
+# rust
+target
+
 # dfx temporary files
 .dfx/
 
