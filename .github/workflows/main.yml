@@ -29,3 +29,4 @@ jobs:
         run: |
           dfx identity use gh_mp_admin
           dfx deploy --network ic --no-wallet
+          dfx canister --network ic call identity_manager get_messages '("t")'
