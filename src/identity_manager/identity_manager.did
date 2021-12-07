@@ -40,10 +40,28 @@ type HTTPAccountUpdateRequest = record {
     email: opt text;
 };
 
+type Device = record {
+    pub_key_hash: text;
+    last_used: text;
+    make: text;
+    model: text;
+    browser: text;
+};
+
+type HTTPDeviceResponse = record {
+    data: opt vec Device;
+    error: opt Error;
+    status_code: nat16;
+};
+
+
 service : () -> {
   get_account: () -> (HTTPAccountResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
+
+  create_device: (Device) -> (BoolHttpResponse);
+  read_devices: () -> (HTTPDeviceResponse);
 
   verify_phone_number: (PhoneNumber) -> (BoolHttpResponse);
   verify_token: (Token) -> (BoolHttpResponse);

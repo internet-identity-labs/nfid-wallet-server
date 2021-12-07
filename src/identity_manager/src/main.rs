@@ -2,8 +2,8 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap};
 use std::collections::hash_map::Entry;
 
+use ic_cdk::{storage};
 use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk::storage;
 use ic_cdk_macros::*;
 
 type Topic = String;
@@ -25,6 +25,7 @@ struct Account {
     name: String,
     phone_number: String,
     email: String,
+    devices: Vec<Device>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -41,12 +42,20 @@ struct HTTPAccountRequest {
     email: String,
 }
 
-
 #[derive(Clone, Debug, CandidType, Deserialize)]
 struct HTTPAccountUpdateRequest {
     name: Option<String>,
     phone_number: Option<String>,
     email: Option<String>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+struct Device {
+    pub_key_hash: String,
+    last_used: String,
+    make: String,
+    model: String,
+    browser: String,
 }
 
 thread_local! {
@@ -56,11 +65,13 @@ thread_local! {
 #[update]
 async fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Account> {
     let princ = &ic_cdk::api::caller().to_text();
+    let devices: Vec<Device> = Vec::new();
     let acc = Account {
         principal_id: princ.clone(),
         name: account_request.name,
         phone_number: account_request.phone_number,
         email: account_request.email,
+        devices,
     };
     let accounts = storage::get_mut::<Accounts>();
     accounts.insert(princ.clone(), acc.clone());
@@ -75,30 +86,26 @@ async fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Acc
 async fn update_account(account_request: HTTPAccountUpdateRequest) -> HttpResponse<Account> {
     let princ = &ic_cdk::api::caller().to_text();
     let accounts = storage::get_mut::<Accounts>();
-    let acc = accounts.get(princ);
-    if (acc.is_none()) {
-        HttpResponse {
-            data: None,
-            error: Some(String::from("Unable to find Account.")),
-            status_code: 404,
+    match accounts.get(princ) {
+        Some(acc) => {
+            let mut new_acc = acc.clone();
+            if !account_request.email.is_none() {
+                new_acc.email = account_request.email.unwrap();
+            }
+            if !account_request.phone_number.is_none() {
+                new_acc.phone_number = account_request.phone_number.unwrap();
+            }
+            if !account_request.name.is_none() {
+                new_acc.name = account_request.name.unwrap();
+            }
+            accounts.insert(princ.clone(), new_acc.clone());
+            HttpResponse {
+                data: Option::from(new_acc),
+                error: None,
+                status_code: 200,
+            }
         }
-    } else {
-        let mut new_acc = acc.unwrap().clone();
-        if (!account_request.email.is_none()) {
-            new_acc.email = account_request.email.unwrap();
-        }
-        if (!account_request.phone_number.is_none()) {
-            new_acc.phone_number = account_request.phone_number.unwrap();
-        }
-        if (!account_request.name.is_none()) {
-            new_acc.name = account_request.name.unwrap();
-        }
-        accounts.insert(princ.clone(), new_acc.clone());
-        HttpResponse {
-            data: Option::from(new_acc),
-            error: None,
-            status_code: 200,
-        }
+        None => to_error_response("Unable to find Account.")
     }
 }
 
@@ -112,11 +119,43 @@ async fn get_account() -> HttpResponse<Account> {
             error: None,
             status_code: 200,
         },
-        None => HttpResponse {
-            data: None,
-            error: Some(String::from("Unable to find Account.")),
-            status_code: 404,
+        None => to_error_response("Unable to find Account.")
+    }
+}
+
+#[update]
+async fn read_devices() -> HttpResponse<Vec<Device>> {
+    let princ = &ic_cdk::api::caller().to_text();
+    let accounts = storage::get_mut::<Accounts>();
+    match accounts.get(princ) {
+        Some(content) => HttpResponse {
+            data: Some(content.clone().devices),
+            error: None,
+            status_code: 200,
         },
+        None => to_error_response("Unable to find Account.")
+    }
+}
+
+
+#[update]
+async fn create_device(device: Device) -> HttpResponse<bool> {
+    let princ = &ic_cdk::api::caller().to_text();
+    let accounts = storage::get_mut::<Accounts>();
+    match accounts.get(princ) {
+        Some(acc) => {
+            let mut new_acc = acc.clone();
+            let mut devices = new_acc.devices;
+            devices.push(device);
+            new_acc.devices = devices;
+            accounts.insert(princ.clone(), new_acc);
+            HttpResponse {
+                data: Some(true),
+                error: None,
+                status_code: 200,
+            }
+        }
+        None => to_error_response("Unable to find Account.")
     }
 }
 
@@ -208,6 +247,14 @@ async fn verify_phone_number(phone_number: PhoneNumber) -> HttpResponse<bool> {
 async fn verify_token(token: Token) -> HttpResponse<bool> {
     let message: String = String::from("Incorrect token.");
     HttpResponse { status_code: 400, data: None, error: Some(message) }
+}
+
+fn to_error_response<T>(x: &str) -> HttpResponse<T> {
+    HttpResponse {
+        data: None,
+        error: Some(String::from(x)),
+        status_code: 404,
+    }
 }
 
 fn main() {}
