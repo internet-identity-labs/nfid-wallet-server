@@ -20,6 +20,8 @@ type Account = record {
     name: text;
     phone_number: text;
     email: text;
+    devices: vec Device;
+    personas: vec Persona;
 };
 
 type HTTPAccountResponse = record {
@@ -54,11 +56,39 @@ type HTTPDeviceResponse = record {
     status_code: nat16;
 };
 
+type Persona = record {
+    name: text;
+    is_root: bool;
+    is_seed_phrase_copied: bool;
+    is_ii_anchor: bool;
+    anchor: text;
+    principal_id: text;
+};
+
+type HTTPPersonaUpdateRequest = record {
+    name: opt text;
+    is_root: opt bool;
+    is_seed_phrase_copied: opt bool;
+    is_ii_anchor: opt bool;
+    anchor: opt text;
+    principal_id: text;
+};
+
+type HTTPPersonasResponse = record {
+    data: opt vec Persona;
+    error: opt Error;
+    status_code: nat16;
+};
+
 
 service : () -> {
   get_account: () -> (HTTPAccountResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
+
+  create_persona: (Persona) -> (HTTPAccountResponse);
+  update_persona: (HTTPPersonaUpdateRequest) -> (HTTPAccountResponse);
+  read_personas: () -> (HTTPPersonasResponse);
 
   create_device: (Device) -> (BoolHttpResponse);
   read_devices: () -> (HTTPDeviceResponse);
