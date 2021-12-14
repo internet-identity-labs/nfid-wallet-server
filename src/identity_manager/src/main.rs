@@ -393,19 +393,11 @@ async fn verify_token(phone_number: PhoneNumber, token: Token) -> HttpResponse<b
                 return if token.eq(o.get_mut()) {
                     HttpResponse { status_code: 200, data: Some(true), error: None }
                 } else {
-                    HttpResponse {
-                        status_code: 400,
-                        data: None,
-                        error: Some(String::from("Token has been expired."))
-                    }
+                    to_error_response("Token has been expired.")
                 };
             }
             Entry::Vacant(_v) => {
-                HttpResponse {
-                    status_code: 404,
-                    data: None,
-                    error: Some(String::from("Not found."))
-                }
+                to_error_response("Not found.")
             }
         };
     })
