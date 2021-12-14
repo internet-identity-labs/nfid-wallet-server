@@ -82,6 +82,7 @@ struct Persona {
 
 thread_local! {
     static MESSAGE_STORAGE: RefCell<HashMap<Topic, Vec<Message>>> = RefCell::new(HashMap::default());
+    static TOKEN_STORAGE: RefCell<HashMap<PhoneNumber, Token>> = RefCell::new(HashMap::default());
 }
 
 #[update]
@@ -385,9 +386,29 @@ async fn verify_phone_number(phone_number: PhoneNumber) -> HttpResponse<bool> {
 }
 
 #[query]
-async fn verify_token(token: Token) -> HttpResponse<bool> {
-    let message: String = String::from("Incorrect token.");
-    HttpResponse { status_code: 400, data: None, error: Some(message) }
+async fn verify_token(phone_number: PhoneNumber, token: Token) -> HttpResponse<bool> {
+    TOKEN_STORAGE.with(|storage| {
+        return match storage.borrow_mut().entry(phone_number) {
+            Entry::Occupied(mut o) => {
+                return if token.eq(o.get_mut()) {
+                    HttpResponse { status_code: 200, data: Some(true), error: None }
+                } else {
+                    to_error_response("Token has been expired.")
+                };
+            }
+            Entry::Vacant(_v) => {
+                to_error_response("Not found.")
+            }
+        };
+    })
+}
+
+#[update]
+async fn post_token(phone_number: PhoneNumber, token: Token) -> HttpResponse<bool> {
+    TOKEN_STORAGE.with(|storage| {
+        storage.borrow_mut().insert(phone_number, token);
+        HttpResponse { status_code: 200, data: Some(true), error: None }
+    })
 }
 
 fn to_error_response<T>(x: &str) -> HttpResponse<T> {

@@ -15,6 +15,12 @@ type BoolHttpResponse = record {
     status_code: nat16;
 };
 
+type EmptyHttpResponse = record {
+     data: opt text;
+     error: opt Error;
+     status_code: nat16;
+ };
+
 type Account = record {
     principal_id: text;
     name: text;
@@ -94,7 +100,8 @@ service : () -> {
   read_devices: () -> (HTTPDeviceResponse);
 
   verify_phone_number: (PhoneNumber) -> (BoolHttpResponse);
-  verify_token: (Token) -> (BoolHttpResponse);
+  verify_token: (PhoneNumber, Token) -> (BoolHttpResponse);
+  post_token: (PhoneNumber, Token) -> (BoolHttpResponse);
 
   post_messages: (Topic, vec Message) -> (MessageHttpResponse);
   get_messages: (Topic) -> (MessageHttpResponse);
