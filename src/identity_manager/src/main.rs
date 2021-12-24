@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
+use blake3::Hash;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk_macros::*;
@@ -11,10 +12,10 @@ use service::{device_service, persona_service};
 
 use crate::http::requests;
 use crate::http::response_mapper;
-use crate::requests::HTTPAccountRequest;
+use crate::requests::{HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
 use crate::requests::HTTPAccountUpdateRequest;
 use crate::requests::HTTPPersonaUpdateRequest;
-use crate::response_mapper::{HttpResponse, to_error_response};
+use crate::response_mapper::{HttpResponse};
 use crate::service::account_service;
 
 mod service;
@@ -23,8 +24,6 @@ mod repository;
 
 type Topic = String;
 type Message = String;
-type PhoneNumber = String;
-type Token = String;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 struct MessageHttpResponse {
@@ -35,7 +34,7 @@ struct MessageHttpResponse {
 
 thread_local! {
     static MESSAGE_STORAGE: RefCell<HashMap<Topic, Vec<Message>>> = RefCell::new(HashMap::default());
-    static TOKEN_STORAGE: RefCell<HashMap<PhoneNumber, Token>> = RefCell::new(HashMap::default());
+    static TOKEN_STORAGE: RefCell<HashMap<Hash, Hash>> = RefCell::new(HashMap::default());
 }
 
 #[update]
@@ -151,33 +150,13 @@ async fn delete_topic(topic: Topic) -> MessageHttpResponse {
     })
 }
 
-#[query]
-async fn verify_phone_number(phone_number: PhoneNumber) -> HttpResponse<bool> {
-    HttpResponse { status_code: 200, data: Some(true), error: None }
-}
-
-#[query]
-async fn verify_token(phone_number: PhoneNumber, token: Token) -> HttpResponse<bool> {
-    TOKEN_STORAGE.with(|storage| {
-        return match storage.borrow_mut().entry(phone_number) {
-            Entry::Occupied(mut o) => {
-                return if token.eq(o.get_mut()) {
-                    HttpResponse { status_code: 200, data: Some(true), error: None }
-                } else {
-                    to_error_response("Token has been expired.")
-                };
-            }
-            Entry::Vacant(_v) => {
-                to_error_response("Not found.")
-            }
-        };
-    })
-}
-
 #[update]
-async fn post_token(phone_number: PhoneNumber, token: Token) -> HttpResponse<bool> {
+async fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
+    let phone_number_hash = blake3::hash(request.phone_number.as_bytes());
+    let token_hash = blake3::hash(request.token.as_bytes());
+
     TOKEN_STORAGE.with(|storage| {
-        storage.borrow_mut().insert(phone_number, token);
+        storage.borrow_mut().insert(phone_number_hash, token_hash);
         HttpResponse { status_code: 200, data: Some(true), error: None }
     })
 }

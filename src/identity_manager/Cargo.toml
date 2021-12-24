@@ -11,4 +11,5 @@ ic-cdk = "0.3.2"
 ic-cdk-macros = "0.3.3"
 ic-types = "0.1.1"
 serde = "1"
+blake3 = "1.2.0"
 
