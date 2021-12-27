@@ -40,6 +40,7 @@ type HTTPAccountRequest = record {
     name: text;
     phone_number: text;
     email: text;
+    token: text;
 };
 
 type HTTPAccountUpdateRequest = record {
@@ -86,6 +87,10 @@ type HTTPPersonasResponse = record {
     status_code: nat16;
 };
 
+type HTTPVerifyPhoneNumberRequest = record {
+    phone_number: text;
+    token: text;
+};
 
 service : () -> {
   get_account: () -> (HTTPAccountResponse) query;
@@ -99,9 +104,7 @@ service : () -> {
   create_device: (Device) -> (BoolHttpResponse);
   read_devices: () -> (HTTPDeviceResponse);
 
-  verify_phone_number: (PhoneNumber) -> (BoolHttpResponse);
-  verify_token: (PhoneNumber, Token) -> (BoolHttpResponse);
-  post_token: (PhoneNumber, Token) -> (BoolHttpResponse);
+  post_token: (HTTPVerifyPhoneNumberRequest) -> (BoolHttpResponse);
 
   post_messages: (Topic, vec Message) -> (MessageHttpResponse);
   get_messages: (Topic) -> (MessageHttpResponse);

@@ -1,4 +1,4 @@
-use crate::HttpResponse;
+use crate::{HttpResponse, TOKEN_STORAGE};
 use crate::service::principle_service::get_principal;
 use crate::repository::repo::{Account, AccountRepo, Device, Persona};
 use crate::requests::{HTTPAccountRequest, HTTPAccountUpdateRequest};
@@ -14,6 +14,11 @@ pub fn get_account() -> HttpResponse<Account> {
 }
 
 pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Account> {
+    match validate_token(&account_request)  {
+        Ok(_) => (),
+        Err(message) => return to_error_response(message)
+    };
+
     let princ = &ic_cdk::api::caller().to_text();
     let devices: Vec<Device> = Vec::new();
     let personas: Vec<Persona> = Vec::new();
@@ -48,6 +53,23 @@ pub fn update_account(account_request: HTTPAccountUpdateRequest) -> HttpResponse
         }
         None => to_error_response("Unable to find Account.")
     }
+}
+
+fn validate_token(request: &HTTPAccountRequest) -> Result<(), &str> {
+    let phone_number_hash = blake3::hash(request.phone_number.as_bytes());
+    let token_hash = blake3::hash(request.token.as_bytes());
+
+    TOKEN_STORAGE.with(|storage| {
+        return match storage.borrow().get(&phone_number_hash) {
+            Some(token) => {
+                return match token_hash.eq(token) {
+                    true => Ok(()),
+                    false => Err("Token does not match")
+                };
+            }
+            None => Err("Phone number not found")
+        }
+    })
 }
 
 
