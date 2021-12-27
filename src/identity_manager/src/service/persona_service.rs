@@ -1,26 +1,27 @@
-use crate::service::principle_service::get_principal;
-use crate::repository::repo::{Account, AccountRepo, Persona, PersonaRepo, PrincipalIndex};
+use crate::http::requests::{AccountRR, PersonaRequest, PersonaResponse};
+use crate::mapper::account_mapper::account_to_account_response;
+use crate::mapper::persona_mapper::{persona_request_to_persona, persona_to_persona_response};
+use crate::repository::repo::{Persona, PersonaRepo, PrincipalIndex};
 use crate::requests::HTTPPersonaUpdateRequest;
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
 
-pub fn create_persona(persona: Persona) -> HttpResponse<Account> {
-    let princ = &ic_cdk::api::caller().to_text();
-    let root_id = get_principal(princ);
-    match PersonaRepo::get_personas(root_id)
+pub fn create_persona(persona_r: PersonaRequest) -> HttpResponse<AccountRR> {
+    match PersonaRepo::get_personas()
     {
         Some(mut personas) => {
-            let required_id = persona.principal_id.clone();
             for persona in personas.iter() {
-                if persona.principal_id == required_id {
+                if persona.principal_id == persona_r.principal_id {
                     return to_error_response("Persona already exists");
                 }
             }
-            personas.push(persona.clone());
-            PersonaRepo::store_personas(get_principal(princ), personas);
-            PrincipalIndex::store_principal(persona.principal_id.as_str(), root_id);
+            let updated_persona = persona_request_to_persona(persona_r.clone());
+            personas.push(updated_persona.clone());
 
-            match AccountRepo::get_account(persona.principal_id.as_str()) {  //todo rethink
-                Some(t) => { to_success_response(t.clone()) }
+            match PersonaRepo::store_personas(personas) {
+                Some(t) => {
+                    PrincipalIndex::store_principal(updated_persona.principal_id_hash);
+                    to_success_response(account_to_account_response(t.clone()))
+                }
 
                 None => to_error_response("Unable to store persona.")
             }
@@ -29,9 +30,8 @@ pub fn create_persona(persona: Persona) -> HttpResponse<Account> {
     }
 }
 
-pub fn update_persona(request: HTTPPersonaUpdateRequest) -> HttpResponse<Account> { //TODO needs to be refactored
-    let princ = &ic_cdk::api::caller().to_text();
-    match PersonaRepo::get_persona(&request.principal_id) {
+pub fn update_persona(request: HTTPPersonaUpdateRequest) -> HttpResponse<AccountRR> { //TODO needs to be refactored
+    match PersonaRepo::get_persona(request.principal_id.clone()) {
         Some(mut persona) => {
             if request.name.is_some() {
                 persona.name = request.name.clone().unwrap();
@@ -48,27 +48,30 @@ pub fn update_persona(request: HTTPPersonaUpdateRequest) -> HttpResponse<Account
             if request.anchor.is_some() {
                 persona.anchor = request.anchor.clone().unwrap();
             }
-            let mut personas: Vec<Persona> = PersonaRepo::get_personas(get_principal(princ))
+            let mut personas: Vec<Persona> = PersonaRepo::get_personas()
                 .unwrap()
                 .into_iter()
                 .filter(|l| l.principal_id != request.principal_id)
                 .collect();
             personas.push(persona.clone());
-            match PersonaRepo::store_personas(get_principal(princ), personas) {
-                Some(mut l) => {
-                    to_success_response(l) }
-                None => to_error_response("Unable to store Persona.")
+            match PersonaRepo::store_personas(personas) {
+                Some(l) => {
+                    to_success_response(account_to_account_response(l))
+                }
+                None => to_error_response("Unable to update Persona.")
             }
         }
         None => to_error_response("Unable to find Persona.")
     }
 }
 
-pub fn read_personas() -> HttpResponse<Vec<Persona>> {
-    let princ = &ic_cdk::api::caller().to_text();
-    match PersonaRepo::get_personas(get_principal(princ)) {
-        Some(acc) => {
-            to_success_response(acc)
+pub fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
+    match PersonaRepo::get_personas() {
+        Some(personas) => {
+            let personas_r = personas.iter()
+                .map(|l| persona_to_persona_response(l.clone()))
+                .collect();
+            to_success_response(personas_r)
         }
         None => to_error_response("Unable to find Account.")
     }

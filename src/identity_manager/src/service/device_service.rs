@@ -1,10 +1,8 @@
-use crate::service::principle_service::get_principal;
 use crate::repository::repo::{Device, DeviceRepo};
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
 
 pub fn read_devices() -> HttpResponse<Vec<Device>> {
-    let p = &ic_cdk::api::caller().to_text();
-    match DeviceRepo::get_devices(get_principal(p)) {
+    match DeviceRepo::get_devices() {
         Some(content) => { to_success_response(content) }
         None => to_error_response("Unable to find Account.")
     }
@@ -12,11 +10,10 @@ pub fn read_devices() -> HttpResponse<Vec<Device>> {
 
 
 pub fn create_device(device: Device) -> HttpResponse<bool> {
-    let princ = &ic_cdk::api::caller().to_text();
-    match DeviceRepo::get_devices(get_principal(princ)) {
+    match DeviceRepo::get_devices() {
         Some(mut content) => {
             content.push(device);
-            DeviceRepo::store_devices(princ, content);
+            DeviceRepo::store_devices(content);
             to_success_response(true)
         }
         None => to_error_response("Unable to find Account.")

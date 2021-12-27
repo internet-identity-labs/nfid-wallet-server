@@ -1,26 +1,28 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-use blake3::Hash;
+use std::collections::HashMap;
 
+use blake3::Hash;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk_macros::*;
 
-use repository::repo::{Account, Device, Persona};
+use repository::repo::{Device};
 use repository::repo;
 use service::{device_service, persona_service};
 
 use crate::http::requests;
+use crate::http::requests::{AccountRR, PersonaResponse, PersonaRequest};
 use crate::http::response_mapper;
 use crate::requests::{HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
 use crate::requests::HTTPAccountUpdateRequest;
 use crate::requests::HTTPPersonaUpdateRequest;
-use crate::response_mapper::{HttpResponse};
+use crate::response_mapper::HttpResponse;
 use crate::service::account_service;
 
 mod service;
 mod http;
 mod repository;
+mod mapper;
 
 type Topic = String;
 type Message = String;
@@ -38,17 +40,17 @@ thread_local! {
 }
 
 #[update]
-async fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Account> {
+async fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<AccountRR> {
     account_service::create_account(account_request)
 }
 
 #[update]
-async fn update_account(account_request: HTTPAccountUpdateRequest) -> HttpResponse<Account> {
+async fn update_account(account_request: HTTPAccountUpdateRequest) -> HttpResponse<AccountRR> {
     account_service::update_account(account_request)
 }
 
 #[query]
-async fn get_account() -> HttpResponse<Account> {
+async fn get_account() -> HttpResponse<AccountRR> {
     account_service::get_account()
 }
 
@@ -57,24 +59,23 @@ async fn read_devices() -> HttpResponse<Vec<Device>> {
     device_service::read_devices()
 }
 
-
 #[update]
 async fn create_device(device: Device) -> HttpResponse<bool> {
     device_service::create_device(device)
 }
 
 #[update]
-async fn create_persona(persona: Persona) -> HttpResponse<Account> {
+async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountRR> {
     persona_service::create_persona(persona)
 }
 
 #[update]
-async fn update_persona(request: HTTPPersonaUpdateRequest) -> HttpResponse<Account> { //TODO needs to be refactored
+async fn update_persona(request: HTTPPersonaUpdateRequest) -> HttpResponse<AccountRR> { //TODO needs to be refactored
     persona_service::update_persona(request)
 }
 
 #[update]
-async fn read_personas() -> HttpResponse<Vec<Persona>> {
+async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
     persona_service::read_personas()
 }
 
