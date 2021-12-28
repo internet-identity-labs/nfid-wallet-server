@@ -21,17 +21,17 @@ type EmptyHttpResponse = record {
      status_code: nat16;
  };
 
-type Account = record {
+type AccountR = record {
     principal_id: text;
     name: text;
     phone_number: text;
     email: text;
     devices: vec Device;
-    personas: vec Persona;
+    personas: vec PersonaResponse;
 };
 
 type HTTPAccountResponse = record {
-    data: opt Account;
+    data: opt AccountR;
     error: opt Error;
     status_code: nat16;
 };
@@ -63,13 +63,23 @@ type HTTPDeviceResponse = record {
     status_code: nat16;
 };
 
-type Persona = record {
+type PersonaResponse = record {
     name: text;
     is_root: bool;
     is_seed_phrase_copied: bool;
     is_ii_anchor: bool;
     anchor: text;
     principal_id: text;
+};
+
+type PersonaRequest = record {
+    name: text;
+    is_root: bool;
+    is_seed_phrase_copied: bool;
+    is_ii_anchor: bool;
+    anchor: text;
+    principal_id: text;
+    principal_id_origin: text;
 };
 
 type HTTPPersonaUpdateRequest = record {
@@ -82,7 +92,7 @@ type HTTPPersonaUpdateRequest = record {
 };
 
 type HTTPPersonasResponse = record {
-    data: opt vec Persona;
+    data: opt vec PersonaResponse;
     error: opt Error;
     status_code: nat16;
 };
@@ -97,7 +107,7 @@ service : () -> {
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
 
-  create_persona: (Persona) -> (HTTPAccountResponse);
+  create_persona: (PersonaRequest) -> (HTTPAccountResponse);
   update_persona: (HTTPPersonaUpdateRequest) -> (HTTPAccountResponse);
   read_personas: () -> (HTTPPersonasResponse);
 
