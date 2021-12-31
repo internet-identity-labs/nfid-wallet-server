@@ -11,7 +11,7 @@ use repository::repo;
 use service::{device_service, persona_service};
 
 use crate::http::requests;
-use crate::http::requests::{AccountRR, PersonaResponse, PersonaRequest};
+use crate::http::requests::{AccountResponse, PersonaResponse, PersonaRequest};
 use crate::http::response_mapper;
 use crate::requests::{HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
 use crate::requests::HTTPAccountUpdateRequest;
@@ -40,17 +40,17 @@ thread_local! {
 }
 
 #[update]
-async fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<AccountRR> {
+async fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<AccountResponse> {
     account_service::create_account(account_request)
 }
 
 #[update]
-async fn update_account(account_request: HTTPAccountUpdateRequest) -> HttpResponse<AccountRR> {
+async fn update_account(account_request: HTTPAccountUpdateRequest) -> HttpResponse<AccountResponse> {
     account_service::update_account(account_request)
 }
 
 #[query]
-async fn get_account() -> HttpResponse<AccountRR> {
+async fn get_account() -> HttpResponse<AccountResponse> {
     account_service::get_account()
 }
 
@@ -65,12 +65,12 @@ async fn create_device(device: Device) -> HttpResponse<bool> {
 }
 
 #[update]
-async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountRR> {
+async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
     persona_service::create_persona(persona)
 }
 
 #[update]
-async fn update_persona(request: HTTPPersonaUpdateRequest) -> HttpResponse<AccountRR> { //TODO needs to be refactored
+async fn update_persona(request: HTTPPersonaUpdateRequest) -> HttpResponse<AccountResponse> { //TODO needs to be refactored
     persona_service::update_persona(request)
 }
 
