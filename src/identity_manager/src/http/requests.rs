@@ -1,4 +1,5 @@
 use ic_cdk::export::candid::{CandidType, Deserialize};
+use ic_cdk::export::Principal;
 use crate::repository::repo::Device;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -61,4 +62,9 @@ pub struct PersonaRequest {
     pub anchor: String,
     pub principal_id: String,
     pub principal_id_origin: String,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct Configuration {
+    pub lambda: Principal
 }

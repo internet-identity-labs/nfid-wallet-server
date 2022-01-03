@@ -8,16 +8,15 @@ use ic_cdk_macros::*;
 
 use repository::repo::{Device};
 use repository::repo;
-use service::{device_service, persona_service};
+use service::{token_service, account_service, device_service, persona_service};
 
 use crate::http::requests;
 use crate::http::requests::{AccountRR, PersonaResponse, PersonaRequest};
 use crate::http::response_mapper;
-use crate::requests::{HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
+use crate::requests::{Configuration, HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
 use crate::requests::HTTPAccountUpdateRequest;
 use crate::requests::HTTPPersonaUpdateRequest;
-use crate::response_mapper::HttpResponse;
-use crate::service::account_service;
+use crate::response_mapper::{HttpResponse, unauthorized};
 
 mod service;
 mod http;
@@ -33,10 +32,22 @@ struct MessageHttpResponse {
     body: Option<Vec<Message>>,
 }
 
+#[init]
+fn init(configuration: Configuration) -> () {
+    CONFIGURATION.with(|config| {
+        config.replace(Some(configuration));
+    });
+}
 
 thread_local! {
     static MESSAGE_STORAGE: RefCell<HashMap<Topic, Vec<Message>>> = RefCell::new(HashMap::default());
     static TOKEN_STORAGE: RefCell<HashMap<Hash, Hash>> = RefCell::new(HashMap::default());
+    static CONFIGURATION: RefCell<Option<Configuration>> = RefCell::new(None);
+}
+
+#[update]
+async fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
+    token_service::post_token(request)
 }
 
 #[update]
@@ -88,7 +99,6 @@ fn pre_upgrade() {
 fn post_upgrade() {
     repo::post_upgrade()
 }
-
 
 #[update]
 async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpResponse {
@@ -150,17 +160,5 @@ async fn delete_topic(topic: Topic) -> MessageHttpResponse {
         };
     })
 }
-
-#[update]
-async fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
-    let phone_number_hash = blake3::hash(request.phone_number.as_bytes());
-    let token_hash = blake3::hash(request.token.as_bytes());
-
-    TOKEN_STORAGE.with(|storage| {
-        storage.borrow_mut().insert(phone_number_hash, token_hash);
-        HttpResponse { status_code: 200, data: Some(true), error: None }
-    })
-}
-
 
 fn main() {}

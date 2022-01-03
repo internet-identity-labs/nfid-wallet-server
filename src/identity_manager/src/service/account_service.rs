@@ -1,4 +1,4 @@
-use crate::{HttpResponse, TOKEN_STORAGE};
+use crate::{HttpResponse, token_service};
 use crate::http::requests::AccountRR;
 use crate::mapper::account_mapper::account_to_account_response;
 use crate::repository::repo::{Account, AccountRepo, calculate_hash, Device, Persona};
@@ -14,7 +14,7 @@ pub fn get_account() -> HttpResponse<AccountRR> {
 }
 
 pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<AccountRR> {
-    match validate_token(&account_request) {
+    match token_service::validate_token(&account_request) {
         Ok(_) => (),
         Err(message) => return to_error_response(message)
     };
@@ -54,23 +54,6 @@ pub fn update_account(account_request: HTTPAccountUpdateRequest) -> HttpResponse
         }
         None => to_error_response("Unable to find Account.")
     }
-}
-
-fn validate_token(request: &HTTPAccountRequest) -> Result<(), &str> {
-    let phone_number_hash = blake3::hash(request.phone_number.as_bytes());
-    let token_hash = blake3::hash(request.token.as_bytes());
-
-    TOKEN_STORAGE.with(|storage| {
-        return match storage.borrow().get(&phone_number_hash) {
-            Some(token) => {
-                return match token_hash.eq(token) {
-                    true => Ok(()),
-                    false => Err("Token does not match")
-                };
-            }
-            None => Err("Phone number not found")
-        };
-    })
 }
 
 
