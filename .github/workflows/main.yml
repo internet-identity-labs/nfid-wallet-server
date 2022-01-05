@@ -28,5 +28,5 @@ jobs:
       - name: IDENITY MANAGER | Deploy to production
         run: |
           dfx identity use gh_mp_admin
-          dfx deploy --network ic --no-wallet
+          dfx deploy --network ic --no-wallet --argument '(record {"lambda" = principal "${{secrets.LAMBDA_PRINCIPAL}}" })'
           dfx canister --network ic call identity_manager get_messages '("t")'

@@ -17,6 +17,14 @@ pub fn to_error_response<T>(x: &str) -> HttpResponse<T> {
     }
 }
 
+pub fn unauthorized() -> HttpResponse<bool> {
+    HttpResponse {
+        data: None,
+        error: Some(Error::from("Unauthorized")),
+        status_code: 404,
+    }
+}
+
 pub fn to_success_response<T>(x: T) -> HttpResponse<T> {
     HttpResponse {
         data: Option::from(x),
