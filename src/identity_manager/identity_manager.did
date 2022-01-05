@@ -4,6 +4,10 @@ type PhoneNumber = text;
 type Token = text;
 type Error = text;
 
+type Configuration = record {
+    lambda: principal;
+};
+
 type MessageHttpResponse = record {
     status_code: nat16;
     body: opt vec Message;
@@ -99,7 +103,7 @@ type HTTPVerifyPhoneNumberRequest = record {
     token: text;
 };
 
-service : () -> {
+service : (Configuration) -> {
   get_account: () -> (HTTPAccountResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
