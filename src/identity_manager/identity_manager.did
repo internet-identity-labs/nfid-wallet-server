@@ -21,17 +21,18 @@ type EmptyHttpResponse = record {
      status_code: nat16;
  };
 
-type AccountR = record {
+type AccountResponse = record {
     principal_id: text;
     name: text;
     phone_number: text;
     email: text;
     devices: vec Device;
     personas: vec PersonaResponse;
+    is_seed_phrase_copied: bool;
 };
 
 type HTTPAccountResponse = record {
-    data: opt AccountR;
+    data: opt AccountResponse;
     error: opt Error;
     status_code: nat16;
 };
@@ -41,12 +42,14 @@ type HTTPAccountRequest = record {
     phone_number: text;
     email: text;
     token: text;
+    is_seed_phrase_copied: bool;
 };
 
 type HTTPAccountUpdateRequest = record {
     name: opt text;
     phone_number: opt text;
     email: opt text;
+    is_seed_phrase_copied: opt bool;
 };
 
 type Device = record {
@@ -64,29 +67,23 @@ type HTTPDeviceResponse = record {
 };
 
 type PersonaResponse = record {
-    name: text;
-    is_root: bool;
-    is_seed_phrase_copied: bool;
-    is_ii_anchor: bool;
-    anchor: text;
+    anchor: opt text;
     principal_id: text;
+    application_user_name: opt text;
+    application: opt text;
 };
 
 type PersonaRequest = record {
-    name: text;
-    is_root: bool;
-    is_seed_phrase_copied: bool;
-    is_ii_anchor: bool;
-    anchor: text;
+    anchor: opt text;
     principal_id: text;
     principal_id_origin: text;
+    application_user_name: opt text;
+    application: opt text;
 };
 
 type HTTPPersonaUpdateRequest = record {
-    name: opt text;
-    is_root: opt bool;
-    is_seed_phrase_copied: opt bool;
-    is_ii_anchor: opt bool;
+    application_user_name: opt text;
+    application: opt text;
     anchor: opt text;
     principal_id: text;
 };

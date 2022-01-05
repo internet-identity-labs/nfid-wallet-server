@@ -1,11 +1,11 @@
-use crate::http::requests::{AccountRR, PersonaRequest, PersonaResponse};
+use crate::http::requests::{AccountResponse, PersonaRequest, PersonaResponse};
 use crate::mapper::account_mapper::account_to_account_response;
 use crate::mapper::persona_mapper::{persona_request_to_persona, persona_to_persona_response};
 use crate::repository::repo::{Persona, PersonaRepo, PrincipalIndex};
 use crate::requests::HTTPPersonaUpdateRequest;
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
 
-pub fn create_persona(persona_r: PersonaRequest) -> HttpResponse<AccountRR> {
+pub fn create_persona(persona_r: PersonaRequest) -> HttpResponse<AccountResponse> {
     match PersonaRepo::get_personas()
     {
         Some(mut personas) => {
@@ -14,12 +14,12 @@ pub fn create_persona(persona_r: PersonaRequest) -> HttpResponse<AccountRR> {
                     return to_error_response("Persona already exists");
                 }
             }
-            let updated_persona = persona_request_to_persona(persona_r.clone());
-            personas.push(updated_persona.clone());
+            let mut created_persona = persona_request_to_persona(persona_r.clone());
+            personas.push(created_persona.clone());
 
             match PersonaRepo::store_personas(personas) {
                 Some(t) => {
-                    PrincipalIndex::store_principal(updated_persona.principal_id_hash);
+                    PrincipalIndex::store_principal(created_persona.principal_id_hash);
                     to_success_response(account_to_account_response(t.clone()))
                 }
 
@@ -30,23 +30,17 @@ pub fn create_persona(persona_r: PersonaRequest) -> HttpResponse<AccountRR> {
     }
 }
 
-pub fn update_persona(request: HTTPPersonaUpdateRequest) -> HttpResponse<AccountRR> { //TODO needs to be refactored
+pub fn update_persona(request: HTTPPersonaUpdateRequest) -> HttpResponse<AccountResponse> { //TODO needs to be refactored
     match PersonaRepo::get_persona(request.principal_id.clone()) {
         Some(mut persona) => {
-            if request.name.is_some() {
-                persona.name = request.name.clone().unwrap();
+            if !request.application.is_none() {
+                persona.application = request.application.clone();
             }
-            if !request.is_root.is_none() {
-                persona.is_root = request.is_root.unwrap();
-            }
-            if !request.is_seed_phrase_copied.is_none() {
-                persona.is_seed_phrase_copied = request.is_seed_phrase_copied.unwrap();
-            }
-            if !request.is_ii_anchor.is_none() {
-                persona.is_ii_anchor = request.is_ii_anchor.unwrap();
+            if !request.application_user_name.is_none() {
+                persona.application_user_name = request.application_user_name.clone();
             }
             if request.anchor.is_some() {
-                persona.anchor = request.anchor.clone().unwrap();
+                persona.anchor = request.anchor.clone();
             }
             let mut personas: Vec<Persona> = PersonaRepo::get_personas()
                 .unwrap()

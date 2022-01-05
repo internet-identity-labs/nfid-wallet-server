@@ -16,13 +16,11 @@ pub struct Device {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Persona {
-    pub name: String,
-    pub is_root: bool,
-    pub is_seed_phrase_copied: bool,
-    pub is_ii_anchor: bool,
-    pub anchor: String,
+    pub anchor: Option<String>,
     pub principal_id_hash: u64,
     pub principal_id: String,
+    pub application_user_name: Option<String>, //todo temp
+    pub application: Option<String>, //todo temp
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -34,6 +32,7 @@ pub struct Account {
     pub email: String,
     pub devices: Vec<Device>,
     pub personas: Vec<Persona>,
+    pub is_seed_phrase_copied: bool,
 }
 
 type Principals = BTreeMap<u64, u64>;
