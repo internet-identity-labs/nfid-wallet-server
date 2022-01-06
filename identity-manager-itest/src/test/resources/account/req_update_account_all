@@ -1,0 +1,1 @@
+dfx canister call identity_manager update_account '( record {name = opt "TEST_USER_UPDATED_2";  email = opt "TEST_EMAIL_2"; phone_number = opt "123456_2";})'

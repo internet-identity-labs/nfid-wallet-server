@@ -1,0 +1,7 @@
+(
+  record {
+    data = null;
+    error = opt "Phone number not found";
+    status_code = 404 : nat16;
+  },
+)

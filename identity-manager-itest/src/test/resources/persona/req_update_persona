@@ -1,0 +1,1 @@
+ dfx canister call identity_manager update_persona '( record { name = opt "NEW_NAME"; principal_id = "NEW_PRINCIPAL"; })'

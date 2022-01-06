@@ -1,0 +1,15 @@
+(
+  record {
+    data = opt vec {
+      record {
+        model = "IProboval";
+        pub_key_hash = "PUB_KEY_HASH";
+        make = "CHINA";
+        browser = "CHROME";
+        last_used = "123";
+      };
+    };
+    error = null;
+    status_code = 200 : nat16;
+  },
+)
