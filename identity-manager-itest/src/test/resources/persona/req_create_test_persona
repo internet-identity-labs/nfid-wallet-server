@@ -1,0 +1,1 @@
+ dfx canister call identity_manager create_persona '( record {name = "PERSONA"; anchor = opt "123456"; principal_id = "SALTED_PRINCIPAL"; principal_id_origin = "%s"; })'

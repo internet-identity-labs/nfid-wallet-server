@@ -1,0 +1,30 @@
+name: BEItest
+on: [push, workflow_dispatch]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '13'
+
+      - name: DFX SETUP  | Provision Linux
+        run: bash .github/workflows/dfx-provision-linux.sh
+
+      - name: Install Rust
+        run: |
+          rustup update 1.51.0 --no-self-update
+          rustup default 1.51.0
+          rustup target add wasm32-unknown-unknown
+
+      - name: DFX SETUP  | Provision Linux
+        run: bash .github/workflows/dfx-provision-linux.sh
+
+      - name: BE ITest
+        run: |
+          cd identity-manager-itest
+          mvn test

@@ -1,0 +1,1 @@
+dfx canister call identity_manager create_device '( record {pub_key_hash = "PUB_KEY_HASH"; last_used = "123"; make = "CHINA"; browser = "CHROME"; model = "IProboval";})'

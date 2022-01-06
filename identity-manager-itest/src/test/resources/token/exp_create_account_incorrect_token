@@ -1,0 +1,7 @@
+(
+  record {
+    data = null;
+    error = opt "Token does not match";
+    status_code = 404 : nat16;
+  },
+)

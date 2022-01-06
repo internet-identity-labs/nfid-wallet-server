@@ -1,0 +1,34 @@
+(
+  record {
+    data = opt record {
+      is_seed_phrase_copied = true;
+      name = "TEST_USER";
+      email = "TEST_EMAIL";
+      personas = vec {
+        record {
+          application = null;
+          anchor = opt "123456";
+          principal_id = "NEW_PRINCIPAL";
+          application_user_name = null;
+        };
+        record {
+          application = null;
+          anchor = opt "1234567";
+          principal_id = "NEW_PRINCIPAL_2_SALTED";
+          application_user_name = null;
+        };
+        record {
+          application = null;
+          anchor = opt "123456";
+          principal_id = "SALTED_PRINCIPAL";
+          application_user_name = null;
+        };
+      };
+      principal_id = "%s";
+      phone_number = "123456";
+      devices = vec {};
+    };
+    error = null;
+    status_code = 200 : nat16;
+  },
+)

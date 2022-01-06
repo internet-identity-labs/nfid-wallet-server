@@ -1,0 +1,15 @@
+(
+  record {
+    data = opt record {
+      is_seed_phrase_copied = true;
+      name = "TEST_USER_UPDATED_2";
+      email = "TEST_EMAIL_2";
+      personas = vec {};
+      principal_id = "%s";
+      phone_number = "123456_2";
+      devices = vec {};
+    };
+    error = null;
+    status_code = 200 : nat16;
+  },
+)
