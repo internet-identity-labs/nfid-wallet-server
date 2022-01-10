@@ -61,7 +61,8 @@ pub struct PersonaRequest {
     pub application: Option<String>, //todo temp
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Copy)]
 pub struct Configuration {
-    pub lambda: Principal
+    pub lambda: Principal,
+    pub token_ttl: u64
 }

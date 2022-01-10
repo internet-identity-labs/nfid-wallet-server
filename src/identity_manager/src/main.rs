@@ -1,14 +1,14 @@
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::time::{Duration};
+use structure::ttlhashmap::{AutoClean, TtlHashMap};
 
 use blake3::Hash;
 use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk::print;
 use ic_cdk_macros::*;
 
 use repository::repo::{Device};
-use repository::repo;
 use service::{token_service, account_service, device_service, persona_service};
 
 use crate::http::requests;
@@ -23,6 +23,7 @@ mod service;
 mod http;
 mod repository;
 mod mapper;
+mod structure;
 
 type Topic = String;
 type Message = String;
@@ -38,11 +39,20 @@ fn init(configuration: Configuration) -> () {
     CONFIGURATION.with(|config| {
         config.replace(Some(configuration));
     });
+
+    TOKEN_STORAGE.with(|token_storage| {
+        let ttl = Duration::from_secs(configuration.token_ttl.clone());
+        token_storage.borrow_mut().ttl = ttl;
+    });
 }
 
 thread_local! {
     static MESSAGE_STORAGE: RefCell<HashMap<Topic, Vec<Message>>> = RefCell::new(HashMap::default());
-    static TOKEN_STORAGE: RefCell<HashMap<Hash, Hash>> = RefCell::new(HashMap::default());
+    static TOKEN_STORAGE: RefCell<TtlHashMap<Hash, Hash>> = {
+        let ttl = Duration::from_secs(30);
+        let mut ttlmap = TtlHashMap::new(ttl);
+        RefCell::new(ttlmap)
+    };
     static CONFIGURATION: RefCell<Option<Configuration>> = RefCell::new(None);
 }
 
@@ -91,15 +101,15 @@ async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
     persona_service::read_personas()
 }
 
-#[pre_upgrade]
-fn pre_upgrade() {
-    repo::pre_upgrade()
-}
-
-#[post_upgrade]
-fn post_upgrade() {
-    repo::post_upgrade()
-}
+// #[pre_upgrade]
+// fn pre_upgrade() {
+//     repo::pre_upgrade()
+// }
+//
+// #[post_upgrade]
+// fn post_upgrade() {
+//     repo::post_upgrade()
+// }
 
 #[update]
 async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpResponse {

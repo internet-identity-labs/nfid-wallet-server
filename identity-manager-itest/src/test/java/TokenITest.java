@@ -1,4 +1,5 @@
 import lombok.SneakyThrows;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 public class TokenITest extends BaseDFXITest {
@@ -29,6 +30,19 @@ public class TokenITest extends BaseDFXITest {
 
         var actual = call("token/req_post_token");
         validateWithFormatIdentity("token/exp_post_token_unauthorized", actual);
+    }
+
+    @Ignore
+    @SneakyThrows
+    @Test(priority = 5)
+    public void createAccountExpectPhoneNumberNotFoundByTokenExpiration() {
+        call("common/use_default_persona");
+        call("token/req_post_token_default");
+
+        Thread.sleep(11000);
+
+        var actual = call("account/req_create_account");
+        validateWithFormatIdentity("token/exp_create_account_incorrect_phone_number", actual);
     }
 
 }
