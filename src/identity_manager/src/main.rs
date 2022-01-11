@@ -9,6 +9,7 @@ use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk_macros::*;
 
 use repository::repo::{Device};
+use repository::repo;
 use service::{token_service, account_service, device_service, persona_service};
 
 use crate::http::requests;
@@ -27,6 +28,8 @@ mod structure;
 
 type Topic = String;
 type Message = String;
+
+const DEFAULT_TOKEN_TTL: Duration = Duration::from_secs(30);
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 struct MessageHttpResponse {
@@ -48,11 +51,7 @@ fn init(configuration: Configuration) -> () {
 
 thread_local! {
     static MESSAGE_STORAGE: RefCell<HashMap<Topic, Vec<Message>>> = RefCell::new(HashMap::default());
-    static TOKEN_STORAGE: RefCell<TtlHashMap<Hash, Hash>> = {
-        let ttl = Duration::from_secs(30);
-        let mut ttlmap = TtlHashMap::new(ttl);
-        RefCell::new(ttlmap)
-    };
+    static TOKEN_STORAGE: RefCell<TtlHashMap<Hash, Hash>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
     static CONFIGURATION: RefCell<Option<Configuration>> = RefCell::new(None);
 }
 
@@ -101,15 +100,15 @@ async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
     persona_service::read_personas()
 }
 
-// #[pre_upgrade]
-// fn pre_upgrade() {
-//     repo::pre_upgrade()
-// }
-//
-// #[post_upgrade]
-// fn post_upgrade() {
-//     repo::post_upgrade()
-// }
+#[pre_upgrade]
+fn pre_upgrade() {
+    repo::pre_upgrade()
+}
+
+#[post_upgrade]
+fn post_upgrade() {
+    repo::post_upgrade()
+}
 
 #[update]
 async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpResponse {

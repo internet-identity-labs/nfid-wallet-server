@@ -11,13 +11,14 @@ import java.nio.charset.StandardCharsets;
 import static org.testng.AssertJUnit.assertEquals;
 
 public class BaseDFXITest {
-
     private final static String PATH = "..";
+    private final static int DEFAULT_TRIES = 20;
 
     static String ROOT_IDENTITY = "";
 
     @BeforeClass
     public void initDfxProject() {
+        int i = 0;
         String actual;
         do {
             call("common/dfx_stop");
@@ -28,6 +29,10 @@ public class BaseDFXITest {
             var command = String.format(getScript("common/deploy_dfx_project").trim(), ROOT_IDENTITY);
             callDfxCommand(command);
             actual = call("account/req_get_account");
+
+            if (++i >= DEFAULT_TRIES)
+                System.exit(1);
+
         } while (actual.isEmpty());
         call("token/req_post_token_default");
     }

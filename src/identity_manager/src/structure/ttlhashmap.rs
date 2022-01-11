@@ -231,9 +231,7 @@ impl<K, V> TtlHashMap<K, V>
     fn to_sorted_vec(&mut self) -> Vec<(K, ValueWrapper<V>)> {
         let it = self.map.drain();
         let mut v: Vec<(K, ValueWrapper<V>)> = it.collect();
-
         v.sort_unstable_by(|a, b| b.1.timeout.partial_cmp(&a.1.timeout).unwrap());
-
         v
     }
 }
