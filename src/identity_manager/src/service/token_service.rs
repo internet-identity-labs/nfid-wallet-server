@@ -22,7 +22,7 @@ pub fn validate_token(request: &HTTPAccountRequest) -> Result<(), &str> {
     let token_hash = blake3::hash(request.token.as_bytes());
 
     TOKEN_STORAGE.with(|storage| {
-        return match storage.borrow().get(&phone_number_hash) {
+        return match storage.borrow_mut().get(&phone_number_hash) {
             Some(token) => {
                 return match token_hash.eq(token) {
                     true => Ok(()),

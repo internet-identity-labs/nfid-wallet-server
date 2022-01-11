@@ -1,10 +1,11 @@
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::time::{Duration};
+use structure::ttlhashmap::{AutoClean, TtlHashMap};
 
 use blake3::Hash;
 use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk::print;
 use ic_cdk_macros::*;
 
 use repository::repo::{Device};
@@ -23,9 +24,12 @@ mod service;
 mod http;
 mod repository;
 mod mapper;
+mod structure;
 
 type Topic = String;
 type Message = String;
+
+const DEFAULT_TOKEN_TTL: Duration = Duration::from_secs(30);
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 struct MessageHttpResponse {
@@ -38,11 +42,16 @@ fn init(configuration: Configuration) -> () {
     CONFIGURATION.with(|config| {
         config.replace(Some(configuration));
     });
+
+    TOKEN_STORAGE.with(|token_storage| {
+        let ttl = Duration::from_secs(configuration.token_ttl.clone());
+        token_storage.borrow_mut().ttl = ttl;
+    });
 }
 
 thread_local! {
     static MESSAGE_STORAGE: RefCell<HashMap<Topic, Vec<Message>>> = RefCell::new(HashMap::default());
-    static TOKEN_STORAGE: RefCell<HashMap<Hash, Hash>> = RefCell::new(HashMap::default());
+    static TOKEN_STORAGE: RefCell<TtlHashMap<Hash, Hash>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
     static CONFIGURATION: RefCell<Option<Configuration>> = RefCell::new(None);
 }
 
