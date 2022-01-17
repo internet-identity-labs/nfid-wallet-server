@@ -1,5 +1,9 @@
-use crate::{CONFIGURATION, HTTPAccountRequest, HttpResponse, HTTPVerifyPhoneNumberRequest,
-            TOKEN_STORAGE, unauthorized};
+use blake3::Hash;
+use crate::TOKEN_STORAGE;
+use crate::HTTPVerifyPhoneNumberRequest;
+use crate::HttpResponse;
+use crate::CONFIGURATION;
+use crate::unauthorized;
 
 pub fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
     let principal = &ic_cdk::api::caller().to_text();
@@ -17,10 +21,7 @@ pub fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
     })
 }
 
-pub fn validate_token(request: &HTTPAccountRequest) -> Result<(), &str> {
-    let phone_number_hash = blake3::hash(request.phone_number.as_bytes());
-    let token_hash = blake3::hash(request.token.as_bytes());
-
+pub fn validate_token<'a>(phone_number_hash: &'a Hash, token_hash: &'a Hash) -> Result<(), &'a str> {
     TOKEN_STORAGE.with(|storage| {
         return match storage.borrow_mut().get(&phone_number_hash) {
             Some(token) => {

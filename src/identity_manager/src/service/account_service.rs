@@ -5,6 +5,7 @@ use crate::repository::repo::{Account, AccountRepo, calculate_hash, Device, Pers
 use crate::requests::{HTTPAccountRequest, HTTPAccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
+use crate::service::phone_number_index_service;
 
 pub fn get_account() -> HttpResponse<AccountResponse> {
     match AccountRepo::get_account() {
@@ -14,11 +15,18 @@ pub fn get_account() -> HttpResponse<AccountResponse> {
 }
 
 pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<AccountResponse> {
-    match token_service::validate_token(&account_request) {
+    let phone_number_hash = blake3::hash(account_request.phone_number.as_bytes());
+    let token_hash = blake3::hash(account_request.token.as_bytes());
+
+    match phone_number_index_service::is_exist(&phone_number_hash) {
         Ok(_) => (),
         Err(message) => return to_error_response(message)
     };
-    //todo validate on existence
+
+    match token_service::validate_token(&phone_number_hash, &token_hash) {
+        Ok(_) => (),
+        Err(message) => return to_error_response(message)
+    };
 
     let princ = &ic_cdk::api::caller().to_text();
     let devices: Vec<Device> = Vec::new();
@@ -35,6 +43,7 @@ pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Accou
         is_seed_phrase_copied: account_request.is_seed_phrase_copied
     };
     AccountRepo::store_account(acc.clone());
+    phone_number_index_service::add(phone_number_hash);
     to_success_response(account_to_account_response(acc))
 }
 

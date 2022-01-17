@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::{Duration};
-use structure::ttlhashmap::{AutoClean, TtlHashMap};
+use structure::ttlhashmap::{TtlHashMap};
 
 use blake3::Hash;
 use ic_cdk::export::candid::{CandidType, Deserialize};
@@ -53,6 +53,7 @@ thread_local! {
     static MESSAGE_STORAGE: RefCell<HashMap<Topic, Vec<Message>>> = RefCell::new(HashMap::default());
     static TOKEN_STORAGE: RefCell<TtlHashMap<Hash, Hash>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
     static CONFIGURATION: RefCell<Option<Configuration>> = RefCell::new(None);
+    static PHONE_NUMBER_INDEX: RefCell<HashSet<Hash>> = RefCell::new(HashSet::default());
 }
 
 #[update]

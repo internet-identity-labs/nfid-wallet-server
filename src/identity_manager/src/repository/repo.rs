@@ -4,6 +4,7 @@ use std::hash::{Hash, Hasher};
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::storage;
+use crate::service::phone_number_index_service;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Device {
@@ -119,13 +120,16 @@ pub fn pre_upgrade() {
 }
 
 pub fn post_upgrade() {
+    let mut phone_numbers = Vec::default();
     let (old_accs, ): (Vec<Account>, ) = storage::stable_restore().unwrap();
     for u in old_accs {
         storage::get_mut::<Accounts>().insert(u.clone().principal_id_hash, u.clone());
+        phone_numbers.push(u.clone().phone_number);
         for persona in u.personas.clone() {
             storage::get_mut::<Principals>().insert(persona.principal_id_hash.clone(), u.clone().principal_id_hash);
         }
     }
+    phone_number_index_service::init(phone_numbers);
 }
 
 pub fn calculate_hash<T: Hash + ?Sized>(t: &T) -> u64 {
