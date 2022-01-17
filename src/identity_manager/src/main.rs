@@ -37,8 +37,8 @@ struct MessageHttpResponse {
     body: Option<Vec<Message>>,
 }
 
-#[init]
-fn init(configuration: Configuration) -> () {
+#[update]
+async fn init(configuration: Configuration) -> () {
     CONFIGURATION.with(|config| {
         config.replace(Some(configuration));
     });
