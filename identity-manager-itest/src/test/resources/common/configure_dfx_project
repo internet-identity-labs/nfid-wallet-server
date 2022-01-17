@@ -1,0 +1,1 @@
+dfx canister call identity_manager init '(record {"lambda" = principal "%s"; token_ttl = 10 })'

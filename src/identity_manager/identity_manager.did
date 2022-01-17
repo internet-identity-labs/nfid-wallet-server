@@ -104,7 +104,8 @@ type HTTPVerifyPhoneNumberRequest = record {
     token: text;
 };
 
-service : (Configuration) -> {
+service : () -> {
+  init: (Configuration) -> ();
   get_account: () -> (HTTPAccountResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);

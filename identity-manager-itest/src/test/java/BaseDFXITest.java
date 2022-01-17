@@ -26,9 +26,9 @@ public class BaseDFXITest {
             call("common/use_default_persona");
             ROOT_IDENTITY = call("common/get_principal").trim();
             call("common/init_dfx_project");
-            var command = String.format(getScript("common/deploy_dfx_project").trim(), ROOT_IDENTITY);
-            callDfxCommand(command);
-            actual = call("account/req_get_account");
+            call("common/deploy_dfx_project");
+            var command = String.format(getScript("common/configure_dfx_project").trim(), ROOT_IDENTITY);
+            actual = callDfxCommand(command);
 
             if (++i >= DEFAULT_TRIES)
                 System.exit(1);
