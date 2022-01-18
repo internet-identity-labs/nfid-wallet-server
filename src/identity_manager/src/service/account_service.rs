@@ -1,11 +1,11 @@
 use crate::http::requests::AccountResponse;
 use crate::{HttpResponse, token_service};
 use crate::mapper::account_mapper::account_to_account_response;
+use crate::repo::PhoneNumberRepo;
 use crate::repository::repo::{Account, AccountRepo, calculate_hash, Device, Persona};
 use crate::requests::{HTTPAccountRequest, HTTPAccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
-use crate::service::phone_number_index_service;
 
 pub fn get_account() -> HttpResponse<AccountResponse> {
     match AccountRepo::get_account() {
@@ -18,10 +18,9 @@ pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Accou
     let phone_number_hash = blake3::hash(account_request.phone_number.as_bytes());
     let token_hash = blake3::hash(account_request.token.as_bytes());
 
-    match phone_number_index_service::is_exist(&phone_number_hash) {
-        Ok(_) => (),
-        Err(message) => return to_error_response(message)
-    };
+    if PhoneNumberRepo::is_exist(&phone_number_hash) {
+        return to_error_response("Phone number already exists")
+    }
 
     match token_service::validate_token(&phone_number_hash, &token_hash) {
         Ok(_) => (),
@@ -43,7 +42,7 @@ pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Accou
         is_seed_phrase_copied: account_request.is_seed_phrase_copied
     };
     AccountRepo::store_account(acc.clone());
-    phone_number_index_service::add(phone_number_hash);
+    PhoneNumberRepo::add(phone_number_hash);
     to_success_response(account_to_account_response(acc))
 }
 
