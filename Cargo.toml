@@ -1,4 +1,5 @@
 [workspace]
 members = [
     "src/identity_manager",
+    "src/pub_sub_channel",
 ]

@@ -16,27 +16,6 @@ public class BaseDFXITest {
 
     static String ROOT_IDENTITY = "";
 
-    @BeforeClass
-    public void initDfxProject() {
-        int i = 0;
-        String actual;
-        do {
-            call("common/dfx_stop");
-            callDfxCommand("rm -rf .dfx");
-            call("common/use_default_persona");
-            ROOT_IDENTITY = call("common/get_principal").trim();
-            call("common/init_dfx_project");
-            call("common/deploy_dfx_project");
-            var command = String.format(getScript("common/configure_dfx_project").trim(), ROOT_IDENTITY);
-            actual = callDfxCommand(command);
-
-            if (++i >= DEFAULT_TRIES)
-                System.exit(1);
-
-        } while (actual.isEmpty());
-        call("token/req_post_token_default");
-    }
-
     @AfterClass
     public void stopDfx() {
         call("common/dfx_stop");

@@ -1,6 +1,6 @@
 import org.testng.annotations.Test;
 
-public class MainITest extends BaseDFXITest {
+public class MainITest extends BaseIdentityManagerITest {
 
     @Test(priority = 1)
     public void configureWhenTheUserExpectOk() {

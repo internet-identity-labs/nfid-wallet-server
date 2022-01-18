@@ -2,7 +2,7 @@ import lombok.SneakyThrows;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
-public class TokenITest extends BaseDFXITest {
+public class TokenITest extends BaseIdentityManagerITest {
 
     @Test(priority = 1)
     public void postTokenExceptCorrectResponse() {
