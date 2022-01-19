@@ -1,6 +1,7 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use std::iter::FromIterator;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::storage;
@@ -37,6 +38,7 @@ pub struct Account {
 
 type Principals = BTreeMap<u64, u64>;
 type Accounts = BTreeMap<u64, Account>;
+type PhoneNumbers = HashSet<blake3::Hash>;
 
 pub struct AccountRepo {}
 
@@ -45,6 +47,8 @@ pub struct PrincipalIndex {}
 pub struct DeviceRepo {}
 
 pub struct PersonaRepo {}
+
+pub struct PhoneNumberRepo {}
 
 impl AccountRepo {
     pub fn store_account(account: Account) -> Option<Account> {
@@ -110,6 +114,20 @@ impl PersonaRepo {
     }
 }
 
+impl PhoneNumberRepo {
+    pub fn is_exist(phone_number_hash: &blake3::Hash) -> bool {
+        storage::get::<PhoneNumbers>().contains(phone_number_hash)
+    }
+
+    pub fn add(phone_number_hash: blake3::Hash) -> () {
+        storage::get_mut::<PhoneNumbers>().insert(phone_number_hash);
+    }
+
+    pub fn add_all(phone_number_hashes: HashSet<blake3::Hash>) -> () {
+        storage::get_mut::<PhoneNumbers>().extend(phone_number_hashes);
+    }
+}
+
 pub fn pre_upgrade() {
     let mut accounts = Vec::new();
     for p in storage::get_mut::<Accounts>().iter() {
@@ -119,13 +137,16 @@ pub fn pre_upgrade() {
 }
 
 pub fn post_upgrade() {
+    let mut phone_numbers = HashSet::default();
     let (old_accs, ): (Vec<Account>, ) = storage::stable_restore().unwrap();
     for u in old_accs {
         storage::get_mut::<Accounts>().insert(u.clone().principal_id_hash, u.clone());
+        phone_numbers.insert(blake3::hash(u.clone().phone_number.as_bytes()));
         for persona in u.personas.clone() {
             storage::get_mut::<Principals>().insert(persona.principal_id_hash.clone(), u.clone().principal_id_hash);
         }
     }
+    PhoneNumberRepo::add_all(phone_numbers);
 }
 
 pub fn calculate_hash<T: Hash + ?Sized>(t: &T) -> u64 {

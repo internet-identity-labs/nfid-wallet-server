@@ -1,6 +1,5 @@
 import org.testng.annotations.Test;
 
-
 public class AccountITest extends BaseDFXITest {
 
     @Test(priority = 1)
@@ -26,4 +25,11 @@ public class AccountITest extends BaseDFXITest {
         String actual = call("account/req_update_account_all");
         validateWithFormatIdentity("account/exp_account_upd_all", actual);
     }
+
+    @Test(priority = 5)
+    public void createAccountSecondTimeExpectPhoneNumberExists() {
+        String actual = call("account/req_create_account");
+        validateWithFormatIdentity("account/exp_phone_number_exists", actual);
+    }
+
 }

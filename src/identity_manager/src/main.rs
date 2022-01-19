@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::{HashMap};
 use std::time::{Duration};
-use structure::ttlhashmap::{AutoClean, TtlHashMap};
+use structure::ttlhashmap::{TtlHashMap};
 
 use blake3::Hash;
 use ic_cdk::export::candid::{CandidType, Deserialize};
