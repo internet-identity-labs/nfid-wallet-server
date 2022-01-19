@@ -2,10 +2,10 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap};
 use std::time::{Duration};
-use structure::ttlhashmap::{TtlHashMap};
-
 use blake3::Hash;
+use structure::ttlhashmap::{TtlHashMap};
 use ic_cdk::export::candid::{CandidType, Deserialize};
+use ic_cdk::{trap};
 use ic_cdk_macros::*;
 
 use repository::repo::{Device};
@@ -15,6 +15,7 @@ use service::{token_service, account_service, device_service, persona_service};
 use crate::http::requests;
 use crate::http::requests::{AccountResponse, PersonaResponse, PersonaRequest};
 use crate::http::response_mapper;
+use crate::repo::{AdminHashRepo};
 use crate::requests::{Configuration, HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
 use crate::requests::HTTPAccountUpdateRequest;
 use crate::requests::HTTPPersonaUpdateRequest;
@@ -37,8 +38,20 @@ struct MessageHttpResponse {
     body: Option<Vec<Message>>,
 }
 
+#[init]
+async fn init() -> () {
+    let admin = blake3::hash(&ic_cdk::api::caller().to_text().as_bytes());
+    AdminHashRepo::save(admin);
+}
+
 #[update]
-async fn init(configuration: Configuration) -> () {
+async fn configure(configuration: Configuration) -> () {
+    let user_hash = blake3::hash(&ic_cdk::api::caller().to_text().as_bytes());
+
+    if !AdminHashRepo::get().eq(&user_hash) {
+        trap("Unauthorized")
+    }
+
     CONFIGURATION.with(|config| {
         config.replace(Some(configuration));
     });
