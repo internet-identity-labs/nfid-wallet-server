@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, HashSet};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
+use std::str::FromStr;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::storage;
@@ -39,6 +40,7 @@ pub struct Account {
 type Principals = BTreeMap<u64, u64>;
 type Accounts = BTreeMap<u64, Account>;
 type PhoneNumbers = HashSet<blake3::Hash>;
+type AdminHash = Option<blake3::Hash>;
 
 pub struct AccountRepo {}
 
@@ -49,6 +51,8 @@ pub struct DeviceRepo {}
 pub struct PersonaRepo {}
 
 pub struct PhoneNumberRepo {}
+
+pub struct AdminHashRepo {}
 
 impl AccountRepo {
     pub fn store_account(account: Account) -> Option<Account> {
@@ -114,6 +118,16 @@ impl PersonaRepo {
     }
 }
 
+impl AdminHashRepo {
+    pub fn get() -> blake3::Hash {
+        storage::get_mut::<AdminHash>().unwrap()
+    }
+
+    pub fn save(admin_hash: blake3::Hash) -> () {
+        storage::get_mut::<AdminHash>().replace(admin_hash);
+    }
+}
+
 impl PhoneNumberRepo {
     pub fn is_exist(phone_number_hash: &blake3::Hash) -> bool {
         storage::get::<PhoneNumbers>().contains(phone_number_hash)
@@ -133,12 +147,14 @@ pub fn pre_upgrade() {
     for p in storage::get_mut::<Accounts>().iter() {
         accounts.push(p.1.clone());
     }
-    storage::stable_save((accounts, )).unwrap();
+
+    let admin = storage::get_mut::<AdminHash>().unwrap().to_string();
+    storage::stable_save((accounts, admin));
 }
 
 pub fn post_upgrade() {
+    let (old_accs, admin): (Vec<Account>, String) = storage::stable_restore().unwrap();
     let mut phone_numbers = HashSet::default();
-    let (old_accs, ): (Vec<Account>, ) = storage::stable_restore().unwrap();
     for u in old_accs {
         storage::get_mut::<Accounts>().insert(u.clone().principal_id_hash, u.clone());
         phone_numbers.insert(blake3::hash(u.clone().phone_number.as_bytes()));
@@ -146,6 +162,7 @@ pub fn post_upgrade() {
             storage::get_mut::<Principals>().insert(persona.principal_id_hash.clone(), u.clone().principal_id_hash);
         }
     }
+    storage::get_mut::<AdminHash>().replace(blake3::Hash::from_str(&admin).unwrap());
     PhoneNumberRepo::add_all(phone_numbers);
 }
 
