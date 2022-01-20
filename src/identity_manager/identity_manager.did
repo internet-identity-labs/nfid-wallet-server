@@ -81,17 +81,11 @@ type IIPersona = record {
     domain: text;
 };
 
-type PersonaResponse = 
-    | NFIDPersona
-    | IIPersona;
+type PersonaResponse = variant { NFIDPersona; IIPersona };
 
-type PersonaRequest = 
-    | NFIDPersona
-    | IIPersona;
+type PersonaRequest = variant { NFIDPersona; IIPersona };
 
-type HTTPPersonaUpdateRequest = 
-    | NFIDPersona
-    | IIPersona;
+type HTTPPersonaUpdateRequest = variant { NFIDPersona; IIPersona };
 
 type HTTPPersonasResponse = record {
     data: opt vec PersonaResponse;
