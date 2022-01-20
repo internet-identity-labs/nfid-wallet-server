@@ -5,6 +5,12 @@
       "candid": "src/identity_manager/identity_manager.did",
       "wasm": "target/wasm32-unknown-unknown/release/identity_manager.wasm",
       "type": "custom"
+    },
+    "pub_sub_channel": {
+      "build": "cargo build --target wasm32-unknown-unknown --package pub_sub_channel --release",
+      "candid": "src/pub_sub_channel/pub_sub_channel.did",
+      "wasm": "target/wasm32-unknown-unknown/release/pub_sub_channel.wasm",
+      "type": "custom"
     }
   },
   "networks": {

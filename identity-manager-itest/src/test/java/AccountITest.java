@@ -1,6 +1,7 @@
 import org.testng.annotations.Test;
 
-public class AccountITest extends BaseDFXITest {
+
+public class AccountITest extends BaseIdentityManagerITest {
 
     @Test(priority = 1)
     public void createAccountExpectCorrectResponse() {

@@ -2,7 +2,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 
-public class DeviceITest extends BaseDFXITest {
+public class DeviceITest extends BaseIdentityManagerITest {
 
     @BeforeClass
     public void initAccount() {

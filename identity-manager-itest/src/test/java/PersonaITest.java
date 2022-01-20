@@ -5,7 +5,7 @@ import org.testng.annotations.Test;
 import static org.testng.AssertJUnit.assertEquals;
 
 
-public class PersonaITest extends BaseDFXITest {
+public class PersonaITest extends BaseIdentityManagerITest {
 
     @BeforeClass
     public void initAccount() {
