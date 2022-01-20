@@ -72,25 +72,21 @@ type HTTPDeviceResponse = record {
 };
 
 type PersonaResponse = record {
-    anchor: opt text;
-    principal_id: text;
-    application_user_name: opt text;
-    application: opt text;
+    anchor: text;
+    persona_id: text;
+    application: text;
 };
 
 type PersonaRequest = record {
-    anchor: opt text;
-    principal_id: text;
-    principal_id_origin: text;
-    application_user_name: opt text;
-    application: opt text;
+    anchor: text;
+    persona_id: text;
+    application: text;
 };
 
 type HTTPPersonaUpdateRequest = record {
-    application_user_name: opt text;
-    application: opt text;
     anchor: opt text;
-    principal_id: text;
+    persona_id: opt text;
+    application: opt text;
 };
 
 type HTTPPersonasResponse = record {
