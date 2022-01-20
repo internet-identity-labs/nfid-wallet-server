@@ -10,6 +10,7 @@ public class BaseIdentityManagerITest extends BaseDFXITest {
         do {
             call("common/dfx_stop");
             callDfxCommand("rm -rf .dfx");
+            call("common/create_test_persona");
             call("common/use_default_persona");
             ROOT_IDENTITY = call("common/get_principal").trim();
             call("common/init_dfx_project");

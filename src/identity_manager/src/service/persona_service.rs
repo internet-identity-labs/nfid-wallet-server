@@ -1,7 +1,7 @@
 use crate::http::requests::{AccountResponse, PersonaRequest, PersonaResponse};
 use crate::mapper::account_mapper::account_to_account_response;
 use crate::mapper::persona_mapper::{persona_request_to_persona, persona_to_persona_response};
-use crate::repository::repo::{Persona, PersonaRepo, PrincipalIndex};
+use crate::repository::repo::{Persona, PersonaRepo};
 use crate::requests::HTTPPersonaUpdateRequest;
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
 
@@ -19,7 +19,6 @@ pub fn create_persona(persona_r: PersonaRequest) -> HttpResponse<AccountResponse
 
             match PersonaRepo::store_personas(personas) {
                 Some(t) => {
-                    PrincipalIndex::store_principal(created_persona.principal_id_hash);
                     to_success_response(account_to_account_response(t.clone()))
                 }
 

@@ -1,5 +1,5 @@
-import lombok.SneakyThrows;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -27,31 +27,13 @@ public class PersonaITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("persona/exp_update_persona_2", call("persona/req_update_persona_2"));
     }
 
-    @SneakyThrows
-    @Test(priority = 4)
-    public void switchPersonaAndGetRootAccount() {
-        call("common/create_test_persona");
-        call("common/use_test_persona");
-        String testPersonaPrincipal = call("common/get_principal").trim();
-        call("common/use_default_persona");
-        String defaultPrincipal = call("common/get_principal").trim();
-        String personaRequest = getScript("persona/req_create_test_persona");
-        personaRequest = String.format(personaRequest, testPersonaPrincipal);
-        callDfxCommand(personaRequest);
-        call("common/use_test_persona");
-        String actual = call("account/req_get_account");
-        String expected = getScript("persona/exp_update_persona_test_id");
-        assertEquals(String.format(expected, defaultPrincipal), actual);
-    }
-
     @Test(priority = 5)
+    @Ignore //todo
     public void testPostUpgradePrincipalIndex() {
-        call("common/use_test_persona");
-        String testPersonaPrincipal = call("common/get_principal").trim();
         call("common/use_default_persona");
         String defaultPrincipal = call("common/get_principal").trim();
         callDfxCommand("cd src && touch test");
-        callDfxCommand("dfx deploy");
+        callDfxCommand("dfx canister install identity_manager --mode upgrade --argument '(null)'");
         call("common/use_test_persona");
         String actual = call("account/req_get_account");
         String expected = getScript("persona/exp_update_persona_test_id");

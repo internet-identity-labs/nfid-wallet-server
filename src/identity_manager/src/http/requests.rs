@@ -6,17 +6,12 @@ use crate::repository::repo::Device;
 pub struct HTTPAccountRequest {
     pub name: String,
     pub phone_number: String,
-    pub email: String,
     pub token: String,
-    pub is_seed_phrase_copied: bool,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct HTTPAccountUpdateRequest {
     pub name: Option<String>,
-    pub phone_number: Option<String>,
-    pub email: Option<String>,
-    pub is_seed_phrase_copied: Option<bool>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -38,10 +33,8 @@ pub struct AccountResponse {
     pub principal_id: String,
     pub name: String,
     pub phone_number: String,
-    pub email: String,
     pub devices: Vec<Device>,
     pub personas: Vec<PersonaResponse>,
-    pub is_seed_phrase_copied: bool,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
