@@ -71,23 +71,27 @@ type HTTPDeviceResponse = record {
     status_code: nat16;
 };
 
-type PersonaResponse = record {
-    anchor: text;
+type NFIDPersona = record {
     persona_id: text;
     application: text;
 };
 
-type PersonaRequest = record {
+type IIPersona = record {
     anchor: text;
-    persona_id: text;
     application: text;
 };
 
-type HTTPPersonaUpdateRequest = record {
-    anchor: opt text;
-    persona_id: opt text;
-    application: opt text;
-};
+type PersonaResponse = 
+    | NFIDPersona
+    | IIPersona;
+
+type PersonaRequest = 
+    | NFIDPersona
+    | IIPersona;
+
+type HTTPPersonaUpdateRequest = 
+    | NFIDPersona
+    | IIPersona;
 
 type HTTPPersonasResponse = record {
     data: opt vec PersonaResponse;
