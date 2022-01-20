@@ -73,12 +73,12 @@ type HTTPDeviceResponse = record {
 
 type NFIDPersona = record {
     persona_id: text;
-    application: text;
+    domain: text;
 };
 
 type IIPersona = record {
     anchor: text;
-    application: text;
+    domain: text;
 };
 
 type PersonaResponse = 
