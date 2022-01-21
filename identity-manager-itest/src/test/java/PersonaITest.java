@@ -1,5 +1,4 @@
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -13,31 +12,26 @@ public class PersonaITest extends BaseIdentityManagerITest {
     }
 
     @Test(priority = 1)
-    public void createPersonaExpectCorrectResponse() {
-        validateWithFormatIdentity("persona/exp_create_persona", call("persona/req_create_persona"));
+    public void createNfidPersonaExpectCorrectResponse() {
+        validateWithFormatIdentity("persona/exp_nfid_persona", call("persona/req_create_nfid_persona"));
     }
 
     @Test(priority = 2)
-    public void updatePersonasNameExpectCorrectResponse() {
-        validateWithFormatIdentity("persona/exp_update_persona", call("persona/req_update_persona"));
+    public void createIIPersonaExpectCorrectResponse() {
+        validateWithFormatIdentity("persona/exp_ii_persona", call("persona/req_create_ii_persona"));
     }
 
     @Test(priority = 3)
     public void addOneMoreExpectList() {
-        validateWithFormatIdentity("persona/exp_update_persona_2", call("persona/req_update_persona_2"));
+        validateWithFormatIdentity("persona/exp_nfid_persona_2", call("persona/req_create_nfid2_persona"));
     }
 
-    @Test(priority = 5)
-    @Ignore //todo
+    @Test(priority = 4)
     public void testPostUpgradePrincipalIndex() {
-        call("common/use_default_persona");
-        String defaultPrincipal = call("common/get_principal").trim();
         callDfxCommand("cd src && touch test");
-        callDfxCommand("dfx canister install identity_manager --mode upgrade --argument '(null)'");
-        call("common/use_test_persona");
-        String actual = call("account/req_get_account");
-        String expected = getScript("persona/exp_update_persona_test_id");
-        assertEquals(String.format(expected, defaultPrincipal), actual);
+        callDfxCommand("dfx build");
+        callDfxCommand("dfx canister install --all --mode upgrade");
+        validateWithFormatIdentity("persona/exp_list_personas", call("persona/req_read_personas"));
         callDfxCommand("cd src && rm test");
     }
 

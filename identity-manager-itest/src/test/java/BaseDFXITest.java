@@ -12,7 +12,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 public class BaseDFXITest {
     private final static String PATH = "..";
-    private final static int DEFAULT_TRIES = 20;
 
     static String ROOT_IDENTITY = "";
 

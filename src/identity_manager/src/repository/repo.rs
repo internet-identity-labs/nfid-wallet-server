@@ -19,10 +19,8 @@ pub struct Device {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Persona {
     pub anchor: Option<String>,
-    pub principal_id_hash: u64,
-    pub principal_id: String,
-    pub application_user_name: Option<String>, //todo temp
-    pub application: Option<String>, //todo temp
+    pub domain: String,
+    pub persona_id: Option<String>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -39,8 +37,6 @@ type PhoneNumbers = HashSet<blake3::Hash>;
 type AdminHash = Option<blake3::Hash>;
 
 pub struct AccountRepo {}
-
-pub struct PrincipalIndex {}
 
 pub struct DeviceRepo {}
 
@@ -82,14 +78,6 @@ impl PersonaRepo {
     pub fn get_personas() -> Option<Vec<Persona>> {
         AccountRepo::get_account()
             .map(|x| x.personas.clone()) //todo &
-    }
-
-    pub fn get_persona(persona_id: String) -> Option<Persona> {
-        AccountRepo::get_account()
-            .map(|x| x.personas.clone())
-            .unwrap()
-            .into_iter()
-            .find(|x| x.principal_id.eq(&persona_id))
     }
 
     pub fn store_personas(personas: Vec<Persona>) -> Option<Account> {

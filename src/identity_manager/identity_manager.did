@@ -24,7 +24,7 @@ type AccountResponse = record {
     name: text;
     phone_number: text;
     devices: vec Device;
-    personas: vec PersonaResponse;
+    personas: vec PersonaVariant;
 };
 
 type HTTPAccountResponse = record {
@@ -57,30 +57,23 @@ type HTTPDeviceResponse = record {
     status_code: nat16;
 };
 
-type PersonaResponse = record {
-    anchor: opt text;
-    principal_id: text;
-    application_user_name: opt text;
-    application: opt text;
+type PersonaVariant = variant {
+  nfid_persona: PersonaNFIDResponse;
+  ii_persona: PersonaIIResponse
 };
 
-type PersonaRequest = record {
-    anchor: opt text;
-    principal_id: text;
-    principal_id_origin: text;
-    application_user_name: opt text;
-    application: opt text;
+type PersonaNFIDResponse = record {
+    persona_id: text;
+    domain: text;
 };
 
-type HTTPPersonaUpdateRequest = record {
-    application_user_name: opt text;
-    application: opt text;
-    anchor: opt text;
-    principal_id: text;
+type PersonaIIResponse = record {
+    anchor: text;
+    domain: text;
 };
 
 type HTTPPersonasResponse = record {
-    data: opt vec PersonaResponse;
+    data: opt vec PersonaVariant;
     error: opt Error;
     status_code: nat16;
 };
@@ -96,8 +89,7 @@ service : () -> {
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
 
-  create_persona: (PersonaRequest) -> (HTTPAccountResponse);
-  update_persona: (HTTPPersonaUpdateRequest) -> (HTTPAccountResponse);
+  create_persona: (PersonaVariant) -> (HTTPAccountResponse);
   read_personas: () -> (HTTPPersonasResponse);
 
   create_device: (Device) -> (BoolHttpResponse);
