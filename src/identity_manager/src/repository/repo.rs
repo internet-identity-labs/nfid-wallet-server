@@ -27,18 +27,14 @@ pub struct Persona {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Account {
-    pub principal_id_hash: u64,
     pub principal_id: String,
     pub name: String,
     pub phone_number: String,
-    pub email: String,
     pub devices: Vec<Device>,
     pub personas: Vec<Persona>,
-    pub is_seed_phrase_copied: bool,
 }
 
-type Principals = BTreeMap<u64, u64>;
-type Accounts = BTreeMap<u64, Account>;
+type Accounts = BTreeMap<String, Account>;
 type PhoneNumbers = HashSet<blake3::Hash>;
 type AdminHash = Option<blake3::Hash>;
 
@@ -57,28 +53,14 @@ pub struct AdminHashRepo {}
 impl AccountRepo {
     pub fn store_account(account: Account) -> Option<Account> {
         let accounts = storage::get_mut::<Accounts>();
-        accounts.insert(account.principal_id_hash, account.clone()); //todo try_insert
+        accounts.insert( account.principal_id.clone(), account.clone()); //todo try_insert
         Option::Some(account)
     }
 
     pub fn get_account() -> Option<&'static Account> {
-        let princ = calculate_hash(&ic_cdk::api::caller().to_text());
+        let princ = &ic_cdk::api::caller().to_text();
         let accounts = storage::get_mut::<Accounts>();
-        accounts.get(&get_principal(princ))
-    }
-}
-
-impl PrincipalIndex {
-    pub fn get_principal(persona_id: u64) -> Option<&'static u64> {
-        let principals = storage::get_mut::<Principals>();
-        principals.get(&persona_id)
-    }
-
-    pub fn store_principal(persona_id: u64) {
-        let princ = calculate_hash(&ic_cdk::api::caller().to_text());
-        let root_id = get_principal(princ);
-        let principals = storage::get_mut::<Principals>();
-        principals.insert(persona_id, root_id);
+        accounts.get(princ)
     }
 }
 
@@ -156,11 +138,8 @@ pub fn post_upgrade() {
     let (old_accs, admin): (Vec<Account>, String) = storage::stable_restore().unwrap();
     let mut phone_numbers = HashSet::default();
     for u in old_accs {
-        storage::get_mut::<Accounts>().insert(u.clone().principal_id_hash, u.clone());
+        storage::get_mut::<Accounts>().insert(u.clone().principal_id, u.clone());
         phone_numbers.insert(blake3::hash(u.clone().phone_number.as_bytes()));
-        for persona in u.personas.clone() {
-            storage::get_mut::<Principals>().insert(persona.principal_id_hash.clone(), u.clone().principal_id_hash);
-        }
     }
     storage::get_mut::<AdminHash>().replace(blake3::Hash::from_str(&admin).unwrap());
     PhoneNumberRepo::add_all(phone_numbers);
@@ -170,15 +149,4 @@ pub fn calculate_hash<T: Hash + ?Sized>(t: &T) -> u64 {
     let mut s = DefaultHasher::new();
     t.hash(&mut s);
     s.finish()
-}
-
-pub fn get_principal(persona_id: u64) -> u64 {
-    *match PrincipalIndex::get_principal(persona_id) {
-        Some(principal_id) => {
-            principal_id
-        }
-        None => {
-            &persona_id
-        }
-    }
 }

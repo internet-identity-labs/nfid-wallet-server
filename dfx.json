@@ -1,7 +1,7 @@
 {
   "canisters": {
     "identity_manager": {
-      "build": "src/identity_manager/build.sh",
+      "build": "cargo build --target wasm32-unknown-unknown --package identity_manager --release",
       "candid": "src/identity_manager/identity_manager.did",
       "wasm": "target/wasm32-unknown-unknown/release/identity_manager.wasm",
       "type": "custom"

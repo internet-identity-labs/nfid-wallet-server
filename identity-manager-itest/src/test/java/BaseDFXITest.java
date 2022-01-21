@@ -27,7 +27,7 @@ public class BaseDFXITest {
                 this.getClass().getResourceAsStream(pathToExpected),
                 StandardCharsets.UTF_8
         );
-        assertEquals(String.format(expected, ROOT_IDENTITY), actual);
+        assertEquals(String.format(expected, ROOT_IDENTITY).trim(), actual.trim());
     }
 
     @SneakyThrows
