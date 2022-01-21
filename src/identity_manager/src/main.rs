@@ -1,23 +1,23 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::time::{Duration};
+use std::time::Duration;
+
 use blake3::Hash;
-use structure::ttlhashmap::{TtlHashMap};
+use ic_cdk::trap;
 use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk::{trap};
 use ic_cdk_macros::*;
 
-use repository::repo::{Device};
+use repository::repo::Device;
 use repository::repo;
-use service::{token_service, account_service, device_service, persona_service};
+use service::{account_service, device_service, persona_service, token_service};
+use structure::ttlhashmap::TtlHashMap;
 
 use crate::http::requests;
-use crate::http::requests::{AccountResponse, PersonaResponse, PersonaRequest};
+use crate::http::requests::{AccountResponse, PersonaVariant};
 use crate::http::response_mapper;
-use crate::repo::{AdminHashRepo};
+use crate::repo::AdminHashRepo;
 use crate::requests::{Configuration, HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
 use crate::requests::HTTPAccountUpdateRequest;
-use crate::requests::HTTPPersonaUpdateRequest;
 use crate::response_mapper::{HttpResponse, unauthorized};
 
 mod service;
@@ -88,17 +88,12 @@ async fn create_device(device: Device) -> HttpResponse<bool> {
 }
 
 #[update]
-async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
+async fn create_persona(persona: PersonaVariant) -> HttpResponse<AccountResponse> {
     persona_service::create_persona(persona)
 }
 
 #[update]
-async fn update_persona(request: HTTPPersonaUpdateRequest) -> HttpResponse<AccountResponse> { //TODO needs to be refactored
-    persona_service::update_persona(request)
-}
-
-#[update]
-async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
+async fn read_personas() -> HttpResponse<Vec<PersonaVariant>> {
     persona_service::read_personas()
 }
 
