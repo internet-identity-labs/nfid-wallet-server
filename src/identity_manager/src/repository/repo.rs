@@ -5,7 +5,9 @@ use std::iter::FromIterator;
 use std::str::FromStr;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
+use ic_cdk::export::Principal;
 use ic_cdk::storage;
+use crate::Configuration;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Device {
@@ -34,7 +36,6 @@ pub struct Account {
 
 type Accounts = BTreeMap<String, Account>;
 type PhoneNumbers = HashSet<blake3::Hash>;
-type AdminHash = Option<blake3::Hash>;
 
 pub struct AccountRepo {}
 
@@ -44,7 +45,9 @@ pub struct PersonaRepo {}
 
 pub struct PhoneNumberRepo {}
 
-pub struct AdminHashRepo {}
+pub struct AdminRepo {}
+
+pub struct ConfigurationRepo {}
 
 impl AccountRepo {
     pub fn store_account(account: Account) -> Option<Account> {
@@ -88,13 +91,13 @@ impl PersonaRepo {
     }
 }
 
-impl AdminHashRepo {
-    pub fn get() -> blake3::Hash {
-        storage::get_mut::<AdminHash>().unwrap()
+impl AdminRepo {
+    pub fn get() -> Principal {
+        storage::get_mut::<Option<Principal>>().unwrap()
     }
 
-    pub fn save(admin_hash: blake3::Hash) -> () {
-        storage::get_mut::<AdminHash>().replace(admin_hash);
+    pub fn save(principal: Principal) -> () {
+        storage::get_mut::<Option<Principal>>().replace(principal);
     }
 }
 
@@ -112,24 +115,34 @@ impl PhoneNumberRepo {
     }
 }
 
+impl ConfigurationRepo {
+    pub fn get() -> Configuration {
+        storage::get::<Option<Configuration>>().unwrap()
+    }
+
+    pub fn save(configuration: Configuration) -> () {
+        storage::get_mut::<Option<Configuration>>().replace(configuration);
+    }
+}
+
 pub fn pre_upgrade() {
     let mut accounts = Vec::new();
     for p in storage::get_mut::<Accounts>().iter() {
         accounts.push(p.1.clone());
     }
 
-    let admin = storage::get_mut::<AdminHash>().unwrap().to_string();
+    let admin = storage::get_mut::<Option<Principal>>().unwrap();
     storage::stable_save((accounts, admin));
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin): (Vec<Account>, String) = storage::stable_restore().unwrap();
+    let (old_accs, admin): (Vec<Account>, Principal) = storage::stable_restore().unwrap();
     let mut phone_numbers = HashSet::default();
     for u in old_accs {
         storage::get_mut::<Accounts>().insert(u.clone().principal_id, u.clone());
-        phone_numbers.insert(blake3::hash(u.clone().phone_number.as_bytes()));
+        phone_numbers.insert(blake3::keyed_hash(&ConfigurationRepo::get().key, u.clone().phone_number.as_bytes()));
     }
-    storage::get_mut::<AdminHash>().replace(blake3::Hash::from_str(&admin).unwrap());
+    storage::get_mut::<Option<Principal>>().replace(admin);
     PhoneNumberRepo::add_all(phone_numbers);
 }
 

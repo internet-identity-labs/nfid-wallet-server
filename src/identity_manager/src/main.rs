@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use blake3::Hash;
+use ic_cdk::api::caller;
 use ic_cdk::trap;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk_macros::*;
@@ -15,7 +16,7 @@ use structure::ttlhashmap::TtlHashMap;
 use crate::http::requests;
 use crate::http::requests::{AccountResponse, PersonaVariant};
 use crate::http::response_mapper;
-use crate::repo::AdminHashRepo;
+use crate::repo::{AdminRepo, ConfigurationRepo};
 use crate::requests::{Configuration, HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
 use crate::requests::HTTPAccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, unauthorized};
@@ -30,21 +31,16 @@ const DEFAULT_TOKEN_TTL: Duration = Duration::from_secs(30);
 
 #[init]
 async fn init() -> () {
-    let admin = blake3::hash(&ic_cdk::api::caller().to_text().as_bytes());
-    AdminHashRepo::save(admin);
+    AdminRepo::save(caller());
 }
 
 #[update]
 async fn configure(configuration: Configuration) -> () {
-    let user_hash = blake3::hash(&ic_cdk::api::caller().to_text().as_bytes());
-
-    if !AdminHashRepo::get().eq(&user_hash) {
+    if !AdminRepo::get().eq(&caller()) {
         trap("Unauthorized")
     }
 
-    CONFIGURATION.with(|config| {
-        config.replace(Some(configuration));
-    });
+    ConfigurationRepo::save(configuration);
 
     TOKEN_STORAGE.with(|token_storage| {
         let ttl = Duration::from_secs(configuration.token_ttl.clone());
@@ -54,7 +50,6 @@ async fn configure(configuration: Configuration) -> () {
 
 thread_local! {
     static TOKEN_STORAGE: RefCell<TtlHashMap<Hash, Hash>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
-    static CONFIGURATION: RefCell<Option<Configuration>> = RefCell::new(None);
 }
 
 #[update]

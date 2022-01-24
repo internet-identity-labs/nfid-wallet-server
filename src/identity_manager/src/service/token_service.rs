@@ -1,19 +1,24 @@
 use blake3::Hash;
-use crate::TOKEN_STORAGE;
+use ic_cdk::api::caller;
+use crate::{ConfigurationRepo, TOKEN_STORAGE};
 use crate::HTTPVerifyPhoneNumberRequest;
 use crate::HttpResponse;
-use crate::CONFIGURATION;
 use crate::unauthorized;
 
 pub fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
-    let principal = &ic_cdk::api::caller().to_text();
-
-    if !is_lambda_authenticated(principal) {
+    if !ConfigurationRepo::get().lambda.eq(&caller()) {
         return unauthorized();
     }
 
-    let phone_number_hash = blake3::hash(request.phone_number.as_bytes());
-    let token_hash = blake3::hash(request.token.as_bytes());
+    let phone_number_hash = blake3::keyed_hash(
+        &ConfigurationRepo::get().key,
+        request.phone_number.as_bytes()
+    );
+
+    let token_hash = blake3::keyed_hash(
+        &ConfigurationRepo::get().key,
+        request.token.as_bytes()
+    );
 
     TOKEN_STORAGE.with(|storage| {
         storage.borrow_mut().insert(phone_number_hash, token_hash);
@@ -32,17 +37,6 @@ pub fn validate_token<'a>(phone_number_hash: &'a Hash, token_hash: &'a Hash) -> 
             }
             None => Err("Phone number not found")
         };
-    })
-}
-
-fn is_lambda_authenticated(principal: &String) -> bool {
-    CONFIGURATION.with(|option| {
-        option.borrow()
-            .clone()
-            .map(|x| x.lambda)
-            .map(|x| x.to_text())
-            .filter(|x| principal.eq(x))
-            .is_some()
     })
 }
 
