@@ -29,4 +29,4 @@ jobs:
         run: |
           dfx identity use gh_mp_admin
           dfx deploy --network ic --no-wallet
-          dfx canister --network ic call identity_manager init '(record {"lambda" = principal "${{secrets.LAMBDA_PRINCIPAL}}"; "token_ttl" = ${{secrets.TOKEN_TTL}} })'
+          dfx canister --network ic call identity_manager init '(record {key = "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}} })'
