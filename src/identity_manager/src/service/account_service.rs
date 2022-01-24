@@ -1,5 +1,5 @@
 use crate::http::requests::AccountResponse;
-use crate::{HttpResponse, token_service};
+use crate::{ConfigurationRepo, HttpResponse, token_service};
 use crate::mapper::account_mapper::account_to_account_response;
 use crate::repo::PhoneNumberRepo;
 use crate::repository::repo::{Account, AccountRepo, calculate_hash, Device, Persona};
@@ -19,8 +19,14 @@ pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Accou
     if princ.len() < 10 {
         return to_error_response("User is anonymous");
     }
-    let phone_number_hash = blake3::hash(account_request.phone_number.as_bytes());
-    let token_hash = blake3::hash(account_request.token.as_bytes());
+    let phone_number_hash = blake3::keyed_hash(
+        &ConfigurationRepo::get().key,
+        account_request.phone_number.as_bytes()
+    );
+    let token_hash = blake3::keyed_hash(
+        &ConfigurationRepo::get().key,
+        account_request.token.as_bytes()
+    );
 
     if PhoneNumberRepo::is_exist(&phone_number_hash) {
         return to_error_response("Phone number already exists")

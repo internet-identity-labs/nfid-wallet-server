@@ -54,4 +54,5 @@ pub struct PersonaNFIDResponse {
 pub struct Configuration {
     pub lambda: Principal,
     pub token_ttl: u64,
+    pub key: [u8; 32]
 }

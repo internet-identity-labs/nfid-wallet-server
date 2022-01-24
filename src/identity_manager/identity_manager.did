@@ -5,6 +5,7 @@ type Error = text;
 type Configuration = record {
     lambda: principal;
     token_ttl: nat64;
+    key: blob;
 };
 
 type BoolHttpResponse = record {
