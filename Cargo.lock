@@ -446,6 +446,8 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-macros",
  "ic-types 0.1.5",
+ "lazy_static",
+ "regex",
  "serde",
 ]
 

@@ -26,6 +26,8 @@ mod http;
 mod repository;
 mod mapper;
 mod structure;
+mod util;
+mod tests;
 
 const DEFAULT_TOKEN_TTL: Duration = Duration::from_secs(30);
 

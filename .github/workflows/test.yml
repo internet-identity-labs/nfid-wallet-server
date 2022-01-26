@@ -24,6 +24,9 @@ jobs:
       - name: DFX SETUP  | Provision Linux
         run: bash .github/workflows/dfx-provision-linux.sh
 
+      - name: BE Unit Test
+        run: cargo test
+
       - name: BE ITest
         run: |
           cd identity-manager-itest

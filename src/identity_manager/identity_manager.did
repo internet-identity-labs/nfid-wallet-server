@@ -69,7 +69,7 @@ type PersonaNFIDResponse = record {
 };
 
 type PersonaIIResponse = record {
-    anchor: text;
+    anchor: nat64;
     domain: text;
 };
 

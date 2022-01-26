@@ -26,5 +26,10 @@ public class DeviceITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("device/exp_read_devices_2", call("device/req_read_devices"));
     }
 
+    @Test(priority = 4)
+    public void createExistentDeviceExpectErrorResponse() {
+        validateWithFormatIdentity("device/exp_create_device_exists", call("device/req_create_device"));
+    }
+
 
 }
