@@ -3,6 +3,12 @@ import org.testng.annotations.Test;
 
 public class AccountITest extends BaseIdentityManagerITest {
 
+    @Test()
+    public void createAccountWithInvalidNameExpectErrorResponse() {
+        String actual = call("account/req_create_invalid_name_account");
+        validateWithFormatIdentity("account/exp_account_invalid_name", actual);
+    }
+
     @Test(priority = 1)
     public void createAccountExpectCorrectResponse() {
         String actual = call("account/req_create_account");

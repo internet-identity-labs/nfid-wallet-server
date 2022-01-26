@@ -1,0 +1,7 @@
+(
+  record {
+    data = null;
+    error = opt "Name must only contain letters and numbers (5-15 characters)";
+    status_code = 404 : nat16;
+  },
+)

@@ -6,6 +6,7 @@ use crate::repository::repo::{Account, AccountRepo, calculate_hash, Device, Pers
 use crate::requests::{HTTPAccountRequest, HTTPAccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
+use crate::util::validation_util::validate_name;
 
 pub fn get_account() -> HttpResponse<AccountResponse> {
     match AccountRepo::get_account() {
@@ -21,21 +22,25 @@ pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Accou
     }
     let phone_number_hash = blake3::keyed_hash(
         &ConfigurationRepo::get().key,
-        account_request.phone_number.as_bytes()
+        account_request.phone_number.as_bytes(),
     );
     let token_hash = blake3::keyed_hash(
         &ConfigurationRepo::get().key,
-        account_request.token.as_bytes()
+        account_request.token.as_bytes(),
     );
 
     if PhoneNumberRepo::is_exist(&phone_number_hash) {
-        return to_error_response("Phone number already exists")
+        return to_error_response("Phone number already exists");
     }
 
     match token_service::validate_token(&phone_number_hash, &token_hash) {
         Ok(_) => (),
         Err(message) => return to_error_response(message)
     };
+
+    if !validate_name(account_request.name.clone().as_str()){
+        return to_error_response("Name must only contain letters and numbers (5-15 characters)");
+    }
 
     let devices: Vec<Device> = Vec::new();
     let personas: Vec<Persona> = Vec::new();

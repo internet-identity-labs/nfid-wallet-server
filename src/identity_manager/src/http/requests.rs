@@ -40,7 +40,7 @@ pub enum PersonaVariant {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct PersonaIIResponse {
-    pub anchor: String,
+    pub anchor: u64,
     pub domain: String,
 }
 

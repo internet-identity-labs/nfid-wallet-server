@@ -27,6 +27,11 @@ public class PersonaITest extends BaseIdentityManagerITest {
     }
 
     @Test(priority = 4)
+    public void addInvalidIIOneMoreExpectList() {
+        validateWithFormatIdentity("persona/exp_invalid_persona", call("persona/req_create_invalid_ii_persona"));
+    }
+
+    @Test(priority = 5)
     public void testPostUpgradePrincipalIndex() {
         callDfxCommand("cd src && touch test");
         callDfxCommand("dfx build");

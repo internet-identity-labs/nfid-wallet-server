@@ -9,7 +9,7 @@ use ic_cdk::export::Principal;
 use ic_cdk::storage;
 use crate::Configuration;
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
 pub struct Device {
     pub pub_key_hash: String,
     pub last_used: String,
@@ -20,7 +20,7 @@ pub struct Device {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Persona {
-    pub anchor: Option<String>,
+    pub anchor: Option<u64>,
     pub domain: String,
     pub persona_id: Option<String>,
 }

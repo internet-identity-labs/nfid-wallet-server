@@ -10,7 +10,10 @@
           }
         };
         variant {
-          ii_persona = record { domain = "TEST_DOMAIN"; anchor = "12345" }
+          ii_persona = record {
+            domain = "TEST_DOMAIN";
+            anchor = 12_345 : nat64;
+          }
         };
       };
       principal_id = "%s";
