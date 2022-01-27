@@ -7,7 +7,7 @@ fn validate_name_test() {
     assert!(validate_name("John Doe"));
     assert!(validate_name("John_Doe"));
     assert!(validate_name("123John_Doe123"));
-    assert!(!validate_name("12345678910111213"));
+    assert!(!validate_name("1234567891011121312345678910111213"));
     assert!(!validate_name("Jo"));
     assert!(!validate_name("John *"));
 }

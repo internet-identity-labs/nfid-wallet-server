@@ -4,7 +4,7 @@ use crate::PersonaVariant;
 
 pub fn validate_name(name: &str) -> bool {
     lazy_static! {
-    static ref RE: Regex  = Regex::new(r"^[0-9a-zA-Z][0-9a-zA-Z _]{5,15}$").unwrap();
+    static ref RE: Regex  = Regex::new(r"^[0-9a-zA-Z][0-9a-zA-Z _]{2,30}$").unwrap();
         }
     RE.is_match(name)
 }

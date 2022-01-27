@@ -1,6 +1,6 @@
 use crate::http::requests::AccountResponse;
 use crate::{ConfigurationRepo, HttpResponse, token_service};
-use crate::mapper::account_mapper::account_to_account_response;
+use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::repo::PhoneNumberRepo;
 use crate::repository::repo::{Account, AccountRepo, calculate_hash, Device, Persona};
 use crate::requests::{HTTPAccountRequest, HTTPAccountUpdateRequest};
@@ -38,19 +38,11 @@ pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Accou
         Err(message) => return to_error_response(message)
     };
 
-    if !validate_name(account_request.name.clone().as_str()){
+    if !validate_name(account_request.name.clone().as_str()) {
         return to_error_response("Name must only contain letters and numbers (5-15 characters)");
     }
 
-    let devices: Vec<Device> = Vec::new();
-    let personas: Vec<Persona> = Vec::new();
-    let acc = Account {
-        principal_id: princ.clone(),
-        name: account_request.name.clone(),
-        phone_number: account_request.phone_number.clone(),
-        devices,
-        personas,
-    };
+    let acc = account_request_to_account(account_request);
     AccountRepo::store_account(acc.clone());
     PhoneNumberRepo::add(phone_number_hash);
     to_success_response(account_to_account_response(acc))

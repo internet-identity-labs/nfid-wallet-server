@@ -8,6 +8,7 @@ pub struct HTTPAccountRequest {
     pub name: String,
     pub phone_number: String,
     pub token: String,
+    pub anchor: u64,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -28,6 +29,7 @@ pub struct AccountResponse {
     pub phone_number: String,
     pub devices: Vec<Device>,
     pub personas: Vec<PersonaVariant>,
+    pub anchor: u64,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
