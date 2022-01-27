@@ -2,6 +2,7 @@
   record {
     data = opt record {
       name = "TEST_USER_UPDATED";
+      anchor = 12_345 : nat64;
       personas = vec {};
       principal_id = "%s";
       phone_number = "123456";

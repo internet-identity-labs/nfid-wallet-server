@@ -27,6 +27,7 @@ pub struct Persona {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Account {
+    pub anchor: u64,
     pub principal_id: String,
     pub name: String,
     pub phone_number: String,
