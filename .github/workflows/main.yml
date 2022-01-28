@@ -41,5 +41,5 @@ jobs:
             ((i=i+1));
             printf 'Try #%s with result: im-%s and ps-%s\n' "$i" "$im" "$ps";
             [[ 20 -gt $i ]] || exit 255;
-            ([[ "()" != $im ]] || [[ "()" != $ps ]]) || break;
+            [[ "()" != $im ]] || [[ "()" != $ps ]] || break;
           done
