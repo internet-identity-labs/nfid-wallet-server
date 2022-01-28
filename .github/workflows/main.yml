@@ -29,6 +29,7 @@ jobs:
         run: |
           dfx identity use gh_mp_admin
           i=0;
+          set +e;
           while :;
           do
             rm -rf .dfx;
@@ -39,3 +40,4 @@ jobs:
             printf 'Try #%s with result:%s\n' "$i" "$res";
             [[ 20 > $i && "()" != result ]] || break;
           done
+          set -e;
