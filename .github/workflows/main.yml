@@ -28,5 +28,14 @@ jobs:
       - name: IDENITY MANAGER | Deploy to production
         run: |
           dfx identity use gh_mp_admin
-          dfx deploy --network ic --no-wallet
-          dfx canister --network ic call identity_manager init '(record {key = "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}} })'
+          i=0;
+          while :;
+          do
+            rm -rf .dfx;
+            dfx deploy --network ic --no-wallet;
+            sleep 5;
+            result=$(dfx canister --network ic call identity_manager configure '(record {key = blob "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}} })');
+            ((i=i+1));
+            printf 'Try #%s with result:%s\n' "$i" "$res";
+            [[ 20 > $i && "()" != result ]] || break;
+          done
