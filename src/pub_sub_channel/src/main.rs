@@ -24,6 +24,7 @@ struct MessageHttpResponse {
 const DEFAULT_TOKEN_TTL: Duration = Duration::from_secs(90);
 
 thread_local! {
+    //TODO remove RefCell
     static MESSAGE_STORAGE: RefCell<TtlHashMap<Topic, Vec<Message>>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
 }
 
@@ -42,23 +43,23 @@ async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpR
         match st.get(&topic) {
             Some(mut o) => {
                 let len = o.len() + messages.clone().len();
-                if len > 10 {
+                if len > 30 {
                     return MessageHttpResponse {
                         status_code: 400,
                         body: None,
-                        error: Some(String::from("More than 10 messages in channel")),
+                        error: Some(String::from("More than 30 messages in channel")),
                     };
                 }
                 let k: Vec<Message> = messages
                     .clone()
                     .into_iter()
-                    .filter(|l| l.as_str().len() > 1000)
+                    .filter(|l| l.as_str().len() > 3500)
                     .collect();
                 if (k.len() > 0) {
                     return MessageHttpResponse {
                         status_code: 400,
                         body: None,
-                        error: Some(String::from("One of messages is more than 1000 chars")),
+                        error: Some(String::from("One of messages is more than 3500 chars")),
                     };
                 }
                 messages.append(&mut o.clone());
@@ -82,24 +83,32 @@ async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpR
 
 #[update]
 async fn get_messages(topic: Topic) -> MessageHttpResponse {
+    let mut rsp = MessageHttpResponse {
+        status_code: 0,
+        body: None,
+        error: None
+    };
     MESSAGE_STORAGE.with(|storage| {
-        return match storage.borrow_mut().get(&topic) {
+        let mut st = storage.borrow_mut();
+        match st.get(&topic) {
             Some(mut messages) => {
-                MessageHttpResponse {
+               rsp = MessageHttpResponse {
                     status_code: 200,
                     body: Some(messages.clone()),
                     error: None,
                 }
             }
             None => {
-                MessageHttpResponse {
+               rsp = MessageHttpResponse {
                     status_code: 404,
                     body: None,
                     error: Some(String::from("No such topic")),
                 }
             }
         };
-    })
+        st.insert(topic, Vec::new());
+    });
+    rsp
 }
 
 #[update]

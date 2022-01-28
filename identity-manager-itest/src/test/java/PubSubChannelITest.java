@@ -28,7 +28,9 @@ public class PubSubChannelITest extends BasePSChannelITest {
     }
 
     @Test(priority = 5)
-    public void postMoreThanNumberExpectError() {
+    public void postMoreThanNumberAndRemoveOnGetExpectError() {
+        call("channel/req_post_message");
+        call("channel/req_post_message");
         String actual = call("channel/req_post_message");
         validateWithFormatIdentity("channel/exp_over_messages", actual);
     }
@@ -37,6 +39,16 @@ public class PubSubChannelITest extends BasePSChannelITest {
     public void postMoreThanLengthExpectError() {
         String actual = call("channel/req_post_long_message");
         validateWithFormatIdentity("channel/exp_long_messages", actual);
+    }
+
+
+    @Test(priority = 7)
+    public void postMoreThanNumberExpectError1() {
+        call("channel/req_post_message");
+        call("channel/req_post_message");
+        call("channel/req_get_messages");
+        String actual = call("channel/req_post_message");
+        validateWithFormatIdentity("channel/exp_post_message", actual);
     }
 
     @Test(priority = 7)
