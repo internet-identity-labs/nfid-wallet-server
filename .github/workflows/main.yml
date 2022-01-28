@@ -29,15 +29,16 @@ jobs:
         run: |
           dfx identity use gh_mp_admin
           i=0;
-          set +e;
           while :;
           do
             rm -rf .dfx;
             dfx deploy --network ic --no-wallet;
             sleep 5;
+            set +e;
             result=$(dfx canister --network ic call identity_manager configure '(record {key = blob "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}} })');
+            set -e;
             ((i=i+1));
-            printf 'Try #%s with result:%s\n' "$i" "$res";
-            [[ 20 > $i && "()" != result ]] || break;
+            printf 'Try #%s with result:%s\n' "$i" "$result";
+            [[ 20 -gt $i ]] || exit 255;
+            [[ "()" != $result ]] || break;
           done
-          set -e;
