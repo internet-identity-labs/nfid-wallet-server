@@ -27,6 +27,9 @@ thread_local! {
     static MESSAGE_STORAGE: RefCell<TtlHashMap<Topic, Vec<Message>>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
 }
 
+#[query]
+async fn ping() -> () {}
+
 #[update]
 async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpResponse {
     let princ = &ic_cdk::api::caller().to_text();

@@ -35,10 +35,11 @@ jobs:
             dfx deploy --network ic --no-wallet;
             sleep 5;
             set +e;
-            result=$(dfx canister --network ic call identity_manager configure '(record {key = blob "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}} })');
+            im=$(dfx canister --network ic call identity_manager configure '(record {key = blob "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}} })');
+            ps=$(dfx canister --network ic call pub_sub_channel ping);
             set -e;
             ((i=i+1));
-            printf 'Try #%s with result:%s\n' "$i" "$result";
+            printf 'Try #%s with result: im-%s and ps-%s\n' "$i" "$im" "$ps";
             [[ 20 -gt $i ]] || exit 255;
-            [[ "()" != $result ]] || break;
+            ([[ "()" != $im ]] || [[ "()" != $ps ]]) || break;
           done
