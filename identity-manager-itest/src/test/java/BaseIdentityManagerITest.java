@@ -22,7 +22,7 @@ public class BaseIdentityManagerITest extends BaseDFXITest {
                 System.exit(1);
 
         } while (identity_manager.isEmpty());
-        call("token/req_post_token_default");
+        call("phone-number/req_post_token_default");
     }
 
 }

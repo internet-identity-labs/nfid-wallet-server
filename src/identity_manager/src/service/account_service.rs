@@ -1,5 +1,5 @@
 use crate::http::requests::AccountResponse;
-use crate::{ConfigurationRepo, HttpResponse, token_service};
+use crate::{ConfigurationRepo, HttpResponse, phone_number_service};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::repo::PhoneNumberRepo;
 use crate::repository::repo::{Account, AccountRepo, calculate_hash, Device, Persona};
@@ -33,7 +33,7 @@ pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Accou
         return to_error_response("Phone number already exists");
     }
 
-    match token_service::validate_token(&phone_number_hash, &token_hash) {
+    match phone_number_service::validate_token(&phone_number_hash, &token_hash) {
         Ok(_) => (),
         Err(message) => return to_error_response(message)
     };
