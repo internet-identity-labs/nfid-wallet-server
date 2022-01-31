@@ -9,6 +9,7 @@ type MessageHttpResponse = record {
 };
 
 service : () -> {
+  ping: () -> () query;
   post_messages: (Topic, vec Message) -> (MessageHttpResponse);
   get_messages: (Topic) -> (MessageHttpResponse);
   create_topic: (Topic) -> (MessageHttpResponse);
