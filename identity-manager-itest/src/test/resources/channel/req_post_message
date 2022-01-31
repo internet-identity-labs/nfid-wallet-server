@@ -1,1 +1,1 @@
-dfx canister call pub_sub_channel post_messages '("asd", vec {"asd";"dsa";"asda";"qwe";"qoqo";"ppp";"yui";"qweqwe";"pojmk";})'
+dfx canister call pub_sub_channel post_messages '("asd", vec {"asd";"dsa";"asda";"qwe";"qoqo";"ppp";"yui";"qweqwe";"asd";"dsa";"asda";"qwe";"qoqo";"ppp";"yui";"qweqwe";"pojmk";})'

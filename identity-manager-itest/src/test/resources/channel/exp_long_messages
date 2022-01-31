@@ -1,7 +1,7 @@
 (
   record {
     body = null;
-    error = opt "One of messages is more than 1000 chars";
+    error = opt "One of messages is more than 3500 chars";
     status_code = 400 : nat16;
   },
 )
