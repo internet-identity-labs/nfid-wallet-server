@@ -25,7 +25,7 @@ type AccountResponse = record {
     principal_id: text;
     name: text;
     phone_number: text;
-    devices: vec Device;
+    access_points: vec AccessPoint;
     personas: vec PersonaVariant;
 };
 
@@ -46,16 +46,17 @@ type HTTPAccountUpdateRequest = record {
     name: opt text;
 };
 
-type Device = record {
-    pub_key_hash: text;
+type AccessPoint = record {
+    pub_key: text;
     last_used: text;
     make: text;
     model: text;
     browser: text;
+    name: text;
 };
 
-type HTTPDeviceResponse = record {
-    data: opt vec Device;
+type HTTPAccessPointResponse = record {
+    data: opt vec AccessPoint;
     error: opt Error;
     status_code: nat16;
 };
@@ -95,8 +96,10 @@ service : () -> {
   create_persona: (PersonaVariant) -> (HTTPAccountResponse);
   read_personas: () -> (HTTPPersonasResponse);
 
-  create_device: (Device) -> (BoolHttpResponse);
-  read_devices: () -> (HTTPDeviceResponse);
+  create_access_point: (AccessPoint) -> (HTTPAccessPointResponse);
+  update_access_point: (AccessPoint) -> (HTTPAccessPointResponse);
+  remove_access_point: (AccessPoint) -> (HTTPAccessPointResponse);
+  read_access_points: () -> (HTTPAccessPointResponse);
 
   post_token: (HTTPVerifyPhoneNumberRequest) -> (BoolHttpResponse);
 }

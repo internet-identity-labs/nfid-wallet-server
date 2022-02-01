@@ -2,7 +2,7 @@ use crate::http::requests::AccountResponse;
 use crate::{ConfigurationRepo, HttpResponse, token_service};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::repo::PhoneNumberRepo;
-use crate::repository::repo::{AccountRepo};
+use crate::repository::repo::{Account, AccountRepo, AccessPoint, Persona};
 use crate::requests::{HTTPAccountRequest, HTTPAccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;

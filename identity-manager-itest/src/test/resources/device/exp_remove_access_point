@@ -2,16 +2,10 @@
   record {
     data = opt vec {
       record {
-        model = "IProboval";
-        pub_key_hash = "PUB_KEY_HASH";
-        make = "CHINA";
-        browser = "CHROME";
-        last_used = "123";
-      };
-      record {
         model = "IProboval_2";
-        pub_key_hash = "PUB_KEY_HASH_2";
         make = "CHINA_2";
+        name = "NAME";
+        pub_key = "PKNEWW";
         browser = "CHROME_2";
         last_used = "123_2";
       };

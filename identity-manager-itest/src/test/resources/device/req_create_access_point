@@ -1,0 +1,1 @@
+dfx canister call identity_manager create_access_point '( record {pub_key = "PUB_KEY_HASH"; last_used = "123"; make = "CHINA"; name = "NAME"; browser = "CHROME"; model = "IProboval";})'

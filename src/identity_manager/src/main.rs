@@ -6,9 +6,9 @@ use ic_cdk::api::caller;
 use ic_cdk::trap;
 use ic_cdk_macros::*;
 
-use repository::repo::Device;
+use repository::repo::AccessPoint;
 use repository::repo;
-use service::{account_service, device_service, persona_service, token_service};
+use service::{account_service, access_point_service, persona_service, token_service};
 use structure::ttlhashmap::TtlHashMap;
 
 use crate::http::requests;
@@ -73,13 +73,23 @@ async fn get_account() -> HttpResponse<AccountResponse> {
 }
 
 #[update]
-async fn read_devices() -> HttpResponse<Vec<Device>> {
-    device_service::read_devices()
+async fn read_access_points() -> HttpResponse<Vec<AccessPoint>> {
+    access_point_service::read_access_points()
 }
 
 #[update]
-async fn create_device(device: Device) -> HttpResponse<bool> {
-    device_service::create_device(device)
+async fn create_access_point(access_point: AccessPoint) -> HttpResponse<Vec<AccessPoint>> {
+    access_point_service::create_access_point(access_point)
+}
+
+#[update]
+async fn update_access_point(access_point: AccessPoint) -> HttpResponse<Vec<AccessPoint>> {
+    access_point_service::update_access_point(access_point)
+}
+
+#[update]
+async fn remove_access_point(access_point: AccessPoint) -> HttpResponse<Vec<AccessPoint>> {
+    access_point_service::remove_access_point(access_point)
 }
 
 #[update]

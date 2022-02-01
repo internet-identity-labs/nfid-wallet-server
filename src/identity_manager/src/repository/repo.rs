@@ -8,12 +8,13 @@ use ic_cdk::{storage};
 use crate::Configuration;
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
-pub struct Device {
-    pub pub_key_hash: String,
+pub struct AccessPoint {
+    pub pub_key: String,
     pub last_used: String,
     pub make: String,
     pub model: String,
     pub browser: String,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -29,7 +30,7 @@ pub struct Account {
     pub principal_id: String,
     pub name: String,
     pub phone_number: String,
-    pub devices: Vec<Device>,
+    pub access_points: Vec<AccessPoint>,
     pub personas: Vec<Persona>,
 }
 
@@ -38,7 +39,7 @@ type PhoneNumbers = HashSet<blake3::Hash>;
 
 pub struct AccountRepo {}
 
-pub struct DeviceRepo {}
+pub struct AccessPointRepo {}
 
 pub struct PersonaRepo {}
 
@@ -73,16 +74,16 @@ impl AccountRepo {
     }
 }
 
-impl DeviceRepo {
-    pub fn get_devices() -> Option<Vec<Device>> {
+impl AccessPointRepo {
+    pub fn get_access_points() -> Option<Vec<AccessPoint>> {
         AccountRepo::get_account()
-            .map(|x| x.devices.clone()) //todo &
+            .map(|x| x.access_points.clone()) //todo &
     }
 
-    pub fn store_devices(devices: Vec<Device>) -> Option<Account> {
+    pub fn store_access_points(access_points: Vec<AccessPoint>) -> Option<Account> {
         let mut acc = AccountRepo::get_account()
             .unwrap().clone();
-        acc.devices = devices;
+        acc.access_points = access_points;
         AccountRepo::store_account(acc)
     }
 }
