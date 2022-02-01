@@ -9,7 +9,6 @@ use crate::response_mapper::{to_error_response, to_success_response};
 use crate::unauthorized;
 
 pub fn validate_phone_number(phone_number: String) -> HttpResponse<bool> {
-    print(&caller().to_text());
     if !ConfigurationRepo::get().lambda.eq(&caller()) {
         return unauthorized();
     }
