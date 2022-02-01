@@ -1,5 +1,5 @@
 use crate::http::requests::{PersonaVariant};
-use crate::repository::repo::{calculate_hash, Persona};
+use crate::repository::repo::{Persona};
 use crate::requests::{PersonaIIResponse, PersonaNFIDResponse};
 
 pub fn persona_to_persona_response(persona: Persona) -> PersonaVariant {

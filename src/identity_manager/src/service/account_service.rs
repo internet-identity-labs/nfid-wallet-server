@@ -2,7 +2,7 @@ use crate::http::requests::AccountResponse;
 use crate::{ConfigurationRepo, HttpResponse, token_service};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::repo::PhoneNumberRepo;
-use crate::repository::repo::{Account, AccountRepo, calculate_hash, Device, Persona};
+use crate::repository::repo::{AccountRepo};
 use crate::requests::{HTTPAccountRequest, HTTPAccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
@@ -43,9 +43,14 @@ pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Accou
     }
 
     let acc = account_request_to_account(account_request);
-    AccountRepo::store_account(acc.clone());
-    PhoneNumberRepo::add(phone_number_hash);
-    to_success_response(account_to_account_response(acc))
+    match { AccountRepo::create_account(acc.clone()) } {
+        None => {
+            to_error_response("It's impossible to link this II anchor, please try another one.") }
+        Some(_) => {
+            PhoneNumberRepo::add(phone_number_hash);
+            to_success_response(account_to_account_response(acc))
+        }
+    }
 }
 
 pub fn update_account(account_request: HTTPAccountUpdateRequest) -> HttpResponse<AccountResponse> {

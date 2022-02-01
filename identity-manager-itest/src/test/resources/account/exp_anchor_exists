@@ -1,0 +1,7 @@
+(
+  record {
+    data = null;
+    error = opt "It's impossible to link this II anchor, please try another one.";
+    status_code = 404 : nat16;
+  },
+)

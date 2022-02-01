@@ -10,7 +10,7 @@ pub fn validate_name(name: &str) -> bool {
 }
 
 
-pub fn validate_frontend_length(persona_request: PersonaVariant) -> bool {
+pub fn validate_frontend_length(persona_request: &PersonaVariant) -> bool {
     const FRONTEND_HOSTNAME_LIMIT: usize = 255;
 
     match persona_request {
