@@ -1,12 +1,10 @@
 use std::collections::{BTreeMap, HashSet};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-use std::iter::FromIterator;
-use std::str::FromStr;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
-use ic_cdk::storage;
+use ic_cdk::{storage};
 use crate::Configuration;
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
@@ -50,11 +48,22 @@ pub struct AdminRepo {}
 
 pub struct ConfigurationRepo {}
 
+
 impl AccountRepo {
+    pub fn create_account(account: Account) -> Option<Account> {
+        let accounts = storage::get_mut::<Accounts>();
+        if is_anchor_exists(account.anchor) {
+            None
+        } else {
+            accounts.insert(account.principal_id.clone(), account.clone());
+            Some(account)
+        }
+    }
+
     pub fn store_account(account: Account) -> Option<Account> {
         let accounts = storage::get_mut::<Accounts>();
-        accounts.insert( account.principal_id.clone(), account.clone()); //todo try_insert
-        Option::Some(account)
+        accounts.insert(account.principal_id.clone(), account.clone()); //todo try_insert
+        Some(account)
     }
 
     pub fn get_account() -> Option<&'static Account> {
@@ -89,6 +98,14 @@ impl PersonaRepo {
             .unwrap().clone();
         acc.personas = personas;
         AccountRepo::store_account(acc)
+    }
+
+    pub fn store_persona(persona: Persona) -> Option<Account> {
+        let mut acc = AccountRepo::get_account();
+        if acc.is_none() { return None; }
+        let mut account = acc.unwrap().clone();
+        account.personas.push(persona);
+        AccountRepo::store_account(account)
     }
 }
 
@@ -147,8 +164,18 @@ pub fn post_upgrade() {
     PhoneNumberRepo::add_all(phone_numbers);
 }
 
-pub fn calculate_hash<T: Hash + ?Sized>(t: &T) -> u64 {
-    let mut s = DefaultHasher::new();
-    t.hash(&mut s);
-    s.finish()
+pub fn is_anchor_exists(anchor: u64) -> bool {
+    let accounts = storage::get_mut::<Accounts>();
+    accounts.into_iter()
+        .map(|l| {
+            let mut anchors: Vec<u64> = l.1.personas.iter()
+                .map(|k| k.anchor)
+                .filter(|l| l.is_some())
+                .map(|l| l.unwrap())
+                .collect();
+            anchors.push(l.1.anchor);
+            anchors
+        })
+        .flat_map(|x| x.into_iter())
+        .any(|x| x == anchor)
 }

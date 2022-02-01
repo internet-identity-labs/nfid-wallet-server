@@ -1,27 +1,25 @@
 use crate::http::requests::{AccountResponse, PersonaVariant};
 use crate::mapper::account_mapper::account_to_account_response;
 use crate::mapper::persona_mapper::{persona_request_to_persona, persona_to_persona_response};
-use crate::repository::repo::{Persona, PersonaRepo};
+use crate::repo::{is_anchor_exists, Persona};
+use crate::repository::repo::{PersonaRepo};
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
 use crate::util::validation_util::validate_frontend_length;
 
 pub fn create_persona(persona_r: PersonaVariant) -> HttpResponse<AccountResponse> {
-    if !validate_frontend_length(persona_r.clone()) {
+    if !validate_frontend_length(&persona_r) {
         return to_error_response("Invalid persona");
     }
-    match PersonaRepo::get_personas()
-    {
-        Some(mut personas) => {
-            let created_persona = persona_request_to_persona(persona_r.clone());
-            personas.push(created_persona.clone());
-            match PersonaRepo::store_personas(personas) {
-                Some(t) => {
-                    to_success_response(account_to_account_response(t.clone()))
-                }
-                None => to_error_response("Unable to store persona.")
-            }
+    let created_persona = persona_request_to_persona(persona_r);
+    if created_persona.anchor.is_some() && is_anchor_exists(created_persona.anchor.unwrap()) {
+        return to_error_response("It's impossible to link this II anchor, please try another one.")
+    }
+
+    match PersonaRepo::store_persona(created_persona) {
+        Some(t) => {
+            to_success_response(account_to_account_response(t))
         }
-        None => to_error_response("Unable to find Account.")
+        None => to_error_response("Unable to store persona.")
     }
 }
 
@@ -29,7 +27,7 @@ pub fn read_personas() -> HttpResponse<Vec<PersonaVariant>> {
     match PersonaRepo::get_personas() {
         Some(personas) => {
             let personas_r = personas.iter()
-                .map(|l| persona_to_persona_response(l.clone()))
+                .map(|l| persona_to_persona_response(l.to_owned()))
                 .collect();
             to_success_response(personas_r)
         }

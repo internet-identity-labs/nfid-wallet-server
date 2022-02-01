@@ -1,7 +1,6 @@
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 
 import java.io.BufferedReader;
 import java.io.IOException;

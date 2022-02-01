@@ -33,4 +33,11 @@ public class AccountITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("account/exp_phone_number_exists", actual);
     }
 
+    @Test(priority = 6)
+    public void createAccountSameAnchorExpectError() {
+        call("token/req_post_token_2");
+        String actual = call("account/req_create_exist_account");
+        validateWithFormatIdentity("account/exp_anchor_exists", actual);
+    }
+
 }

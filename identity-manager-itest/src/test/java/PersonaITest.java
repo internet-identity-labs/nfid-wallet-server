@@ -31,7 +31,17 @@ public class PersonaITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("persona/exp_invalid_persona", call("persona/req_create_invalid_ii_persona"));
     }
 
-    @Test(priority = 5)
+    @Test(priority = 6)
+    public void addInvalidIIAnchExpectError() {
+        validateWithFormatIdentity("persona/exp_invalid_anch", call("persona/req_create_ii_persona_anch_exists"));
+    }
+
+    @Test(priority = 7)
+    public void addInvalidIIAnchRootExpectError() {
+        validateWithFormatIdentity("persona/exp_invalid_anch", call("persona/req_create_ii_persona_anch_exists_root"));
+    }
+
+    @Test(priority = 8)
     public void testPostUpgradePrincipalIndex() {
         callDfxCommand("cd src && touch test");
         callDfxCommand("dfx build");

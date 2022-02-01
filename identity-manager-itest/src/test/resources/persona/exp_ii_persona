@@ -13,7 +13,7 @@
         variant {
           ii_persona = record {
             domain = "TEST_DOMAIN";
-            anchor = 12_345 : nat64;
+            anchor = 123_456 : nat64;
           }
         };
       };
