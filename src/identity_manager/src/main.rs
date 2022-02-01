@@ -8,7 +8,7 @@ use ic_cdk_macros::*;
 
 use repository::repo::Device;
 use repository::repo;
-use service::{account_service, device_service, persona_service, token_service};
+use service::{account_service, device_service, persona_service, phone_number_service};
 use structure::ttlhashmap::TtlHashMap;
 
 use crate::http::requests;
@@ -52,9 +52,14 @@ thread_local! {
     static TOKEN_STORAGE: RefCell<TtlHashMap<Hash, Hash>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
 }
 
+#[query]
+async fn validate_phone_number(phone_number: String) -> HttpResponse<bool> {
+    phone_number_service::validate_phone_number(phone_number)
+}
+
 #[update]
 async fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
-    token_service::post_token(request)
+    phone_number_service::post_token(request)
 }
 
 #[update]

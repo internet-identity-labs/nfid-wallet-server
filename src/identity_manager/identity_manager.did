@@ -99,4 +99,5 @@ service : () -> {
   read_devices: () -> (HTTPDeviceResponse);
 
   post_token: (HTTPVerifyPhoneNumberRequest) -> (BoolHttpResponse);
+  validate_phone_number: (PhoneNumber) -> (BoolHttpResponse) query;
 }
