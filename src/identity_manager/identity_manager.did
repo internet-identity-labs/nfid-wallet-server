@@ -102,4 +102,5 @@ service : () -> {
   read_access_points: () -> (HTTPAccessPointResponse);
 
   post_token: (HTTPVerifyPhoneNumberRequest) -> (BoolHttpResponse);
+  validate_phone_number: (PhoneNumber) -> (BoolHttpResponse) query;
 }

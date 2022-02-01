@@ -1,0 +1,1 @@
+dfx canister call identity_manager validate_phone_number '("123456")'
