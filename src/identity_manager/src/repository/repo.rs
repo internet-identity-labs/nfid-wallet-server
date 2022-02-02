@@ -4,8 +4,13 @@ use std::hash::{Hash, Hasher};
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
-use ic_cdk::{storage};
+use ic_cdk::storage;
+use magic_crypt::new_magic_crypt;
+
 use crate::Configuration;
+use crate::mapper::account_mapper::account_request_to_account;
+use crate::repository::encrypt::account_encrypt::encrypt;
+use crate::repository::encrypted_repo::{EncryptedAccount, EncryptedRepo};
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
 pub struct AccessPoint {
@@ -34,7 +39,8 @@ pub struct Account {
     pub personas: Vec<Persona>,
 }
 
-type Accounts = BTreeMap<String, Account>;
+pub type EncryptedAccounts = BTreeMap<String, EncryptedAccount>;
+
 type PhoneNumbers = HashSet<blake3::Hash>;
 
 pub struct AccountRepo {}
@@ -52,25 +58,15 @@ pub struct ConfigurationRepo {}
 
 impl AccountRepo {
     pub fn create_account(account: Account) -> Option<Account> {
-        let accounts = storage::get_mut::<Accounts>();
-        if is_anchor_exists(account.anchor) {
-            None
-        } else {
-            accounts.insert(account.principal_id.clone(), account.clone());
-            Some(account)
-        }
+        EncryptedRepo::create_account(account)
     }
 
     pub fn store_account(account: Account) -> Option<Account> {
-        let accounts = storage::get_mut::<Accounts>();
-        accounts.insert(account.principal_id.clone(), account.clone()); //todo try_insert
-        Some(account)
+        EncryptedRepo::store_account(account)
     }
 
-    pub fn get_account() -> Option<&'static Account> {
-        let princ = &ic_cdk::api::caller().to_text();
-        let accounts = storage::get_mut::<Accounts>();
-        accounts.get(princ)
+    pub fn get_account() -> Option<Account> {
+        EncryptedRepo::get_account()
     }
 }
 
@@ -144,39 +140,40 @@ impl ConfigurationRepo {
     }
 }
 
+pub fn is_anchor_exists(anch: u64) -> bool {
+    let anchor = encrypt(anch.to_string());
+    let accounts = storage::get_mut::<EncryptedAccounts>();
+    accounts.into_iter()
+        .map(|l| {
+            let mut c = l.1.clone();
+            let mut anchors: Vec<String> = l.1.personas.iter()
+                .map(|k| k.anchor.clone())
+                .filter(|l| l.is_some())
+                .map(|l| l.unwrap())
+                .collect();
+            anchors.push(c.anchor);
+            anchors
+        })
+        .flat_map(|x| x.into_iter())
+        .any(|x| x == anchor)
+}
+
 pub fn pre_upgrade() {
     let mut accounts = Vec::new();
-    for p in storage::get_mut::<Accounts>().iter() {
+    for p in storage::get_mut::<EncryptedAccounts>().iter() {
         accounts.push(p.1.clone());
     }
-
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
     storage::stable_save((accounts, admin));
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin): (Vec<Account>, Principal) = storage::stable_restore().unwrap();
+    let (old_accs, admin): (Vec<EncryptedAccount>, Principal) = storage::stable_restore().unwrap();
     let mut phone_numbers = HashSet::default();
     for u in old_accs {
-        storage::get_mut::<Accounts>().insert(u.clone().principal_id, u.clone());
+        storage::get_mut::<EncryptedAccounts>().insert(u.clone().principal_id, u.clone());
         phone_numbers.insert(blake3::keyed_hash(&ConfigurationRepo::get().key, u.clone().phone_number.as_bytes()));
     }
     storage::get_mut::<Option<Principal>>().replace(admin);
     PhoneNumberRepo::add_all(phone_numbers);
-}
-
-pub fn is_anchor_exists(anchor: u64) -> bool {
-    let accounts = storage::get_mut::<Accounts>();
-    accounts.into_iter()
-        .map(|l| {
-            let mut anchors: Vec<u64> = l.1.personas.iter()
-                .map(|k| k.anchor)
-                .filter(|l| l.is_some())
-                .map(|l| l.unwrap())
-                .collect();
-            anchors.push(l.1.anchor);
-            anchors
-        })
-        .flat_map(|x| x.into_iter())
-        .any(|x| x == anchor)
 }
