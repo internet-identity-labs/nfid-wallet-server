@@ -1,6 +1,4 @@
 use std::cell::RefCell;
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk_macros::*;
@@ -8,9 +6,8 @@ use ic_cdk_macros::*;
 type Topic = String;
 type Message = String;
 
-use structure::ttlhashmap::{AutoClean, TtlHashMap};
+use structure::ttlhashmap::{TtlHashMap};
 use std::time::{Duration};
-use ic_cdk::print;
 
 mod structure;
 
@@ -34,7 +31,7 @@ async fn ping() -> () {}
 #[update]
 async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpResponse {
     let princ = &ic_cdk::api::caller().to_text();
-    if (princ.len() < 10) {
+    if princ.len() < 10 {
         return MessageHttpResponse {
             status_code: 401,
             body: None,
@@ -44,7 +41,7 @@ async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpR
     MESSAGE_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
         match st.get(&topic) {
-            Some(mut o) => {
+            Some(o) => {
                 let len = o.len() + messages.clone().len();
                 if len > 30 {
                     return MessageHttpResponse {
@@ -58,7 +55,7 @@ async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpR
                     .into_iter()
                     .filter(|l| l.as_str().len() > 3500)
                     .collect();
-                if (k.len() > 0) {
+                if k.len() > 0 {
                     return MessageHttpResponse {
                         status_code: 400,
                         body: None,
@@ -94,7 +91,7 @@ async fn get_messages(topic: Topic) -> MessageHttpResponse {
     MESSAGE_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
         match st.get(&topic) {
-            Some(mut messages) => {
+            Some(messages) => {
                rsp = MessageHttpResponse {
                     status_code: 200,
                     body: Some(messages.clone()),
@@ -117,7 +114,7 @@ async fn get_messages(topic: Topic) -> MessageHttpResponse {
 #[update]
 async fn create_topic(topic: Topic) -> MessageHttpResponse {
     let princ = &ic_cdk::api::caller().to_text();
-    if (princ.len() < 10) {
+    if princ.len() < 10 {
         return MessageHttpResponse {
             status_code: 401,
             body: None,
@@ -127,7 +124,7 @@ async fn create_topic(topic: Topic) -> MessageHttpResponse {
     MESSAGE_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
         return match st.get(&topic) {
-            Some(o) => {
+            Some(_o) => {
                 MessageHttpResponse {
                     status_code: 409,
                     body: None,
@@ -149,7 +146,7 @@ async fn create_topic(topic: Topic) -> MessageHttpResponse {
 #[update]
 async fn delete_topic(topic: Topic) -> MessageHttpResponse {
     let princ = &ic_cdk::api::caller().to_text();
-    if (princ.len() < 10) {
+    if princ.len() < 10 {
         return MessageHttpResponse {
             status_code: 401,
             body: None,
@@ -158,7 +155,7 @@ async fn delete_topic(topic: Topic) -> MessageHttpResponse {
     }
     MESSAGE_STORAGE.with(|storage| {
         return match storage.borrow_mut().remove(&topic) {
-            Some(o) => {
+            Some(_o) => {
                 MessageHttpResponse {
                     status_code: 200,
                     body: None,

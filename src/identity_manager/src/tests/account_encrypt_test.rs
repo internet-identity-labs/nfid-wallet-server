@@ -1,8 +1,7 @@
 use ic_cdk::export::Principal;
 use crate::{AccessPoint, Configuration, ConfigurationRepo};
-use crate::repository::encrypt::account_encrypt::{decrypt_access_point, decrypt_account, decrypt_persona, encrypt_access_point, encrypt_persona};
 use crate::repo::{Account, Persona};
-use crate::repository::encrypt::account_encrypt::encrypt_account;
+use crate::repository::encrypt::account_encrypt::{decrypt_access_point, decrypt_account, decrypt_persona, encrypt_access_point, encrypt_account, encrypt_persona};
 
 #[test]
 fn encrypt_decrypt_test() {

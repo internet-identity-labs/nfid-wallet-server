@@ -1,9 +1,6 @@
 use ic_cdk::export::Principal;
-use crate::{AccessPoint, Configuration, ConfigurationRepo};
-use crate::repository::encrypt::account_encrypt::{decrypt_access_point, decrypt_account, decrypt_persona, encrypt_access_point, encrypt_persona};
-use crate::repo::{Account, AccountRepo, is_anchor_exists, Persona};
-use crate::repository::encrypt::account_encrypt::encrypt_account;
-use crate::repository::encrypted_repo::{EncryptedRepo};
+use crate::{Configuration, ConfigurationRepo};
+use crate::repo::{Account, AccountRepo, is_anchor_exists};
 
 #[test]
 fn anchor_ex_test() {

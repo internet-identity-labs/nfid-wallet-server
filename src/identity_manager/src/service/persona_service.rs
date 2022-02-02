@@ -1,7 +1,7 @@
 use crate::http::requests::{AccountResponse, PersonaVariant};
 use crate::mapper::account_mapper::account_to_account_response;
 use crate::mapper::persona_mapper::{persona_request_to_persona, persona_to_persona_response};
-use crate::repo::{is_anchor_exists, Persona};
+use crate::repo::{is_anchor_exists};
 use crate::repository::repo::{PersonaRepo};
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
 use crate::util::validation_util::validate_frontend_length;

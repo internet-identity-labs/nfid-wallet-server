@@ -1,14 +1,11 @@
 use std::collections::{BTreeMap, HashSet};
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::storage;
-use magic_crypt::new_magic_crypt;
 
 use crate::Configuration;
-use crate::mapper::account_mapper::account_request_to_account;
+
 use crate::repository::encrypt::account_encrypt::encrypt;
 use crate::repository::encrypted_repo::{EncryptedAccount, EncryptedRepo};
 
@@ -90,15 +87,8 @@ impl PersonaRepo {
             .map(|x| x.personas.clone()) //todo &
     }
 
-    pub fn store_personas(personas: Vec<Persona>) -> Option<Account> {
-        let mut acc = AccountRepo::get_account()
-            .unwrap().clone();
-        acc.personas = personas;
-        AccountRepo::store_account(acc)
-    }
-
     pub fn store_persona(persona: Persona) -> Option<Account> {
-        let mut acc = AccountRepo::get_account();
+        let acc = AccountRepo::get_account();
         if acc.is_none() { return None; }
         let mut account = acc.unwrap().clone();
         account.personas.push(persona);
@@ -145,7 +135,7 @@ pub fn is_anchor_exists(anch: u64) -> bool {
     let accounts = storage::get_mut::<EncryptedAccounts>();
     accounts.into_iter()
         .map(|l| {
-            let mut c = l.1.clone();
+            let c = l.1.clone();
             let mut anchors: Vec<String> = l.1.personas.iter()
                 .map(|k| k.anchor.clone())
                 .filter(|l| l.is_some())
