@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+
 use crate::repository::repo::{AccessPoint, AccessPointRepo};
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
 
@@ -26,7 +26,7 @@ pub fn create_access_point(access_point: AccessPoint) -> HttpResponse<Vec<Access
 
 pub fn update_access_point(access_point: AccessPoint) -> HttpResponse<Vec<AccessPoint>> {
     match AccessPointRepo::get_access_points() {
-        Some(mut content) => {
+        Some(content) => {
             let mut a: Vec<AccessPoint> = content.iter()
                 .filter(|x| x.pub_key != access_point.pub_key)
                 .cloned()
@@ -44,8 +44,8 @@ pub fn update_access_point(access_point: AccessPoint) -> HttpResponse<Vec<Access
 
 pub fn remove_access_point(access_point: AccessPoint) -> HttpResponse<Vec<AccessPoint>> {
     match AccessPointRepo::get_access_points() {
-        Some(mut content) => {
-            let mut a: Vec<AccessPoint> = content.iter()
+        Some(content) => {
+            let a: Vec<AccessPoint> = content.iter()
                 .filter(|x| x.pub_key != access_point.pub_key)
                 .cloned()
                 .collect();

@@ -1,11 +1,11 @@
 use blake3::Hash;
 use ic_cdk::api::caller;
-use ic_cdk::print;
+
 use crate::{ConfigurationRepo, TOKEN_STORAGE};
 use crate::HTTPVerifyPhoneNumberRequest;
 use crate::HttpResponse;
 use crate::repo::PhoneNumberRepo;
-use crate::response_mapper::{to_error_response, to_success_response};
+use crate::response_mapper::{to_success_response};
 use crate::unauthorized;
 
 pub fn validate_phone_number(phone_number: String) -> HttpResponse<bool> {
