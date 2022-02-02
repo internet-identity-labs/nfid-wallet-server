@@ -3,6 +3,7 @@
     data = opt record {
       name = "TEST_USER";
       anchor = 12_345 : nat64;
+      access_points = vec {};
       personas = vec {
         variant {
           nfid_persona = record {
@@ -13,7 +14,6 @@
       };
       principal_id = "%s";
       phone_number = "123456";
-      devices = vec {};
     };
     error = null;
     status_code = 200 : nat16;

@@ -1,7 +1,7 @@
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 
-use crate::repository::repo::Device;
+use crate::repository::repo::AccessPoint;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct HTTPAccountRequest {
@@ -27,7 +27,7 @@ pub struct AccountResponse {
     pub principal_id: String,
     pub name: String,
     pub phone_number: String,
-    pub devices: Vec<Device>,
+    pub access_points: Vec<AccessPoint>,
     pub personas: Vec<PersonaVariant>,
     pub anchor: u64,
 }

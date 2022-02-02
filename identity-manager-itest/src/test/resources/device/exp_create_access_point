@@ -3,8 +3,9 @@
     data = opt vec {
       record {
         model = "IProboval";
-        pub_key_hash = "PUB_KEY_HASH";
         make = "CHINA";
+        name = "NAME";
+        pub_key = "PUB_KEY_HASH";
         browser = "CHROME";
         last_used = "123";
       };

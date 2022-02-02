@@ -3,18 +3,19 @@
     data = opt record {
       name = "TEST_USER";
       anchor = 12_345 : nat64;
-      personas = vec {};
-      principal_id = "%s";
-      phone_number = "123456";
-      devices = vec {
+      access_points = vec {
         record {
           model = "IProboval";
-          pub_key_hash = "PUB_KEY_HASH";
           make = "CHINA";
+          name = "NAME";
+          pub_key = "PUB_KEY_HASH";
           browser = "CHROME";
           last_used = "123";
         };
       };
+      personas = vec {};
+      principal_id = "%s";
+      phone_number = "123456";
     };
     error = null;
     status_code = 200 : nat16;

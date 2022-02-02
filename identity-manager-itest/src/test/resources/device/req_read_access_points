@@ -1,0 +1,1 @@
+dfx canister call identity_manager read_access_points
