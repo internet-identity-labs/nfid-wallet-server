@@ -161,7 +161,7 @@ pub fn post_upgrade() {
     let mut phone_numbers = HashSet::default();
     for u in old_accs {
         storage::get_mut::<EncryptedAccounts>().insert(u.clone().principal_id, u.clone());
-        phone_numbers.insert(blake3::keyed_hash(&ConfigurationRepo::get().key, decrypt_phone_number(u).clone().phone_number.as_bytes()));
+        phone_numbers.insert(blake3::keyed_hash(&ConfigurationRepo::get().key, decrypt_phone_number(u).clone().as_bytes()));
     }
     storage::get_mut::<Option<Principal>>().replace(admin);
     PhoneNumberRepo::add_all(phone_numbers);
