@@ -2,8 +2,6 @@ extern crate base64;
 
 use std::io::Cursor;
 use std::option::Option;
-
-
 use magic_crypt::{MagicCrypt256, MagicCryptTrait, new_magic_crypt};
 use magic_crypt::generic_array::typenum::U256;
 
@@ -36,6 +34,12 @@ pub fn decrypt_account(account: EncryptedAccount) -> Account {
         access_points: account.access_points.into_iter().map(|l| decrypt_access_point(l)).collect(),
         personas: account.personas.into_iter().map(|l| decrypt_persona(l)).collect(),
     }
+}
+
+pub fn decrypt_phone_number(account: EncryptedAccount) -> String {
+    let key = std::str::from_utf8(ConfigurationRepo::get().key.as_slice()).unwrap().to_string();
+    let crypt = new_magic_crypt!(key.clone(), 256);
+    crypt.decrypt_base64_to_string(account.phone_number).unwrap()
 }
 
 pub fn encrypt_access_point(access_point: AccessPoint) -> EncryptedAccessPoint {
