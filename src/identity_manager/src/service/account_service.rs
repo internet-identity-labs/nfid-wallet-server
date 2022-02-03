@@ -29,7 +29,11 @@ pub fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<Accou
         account_request.token.as_bytes(),
     );
 
-    if PhoneNumberRepo::is_exist(&phone_number_hash) {
+    let is_whitelisted = ConfigurationRepo::get().whitelisted_phone_numbers.as_ref()
+        .filter(|x| x.contains(&account_request.phone_number))
+        .is_some();
+
+    if !is_whitelisted && PhoneNumberRepo::is_exist(&phone_number_hash) {
         return to_error_response("Phone number already exists");
     }
 

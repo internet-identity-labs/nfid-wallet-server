@@ -40,10 +40,12 @@ async fn configure(configuration: Configuration) -> () {
         trap("Unauthorized")
     }
 
+    let token_ttl = configuration.token_ttl.clone();
+
     ConfigurationRepo::save(configuration);
 
     TOKEN_STORAGE.with(|token_storage| {
-        let ttl = Duration::from_secs(configuration.token_ttl.clone());
+        let ttl = Duration::from_secs(token_ttl);
         token_storage.borrow_mut().ttl = ttl;
     });
 }

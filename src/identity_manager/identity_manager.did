@@ -6,6 +6,7 @@ type Configuration = record {
     lambda: principal;
     token_ttl: nat64;
     key: blob;
+    whitelisted_phone_numbers: opt vec text;
 };
 
 type BoolHttpResponse = record {

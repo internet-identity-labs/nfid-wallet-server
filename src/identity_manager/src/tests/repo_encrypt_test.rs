@@ -8,6 +8,7 @@ fn anchor_ex_test() {
         lambda: Principal::anonymous(),
         token_ttl: 0,
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        whitelisted_phone_numbers: Option::None
     };
     ConfigurationRepo::save(a);
     let acc = Account {

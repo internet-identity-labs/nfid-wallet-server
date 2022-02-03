@@ -9,6 +9,7 @@ fn encrypt_decrypt_test() {
         lambda: Principal::anonymous(),
         token_ttl: 0,
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        whitelisted_phone_numbers: Option::None
     };
     let ap = AccessPoint {
         pub_key: "".to_string(),
@@ -54,6 +55,7 @@ fn encrypt_decrypt_persona() {
         lambda: Principal::anonymous(),
         token_ttl: 0,
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        whitelisted_phone_numbers: Option::None
     };
     ConfigurationRepo::save(a);
     let persona = Persona {
@@ -77,6 +79,7 @@ fn encrypt_decrypt_nullable_persona() {
         lambda: Principal::anonymous(),
         token_ttl: 0,
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        whitelisted_phone_numbers: Option::None
     };
     ConfigurationRepo::save(a);
     let persona = Persona {
@@ -100,6 +103,7 @@ fn encrypt_decrypt_access_point() {
         lambda: Principal::anonymous(),
         token_ttl: 0,
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        whitelisted_phone_numbers: Option::None
     };
     ConfigurationRepo::save(a);
     let ap = AccessPoint {

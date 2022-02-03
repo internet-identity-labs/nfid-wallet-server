@@ -13,6 +13,14 @@ pub fn validate_phone_number(phone_number: String) -> HttpResponse<bool> {
         return unauthorized();
     }
 
+    let is_whitelisted = ConfigurationRepo::get().whitelisted_phone_numbers.as_ref()
+        .filter(|x| x.contains(&phone_number))
+        .is_some();
+
+    if is_whitelisted {
+        return to_success_response(true)
+    }
+
     let phone_number_hash = blake3::keyed_hash(
         &ConfigurationRepo::get().key,
         phone_number.as_bytes()
