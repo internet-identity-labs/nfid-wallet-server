@@ -37,7 +37,7 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
 
     @SneakyThrows
     @Test(priority = 6)
-    public void validatePhoneNumber_whenWhitelistedPhoneNumberPassedAndMatch_expectTrue() {
+    public void validatePhoneNumberWhenWhitelistedPhoneNumberPassedAndMatchExpectTrue() {
         var command = String.format(getScript("common/configure_dfx_project_with_whitelisted_phone_numbers").trim(), ROOT_IDENTITY);
         callDfxCommand(command);
 
