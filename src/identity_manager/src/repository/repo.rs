@@ -120,8 +120,8 @@ impl PhoneNumberRepo {
 }
 
 impl ConfigurationRepo {
-    pub fn get() -> Configuration {
-        storage::get::<Option<Configuration>>().unwrap()
+    pub fn get() -> &'static Configuration {
+        storage::get::<Option<Configuration>>().as_ref().unwrap()
     }
 
     pub fn save(configuration: Configuration) -> () {

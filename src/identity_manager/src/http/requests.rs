@@ -52,9 +52,10 @@ pub struct PersonaNFIDResponse {
     pub persona_id: String,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize, Copy)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Configuration {
     pub lambda: Principal,
     pub token_ttl: u64,
-    pub key: [u8; 32]
+    pub key: [u8; 32],
+    pub whitelisted_phone_numbers: Option<Vec<String>>
 }

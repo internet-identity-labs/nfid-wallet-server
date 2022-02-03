@@ -37,6 +37,37 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
 
     @SneakyThrows
     @Test(priority = 6)
+    public void validatePhoneNumber_whenWhitelistedPhoneNumberPassedAndMatch_expectTrue() {
+        var command = String.format(getScript("common/configure_dfx_project_with_whitelisted_phone_numbers").trim(), ROOT_IDENTITY);
+        callDfxCommand(command);
+
+        var actual = call("phone-number/req_validate_phone_number");
+        validateWithFormatIdentity("phone-number/exp_true_validate_phone_number", actual);
+
+        call("account/req_create_account");
+
+        var command2 = String.format(getScript("common/configure_dfx_project").trim(), ROOT_IDENTITY);
+        callDfxCommand(command2);
+    }
+
+    @SneakyThrows
+    @Test(priority = 7)
+    public void validatePhoneNumber_whenWhitelistedPhoneNumberPassedAndMatch_expectFalse() {
+        var command = String.format(getScript("common/configure_dfx_project_with_whitelisted_phone_numbers").trim(), ROOT_IDENTITY);
+        callDfxCommand(command);
+
+        var actual = call("phone-number/req_validate_phone_number");
+        validateWithFormatIdentity("phone-number/exp_true_validate_phone_number", actual);
+
+        var command2 = String.format(getScript("common/configure_dfx_project").trim(), ROOT_IDENTITY);
+        callDfxCommand(command2);
+
+        var actual2 = call("account/req_create_account");
+        validateWithFormatIdentity("account/exp_phone_number_exists", actual2);
+    }
+
+    @SneakyThrows
+    @Test(priority = 8)
     public void switchPersonaAndGetRootAccount() {
         call("common/create_test_persona");
         call("common/use_test_persona");
@@ -47,7 +78,7 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
 
     @Ignore
     @SneakyThrows
-    @Test(priority = 7)
+    @Test(priority = 9)
     public void createAccountExpectPhoneNumberNotFoundByTokenExpiration() {
         call("common/use_default_persona");
         call("phone-number/req_post_token_default");
