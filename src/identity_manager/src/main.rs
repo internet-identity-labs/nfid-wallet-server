@@ -54,7 +54,7 @@ thread_local! {
     static TOKEN_STORAGE: RefCell<TtlHashMap<Hash, Hash>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
 }
 
-#[query]
+#[update]
 async fn validate_phone_number(phone_number: String) -> HttpResponse<bool> {
     phone_number_service::validate_phone_number(phone_number)
 }

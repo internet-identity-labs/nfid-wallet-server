@@ -1,23 +1,20 @@
 use blake3::Hash;
 use ic_cdk::api::caller;
+use ic_cdk::export::Principal;
 
 use crate::{ConfigurationRepo, TOKEN_STORAGE};
 use crate::HTTPVerifyPhoneNumberRequest;
 use crate::HttpResponse;
 use crate::repo::PhoneNumberRepo;
-use crate::response_mapper::{to_success_response};
+use crate::response_mapper::{to_success_response, too_many_requests};
 use crate::unauthorized;
 
 pub fn validate_phone_number(phone_number: String) -> HttpResponse<bool> {
-    if !ConfigurationRepo::get().lambda.eq(&caller()) {
+    if !is_lambda(&caller()) {
         return unauthorized();
     }
 
-    let is_whitelisted = ConfigurationRepo::get().whitelisted_phone_numbers.as_ref()
-        .filter(|x| x.contains(&phone_number))
-        .is_some();
-
-    if is_whitelisted {
+    if is_whitelisted(&phone_number) {
         return to_success_response(true)
     }
 
@@ -26,8 +23,11 @@ pub fn validate_phone_number(phone_number: String) -> HttpResponse<bool> {
         phone_number.as_bytes()
     );
 
-    let is_valid = !PhoneNumberRepo::is_exist(&phone_number_hash);
+    if is_too_many_requests(&phone_number_hash) {
+        return too_many_requests()
+    }
 
+    let is_valid = !PhoneNumberRepo::is_exist(&phone_number_hash);
     to_success_response(is_valid)
 }
 
@@ -63,6 +63,23 @@ pub fn validate_token<'a>(phone_number_hash: &'a Hash, token_hash: &'a Hash) -> 
             }
             None => Err("Phone number not found")
         };
+    })
+}
+
+fn is_whitelisted(phone_number: &String) -> bool {
+    ConfigurationRepo::get().whitelisted_phone_numbers.as_ref()
+        .filter(|x| x.contains(&phone_number))
+        .is_some()
+}
+
+fn is_lambda(caller: &Principal) -> bool {
+    ConfigurationRepo::get().lambda.eq(caller)
+}
+
+fn is_too_many_requests(phone_number_hash: &Hash) -> bool {
+    TOKEN_STORAGE.with(|storage| {
+        storage.borrow_mut().cleanup();
+        return storage.borrow_mut().get(&phone_number_hash).is_some()
     })
 }
 

@@ -1,0 +1,1 @@
+dfx canister call identity_manager create_account '( record {name = "TEST_USER"; anchor = 12345; phone_number = "%s";  token = "1234"})'

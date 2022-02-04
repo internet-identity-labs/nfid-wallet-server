@@ -1,0 +1,1 @@
+dfx canister call identity_manager configure '(record {key = blob "gq6282SVGQqYxyKGNPu9HZU4BXPdzDAG"; lambda = principal "%s"; token_ttl = %s })'

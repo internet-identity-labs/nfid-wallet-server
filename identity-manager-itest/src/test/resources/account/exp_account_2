@@ -1,0 +1,14 @@
+(
+  record {
+    data = opt record {
+      name = "TEST_USER";
+      anchor = 1_111 : nat64;
+      access_points = vec {};
+      personas = vec {};
+      principal_id = "%s";
+      phone_number = "123456";
+    };
+    error = null;
+    status_code = 200 : nat16;
+  },
+)
