@@ -54,6 +54,10 @@ public class BaseDFXITest {
         return execute(bashScript);
     }
 
+    public String call(String dfxCommand, Object... params) {
+        return callDfxCommand(String.format(getScript(dfxCommand).trim(), params));
+    }
+
     public String getPath(String somePath) {
         return PATH;
     }

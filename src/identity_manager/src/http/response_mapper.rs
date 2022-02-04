@@ -25,6 +25,14 @@ pub fn unauthorized() -> HttpResponse<bool> {
     }
 }
 
+pub fn too_many_requests() -> HttpResponse<bool> {
+    HttpResponse {
+        data: None,
+        error: Some(Error::from("Too many requests")),
+        status_code: 429,
+    }
+}
+
 pub fn to_success_response<T>(x: T) -> HttpResponse<T> {
     HttpResponse {
         data: Option::from(x),
