@@ -45,7 +45,7 @@ public class PersonaITest extends BaseIdentityManagerITest {
     public void addOverDomainLimitExpectError() {
         call("persona/req_create_application");
         validateWithFormatIdentity("persona/exp_over_limit_for_app_bool", call("application/req_is_over_limit"));
-        validateWithFormatIdentity("persona/exp_under_limit_for_app", call("persona/req_create_ii_persona_over_limit_domain"));
+        validateWithFormatIdentity("persona/exp_create_ii_persona_over_limit_domain", call("persona/req_create_ii_persona_over_limit_domain"));
     }
 
     @Test(priority = 80)

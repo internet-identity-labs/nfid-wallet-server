@@ -1,0 +1,7 @@
+(
+  record {
+    data = null;
+    error = opt "It's impossible to link this domain. Over limit.";
+    status_code = 404 : nat16;
+  },
+)
