@@ -56,6 +56,7 @@ pub struct PersonaNFID {
 pub struct Configuration {
     pub lambda: Principal,
     pub token_ttl: u64,
+    pub token_refresh_ttl: u64,
     pub key: [u8; 32],
     pub whitelisted_phone_numbers: Option<Vec<String>>
 }

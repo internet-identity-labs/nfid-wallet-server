@@ -8,6 +8,7 @@ fn encrypt_decrypt_test() {
     let a = Configuration {
         lambda: Principal::anonymous(),
         token_ttl: 0,
+        token_refresh_ttl: 0,
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         whitelisted_phone_numbers: Option::None
     };
@@ -54,6 +55,7 @@ fn encrypt_decrypt_persona() {
     let a = Configuration {
         lambda: Principal::anonymous(),
         token_ttl: 0,
+        token_refresh_ttl: 0,
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         whitelisted_phone_numbers: Option::None
     };
@@ -78,6 +80,7 @@ fn encrypt_decrypt_nullable_persona() {
     let a = Configuration {
         lambda: Principal::anonymous(),
         token_ttl: 0,
+        token_refresh_ttl: 0,
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         whitelisted_phone_numbers: Option::None
     };
@@ -102,6 +105,7 @@ fn encrypt_decrypt_access_point() {
     let a = Configuration {
         lambda: Principal::anonymous(),
         token_ttl: 0,
+        token_refresh_ttl: 0,
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         whitelisted_phone_numbers: Option::None
     };

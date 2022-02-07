@@ -15,8 +15,7 @@ public class BaseIdentityManagerITest extends BaseDFXITest {
             ROOT_IDENTITY = call("common/get_principal").trim();
             call("common/init_dfx_project");
             call("common/deploy_dfx_project");
-            var command = String.format(getScript("common/configure_dfx_project").trim(), ROOT_IDENTITY);
-            identity_manager = callDfxCommand(command);
+            identity_manager = call("common/configure_dfx_project", KEY, ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS);
 
             if (++i >= DEFAULT_TRIES)
                 System.exit(1);

@@ -37,7 +37,7 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
 
     @Test(priority = 5)
     public void validatePhoneNumberExpectFalseWhenPhoneNumberExists() throws InterruptedException {
-        call("common/configure_dfx_project_with_ttl", ROOT_IDENTITY, "1");
+        call("common/configure_dfx_project", KEY, ROOT_IDENTITY, TTL, "1", WHITELISTED_PHONE_NUMBERS);
         call("phone-number/req_post_token_with_phone_number", "123");
         call("account/req_create_account_with_phone_number", "123");
 
@@ -50,7 +50,7 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
     @SneakyThrows
     @Test(priority = 6)
     public void validatePhoneNumberWhenWhitelistedPhoneNumberPassedAndMatchExpectTrue() {
-        call("common/configure_dfx_project_with_whitelisted_phone_numbers", ROOT_IDENTITY);
+        call("common/configure_dfx_project", KEY, ROOT_IDENTITY, TTL, TTL_REFRESH, "opt vec {\"123456\"}");
 
         var actual = call("phone-number/req_validate_phone_number");
         validateWithFormatIdentity("phone-number/exp_true_validate_phone_number", actual);
