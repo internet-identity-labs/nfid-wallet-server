@@ -53,13 +53,13 @@ async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpR
                 let k: Vec<Message> = messages
                     .clone()
                     .into_iter()
-                    .filter(|l| l.as_str().len() > 3500)
+                    .filter(|l| l.as_str().len() > 10000)
                     .collect();
                 if k.len() > 0 {
                     return MessageHttpResponse {
                         status_code: 400,
                         body: None,
-                        error: Some(String::from("One of messages is more than 3500 chars")),
+                        error: Some(String::from("One of messages is more than 10000 chars")),
                     };
                 }
                 messages.append(&mut o.clone());
