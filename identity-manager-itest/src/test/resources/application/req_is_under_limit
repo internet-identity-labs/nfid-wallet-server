@@ -1,0 +1,1 @@
+dfx canister call identity_manager is_over_the_application_limit '("TEST_DOMAIN_DO")'

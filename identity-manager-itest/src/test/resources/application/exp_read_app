@@ -1,0 +1,10 @@
+(
+  record {
+    data = opt vec {
+      record { user_limit = 1 : nat16; domain = "dom"; name = "TEST_APP" };
+      record { user_limit = 2 : nat16; domain = "dom2"; name = "TEST_APP2" };
+    };
+    error = null;
+    status_code = 200 : nat16;
+  },
+)
