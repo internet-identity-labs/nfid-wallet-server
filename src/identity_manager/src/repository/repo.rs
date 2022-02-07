@@ -154,17 +154,22 @@ impl ApplicationRepo {
             .collect()
     }
 
+    pub fn delete_application(name: String) -> bool {
+        let app_to_remove = storage::get_mut::<Applications>().iter()
+            .find(|a| a.name.eq(&name));
+        match app_to_remove {
+            None => { false }
+            Some(app) => {
+                storage::get_mut::<Applications>()
+                    .remove(app)
+            }
+        }
+    }
+
     pub fn is_application_exists(application: &Application) -> bool {
         let applications = storage::get_mut::<Applications>();
         applications.iter()
             .any(|a| a.name.eq(&application.name) || a.domain.eq(&application.domain))
-    }
-
-    pub fn get_limit_by_domain(domain: &String) -> Option<u16> {
-        let applications = storage::get_mut::<Applications>();
-        applications.iter()
-            .find(|a| a.domain.eq(domain))
-            .map(|a| a.user_limit)
     }
 }
 

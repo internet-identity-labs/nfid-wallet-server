@@ -1,0 +1,1 @@
+dfx canister call identity_manager delete_application '("TEST_PERSONA")'

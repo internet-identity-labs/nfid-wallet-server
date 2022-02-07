@@ -1,6 +1,7 @@
 type PhoneNumber = text;
 type Token = text;
 type Domain = text;
+type Name = text;
 type Error = text;
 
 type Configuration = record {
@@ -119,6 +120,7 @@ service : () -> {
   validate_phone_number: (PhoneNumber) -> (BoolHttpResponse);
 
   create_application: (Application) -> (HTTPApplicationResponse);
+  delete_application: (Name) -> (BoolHttpResponse);
   read_applications: () -> (HTTPApplicationResponse) query;
   is_over_the_application_limit: (Domain) -> (BoolHttpResponse) query;
 

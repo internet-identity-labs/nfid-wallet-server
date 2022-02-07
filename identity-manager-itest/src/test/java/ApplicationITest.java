@@ -38,4 +38,10 @@ public class ApplicationITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("persona/exp_over_limit_for_app", call("application/req_is_over_limit"));
     }
 
+    @Test(priority = 60)
+    public void deleteApplicationIsOverLimitExpectCorrectResponse() {
+        validateWithFormatIdentity("application/exp_delete_app", call("application/req_delete_application"));
+        validateWithFormatIdentity("persona/exp_under_limit_for_app", call("application/req_is_over_limit"));
+    }
+
 }

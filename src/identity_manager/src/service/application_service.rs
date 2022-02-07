@@ -7,6 +7,14 @@ pub fn read_applications() -> HttpResponse<Vec<Application>> {
     to_success_response(apps)
 }
 
+pub fn delete_application(name: String) -> HttpResponse<bool> {
+    let apps = ApplicationRepo::delete_application(name);
+    if apps {
+        return to_success_response(apps);
+    }
+    to_error_response("Unable to remove app with such name.")
+}
+
 pub fn create_application(app: Application) -> HttpResponse<Vec<Application>> {
     if ApplicationRepo::is_application_exists(&app) {
         return to_error_response("Unable to create Application. Application exists");

@@ -115,6 +115,11 @@ async fn create_application(app: Application) -> HttpResponse<Vec<Application>> 
     application_service::create_application(app)
 }
 
+#[update]
+async fn delete_application(app: String) -> HttpResponse<bool> {
+    application_service::delete_application(app)
+}
+
 #[query]
 async fn read_applications() -> HttpResponse<Vec<Application>> {
     application_service::read_applications()
