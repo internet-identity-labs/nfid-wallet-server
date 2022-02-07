@@ -2,7 +2,7 @@ use blake3::Hash;
 use ic_cdk::api::caller;
 use ic_cdk::export::Principal;
 
-use crate::{ConfigurationRepo, TOKEN_STORAGE};
+use crate::{ConfigurationRepo, TOKEN_REFRESH_STORAGE, TOKEN_STORAGE};
 use crate::HTTPVerifyPhoneNumberRequest;
 use crate::HttpResponse;
 use crate::repo::PhoneNumberRepo;
@@ -41,6 +41,10 @@ pub fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
         request.phone_number.as_bytes()
     );
 
+    TOKEN_REFRESH_STORAGE.with(|storage| {
+        storage.borrow_mut().insert(phone_number_hash, ());
+    });
+
     let token_hash = blake3::keyed_hash(
         &ConfigurationRepo::get().key,
         request.token.as_bytes()
@@ -77,7 +81,7 @@ fn is_lambda(caller: &Principal) -> bool {
 }
 
 fn is_too_many_requests(phone_number_hash: &Hash) -> bool {
-    TOKEN_STORAGE.with(|storage| {
+    TOKEN_REFRESH_STORAGE.with(|storage| {
         storage.borrow_mut().cleanup();
         return storage.borrow_mut().get(&phone_number_hash).is_some()
     })

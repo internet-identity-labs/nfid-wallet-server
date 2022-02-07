@@ -28,7 +28,7 @@ mod structure;
 mod util;
 mod tests;
 
-const DEFAULT_TOKEN_TTL: Duration = Duration::from_secs(30);
+const DEFAULT_TOKEN_TTL: Duration = Duration::from_secs(60);
 
 #[init]
 async fn init() -> () {
@@ -42,8 +42,14 @@ async fn configure(configuration: Configuration) -> () {
     }
 
     let token_ttl = configuration.token_ttl.clone();
+    let token_refresh_ttl = configuration.token_refresh_ttl.clone();
 
     ConfigurationRepo::save(configuration);
+
+    TOKEN_REFRESH_STORAGE.with(|token_storage| {
+        let ttl = Duration::from_secs(token_refresh_ttl);
+        token_storage.borrow_mut().ttl = ttl;
+    });
 
     TOKEN_STORAGE.with(|token_storage| {
         let ttl = Duration::from_secs(token_ttl);
@@ -53,6 +59,7 @@ async fn configure(configuration: Configuration) -> () {
 
 thread_local! {
     static TOKEN_STORAGE: RefCell<TtlHashMap<Hash, Hash>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
+    static TOKEN_REFRESH_STORAGE: RefCell<TtlHashMap<Hash, ()>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
 }
 
 #[update]

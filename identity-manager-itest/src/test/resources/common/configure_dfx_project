@@ -1,1 +1,1 @@
-dfx canister call identity_manager configure '(record {key = blob "gq6282SVGQqYxyKGNPu9HZU4BXPdzDAG"; lambda = principal "%s"; token_ttl = 10 })'
+dfx canister call identity_manager configure '(record {key = blob "%s"; lambda = principal "%s"; token_ttl = %s;  token_refresh_ttl = %s; whitelisted_phone_numbers = %s })'
