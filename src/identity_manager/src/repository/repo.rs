@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
@@ -35,7 +35,15 @@ pub struct Account {
     pub personas: Vec<Persona>,
 }
 
+#[derive(Clone, Debug, CandidType, Deserialize, PartialOrd, PartialEq, Ord, Eq)]
+pub struct Application {
+    pub domain: String,
+    pub user_limit: u16,
+    pub name: String,
+}
+
 pub type EncryptedAccounts = BTreeMap<String, EncryptedAccount>;
+pub type Applications = BTreeSet<Application>;
 
 type PhoneNumbers = HashSet<blake3::Hash>;
 
@@ -50,6 +58,8 @@ pub struct PhoneNumberRepo {}
 pub struct AdminRepo {}
 
 pub struct ConfigurationRepo {}
+
+pub struct ApplicationRepo {}
 
 
 impl AccountRepo {
@@ -126,6 +136,35 @@ impl ConfigurationRepo {
 
     pub fn save(configuration: Configuration) -> () {
         storage::get_mut::<Option<Configuration>>().replace(configuration);
+    }
+}
+
+impl ApplicationRepo {
+    pub fn create_application(application: Application) -> Vec<Application> {
+        let applications = storage::get_mut::<Applications>();
+        applications.insert(application.clone());
+        applications.iter()
+            .map(|p| p.clone())
+            .collect()
+    }
+
+    pub fn read_applications() -> Vec<Application> {
+        storage::get_mut::<Applications>().iter()
+            .map(|p| p.clone())
+            .collect()
+    }
+
+    pub fn is_application_exists(application: &Application) -> bool {
+        let applications = storage::get_mut::<Applications>();
+        applications.iter()
+            .any(|a| a.name.eq(&application.name) || a.domain.eq(&application.domain))
+    }
+
+    pub fn get_limit_by_domain(domain: &String) -> Option<u16> {
+        let applications = storage::get_mut::<Applications>();
+        applications.iter()
+            .find(|a| a.domain.eq(domain))
+            .map(|a| a.user_limit)
     }
 }
 

@@ -1,17 +1,17 @@
 use crate::http::requests::{PersonaVariant};
 use crate::repository::repo::{Persona};
-use crate::requests::{PersonaIIResponse, PersonaNFIDResponse};
+use crate::requests::{PersonaII, PersonaNFID};
 
 pub fn persona_to_persona_response(persona: Persona) -> PersonaVariant {
     match persona.anchor {
         None => {
-            PersonaVariant::NfidPersona(PersonaNFIDResponse {
+            PersonaVariant::NfidPersona(PersonaNFID {
                 domain: persona.domain,
                 persona_id: persona.persona_id.unwrap(),
             })
         }
         Some(_) => {
-            PersonaVariant::IiPersona(PersonaIIResponse {
+            PersonaVariant::IiPersona(PersonaII {
                 domain: persona.domain,
                 anchor: persona.anchor.unwrap(),
             })

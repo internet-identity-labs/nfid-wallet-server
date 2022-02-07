@@ -35,19 +35,19 @@ pub struct AccountResponse {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum PersonaVariant {
     #[serde(rename = "nfid_persona")]
-    NfidPersona(PersonaNFIDResponse),
+    NfidPersona(PersonaNFID),
     #[serde(rename = "ii_persona")]
-    IiPersona(PersonaIIResponse),
+    IiPersona(PersonaII),
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct PersonaIIResponse {
+pub struct PersonaII {
     pub anchor: u64,
     pub domain: String,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct PersonaNFIDResponse {
+pub struct PersonaNFID {
     pub domain: String,
     pub persona_id: String,
 }

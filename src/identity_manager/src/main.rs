@@ -6,18 +6,19 @@ use ic_cdk::api::caller;
 use ic_cdk::trap;
 use ic_cdk_macros::*;
 
-use repository::repo::AccessPoint;
 use repository::repo;
-use service::{account_service, access_point_service, persona_service, phone_number_service};
+use repository::repo::AccessPoint;
+use service::{access_point_service, account_service, persona_service, phone_number_service};
 use structure::ttlhashmap::TtlHashMap;
 
 use crate::http::requests;
 use crate::http::requests::{AccountResponse, PersonaVariant};
 use crate::http::response_mapper;
-use crate::repo::{AdminRepo, ConfigurationRepo};
+use crate::repo::{AdminRepo, Application, ConfigurationRepo};
 use crate::requests::{Configuration, HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
 use crate::requests::HTTPAccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, unauthorized};
+use crate::service::application_service;
 
 mod service;
 mod http;
@@ -107,6 +108,21 @@ async fn create_persona(persona: PersonaVariant) -> HttpResponse<AccountResponse
 #[update]
 async fn read_personas() -> HttpResponse<Vec<PersonaVariant>> {
     persona_service::read_personas()
+}
+
+#[update]
+async fn create_application(app: Application) -> HttpResponse<Vec<Application>> {
+    application_service::create_application(app)
+}
+
+#[query]
+async fn read_applications() -> HttpResponse<Vec<Application>> {
+    application_service::read_applications()
+}
+
+#[query]
+async fn is_over_the_application_limit(domain: String) -> HttpResponse<bool> {
+    application_service::is_over_the_application_limit(&domain)
 }
 
 #[pre_upgrade]

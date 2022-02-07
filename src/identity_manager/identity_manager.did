@@ -1,5 +1,6 @@
 type PhoneNumber = text;
 type Token = text;
+type Domain = text;
 type Error = text;
 
 type Configuration = record {
@@ -56,6 +57,18 @@ type AccessPoint = record {
     name: text;
 };
 
+type Application = record {
+    name: text;
+    domain: text;
+    user_limit: nat16;
+};
+
+type HTTPApplicationResponse = record {
+    data: opt vec Application;
+    error: opt Error;
+    status_code: nat16;
+};
+
 type HTTPAccessPointResponse = record {
     data: opt vec AccessPoint;
     error: opt Error;
@@ -104,4 +117,9 @@ service : () -> {
 
   post_token: (HTTPVerifyPhoneNumberRequest) -> (BoolHttpResponse);
   validate_phone_number: (PhoneNumber) -> (BoolHttpResponse);
+
+  create_application: (Application) -> (HTTPApplicationResponse);
+  read_applications: () -> (HTTPApplicationResponse) query;
+  is_over_the_application_limit: (Domain) -> (BoolHttpResponse) query;
+
 }

@@ -1,0 +1,1 @@
+dfx canister call identity_manager create_application '( record {name = "TEST_APP2"; domain = "dom";  user_limit = 1})'
