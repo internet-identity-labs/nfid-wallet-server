@@ -53,7 +53,7 @@ pub struct PersonaNFID {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct Configuration {
+pub struct ConfigurationRequest {
     pub lambda: Principal,
     pub token_ttl: u64,
     pub token_refresh_ttl: u64,

@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::time::Duration;
+use base64::Config;
 
 use blake3::Hash;
 use ic_cdk::api::caller;
@@ -9,13 +10,12 @@ use ic_cdk_macros::*;
 use repository::repo;
 use repository::repo::AccessPoint;
 use service::{access_point_service, account_service, persona_service, phone_number_service};
-use structure::ttlhashmap::TtlHashMap;
 
 use crate::http::requests;
 use crate::http::requests::{AccountResponse, PersonaVariant};
 use crate::http::response_mapper;
-use crate::repo::{AdminRepo, Application, ConfigurationRepo};
-use crate::requests::{Configuration, HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
+use crate::repo::{AdminRepo, Application, Configuration, ConfigurationRepo};
+use crate::requests::{ConfigurationRequest, HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
 use crate::requests::HTTPAccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, unauthorized};
 use crate::service::application_service;
@@ -24,7 +24,6 @@ mod service;
 mod http;
 mod repository;
 mod mapper;
-mod structure;
 mod util;
 mod tests;
 
@@ -36,30 +35,20 @@ async fn init() -> () {
 }
 
 #[update]
-async fn configure(configuration: Configuration) -> () {
+async fn configure(request: ConfigurationRequest) -> () {
     if !AdminRepo::get().eq(&caller()) {
         trap("Unauthorized")
     }
 
-    let token_ttl = configuration.token_ttl.clone();
-    let token_refresh_ttl = configuration.token_refresh_ttl.clone();
+    let configuration = Configuration {
+        lambda: request.lambda,
+        token_ttl: Duration::from_secs(request.token_ttl),
+        token_refresh_ttl: Duration::from_secs(request.token_refresh_ttl),
+        key: request.key,
+        whitelisted: request.whitelisted_phone_numbers.unwrap_or(Vec::default())
+    };
 
     ConfigurationRepo::save(configuration);
-
-    TOKEN_REFRESH_STORAGE.with(|token_storage| {
-        let ttl = Duration::from_secs(token_refresh_ttl);
-        token_storage.borrow_mut().ttl = ttl;
-    });
-
-    TOKEN_STORAGE.with(|token_storage| {
-        let ttl = Duration::from_secs(token_ttl);
-        token_storage.borrow_mut().ttl = ttl;
-    });
-}
-
-thread_local! {
-    static TOKEN_STORAGE: RefCell<TtlHashMap<Hash, Hash>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
-    static TOKEN_REFRESH_STORAGE: RefCell<TtlHashMap<Hash, ()>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
 }
 
 #[update]
