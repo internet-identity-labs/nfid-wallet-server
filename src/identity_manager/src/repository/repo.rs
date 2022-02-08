@@ -4,7 +4,7 @@ use ic_cdk::api::time;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
-use ic_cdk::{print, storage};
+use ic_cdk::storage;
 
 use crate::repository::encrypt::account_encrypt::{decrypt_phone_number, encrypt};
 use crate::repository::encrypted_repo::{EncryptedAccount, EncryptedRepo};
@@ -151,16 +151,9 @@ impl TokenRepo {
 
     pub fn get(phone_number: &blake3::Hash, duration: Duration) -> Option<&blake3::Hash> {
         let time_window: u64 = time() - duration.as_nanos() as u64;
-        print("WINDOW");
-        print(time_window.to_string());
         storage::get::<Tokens>()
             .get(phone_number)
-            .filter(|(v, t)| {
-                print("EXACT");
-                print(t.to_string());
-                print((*t > time_window).to_string());
-                *t > time_window
-            })
+            .filter(|(v, t)| *t > time_window)
             .map(|(v, t)| v)
     }
 }
