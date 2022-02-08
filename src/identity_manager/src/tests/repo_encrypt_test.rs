@@ -1,3 +1,4 @@
+use std::time::Duration;
 use ic_cdk::export::Principal;
 use crate::{Configuration, ConfigurationRepo};
 use crate::repo::{Account, AccountRepo, is_anchor_exists};
@@ -6,10 +7,10 @@ use crate::repo::{Account, AccountRepo, is_anchor_exists};
 fn anchor_ex_test() {
     let a = Configuration {
         lambda: Principal::anonymous(),
-        token_ttl: 0,
-        token_refresh_ttl: 0,
+        token_ttl: Duration::from_secs(0),
+        token_refresh_ttl: Duration::from_secs(0),
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        whitelisted_phone_numbers: Option::None
+        whitelisted: Vec::default()
     };
     ConfigurationRepo::save(a);
     let acc = Account {

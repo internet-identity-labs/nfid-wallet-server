@@ -4,7 +4,7 @@ type Domain = text;
 type Name = text;
 type Error = text;
 
-type Configuration = record {
+type ConfigurationRequest = record {
     lambda: principal;
     token_ttl: nat64;
     token_refresh_ttl: nat64;
@@ -104,7 +104,7 @@ type HTTPVerifyPhoneNumberRequest = record {
 };
 
 service : () -> {
-  configure: (Configuration) -> ();
+  configure: (ConfigurationRequest) -> ();
   get_account: () -> (HTTPAccountResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);

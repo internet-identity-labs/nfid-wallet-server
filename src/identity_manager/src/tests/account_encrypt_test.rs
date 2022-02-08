@@ -1,3 +1,4 @@
+use std::time::Duration;
 use ic_cdk::export::Principal;
 use crate::{AccessPoint, Configuration, ConfigurationRepo};
 use crate::repo::{Account, Persona};
@@ -7,10 +8,10 @@ use crate::repository::encrypt::account_encrypt::{decrypt_access_point, decrypt_
 fn encrypt_decrypt_test() {
     let a = Configuration {
         lambda: Principal::anonymous(),
-        token_ttl: 0,
-        token_refresh_ttl: 0,
+        token_ttl: Duration::from_secs(0),
+        token_refresh_ttl: Duration::from_secs(0),
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        whitelisted_phone_numbers: Option::None
+        whitelisted: Vec::default()
     };
     let ap = AccessPoint {
         pub_key: "".to_string(),
@@ -54,10 +55,10 @@ fn encrypt_decrypt_test() {
 fn encrypt_decrypt_persona() {
     let a = Configuration {
         lambda: Principal::anonymous(),
-        token_ttl: 0,
-        token_refresh_ttl: 0,
+        token_ttl: Duration::from_secs(0),
+        token_refresh_ttl: Duration::from_secs(0),
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        whitelisted_phone_numbers: Option::None
+        whitelisted: Vec::default()
     };
     ConfigurationRepo::save(a);
     let persona = Persona {
@@ -79,10 +80,10 @@ fn encrypt_decrypt_persona() {
 fn encrypt_decrypt_nullable_persona() {
     let a = Configuration {
         lambda: Principal::anonymous(),
-        token_ttl: 0,
-        token_refresh_ttl: 0,
+        token_ttl: Duration::from_secs(0),
+        token_refresh_ttl: Duration::from_secs(0),
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        whitelisted_phone_numbers: Option::None
+        whitelisted: Vec::default()
     };
     ConfigurationRepo::save(a);
     let persona = Persona {
@@ -104,10 +105,10 @@ fn encrypt_decrypt_nullable_persona() {
 fn encrypt_decrypt_access_point() {
     let a = Configuration {
         lambda: Principal::anonymous(),
-        token_ttl: 0,
-        token_refresh_ttl: 0,
+        token_ttl: Duration::from_secs(0),
+        token_refresh_ttl: Duration::from_secs(0),
         key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        whitelisted_phone_numbers: Option::None
+        whitelisted: Vec::default()
     };
     ConfigurationRepo::save(a);
     let ap = AccessPoint {
