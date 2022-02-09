@@ -9,12 +9,6 @@ struct ValueWrapper<V> {
     val: V,
 }
 
-pub enum AutoClean {
-    Always,
-    Modify,
-    Never,
-}
-
 pub struct TtlHashMap<K, V>
     where
         K: Eq + Hash
@@ -22,7 +16,6 @@ pub struct TtlHashMap<K, V>
     map: HashMap<K, ValueWrapper<V>>,
     pub ttl: Duration,
     oldest: Option<u64>,
-    pub autoclean: AutoClean,
     pub max_nodes: Option<usize>,
 }
 
@@ -36,7 +29,6 @@ impl<K, V> TtlHashMap<K, V>
             map: HashMap::new(),
             ttl,
             oldest: None,
-            autoclean: AutoClean::Always,
             max_nodes: None,
         }
     }
@@ -122,24 +114,12 @@ impl<K, V> TtlHashMap<K, V>
         }
     }
 
-
-    pub fn contains_key<Q: ?Sized>(&self, key: &Q) -> bool
-        where
-            K: Borrow<Q>,
-            Q: Hash + Eq
-    {
-        self.map.contains_key(key)
-    }
-
     pub fn get<Q: ?Sized>(&mut self, key: &Q) -> Option<&V>
         where
             K: Borrow<Q>,
             Q: Hash + Eq
     {
-        match self.autoclean {
-            AutoClean::Always => self.cleanup(),
-            _ => {}
-        }
+        self.cleanup();
         self.touch(key);
         self.get_raw(key)
     }
@@ -156,37 +136,8 @@ impl<K, V> TtlHashMap<K, V>
         }
     }
 
-    pub fn get_mut<Q: ?Sized>(&mut self, key: &Q) -> Option<&mut V>
-        where
-            K: Borrow<Q>,
-            Q: Hash + Eq
-    {
-        match self.autoclean {
-            AutoClean::Always => self.cleanup(),
-            _ => {}
-        }
-        self.touch(key);
-        self.get_mut_raw(key)
-    }
-
-
-    pub fn get_mut_raw<Q: ?Sized>(&mut self, key: &Q) -> Option<&mut V>
-        where
-            K: Borrow<Q>,
-            Q: Hash + Eq
-    {
-        match self.map.get_mut(key) {
-            Some(v) => Some(&mut (v.val)),
-            None => None
-        }
-    }
-
-
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
-        match self.autoclean {
-            AutoClean::Always | AutoClean::Modify => self.cleanup(),
-            _ => {}
-        }
+        self.cleanup();
 
         let croaktime = time() + self.ttl.as_nanos() as u64;
         let ret = self.map.insert(
@@ -204,28 +155,16 @@ impl<K, V> TtlHashMap<K, V>
         }
     }
 
-
     pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<V>
         where
             K: Borrow<Q>,
             Q: Hash + Eq
     {
-        match self.autoclean {
-            AutoClean::Always | AutoClean::Modify => self.cleanup(),
-            _ => {}
-        }
+        self.cleanup();
         match self.map.remove(key) {
             Some(v) => Some(v.val),
             None => None
         }
-    }
-
-    pub fn len(&self) -> usize {
-        self.map.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
     }
 
     fn to_sorted_vec(&mut self) -> Vec<(K, ValueWrapper<V>)> {

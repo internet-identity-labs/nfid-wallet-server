@@ -153,8 +153,8 @@ impl TokenRepo {
         let time_window: u64 = time() - duration.as_nanos() as u64;
         storage::get::<Tokens>()
             .get(phone_number)
-            .filter(|(v, t)| *t > time_window)
-            .map(|(v, t)| v)
+            .filter(|(_, t)| *t > time_window)
+            .map(|(v, _)| v)
     }
 }
 
@@ -226,7 +226,7 @@ pub fn pre_upgrade() {
         accounts.push(p.1.clone());
     }
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
-    storage::stable_save((accounts, admin));
+    match storage::stable_save((accounts, admin)) { _ => ()};
 }
 
 pub fn post_upgrade() {

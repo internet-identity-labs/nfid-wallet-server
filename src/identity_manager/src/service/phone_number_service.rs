@@ -1,7 +1,5 @@
-use std::time::Duration;
 use blake3::Hash;
 use ic_cdk::api::caller;
-use ic_cdk::export::candid::parser::token::Token;
 use ic_cdk::export::Principal;
 
 use crate::ConfigurationRepo;
