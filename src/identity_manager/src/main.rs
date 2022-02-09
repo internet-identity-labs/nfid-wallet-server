@@ -1,8 +1,4 @@
-use std::cell::RefCell;
 use std::time::Duration;
-use base64::Config;
-
-use blake3::Hash;
 use ic_cdk::api::caller;
 use ic_cdk::trap;
 use ic_cdk_macros::*;
@@ -26,8 +22,6 @@ mod repository;
 mod mapper;
 mod util;
 mod tests;
-
-const DEFAULT_TOKEN_TTL: Duration = Duration::from_secs(60);
 
 #[init]
 async fn init() -> () {

@@ -32,14 +32,28 @@ jobs:
           while :;
           do
             rm -rf .dfx;
-            dfx deploy --network ic --no-wallet;
+            dfx deploy --network ic --no-wallet pub_sub_channel;
             sleep 5;
             set +e;
-            im=$(dfx canister --network ic call identity_manager configure '(record {key = blob "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}}; whitelisted_phone_numbers = opt vec {${{secrets.WHITELISTED_PHONE_NUMBERS}}} })');
             ps=$(dfx canister --network ic call pub_sub_channel ping);
             set -e;
             ((i=i+1));
-            printf 'Try #%s with result: im-%s and ps-%s\n' "$i" "$im" "$ps";
+            printf 'Try #%s with result: ps-%s\n' "$i" "$ps";
             [[ 20 -gt $i ]] || exit 255;
-            [[ "()" != $im ]] || [[ "()" != $ps ]] || break;
+            [[ "()" != $ps ]] || break;
+          done
+
+          i=0;
+          while :;
+          do
+            rm -rf .dfx;
+            dfx deploy --network ic --no-wallet identity_manager;
+            sleep 5;
+            set +e;
+            im=$(dfx canister --network ic call identity_manager configure '(record {key = blob "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}}; whitelisted_phone_numbers = opt vec {${{secrets.WHITELISTED_PHONE_NUMBERS}}} })');
+            set -e;
+            ((i=i+1));
+            printf 'Try #%s with result: im-%s\n' "$i" "$im";
+            [[ 20 -gt $i ]] || exit 255;
+            [[ "()" != $im ]] || break;
           done
