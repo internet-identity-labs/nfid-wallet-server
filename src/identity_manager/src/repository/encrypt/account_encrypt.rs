@@ -2,16 +2,17 @@ extern crate base64;
 
 use std::io::Cursor;
 use std::option::Option;
+use inject::{container, get};
 use magic_crypt::{MagicCrypt256, MagicCryptTrait, new_magic_crypt};
 use magic_crypt::generic_array::typenum::U256;
 
-use crate::{AccessPoint, ConfigurationRepo};
-use crate::repo::{Account, Persona};
-use crate::repository::encrypted_repo::{EncryptedAccessPoint, EncryptedAccount, EncryptedPersona};
+use crate::{AccessPoint, Configuration, ConfigurationRepo};
+use crate::repository::repo::{Account, Persona};
+use crate::repository::encrypt::encrypted_repo::{EncryptedAccessPoint, EncryptedAccount, EncryptedPersona};
 
 
 pub fn encrypt_account(account: Account) -> EncryptedAccount {
-    let key = std::str::from_utf8(ConfigurationRepo::get().key.as_slice()).unwrap().to_string();
+    let key = get_key();
     let crypt = new_magic_crypt!(key.clone(), 256);
     EncryptedAccount {
         anchor: encrypt_string(&crypt, account.anchor.to_string()),
@@ -24,7 +25,7 @@ pub fn encrypt_account(account: Account) -> EncryptedAccount {
 }
 
 pub fn decrypt_account(account: EncryptedAccount) -> Account {
-    let key = std::str::from_utf8(ConfigurationRepo::get().key.as_slice()).unwrap().to_string();
+    let key = get_key();
     let crypt = new_magic_crypt!(key.clone(), 256);
     Account {
         anchor: decrypt_number(&crypt, account.anchor),
@@ -37,13 +38,13 @@ pub fn decrypt_account(account: EncryptedAccount) -> Account {
 }
 
 pub fn decrypt_phone_number(account: EncryptedAccount) -> String {
-    let key = std::str::from_utf8(ConfigurationRepo::get().key.as_slice()).unwrap().to_string();
+    let key = get_key();
     let crypt = new_magic_crypt!(key.clone(), 256);
     crypt.decrypt_base64_to_string(account.phone_number).unwrap()
 }
 
 pub fn encrypt_access_point(access_point: AccessPoint) -> EncryptedAccessPoint {
-    let key = std::str::from_utf8(ConfigurationRepo::get().key.as_slice()).unwrap().to_string();
+    let key = get_key();
     let crypt = new_magic_crypt!(key.clone(), 256);
     EncryptedAccessPoint {
         pub_key: encrypt_string(&crypt, access_point.pub_key),
@@ -56,7 +57,7 @@ pub fn encrypt_access_point(access_point: AccessPoint) -> EncryptedAccessPoint {
 }
 
 pub fn decrypt_access_point(access_point: EncryptedAccessPoint) -> AccessPoint {
-    let key = std::str::from_utf8(ConfigurationRepo::get().key.as_slice()).unwrap().to_string();
+    let key = get_key();
     let crypt = new_magic_crypt!(key.clone(), 256);
     AccessPoint {
         pub_key: crypt.decrypt_base64_to_string(access_point.pub_key).unwrap(),
@@ -69,7 +70,7 @@ pub fn decrypt_access_point(access_point: EncryptedAccessPoint) -> AccessPoint {
 }
 
 pub fn encrypt_persona(persona: Persona) -> EncryptedPersona {
-    let key = std::str::from_utf8(ConfigurationRepo::get().key.as_slice()).unwrap().to_string();
+    let key = get_key();
     let crypt = new_magic_crypt!(key.clone(), 256);
     EncryptedPersona {
         anchor: encrypt_optional_number(&crypt, persona.anchor),
@@ -79,7 +80,7 @@ pub fn encrypt_persona(persona: Persona) -> EncryptedPersona {
 }
 
 pub fn decrypt_persona(persona: EncryptedPersona) -> Persona {
-    let key = std::str::from_utf8(ConfigurationRepo::get().key.as_slice()).unwrap().to_string();
+    let key = get_key();
     let crypt = new_magic_crypt!(key.clone(), 256);
     Persona {
         anchor: decrypt_optional_number(&crypt, persona.anchor, &decrypt_number),
@@ -89,7 +90,7 @@ pub fn decrypt_persona(persona: EncryptedPersona) -> Persona {
 }
 
 pub fn encrypt(str: String) -> String {
-    let key = std::str::from_utf8(ConfigurationRepo::get().key.as_slice()).unwrap().to_string();
+    let key = get_key();
     let crypt = new_magic_crypt!(key.clone(), 256);
     encrypt_string(&crypt, str)
 }
@@ -143,4 +144,8 @@ fn decrypt_optional_number(crypt: &MagicCrypt256, opt: Option<String>, f: &dyn F
         }
         None => { None }
     }
+}
+
+fn get_key() -> String {
+    std::str::from_utf8(ConfigurationRepo::get().key.as_slice()).unwrap().to_string()
 }

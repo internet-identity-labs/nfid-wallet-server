@@ -1,29 +1,25 @@
+use std::sync::Arc;
 use std::time::Duration;
 use ic_cdk::export::Principal;
+use inject::container;
 use crate::{AccessPoint, Configuration, ConfigurationRepo};
-use crate::repo::{Account, Persona};
+use crate::repository::repo::{Account, Persona};
 use crate::repository::encrypt::account_encrypt::{decrypt_access_point, decrypt_account, decrypt_persona, encrypt_access_point, encrypt_account, encrypt_persona};
+use crate::tests::test_util::init_config;
 
 #[test]
 fn encrypt_decrypt_test() {
-    let a = Configuration {
-        lambda: Principal::anonymous(),
-        token_ttl: Duration::from_secs(0),
-        token_refresh_ttl: Duration::from_secs(0),
-        key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        whitelisted: Vec::default()
-    };
+    init_config();
     let ap = AccessPoint {
         pub_key: "".to_string(),
         last_used: "".to_string(),
         make: "".to_string(),
         model: "".to_string(),
         browser: "".to_string(),
-        name: "".to_string()
+        name: "".to_string(),
     };
     let mut apv = Vec::new();
     apv.push(ap.clone());
-    ConfigurationRepo::save(a);
     let acc = Account {
         anchor: 0,
         principal_id: "".to_string(),
@@ -53,14 +49,7 @@ fn encrypt_decrypt_test() {
 
 #[test]
 fn encrypt_decrypt_persona() {
-    let a = Configuration {
-        lambda: Principal::anonymous(),
-        token_ttl: Duration::from_secs(0),
-        token_refresh_ttl: Duration::from_secs(0),
-        key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        whitelisted: Vec::default()
-    };
-    ConfigurationRepo::save(a);
+    init_config();
     let persona = Persona {
         anchor: Option::from(1),
         domain: "domain".to_string(),
@@ -78,14 +67,7 @@ fn encrypt_decrypt_persona() {
 
 #[test]
 fn encrypt_decrypt_nullable_persona() {
-    let a = Configuration {
-        lambda: Principal::anonymous(),
-        token_ttl: Duration::from_secs(0),
-        token_refresh_ttl: Duration::from_secs(0),
-        key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        whitelisted: Vec::default()
-    };
-    ConfigurationRepo::save(a);
+    init_config();
     let persona = Persona {
         anchor: None,
         domain: "domain".to_string(),
@@ -103,21 +85,14 @@ fn encrypt_decrypt_nullable_persona() {
 
 #[test]
 fn encrypt_decrypt_access_point() {
-    let a = Configuration {
-        lambda: Principal::anonymous(),
-        token_ttl: Duration::from_secs(0),
-        token_refresh_ttl: Duration::from_secs(0),
-        key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        whitelisted: Vec::default()
-    };
-    ConfigurationRepo::save(a);
+    init_config();
     let ap = AccessPoint {
         pub_key: "".to_string(),
         last_used: "".to_string(),
         make: "".to_string(),
         model: "".to_string(),
         browser: "".to_string(),
-        name: "".to_string()
+        name: "".to_string(),
     };
     let encrypted = encrypt_access_point(ap.clone());
     assert_ne!(ap.pub_key, encrypted.pub_key);

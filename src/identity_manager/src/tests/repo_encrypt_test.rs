@@ -1,18 +1,15 @@
 use std::time::Duration;
 use ic_cdk::export::Principal;
-use crate::{Configuration, ConfigurationRepo};
-use crate::repo::{Account, AccountRepo, is_anchor_exists};
+use inject::{get, container};
+use crate::{AccountRepo, Configuration, ConfigurationRepo};
+use crate::account_service::{AccountServiceTrait, AccountService};
+use crate::repository::account_repo::AccountRepoTrait;
+use crate::repository::repo::{Account, is_anchor_exists};
+use crate::tests::test_util::init_config;
 
 #[test]
 fn anchor_ex_test() {
-    let a = Configuration {
-        lambda: Principal::anonymous(),
-        token_ttl: Duration::from_secs(0),
-        token_refresh_ttl: Duration::from_secs(0),
-        key: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        whitelisted: Vec::default()
-    };
-    ConfigurationRepo::save(a);
+    init_config();
     let acc = Account {
         anchor: 123,
         principal_id: "".to_string(),
@@ -21,7 +18,8 @@ fn anchor_ex_test() {
         personas: vec![],
         access_points: vec![],
     };
-    AccountRepo::store_account(acc);
+    let ar = AccountRepo {};
+    ar.store_account(acc);
     let a = is_anchor_exists(123);
     assert!(a)
 }
