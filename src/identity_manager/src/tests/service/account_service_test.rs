@@ -1,26 +1,15 @@
-#![feature(use_extern_macros)]
-
-use std::sync::Arc;
-use std::time::Duration;
-
-use inject::{container, get};
 use mockers::Scenario;
-
-use crate::{AccountRepo, AccountService, AccountServiceTrait, AdminRepo, Configuration, PhoneNumberService, Principal};
+use crate::{AccountRepo, AccountService, AccountServiceTrait, ic_service, PhoneNumberService};
 use crate::repository::account_repo::AccountRepoTrait;
 use crate::repository::encrypt::encrypted_repo::EncryptedRepo;
 use crate::repository::phone_number_repo::PhoneNumberRepo;
 use crate::repository::repo::Account;
-use crate::service::ic_service;
-use crate::tests::test_util;
 use crate::tests::test_util::init_config;
-
-use super::*;
 
 #[test]
 fn test_get_account_expect_acc_frm_trait() {
     let scenario = Scenario::new();
-    let (mut cond, cond_handle) = scenario.create_mock_for::<dyn AccountRepoTrait>();
+    let (cond, cond_handle) = scenario.create_mock_for::<dyn AccountRepoTrait>();
     let v = Account {
         anchor: 5,
         principal_id: "".to_string(),
