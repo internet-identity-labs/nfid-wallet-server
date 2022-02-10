@@ -1,5 +1,5 @@
 use crate::http::requests::AccountResponse;
-use crate::{ConfigurationRepo, HttpResponse, phone_number_service};
+use crate::{ConfigurationRepo, HttpResponse};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::phone_number_service::PhoneNumberServiceTrait;
 use crate::repository::account_repo::AccountRepoTrait;

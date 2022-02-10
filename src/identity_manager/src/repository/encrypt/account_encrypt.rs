@@ -2,11 +2,11 @@ extern crate base64;
 
 use std::io::Cursor;
 use std::option::Option;
-use inject::{container, get};
+
 use magic_crypt::{MagicCrypt256, MagicCryptTrait, new_magic_crypt};
 use magic_crypt::generic_array::typenum::U256;
 
-use crate::{AccessPoint, Configuration, ConfigurationRepo};
+use crate::{AccessPoint, ConfigurationRepo};
 use crate::repository::repo::{Account, Persona};
 use crate::repository::encrypt::encrypted_repo::{EncryptedAccessPoint, EncryptedAccount, EncryptedPersona};
 
