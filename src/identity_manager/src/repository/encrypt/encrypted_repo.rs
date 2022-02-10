@@ -1,6 +1,7 @@
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::storage;
-
+#[cfg(test)]
+use ic_cdk::storage as Instant;
 
 use crate::repository::repo::{Account, EncryptedAccounts, is_anchor_exists};
 use crate::repository::encrypt::account_encrypt::{decrypt_account, encrypt, encrypt_account};

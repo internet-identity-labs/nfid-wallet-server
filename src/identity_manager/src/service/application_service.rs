@@ -1,6 +1,6 @@
-use crate::{HttpResponse};
+use crate::{AccountRepo, HttpResponse};
 use crate::repository::account_repo::AccountRepoTrait;
-use crate::repository::application_repo::{ApplicationRepoTrait};
+use crate::repository::application_repo::{ApplicationRepo, ApplicationRepoTrait};
 use crate::repository::repo::{Account, Application};
 use crate::response_mapper::{to_error_response, to_success_response};
 

@@ -5,10 +5,10 @@ use ic_cdk::api::time;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::storage;
-
+use crate::repository::account_repo::{AccountRepo, AccountRepoTrait};
 
 use crate::repository::encrypt::account_encrypt::{decrypt_phone_number, encrypt};
-use crate::repository::encrypt::encrypted_repo::{EncryptedAccount};
+use crate::repository::encrypt::encrypted_repo::{EncryptedAccount, EncryptedRepo};
 use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]

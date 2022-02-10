@@ -1,11 +1,11 @@
 use std::time::Duration;
-
-
-
-
-use ic_cdk::{trap};
+use std::any::Any;
+use std::cell::RefCell;
+use std::sync::Arc;
+use ic_cdk::export::Principal;
+use ic_cdk::{print, trap};
 use ic_cdk_macros::*;
-
+use inject::{container, get};
 
 use service::{access_point_service, account_service, persona_service, phone_number_service};
 use repository::repo::{AccessPoint, AdminRepo, Application, Configuration, ConfigurationRepo};
@@ -68,7 +68,7 @@ async fn validate_phone_number(phone_number: String) -> HttpResponse<bool> {
 
 #[update]
 async fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
-    let phone_number_service = get_phone_number_service();
+    let mut phone_number_service = get_phone_number_service();
     phone_number_service.post_token(request)
 }
 
@@ -92,37 +92,37 @@ async fn get_account() -> HttpResponse<AccountResponse> {
 
 #[update]
 async fn read_access_points() -> HttpResponse<Vec<AccessPoint>> {
-    let access_point_service = get_access_point_service();
+    let mut access_point_service = get_access_point_service();
     access_point_service.read_access_points()
 }
 
 #[update]
 async fn create_access_point(access_point: AccessPoint) -> HttpResponse<Vec<AccessPoint>> {
-    let access_point_service = get_access_point_service();
+    let mut access_point_service = get_access_point_service();
     access_point_service.create_access_point(access_point)
 }
 
 #[update]
 async fn update_access_point(access_point: AccessPoint) -> HttpResponse<Vec<AccessPoint>> {
-    let access_point_service = get_access_point_service();
+    let mut access_point_service = get_access_point_service();
     access_point_service.update_access_point(access_point)
 }
 
 #[update]
 async fn remove_access_point(access_point: AccessPoint) -> HttpResponse<Vec<AccessPoint>> {
-    let access_point_service = get_access_point_service();
+    let mut access_point_service = get_access_point_service();
     access_point_service.remove_access_point(access_point)
 }
 
 #[update]
 async fn create_persona(persona: PersonaVariant) -> HttpResponse<AccountResponse> {
-    let persona_service = get_persona_service();
+    let mut persona_service = get_persona_service();
     persona_service.create_persona(persona)
 }
 
 #[update]
 async fn read_personas() -> HttpResponse<Vec<PersonaVariant>> {
-    let persona_service = get_persona_service();
+    let mut persona_service = get_persona_service();
     persona_service.read_personas()
 }
 
