@@ -2,7 +2,8 @@ use crate::mapper::persona_mapper::persona_to_persona_response;
 use crate::repository::repo::Account;
 use crate::http::requests::AccountResponse;
 use crate::{AccessPoint, HTTPAccountRequest};
-use crate::repo::Persona;
+use crate::repository::repo::Persona;
+use crate::service::ic_service;
 
 pub fn account_to_account_response(account: Account) -> AccountResponse {
     let personas_r = account.personas.iter()
@@ -19,7 +20,7 @@ pub fn account_to_account_response(account: Account) -> AccountResponse {
 }
 
 pub fn account_request_to_account(account_request: HTTPAccountRequest) -> Account {
-    let principal_id = ic_cdk::api::caller().to_text();
+    let principal_id = ic_service::get_caller().to_text();
     let access_points: Vec<AccessPoint> = Vec::new();
     let personas: Vec<Persona> = Vec::new();
     Account {

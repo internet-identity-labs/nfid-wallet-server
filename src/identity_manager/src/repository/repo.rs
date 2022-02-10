@@ -6,8 +6,10 @@ use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::storage;
 
+
 use crate::repository::encrypt::account_encrypt::{decrypt_phone_number, encrypt};
-use crate::repository::encrypted_repo::{EncryptedAccount, EncryptedRepo};
+use crate::repository::encrypt::encrypted_repo::{EncryptedAccount};
+use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
 pub struct AccessPoint {
@@ -49,22 +51,14 @@ pub struct Configuration {
     pub token_ttl: Duration,
     pub token_refresh_ttl: Duration,
     pub key: [u8; 32],
-    pub whitelisted: Vec<String>
+    pub whitelisted: Vec<String>,
 }
 
 pub type EncryptedAccounts = BTreeMap<String, EncryptedAccount>;
+//todo rethink visibility
 pub type Applications = BTreeSet<Application>;
 pub type Tokens = HashMap<blake3::Hash, (blake3::Hash, u64)>;
-
-type PhoneNumbers = HashSet<blake3::Hash>;
-
-pub struct AccountRepo {}
-
-pub struct AccessPointRepo {}
-
-pub struct PersonaRepo {}
-
-pub struct PhoneNumberRepo {}
+pub type PhoneNumbers = HashSet<blake3::Hash>;
 
 pub struct TokenRepo {}
 
@@ -72,51 +66,6 @@ pub struct AdminRepo {}
 
 pub struct ConfigurationRepo {}
 
-pub struct ApplicationRepo {}
-
-
-impl AccountRepo {
-    pub fn create_account(account: Account) -> Option<Account> {
-        EncryptedRepo::create_account(account)
-    }
-
-    pub fn store_account(account: Account) -> Option<Account> {
-        EncryptedRepo::store_account(account)
-    }
-
-    pub fn get_account() -> Option<Account> {
-        EncryptedRepo::get_account()
-    }
-}
-
-impl AccessPointRepo {
-    pub fn get_access_points() -> Option<Vec<AccessPoint>> {
-        AccountRepo::get_account()
-            .map(|x| x.access_points.clone()) //todo &
-    }
-
-    pub fn store_access_points(access_points: Vec<AccessPoint>) -> Option<Account> {
-        let mut acc = AccountRepo::get_account()
-            .unwrap().clone();
-        acc.access_points = access_points;
-        AccountRepo::store_account(acc)
-    }
-}
-
-impl PersonaRepo {
-    pub fn get_personas() -> Option<Vec<Persona>> {
-        AccountRepo::get_account()
-            .map(|x| x.personas.clone()) //todo &
-    }
-
-    pub fn store_persona(persona: Persona) -> Option<Account> {
-        let acc = AccountRepo::get_account();
-        if acc.is_none() { return None; }
-        let mut account = acc.unwrap().clone();
-        account.personas.push(persona);
-        AccountRepo::store_account(account)
-    }
-}
 
 impl AdminRepo {
     pub fn get() -> Principal {
@@ -125,20 +74,6 @@ impl AdminRepo {
 
     pub fn save(principal: Principal) -> () {
         storage::get_mut::<Option<Principal>>().replace(principal);
-    }
-}
-
-impl PhoneNumberRepo {
-    pub fn is_exist(phone_number_hash: &blake3::Hash) -> bool {
-        storage::get::<PhoneNumbers>().contains(phone_number_hash)
-    }
-
-    pub fn add(phone_number_hash: blake3::Hash) -> () {
-        storage::get_mut::<PhoneNumbers>().insert(phone_number_hash);
-    }
-
-    pub fn add_all(phone_number_hashes: HashSet<blake3::Hash>) -> () {
-        storage::get_mut::<PhoneNumbers>().extend(phone_number_hashes);
     }
 }
 
@@ -158,7 +93,7 @@ impl TokenRepo {
     }
 }
 
-impl ConfigurationRepo {
+impl ConfigurationRepo { //todo fix Principle not implement default!
     pub fn get() -> &'static Configuration {
         storage::get::<Option<Configuration>>().as_ref().unwrap()
     }
@@ -168,41 +103,8 @@ impl ConfigurationRepo {
     }
 }
 
-impl ApplicationRepo {
-    pub fn create_application(application: Application) -> Vec<Application> {
-        let applications = storage::get_mut::<Applications>();
-        applications.insert(application.clone());
-        applications.iter()
-            .map(|p| p.clone())
-            .collect()
-    }
 
-    pub fn read_applications() -> Vec<Application> {
-        storage::get_mut::<Applications>().iter()
-            .map(|p| p.clone())
-            .collect()
-    }
-
-    pub fn delete_application(name: String) -> bool {
-        let app_to_remove = storage::get_mut::<Applications>().iter()
-            .find(|a| a.name.eq(&name));
-        match app_to_remove {
-            None => { false }
-            Some(app) => {
-                storage::get_mut::<Applications>()
-                    .remove(app)
-            }
-        }
-    }
-
-    pub fn is_application_exists(application: &Application) -> bool {
-        let applications = storage::get_mut::<Applications>();
-        applications.iter()
-            .any(|a| a.name.eq(&application.name) || a.domain.eq(&application.domain))
-    }
-}
-
-pub fn is_anchor_exists(anch: u64) -> bool {
+pub fn is_anchor_exists(anch: u64) -> bool { //todo move somewhere
     let anchor = encrypt(anch.to_string());
     let accounts = storage::get_mut::<EncryptedAccounts>();
     accounts.into_iter()
@@ -226,7 +128,7 @@ pub fn pre_upgrade() {
         accounts.push(p.1.clone());
     }
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
-    match storage::stable_save((accounts, admin)) { _ => ()};
+    match storage::stable_save((accounts, admin)) { _ => () };
 }
 
 pub fn post_upgrade() {
@@ -237,5 +139,6 @@ pub fn post_upgrade() {
         phone_numbers.insert(blake3::keyed_hash(&ConfigurationRepo::get().key, decrypt_phone_number(u).clone().as_bytes()));
     }
     storage::get_mut::<Option<Principal>>().replace(admin);
-    PhoneNumberRepo::add_all(phone_numbers);
+    let pn_repo = PhoneNumberRepo {}; //TODO test container
+    pn_repo.add_all(phone_numbers);
 }

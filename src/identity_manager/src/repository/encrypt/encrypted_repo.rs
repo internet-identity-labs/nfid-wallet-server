@@ -1,12 +1,10 @@
-
-
 use ic_cdk::export::candid::{CandidType, Deserialize};
-
 use ic_cdk::storage;
 
 
-use crate::repo::{Account, EncryptedAccounts, is_anchor_exists};
+use crate::repository::repo::{Account, EncryptedAccounts, is_anchor_exists};
 use crate::repository::encrypt::account_encrypt::{decrypt_account, encrypt, encrypt_account};
+use crate::service::ic_service;
 
 #[derive(Default, Clone, Debug, CandidType, Deserialize, PartialEq)]
 pub struct EncryptedAccessPoint {
@@ -57,7 +55,7 @@ impl EncryptedRepo {
     }
 
     pub fn get_account() -> Option<Account> {
-        let princ = &ic_cdk::api::caller().to_text();
+        let princ = ic_service::get_caller().to_text();
         let accounts = storage::get_mut::<EncryptedAccounts>();
         match accounts.get(&encrypt(princ.to_owned())) {
             None => { None }
