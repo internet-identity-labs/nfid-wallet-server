@@ -1,14 +1,7 @@
 use std::time::Duration;
-
-
-
-
 use ic_cdk::{trap};
 use ic_cdk_macros::*;
-
-
 use service::{access_point_service, account_service, persona_service, phone_number_service};
-use repository::repo::{AccessPoint, AdminRepo, Application, Configuration, ConfigurationRepo};
 use crate::account_service::{AccountService, AccountServiceTrait};
 use crate::persona_service::{PersonaService, PersonaServiceTrait};
 use crate::access_point_service::{AccessPointService, AccessPointServiceTrait};
@@ -17,7 +10,7 @@ use crate::repository::persona_repo::PersonaRepo;
 use crate::application_service::ApplicationService;
 use crate::container::container_wrapper;
 use crate::container_wrapper::{get_access_point_service, get_account_service, get_application_service, get_persona_service, get_phone_number_service};
-use crate::repository::application_repo::ApplicationRepo;
+use crate::repository::application_repo::{Application, ApplicationRepo};
 use crate::service::application_service::ApplicationServiceTrait;
 use crate::service::phone_number_service::PhoneNumberServiceTrait;
 
@@ -26,8 +19,9 @@ use crate::http::requests::{AccountResponse, PersonaVariant};
 use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
 use crate::repository::account_repo::AccountRepo;
-use crate::requests::{ConfigurationRequest, HTTPAccountRequest, HTTPVerifyPhoneNumberRequest};
-use crate::requests::HTTPAccountUpdateRequest;
+use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
+use crate::requests::{ConfigurationRequest, AccountRequest, HTTPVerifyPhoneNumberRequest, AccessPointResponse, AccessPointRequest};
+use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, unauthorized};
 use crate::service::{application_service, ic_service};
 
@@ -49,12 +43,13 @@ async fn configure(request: ConfigurationRequest) -> () {
     if !AdminRepo::get().eq(&ic_service::get_caller()) {
         trap("Unauthorized")
     }
+
     let configuration = Configuration {
         lambda: request.lambda,
         token_ttl: Duration::from_secs(request.token_ttl),
         token_refresh_ttl: Duration::from_secs(request.token_refresh_ttl),
         key: request.key,
-        whitelisted: request.whitelisted_phone_numbers.unwrap_or(Vec::default()),
+        whitelisted: request.whitelisted_phone_numbers.unwrap_or(Vec::default())
     };
 
     ConfigurationRepo::save(configuration);
@@ -73,13 +68,13 @@ async fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool>
 }
 
 #[update]
-async fn create_account(account_request: HTTPAccountRequest) -> HttpResponse<AccountResponse> {
+async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     account_service.create_account(account_request)
 }
 
 #[update]
-async fn update_account(account_request: HTTPAccountUpdateRequest) -> HttpResponse<AccountResponse> {
+async fn update_account(account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     account_service.update_account(account_request)
 }
@@ -91,25 +86,25 @@ async fn get_account() -> HttpResponse<AccountResponse> {
 }
 
 #[update]
-async fn read_access_points() -> HttpResponse<Vec<AccessPoint>> {
+async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.read_access_points()
 }
 
 #[update]
-async fn create_access_point(access_point: AccessPoint) -> HttpResponse<Vec<AccessPoint>> {
+async fn create_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.create_access_point(access_point)
 }
 
 #[update]
-async fn update_access_point(access_point: AccessPoint) -> HttpResponse<Vec<AccessPoint>> {
+async fn update_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.update_access_point(access_point)
 }
 
 #[update]
-async fn remove_access_point(access_point: AccessPoint) -> HttpResponse<Vec<AccessPoint>> {
+async fn remove_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.remove_access_point(access_point)
 }

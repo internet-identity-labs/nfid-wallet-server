@@ -1,6 +1,7 @@
+use std::collections::HashSet;
 use crate::AccountRepo;
-use crate::repository::account_repo::AccountRepoTrait;
-use crate::repository::repo::{Account, is_anchor_exists};
+use crate::repository::account_repo::{Account, AccountRepoTrait};
+use crate::repository::repo::is_anchor_exists;
 use crate::tests::test_util::init_config;
 
 #[test]
@@ -12,7 +13,8 @@ fn anchor_ex_test() {
         name: "".to_string(),
         phone_number: "".to_string(),
         personas: vec![],
-        access_points: vec![],
+        access_points: HashSet::new(),
+        base_fields: Default::default()
     };
     let ar = AccountRepo {};
     ar.store_account(acc);

@@ -1,7 +1,6 @@
 use crate::{HttpResponse};
-use crate::repository::account_repo::AccountRepoTrait;
-use crate::repository::application_repo::{ApplicationRepoTrait};
-use crate::repository::repo::{Account, Application};
+use crate::repository::account_repo::{Account, AccountRepoTrait};
+use crate::repository::application_repo::{Application, ApplicationRepoTrait};
 use crate::response_mapper::{to_error_response, to_success_response};
 
 pub trait ApplicationServiceTrait {

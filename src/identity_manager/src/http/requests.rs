@@ -1,10 +1,10 @@
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
+use crate::repository::access_point_repo::AccessPoint;
 
-use crate::repository::repo::AccessPoint;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct HTTPAccountRequest {
+pub struct AccountRequest {
     pub name: String,
     pub phone_number: String,
     pub token: String,
@@ -12,7 +12,7 @@ pub struct HTTPAccountRequest {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct HTTPAccountUpdateRequest {
+pub struct AccountUpdateRequest {
     pub name: Option<String>,
 }
 
@@ -30,6 +30,26 @@ pub struct AccountResponse {
     pub access_points: Vec<AccessPoint>,
     pub personas: Vec<PersonaVariant>,
     pub anchor: u64,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct AccessPointResponse {
+    pub pub_key: String,
+    pub last_used: String,
+    pub make: String,
+    pub model: String,
+    pub browser: String,
+    pub name: String,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct AccessPointRequest {
+    pub pub_key: String,
+    pub last_used: String,
+    pub make: String,
+    pub model: String,
+    pub browser: String,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

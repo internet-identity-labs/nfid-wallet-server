@@ -1,7 +1,14 @@
 use ic_cdk::storage;
 
-use crate::Application;
 use crate::repository::repo::Applications;
+use ic_cdk::export::candid::{CandidType, Deserialize};
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialOrd, PartialEq, Ord, Eq)]
+pub struct Application {
+    pub domain: String,
+    pub user_limit: u16,
+    pub name: String,
+}
 
 pub trait ApplicationRepoTrait {
     fn create_application(&self, application: Application) -> Vec<Application>;
