@@ -57,3 +57,26 @@ jobs:
             [[ 20 -gt $i ]] || exit 255;
             [[ "()" != $im ]] || break;
           done
+
+      - name: Checkout remote frontend repository to frontend directory.
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.PAT }}
+          repository: InternetIdentityLabs/MultipassFrontend
+          path: frontend
+
+      - name: Update did files.
+        run: |
+          cp ./.dfx/local/canisters/identity_manager/identity_manager.did.d.ts ./frontend/frontend/services/identity-manager/identity_manager.did.d.ts -f
+          cp ./.dfx/local/canisters/identity_manager/identity_manager.did.js ./frontend/frontend/services/identity-manager/identity_manager.did.js -f
+          cp ./.dfx/local/canisters/pub_sub_channel/pub_sub_channel.did.d.ts ./frontend/frontend/services/pub-sub-channel/pub_sub_channel.did.d.ts -f
+          cp ./.dfx/local/canisters/pub_sub_channel/pub_sub_channel.did.js ./frontend/frontend/services/pub-sub-channel/pub_sub_channel.did.js -f
+
+      - name: Create a pull request to remote frontend repository.
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.PAT }}
+          commit-message: Update did files.
+          title: Update did files.
+          branch: update-did-files
+          path: frontend
