@@ -1,15 +1,11 @@
 extern crate base64;
-
 use std::io::Cursor;
 use std::option::Option;
-
 use magic_crypt::{MagicCrypt256, MagicCryptTrait, new_magic_crypt};
 use magic_crypt::generic_array::typenum::U256;
-
 use crate::{ConfigurationRepo};
 use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::account_repo::Account;
-use crate::repository::repo::{BasicEntity};
 use crate::repository::encrypt::encrypted_repo::{EncryptedAccessPoint, EncryptedAccount, EncryptedPersona};
 use crate::repository::persona_repo::Persona;
 

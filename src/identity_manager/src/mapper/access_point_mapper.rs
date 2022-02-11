@@ -1,10 +1,6 @@
-use crate::mapper::persona_mapper::persona_to_persona_response;
 use crate::repository::repo::{BasicEntity};
-use crate::http::requests::AccountResponse;
-use crate::{AccountRequest};
 use crate::repository::access_point_repo::AccessPoint;
 use crate::requests::{AccessPointRequest, AccessPointResponse};
-use crate::service::ic_service;
 
 pub fn access_point_to_access_point_response(access_point: AccessPoint) -> AccessPointResponse {
     AccessPointResponse {

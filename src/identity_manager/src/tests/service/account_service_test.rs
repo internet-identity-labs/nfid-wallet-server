@@ -1,12 +1,11 @@
 use std::collections::HashSet;
-use std::str::FromStr;
 use mockers::Scenario;
-use crate::{AccountRepo, AccountRequest, AccountService, AccountServiceTrait, ConfigurationRepo, AccountUpdateRequest, HTTPVerifyPhoneNumberRequest, ic_service, PhoneNumberService, PhoneNumberServiceTrait};
+use crate::{AccountRepo, AccountRequest, AccountService, AccountServiceTrait, AccountUpdateRequest, HTTPVerifyPhoneNumberRequest, ic_service, PhoneNumberService, PhoneNumberServiceTrait};
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::encrypt::encrypted_repo::EncryptedRepo;
-use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
+use crate::repository::phone_number_repo::{PhoneNumberRepo};
 use crate::repository::repo::BasicEntity;
-use crate::repository::token_repo::{TokenRepo, TokenRepoTrait};
+use crate::repository::token_repo::{TokenRepo};
 use crate::tests::test_util::init_config;
 
 #[test]

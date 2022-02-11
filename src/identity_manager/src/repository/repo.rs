@@ -1,13 +1,10 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
-use std::hash::{Hash, Hasher};
+use std::hash::{Hash};
 use std::time::Duration;
-use ic_cdk::api::time;
-
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::storage;
 use crate::ic_service;
-use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::application_repo::Application;
 
 use crate::repository::encrypt::account_encrypt::{decrypt_phone_number, encrypt};

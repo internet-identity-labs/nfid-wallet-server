@@ -7,9 +7,7 @@ use crate::HTTPVerifyPhoneNumberRequest;
 use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
 use crate::response_mapper::{to_success_response, too_many_requests};
 use crate::unauthorized;
-#[cfg(test)]
-use mockers_derive::mocked;
-use crate::repository::token_repo::{TokenRepo, TokenRepoTrait};
+use crate::repository::token_repo::{TokenRepoTrait};
 
 pub trait PhoneNumberServiceTrait {
     fn add(&self, phone_number_hash: blake3::Hash) -> ();
@@ -100,13 +98,6 @@ fn is_whitelisted(phone_number: &String) -> bool {
 
 fn is_lambda(caller: &Principal) -> bool {
     ConfigurationRepo::get().lambda.eq(caller)
-}
-
-fn is_too_many_requests(phone_number_hash: &Hash, token_repo: TokenRepo) -> bool {
-    token_repo.get(
-        phone_number_hash,
-        ConfigurationRepo::get().token_refresh_ttl,
-    ).is_some()
 }
 
 

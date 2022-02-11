@@ -4,7 +4,6 @@ use crate::repository::access_point_repo::{AccessPoint, AccessPointRepoTrait};
 use crate::requests::{AccessPointRequest, AccessPointResponse};
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
 
-
 pub trait AccessPointServiceTrait {
     fn read_access_points(&self) -> HttpResponse<Vec<AccessPointResponse>>;
     fn create_access_point(&self, access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>>;
@@ -55,12 +54,12 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
     fn update_access_point(&self, access_point_update_request: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
         match self.access_point_repo.get_access_points() {
             Some(mut content) => {
-                let mut aps = content.iter()
+                let aps = content.iter()
                     .find(|x| x.pub_key == access_point_update_request.pub_key);
                 if aps.is_none() {
                     return to_error_response("Access Point not exists.");
                 }
-                let mut access_point = access_point_update_request_to_access_point(access_point_update_request, aps.unwrap().clone());
+                let access_point = access_point_update_request_to_access_point(access_point_update_request, aps.unwrap().clone());
                 content.replace(access_point);
                 self.access_point_repo.store_access_points(content.clone());
                 let response: Vec<AccessPointResponse> = content.into_iter()
