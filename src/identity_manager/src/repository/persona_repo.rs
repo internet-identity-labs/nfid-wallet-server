@@ -1,7 +1,20 @@
 use crate::AccountRepo;
-use crate::repository::account_repo::AccountRepoTrait;
-use crate::repository::repo::{Account, Persona};
+use crate::repository::account_repo::{Account, AccountRepoTrait};
+use crate::repository::repo::BasicEntity;
+use ic_cdk::export::candid::{CandidType, Deserialize};
+#[cfg(test)]
+use mockers_derive::mocked;
 
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct Persona {
+    pub anchor: Option<u64>,
+    pub domain: String,
+    pub persona_id: Option<String>,
+    pub base_fields: BasicEntity,
+}
+
+#[cfg_attr(test, mocked)]
 pub trait PersonaRepoTrait {
     fn get_personas(&self) -> Option<Vec<Persona>>;
     fn store_persona(&self, persona: Persona) -> Option<Account>;

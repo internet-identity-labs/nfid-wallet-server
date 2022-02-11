@@ -1,49 +1,19 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::time::Duration;
 use ic_cdk::api::time;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::storage;
-
+use crate::ic_service;
+use crate::repository::access_point_repo::AccessPoint;
+use crate::repository::application_repo::Application;
 
 use crate::repository::encrypt::account_encrypt::{decrypt_phone_number, encrypt};
 use crate::repository::encrypt::encrypted_repo::{EncryptedAccount};
 use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
 
-#[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
-pub struct AccessPoint {
-    pub pub_key: String,
-    pub last_used: String,
-    pub make: String,
-    pub model: String,
-    pub browser: String,
-    pub name: String,
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct Persona {
-    pub anchor: Option<u64>,
-    pub domain: String,
-    pub persona_id: Option<String>,
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct Account {
-    pub anchor: u64,
-    pub principal_id: String,
-    pub name: String,
-    pub phone_number: String,
-    pub access_points: Vec<AccessPoint>,
-    pub personas: Vec<Persona>,
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize, PartialOrd, PartialEq, Ord, Eq)]
-pub struct Application {
-    pub domain: String,
-    pub user_limit: u16,
-    pub name: String,
-}
 
 #[derive(Debug, Deserialize)]
 pub struct Configuration {
@@ -60,12 +30,32 @@ pub type Applications = BTreeSet<Application>;
 pub type Tokens = HashMap<blake3::Hash, (blake3::Hash, u64)>;
 pub type PhoneNumbers = HashSet<blake3::Hash>;
 
-pub struct TokenRepo {}
 
 pub struct AdminRepo {}
 
 pub struct ConfigurationRepo {}
 
+#[derive(Clone, Debug, CandidType, Deserialize, Default, PartialEq, Eq, Copy, Hash)]
+pub struct BasicEntity {
+    created_date: u64,
+    modified_date: u64,
+}
+
+impl BasicEntity {
+    pub fn get_created_date(self) -> u64 {
+        self.created_date
+    }
+    pub fn get_modified_date(self) -> u64 {
+        self.modified_date
+    }
+    pub fn update_modified_date(mut self) -> u64 {
+        self.modified_date = ic_service::get_time();
+        self.modified_date
+    }
+    pub fn new() -> BasicEntity {
+        BasicEntity { created_date: ic_service::get_time(), modified_date: ic_service::get_time() }
+    }
+}
 
 impl AdminRepo {
     pub fn get() -> Principal {
@@ -77,23 +67,10 @@ impl AdminRepo {
     }
 }
 
-impl TokenRepo {
-    pub fn add(phone_number: blake3::Hash, token: blake3::Hash) -> () {
-        let time_window: u64 = time() - ConfigurationRepo::get().token_ttl.as_nanos() as u64;
-        storage::get_mut::<Tokens>().retain(|_, (_, t)| *t > time_window);
-        storage::get_mut::<Tokens>().insert(phone_number, (token, time()));
-    }
 
-    pub fn get(phone_number: &blake3::Hash, duration: Duration) -> Option<&blake3::Hash> {
-        let time_window: u64 = time() - duration.as_nanos() as u64;
-        storage::get::<Tokens>()
-            .get(phone_number)
-            .filter(|(_, t)| *t > time_window)
-            .map(|(v, _)| v)
-    }
-}
 
-impl ConfigurationRepo { //todo fix Principle not implement default!
+impl ConfigurationRepo {
+    //todo fix Principle not implement default!
     pub fn get() -> &'static Configuration {
         storage::get::<Option<Configuration>>().as_ref().unwrap()
     }

@@ -1,7 +1,10 @@
 use std::collections::HashSet;
 use ic_cdk::storage;
 use crate::repository::repo::PhoneNumbers;
+#[cfg(test)]
+use mockers_derive::mocked;
 
+#[cfg_attr(test, mocked)]
 pub trait PhoneNumberRepoTrait {
     fn is_exist(&self, phone_number_hash: &blake3::Hash) -> bool;
     fn add(&self, phone_number_hash: blake3::Hash) -> ();

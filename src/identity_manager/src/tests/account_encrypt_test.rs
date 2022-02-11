@@ -1,6 +1,9 @@
-use crate::AccessPoint;
+use std::collections::HashSet;
+use blake3::Hash;
+use crate::repository::access_point_repo::AccessPoint;
+use crate::repository::account_repo::Account;
 use crate::repository::encrypt::account_encrypt::{decrypt_access_point, decrypt_account, decrypt_persona, encrypt_access_point, encrypt_account, encrypt_persona};
-use crate::repository::repo::{Account, Persona};
+use crate::repository::persona_repo::Persona;
 use crate::tests::test_util::init_config;
 
 #[test]
@@ -13,9 +16,10 @@ fn encrypt_decrypt_test() {
         model: "".to_string(),
         browser: "".to_string(),
         name: "".to_string(),
+        base_fields: Default::default(),
     };
-    let mut apv = Vec::new();
-    apv.push(ap.clone());
+    let mut apv = HashSet::new();
+    apv.insert(ap.clone());
     let acc = Account {
         anchor: 0,
         principal_id: "".to_string(),
@@ -23,6 +27,7 @@ fn encrypt_decrypt_test() {
         phone_number: "".to_string(),
         personas: vec![],
         access_points: apv,
+        base_fields: Default::default(),
     };
     let encrypted = encrypt_account(acc.clone());
     assert_ne!(acc.name, encrypted.name);
@@ -34,7 +39,7 @@ fn encrypt_decrypt_test() {
     assert_eq!(acc.principal_id, decrypted.principal_id);
     assert_eq!(acc.phone_number, decrypted.phone_number);
     assert_eq!(acc.anchor, decrypted.anchor);
-    let dap = decrypted.access_points.get(0).unwrap();
+    let dap = decrypted.access_points.get(&ap).unwrap();
     assert_eq!(ap.pub_key, dap.pub_key);
     assert_eq!(ap.last_used, dap.last_used);
     assert_eq!(ap.make, dap.make);
@@ -50,6 +55,7 @@ fn encrypt_decrypt_persona() {
         anchor: Option::from(1),
         domain: "domain".to_string(),
         persona_id: Option::from("id".to_string()),
+        base_fields: Default::default(),
     };
     let encrypted = encrypt_persona(persona.clone());
     assert_ne!(persona.anchor.unwrap().to_string(), encrypted.anchor.clone().unwrap().to_string());
@@ -68,6 +74,7 @@ fn encrypt_decrypt_nullable_persona() {
         anchor: None,
         domain: "domain".to_string(),
         persona_id: None,
+        base_fields: Default::default(),
     };
     let encrypted = encrypt_persona(persona.clone());
     assert_eq!(persona.anchor.unwrap_or(0).to_string(), encrypted.anchor.clone().unwrap_or("0".to_string()).to_string());
@@ -89,6 +96,7 @@ fn encrypt_decrypt_access_point() {
         model: "".to_string(),
         browser: "".to_string(),
         name: "".to_string(),
+        base_fields: Default::default(),
     };
     let encrypted = encrypt_access_point(ap.clone());
     assert_ne!(ap.pub_key, encrypted.pub_key);

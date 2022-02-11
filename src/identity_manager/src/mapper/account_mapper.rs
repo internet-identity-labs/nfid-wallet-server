@@ -1,8 +1,11 @@
+use std::collections::HashSet;
 use crate::mapper::persona_mapper::persona_to_persona_response;
-use crate::repository::repo::Account;
 use crate::http::requests::AccountResponse;
-use crate::{AccessPoint, HTTPAccountRequest};
-use crate::repository::repo::Persona;
+use crate::{AccountRequest};
+use crate::repository::access_point_repo::AccessPoint;
+use crate::repository::account_repo::Account;
+use crate::repository::persona_repo::Persona;
+use crate::repository::repo::BasicEntity;
 use crate::service::ic_service;
 
 pub fn account_to_account_response(account: Account) -> AccountResponse {
@@ -14,21 +17,21 @@ pub fn account_to_account_response(account: Account) -> AccountResponse {
         principal_id: account.principal_id,
         name: account.name,
         phone_number: account.phone_number,
-        access_points: account.access_points,
+        access_points: account.access_points.into_iter().collect(),
         personas: personas_r,
     }
 }
 
-pub fn account_request_to_account(account_request: HTTPAccountRequest) -> Account {
+pub fn account_request_to_account(account_request: AccountRequest) -> Account {
     let principal_id = ic_service::get_caller().to_text();
-    let access_points: Vec<AccessPoint> = Vec::new();
     let personas: Vec<Persona> = Vec::new();
     Account {
         anchor: account_request.anchor,
         principal_id,
         name: account_request.name,
         phone_number: account_request.phone_number,
-        access_points: access_points,
+        access_points: HashSet::new(),
         personas,
+        base_fields: BasicEntity::new(),
     }
 }

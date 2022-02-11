@@ -3,7 +3,7 @@ use crate::{ConfigurationRepo, HttpResponse};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::phone_number_service::PhoneNumberServiceTrait;
 use crate::repository::account_repo::AccountRepoTrait;
-use crate::requests::{HTTPAccountRequest, HTTPAccountUpdateRequest};
+use crate::requests::{AccountRequest, AccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
@@ -11,8 +11,8 @@ use crate::util::validation_util::validate_name;
 
 pub trait AccountServiceTrait {
     fn get_account(&mut self) -> HttpResponse<AccountResponse>;
-    fn create_account(&mut self, account_request: HTTPAccountRequest) -> HttpResponse<AccountResponse>;
-    fn update_account(&mut self, account_request: HTTPAccountUpdateRequest) -> HttpResponse<AccountResponse>;
+    fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse>;
+    fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
 }
 
 #[derive(Default)]
@@ -29,9 +29,9 @@ impl<T: AccountRepoTrait, N: PhoneNumberServiceTrait> AccountServiceTrait for Ac
         }
     }
 
-    fn create_account(&mut self, account_request: HTTPAccountRequest) -> HttpResponse<AccountResponse> {
+    fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse> {
         let princ = ic_service::get_caller().to_text();
-        if princ.len() < 10 {
+        if ic_service::is_anonymous(princ) {
             return to_error_response("User is anonymous");
         }
         let phone_number_hash = blake3::keyed_hash(
@@ -71,13 +71,14 @@ impl<T: AccountRepoTrait, N: PhoneNumberServiceTrait> AccountServiceTrait for Ac
         }
     }
 
-    fn update_account(&mut self, account_request: HTTPAccountUpdateRequest) -> HttpResponse<AccountResponse> {
+    fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse> {
         match self.account_repo.get_account() {
             Some(acc) => {
                 let mut new_acc = acc.clone();
                 if !account_request.name.is_none() {
                     new_acc.name = account_request.name.unwrap();
                 }
+                new_acc.base_fields.update_modified_date();
                 self.account_repo.store_account(new_acc.clone());
                 to_success_response(account_to_account_response(new_acc))
             }

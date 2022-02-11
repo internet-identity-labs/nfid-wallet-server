@@ -1,7 +1,22 @@
+use std::collections::HashSet;
 use crate::repository::encrypt::encrypted_repo::EncryptedRepo;
-use crate::repository::repo::Account;
 #[cfg(test)]
 use mockers_derive::mocked;
+use crate::repository::access_point_repo::AccessPoint;
+use crate::repository::persona_repo::Persona;
+use crate::repository::repo::BasicEntity;
+use ic_cdk::export::candid::{CandidType, Deserialize};
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct Account {
+    pub anchor: u64,
+    pub principal_id: String,
+    pub name: String,
+    pub phone_number: String,
+    pub access_points: HashSet<AccessPoint>,
+    pub personas: Vec<Persona>,
+    pub base_fields: BasicEntity,
+}
 
 #[cfg_attr(test, mocked)]
 pub trait AccountRepoTrait {

@@ -5,25 +5,27 @@ use crate::{ConfigurationRepo, ic_service};
 use crate::HttpResponse;
 use crate::HTTPVerifyPhoneNumberRequest;
 use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
-use crate::repository::repo::{TokenRepo};
 use crate::response_mapper::{to_success_response, too_many_requests};
 use crate::unauthorized;
+#[cfg(test)]
+use mockers_derive::mocked;
+use crate::repository::token_repo::{TokenRepo, TokenRepoTrait};
 
 pub trait PhoneNumberServiceTrait {
     fn add(&self, phone_number_hash: blake3::Hash) -> ();
     fn is_exist(&self, phone_number_hash: &blake3::Hash) -> bool;
     fn validate_phone_number(&self, phone_number: String) -> HttpResponse<bool>;
     fn post_token(&self, request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool>;
-    fn validate_token<'a>(&self, phone_number_hash: &'a Hash, token_hash: &'a Hash) -> Result<(), &'a str>;
+    fn validate_token(&self, phone_number_hash: &Hash, token_hash: &Hash) -> Result<(), &str>;
 }
 
 #[derive(Default)]
-pub struct PhoneNumberService<T> {
+pub struct PhoneNumberService<T, N> {
     pub(crate) phone_number_repo: T,
+    pub(crate) token_repo: N,
 }
 
-
-impl<T: PhoneNumberRepoTrait> PhoneNumberServiceTrait for PhoneNumberService<T> {
+impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait> PhoneNumberServiceTrait for PhoneNumberService<T, N> {
     fn add(&self, phone_number_hash: blake3::Hash) -> () {
         self.phone_number_repo.add(phone_number_hash)
     }
@@ -46,7 +48,10 @@ impl<T: PhoneNumberRepoTrait> PhoneNumberServiceTrait for PhoneNumberService<T> 
             phone_number.as_bytes(),
         );
 
-        if is_too_many_requests(&phone_number_hash) {
+        if self.token_repo.get(
+            &phone_number_hash,
+            ConfigurationRepo::get().token_refresh_ttl,
+        ).is_some() {
             return too_many_requests();
         }
 
@@ -69,12 +74,12 @@ impl<T: PhoneNumberRepoTrait> PhoneNumberServiceTrait for PhoneNumberService<T> 
             request.token.as_bytes(),
         );
 
-        TokenRepo::add(phone_number_hash, token_hash);
+        self.token_repo.add(phone_number_hash, token_hash);
         HttpResponse { status_code: 200, data: Some(true), error: None }
     }
 
-    fn validate_token<'a>(&self, phone_number_hash: &'a Hash, token_hash: &'a Hash) -> Result<(), &'a str> {
-        return match TokenRepo::get(
+    fn validate_token(&self, phone_number_hash: &Hash, token_hash: &Hash) -> Result<(), &str> {
+        return match self.token_repo.get(
             phone_number_hash,
             ConfigurationRepo::get().token_ttl,
         ) {
@@ -97,8 +102,8 @@ fn is_lambda(caller: &Principal) -> bool {
     ConfigurationRepo::get().lambda.eq(caller)
 }
 
-fn is_too_many_requests(phone_number_hash: &Hash) -> bool {
-    TokenRepo::get(
+fn is_too_many_requests(phone_number_hash: &Hash, token_repo: TokenRepo) -> bool {
+    token_repo.get(
         phone_number_hash,
         ConfigurationRepo::get().token_refresh_ttl,
     ).is_some()

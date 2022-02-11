@@ -6,9 +6,12 @@ use std::option::Option;
 use magic_crypt::{MagicCrypt256, MagicCryptTrait, new_magic_crypt};
 use magic_crypt::generic_array::typenum::U256;
 
-use crate::{AccessPoint, ConfigurationRepo};
-use crate::repository::repo::{Account, Persona};
+use crate::{ConfigurationRepo};
+use crate::repository::access_point_repo::AccessPoint;
+use crate::repository::account_repo::Account;
+use crate::repository::repo::{BasicEntity};
 use crate::repository::encrypt::encrypted_repo::{EncryptedAccessPoint, EncryptedAccount, EncryptedPersona};
+use crate::repository::persona_repo::Persona;
 
 
 pub fn encrypt_account(account: Account) -> EncryptedAccount {
@@ -21,6 +24,7 @@ pub fn encrypt_account(account: Account) -> EncryptedAccount {
         phone_number: encrypt_string(&crypt, account.phone_number),
         access_points: account.access_points.into_iter().map(|l| encrypt_access_point(l)).collect(),
         personas: account.personas.into_iter().map(|l| encrypt_persona(l)).collect(),
+        base_fields: account.base_fields
     }
 }
 
@@ -34,6 +38,7 @@ pub fn decrypt_account(account: EncryptedAccount) -> Account {
         phone_number: crypt.decrypt_base64_to_string(account.phone_number).unwrap(),
         access_points: account.access_points.into_iter().map(|l| decrypt_access_point(l)).collect(),
         personas: account.personas.into_iter().map(|l| decrypt_persona(l)).collect(),
+        base_fields: account.base_fields
     }
 }
 
@@ -53,6 +58,7 @@ pub fn encrypt_access_point(access_point: AccessPoint) -> EncryptedAccessPoint {
         model: encrypt_string(&crypt, access_point.model),
         browser: encrypt_string(&crypt, access_point.browser),
         name: encrypt_string(&crypt, access_point.name),
+        base_fields: access_point.base_fields
     }
 }
 
@@ -66,6 +72,7 @@ pub fn decrypt_access_point(access_point: EncryptedAccessPoint) -> AccessPoint {
         model: crypt.decrypt_base64_to_string(access_point.model).unwrap(),
         browser: crypt.decrypt_base64_to_string(access_point.browser).unwrap(),
         name: crypt.decrypt_base64_to_string(access_point.name).unwrap(),
+        base_fields: access_point.base_fields
     }
 }
 
@@ -76,6 +83,7 @@ pub fn encrypt_persona(persona: Persona) -> EncryptedPersona {
         anchor: encrypt_optional_number(&crypt, persona.anchor),
         domain: encrypt_string(&crypt, persona.domain.to_string()),
         persona_id: encrypt_optional(&crypt, persona.persona_id),
+        base_fields: persona.base_fields
     }
 }
 
@@ -86,6 +94,7 @@ pub fn decrypt_persona(persona: EncryptedPersona) -> Persona {
         anchor: decrypt_optional_number(&crypt, persona.anchor, &decrypt_number),
         domain: crypt.decrypt_base64_to_string(persona.domain).unwrap(),
         persona_id: decrypt_optional(&crypt, persona.persona_id, &decrypt_as_string),
+        base_fields: persona.base_fields
     }
 }
 
