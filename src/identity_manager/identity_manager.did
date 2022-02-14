@@ -107,6 +107,7 @@ service : () -> {
   configure: (ConfigurationRequest) -> ();
   get_account: () -> (HTTPAccountResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
+  remove_account: () -> (BoolHttpResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
 
   create_persona: (PersonaVariant) -> (HTTPAccountResponse);

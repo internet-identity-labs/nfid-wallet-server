@@ -13,6 +13,7 @@ pub trait AccountServiceTrait {
     fn get_account(&mut self) -> HttpResponse<AccountResponse>;
     fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse>;
     fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
+    fn remove_account(&mut self) -> HttpResponse<bool>;
 }
 
 #[derive(Default)]
@@ -83,6 +84,22 @@ impl<T: AccountRepoTrait, N: PhoneNumberServiceTrait> AccountServiceTrait for Ac
                 to_success_response(account_to_account_response(new_acc))
             }
             None => to_error_response("Unable to find Account.")
+        }
+    }
+
+    fn remove_account(&mut self) -> HttpResponse<bool> {
+        match self.account_repo.remove_account() {
+            Some(content) => {
+                let phone_number_hash = blake3::keyed_hash(
+                    &ConfigurationRepo::get().key,
+                    content.phone_number.as_bytes(),
+                );
+                match self.phone_number_service.remove(&phone_number_hash) {
+                    true => { to_success_response(true) }
+                    false => { to_error_response("Unable to remove Phone Number") }
+                }
+            }
+            None => to_error_response("Unable to remove Account")
         }
     }
 }

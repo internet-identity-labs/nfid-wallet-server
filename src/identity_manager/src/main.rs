@@ -86,6 +86,12 @@ async fn get_account() -> HttpResponse<AccountResponse> {
 }
 
 #[update]
+async fn remove_account() -> HttpResponse<bool> {
+    let mut account_service = get_account_service();
+    account_service.remove_account()
+}
+
+#[update]
 async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.read_access_points()

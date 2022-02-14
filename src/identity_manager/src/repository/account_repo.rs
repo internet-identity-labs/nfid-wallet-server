@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use crate::repository::encrypt::encrypted_repo::EncryptedRepo;
+use crate::repository::encrypt::encrypted_repo::{EncryptedAccount, EncryptedRepo};
 #[cfg(test)]
 use mockers_derive::mocked;
 use crate::repository::access_point_repo::AccessPoint;
@@ -23,6 +23,7 @@ pub trait AccountRepoTrait {
     fn get_account(&self) -> Option<Account>;
     fn create_account(&self, account: Account) -> Option<Account>;
     fn store_account(&self, account: Account) -> Option<Account>;
+    fn remove_account(&self) -> Option<Account>;
 }
 
 #[derive(Default)]
@@ -39,5 +40,9 @@ impl AccountRepoTrait for AccountRepo {
 
     fn store_account(&self, account: Account) -> Option<Account> {
         EncryptedRepo::store_account(account)
+    }
+
+    fn remove_account(&self) -> Option<Account> {
+        EncryptedRepo::remove_account()
     }
 }

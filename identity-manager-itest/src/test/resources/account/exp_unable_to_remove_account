@@ -1,0 +1,7 @@
+(
+  record {
+    data = null;
+    error = opt "Unable to remove Account";
+    status_code = 404 : nat16;
+  },
+)

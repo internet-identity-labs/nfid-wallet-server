@@ -15,6 +15,7 @@ pub trait PhoneNumberServiceTrait {
     fn validate_phone_number(&self, phone_number: String) -> HttpResponse<bool>;
     fn post_token(&self, request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool>;
     fn validate_token(&self, phone_number_hash: &Hash, token_hash: &Hash) -> Result<(), &str>;
+    fn remove(&self, phone_number_hash: &blake3::Hash) -> bool;
 }
 
 #[derive(Default)]
@@ -89,6 +90,10 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait> PhoneNumberServiceTrait for Pho
                 };
             }
         };
+    }
+
+    fn remove(&self, phone_number_hash: &blake3::Hash) -> bool {
+        self.phone_number_repo.remove(phone_number_hash)
     }
 }
 

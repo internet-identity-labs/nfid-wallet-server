@@ -80,5 +80,14 @@ impl EncryptedRepo {
             Some(acc) => { Option::from(decrypt_account(acc.to_owned())) }
         }
     }
+
+    pub fn remove_account() -> Option<Account> {
+        let princ = ic_service::get_caller().to_text();
+        let accounts = storage::get_mut::<EncryptedAccounts>();
+        match accounts.remove(&encrypt(princ.to_owned())) {
+            None => { None }
+            Some(acc) => { Option::from(decrypt_account(acc.to_owned())) }
+        }
+    }
 }
 
