@@ -46,7 +46,6 @@ pub struct EncryptedAccount {
     pub principal_id: String,
     pub name: String,
     pub phone_number: String,
-    pub access_points: HashSet<EncryptedAccessPoint>,
     pub personas: Vec<EncryptedPersona>,
     pub base_fields: BasicEntity,
 }

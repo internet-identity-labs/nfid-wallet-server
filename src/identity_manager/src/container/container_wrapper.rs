@@ -1,5 +1,5 @@
 use inject::{get, container};
-use crate::{AccessPointRepo, PersonaRepo, AccessPointService, AccountRepo, AccountService, ApplicationRepo, ApplicationService, PhoneNumberService, PersonaService};
+use crate::{PersonaRepo, AccountRepo, AccountService, ApplicationRepo, ApplicationService, PhoneNumberService, PersonaService};
 use crate::repository::phone_number_repo::PhoneNumberRepo;
 use crate::repository::token_repo::TokenRepo;
 
@@ -9,10 +9,6 @@ pub fn get_account_service() -> AccountService<AccountRepo, PhoneNumberService<P
 
 pub fn get_phone_number_service() -> PhoneNumberService<PhoneNumberRepo, TokenRepo> {
     get!(&container![], PhoneNumberService<PhoneNumberRepo, TokenRepo>).unwrap()
-}
-
-pub fn get_access_point_service() -> AccessPointService<AccessPointRepo> {
-    get!(&container![], AccessPointService<AccessPointRepo>).unwrap()
 }
 
 pub fn get_persona_service() -> PersonaService<PersonaRepo, ApplicationService<ApplicationRepo, AccountRepo>> {

@@ -29,7 +29,6 @@ type AccountResponse = record {
     principal_id: text;
     name: text;
     phone_number: text;
-    access_points: vec AccessPoint;
     personas: vec PersonaVariant;
 };
 
@@ -50,15 +49,6 @@ type HTTPAccountUpdateRequest = record {
     name: opt text;
 };
 
-type AccessPoint = record {
-    pub_key: text;
-    last_used: text;
-    make: text;
-    model: text;
-    browser: text;
-    name: text;
-};
-
 type Application = record {
     name: text;
     domain: text;
@@ -67,12 +57,6 @@ type Application = record {
 
 type HTTPApplicationResponse = record {
     data: opt vec Application;
-    error: opt Error;
-    status_code: nat16;
-};
-
-type HTTPAccessPointResponse = record {
-    data: opt vec AccessPoint;
     error: opt Error;
     status_code: nat16;
 };
@@ -112,11 +96,6 @@ service : () -> {
 
   create_persona: (PersonaVariant) -> (HTTPAccountResponse);
   read_personas: () -> (HTTPPersonasResponse);
-
-  create_access_point: (AccessPoint) -> (HTTPAccessPointResponse);
-  update_access_point: (AccessPoint) -> (HTTPAccessPointResponse);
-  remove_access_point: (AccessPoint) -> (HTTPAccessPointResponse);
-  read_access_points: () -> (HTTPAccessPointResponse);
 
   post_token: (HTTPVerifyPhoneNumberRequest) -> (BoolHttpResponse);
   validate_phone_number: (PhoneNumber) -> (BoolHttpResponse);
