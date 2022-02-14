@@ -13,7 +13,6 @@ fn anchor_ex_test() {
         name: "".to_string(),
         phone_number: "".to_string(),
         personas: vec![],
-        access_points: HashSet::new(),
         base_fields: Default::default()
     };
     let ar = AccountRepo {};

@@ -1,6 +1,5 @@
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
-use crate::repository::access_point_repo::AccessPoint;
 
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -27,29 +26,8 @@ pub struct AccountResponse {
     pub principal_id: String,
     pub name: String,
     pub phone_number: String,
-    pub access_points: Vec<AccessPoint>,
     pub personas: Vec<PersonaVariant>,
     pub anchor: u64,
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct AccessPointResponse {
-    pub pub_key: String,
-    pub last_used: String,
-    pub make: String,
-    pub model: String,
-    pub browser: String,
-    pub name: String,
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct AccessPointRequest {
-    pub pub_key: String,
-    pub last_used: String,
-    pub make: String,
-    pub model: String,
-    pub browser: String,
-    pub name: String,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

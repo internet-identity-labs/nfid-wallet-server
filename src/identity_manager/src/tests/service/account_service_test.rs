@@ -17,7 +17,6 @@ fn test_get_account_expect_acc_frm_trait() {
         principal_id: "".to_string(),
         name: "".to_string(),
         phone_number: "".to_string(),
-        access_points: HashSet::new(),
         personas: vec![],
         base_fields: BasicEntity::new(),
     };
@@ -40,7 +39,6 @@ fn test_get_account_e2e() {
         principal_id: ic_service::get_caller().to_text(),
         name: "".to_string(),
         phone_number: "".to_string(),
-        access_points: HashSet::new(),
         personas: vec![],
         base_fields: BasicEntity::new(),
     };
@@ -53,8 +51,6 @@ fn test_get_account_e2e() {
     };
     assert_eq!(5, acc_serv.get_account().data.unwrap().anchor);
     assert_eq!(ic_service::get_caller().to_text(), acc_serv.get_account().data.unwrap().principal_id);
-    assert_eq!(true, acc_serv.remove_account().data.unwrap());
-    assert_eq!("Unable to remove Account", acc_serv.remove_account().error.unwrap());
 }
 
 #[test]
