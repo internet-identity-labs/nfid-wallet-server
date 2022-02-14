@@ -9,6 +9,7 @@ pub trait PhoneNumberRepoTrait {
     fn is_exist(&self, phone_number_hash: &blake3::Hash) -> bool;
     fn add(&self, phone_number_hash: blake3::Hash) -> ();
     fn add_all(&self, phone_number_hashes: HashSet<blake3::Hash>) -> ();
+    fn remove(&self, phone_number_hash: &blake3::Hash) -> bool;
 }
 
 #[derive(Default)]
@@ -25,5 +26,9 @@ impl PhoneNumberRepoTrait for PhoneNumberRepo {
 
     fn add_all(&self, phone_number_hashes: HashSet<blake3::Hash>) -> () {
         storage::get_mut::<PhoneNumbers>().extend(phone_number_hashes);
+    }
+
+    fn remove(&self, phone_number_hash: &blake3::Hash) -> bool {
+        storage::get_mut::<PhoneNumbers>().remove(phone_number_hash)
     }
 }
