@@ -20,7 +20,7 @@ public class BaseDFXITest {
 
     @AfterClass
     public void stopDfx() {
-//        call("common/dfx_stop");
+        call("common/dfx_stop");
     }
 
     @SneakyThrows

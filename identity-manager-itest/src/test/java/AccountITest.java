@@ -41,7 +41,7 @@ public class AccountITest extends BaseIdentityManagerITest {
     }
 
     @Test(priority = 60)
-    public void removeAccountSameAnchorExpectError() {
+    public void removeAccountExpectSuccess() {
         validateWithFormatIdentity("common/resp_bool_success", call("account/req_remove_account"));
         validateWithFormatIdentity("account/exp_unable_to_remove_account", call("account/req_remove_account"));
         String actual = call("account/req_create_account");
