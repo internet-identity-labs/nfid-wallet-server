@@ -40,11 +40,11 @@ jobs:
         run: |
           dfx identity use gh_mp_admin
           i=0;
-          dfx build --network ic pub_sub_channel;
           while :;
           do
             rm -rf .dfx;
             set +e;
+            dfx build --network ic pub_sub_channel;
             dfx canister --no-wallet --network ic install --mode upgrade pub_sub_channel;
             sleep 5;
             ps=$(dfx canister --network ic call pub_sub_channel ping);
@@ -59,11 +59,11 @@ jobs:
           cp ./.dfx/ic/canisters/pub_sub_channel/pub_sub_channel.did.js ./ -f
 
           i=0;
-          dfx build --network ic identity_manager;
           while :;
           do
             rm -rf .dfx;
             set +e;
+            dfx build --network ic identity_manager;
             dfx canister --no-wallet --network ic install --mode upgrade identity_manager;
             sleep 5;
             im=$(dfx canister --network ic call identity_manager configure '(record {key = blob "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}}; token_refresh_ttl = ${{secrets.TOKEN_REFRESH_TTL}}; whitelisted_phone_numbers = opt vec {${{secrets.WHITELISTED_PHONE_NUMBERS}}} })');
