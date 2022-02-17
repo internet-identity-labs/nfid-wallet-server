@@ -2,4 +2,5 @@
 members = [
     "src/identity_manager",
     "src/pub_sub_channel",
+    "src/libraries/canister_api_macros",
 ]

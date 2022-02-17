@@ -1,5 +1,5 @@
 use std::time::Duration;
-use ic_cdk::{trap};
+use ic_cdk::{call, print, storage, trap};
 use ic_cdk_macros::*;
 use service::{account_service, persona_service, phone_number_service};
 use crate::account_service::{AccountService, AccountServiceTrait};
@@ -30,6 +30,7 @@ mod mapper;
 mod util;
 mod tests;
 mod container;
+mod logger;
 
 #[init]
 async fn init() -> () {
@@ -47,7 +48,7 @@ async fn configure(request: ConfigurationRequest) -> () {
         token_ttl: Duration::from_secs(request.token_ttl),
         token_refresh_ttl: Duration::from_secs(request.token_refresh_ttl),
         key: request.key,
-        whitelisted: request.whitelisted_phone_numbers.unwrap_or(Vec::default())
+        whitelisted: request.whitelisted_phone_numbers.unwrap_or(Vec::default()),
     };
 
     ConfigurationRepo::save(configuration);
@@ -117,6 +118,28 @@ async fn delete_application(app: String) -> HttpResponse<bool> {
 async fn read_applications() -> HttpResponse<Vec<Application>> {
     let application_service = get_application_service();
     application_service.read_applications()
+}
+
+use canister_api_macros::{trace};
+use ic_cdk::export::candid::{CandidType, Deserialize};
+use crate::logger::logger::{Log, LogLevel, LogRepo};
+
+
+#[update]
+#[trace]
+pub async fn test() -> HttpResponse<bool> {
+    print("Tut");
+    HttpResponse {
+        data: None,
+        error: Some(String::from("dadadada")),
+        status_code: 0,
+    }
+}
+
+#[query]
+pub async fn testtttt() -> Vec<Log> {
+    print("Tut222222");
+    LogRepo::get(5)
 }
 
 #[query]
