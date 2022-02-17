@@ -14,6 +14,4 @@ service : () -> {
   get_messages: (Topic) -> (MessageHttpResponse);
   create_topic: (Topic) -> (MessageHttpResponse);
   delete_topic: (Topic) -> (MessageHttpResponse);
-  test: () -> ();
-
 }

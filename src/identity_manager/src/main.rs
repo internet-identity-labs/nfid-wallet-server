@@ -1,5 +1,5 @@
 use std::time::Duration;
-use ic_cdk::{print, trap};
+use ic_cdk::{trap};
 use ic_cdk_macros::*;
 use service::{account_service, persona_service, phone_number_service};
 use crate::account_service::{AccountService, AccountServiceTrait};

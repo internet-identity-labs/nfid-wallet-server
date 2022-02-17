@@ -8,7 +8,6 @@ type Message = String;
 
 use structure::ttlhashmap::{TtlHashMap};
 use std::time::{Duration};
-use ic_cdk::{print};
 
 mod structure;
 
@@ -179,12 +178,5 @@ fn pre_upgrade() {}
 
 #[post_upgrade]
 fn post_upgrade() {}
-
-#[update]
-async fn test() {
-    print("Tetetetetetet")
-}
-
-
 
 fn main() {}
