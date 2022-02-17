@@ -25,7 +25,6 @@ type EmptyHttpResponse = record {
 
 type AccountResponse = record {
     anchor: nat64;
-    principal_id: text;
     name: text;
 };
 
