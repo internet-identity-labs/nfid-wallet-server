@@ -1,5 +1,5 @@
 use std::time::Duration;
-use ic_cdk::{call, print, storage, trap};
+use ic_cdk::{print, trap};
 use ic_cdk_macros::*;
 use service::{account_service, persona_service, phone_number_service};
 use crate::account_service::{AccountService, AccountServiceTrait};
@@ -22,6 +22,8 @@ use crate::requests::{ConfigurationRequest, AccountRequest, HTTPVerifyPhoneNumbe
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, unauthorized};
 use crate::service::{application_service, ic_service};
+use canister_api_macros::{trace};
+use crate::logger::logger::{Log, LogLevel, LogRepo};
 
 mod service;
 mod http;
@@ -120,9 +122,6 @@ async fn read_applications() -> HttpResponse<Vec<Application>> {
     application_service.read_applications()
 }
 
-use canister_api_macros::{trace};
-use ic_cdk::export::candid::{CandidType, Deserialize};
-use crate::logger::logger::{Log, LogLevel, LogRepo};
 
 
 #[update]

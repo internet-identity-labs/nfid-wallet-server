@@ -6,7 +6,7 @@ use magic_crypt::{MagicCrypt256, MagicCryptTrait, new_magic_crypt};
 use magic_crypt::generic_array::typenum::U256;
 use crate::{ConfigurationRepo};
 use crate::repository::account_repo::Account;
-use crate::repository::encrypt::encrypted_repo::{EncryptedAccessPoint, EncryptedAccount, EncryptedPersona};
+use crate::repository::encrypt::encrypted_repo::{EncryptedAccount, EncryptedPersona};
 use crate::repository::persona_repo::Persona;
 
 

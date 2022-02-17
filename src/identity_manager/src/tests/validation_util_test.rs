@@ -1,6 +1,5 @@
-use crate::PersonaVariant;
-use crate::requests::{PersonaII, PersonaNFID};
-use crate::util::validation_util::{validate_frontend_length, validate_name};
+use crate::requests::*;
+use crate::util::validation_util::*;
 
 #[test]
 fn validate_name_test() {

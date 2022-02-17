@@ -8,7 +8,7 @@ type Message = String;
 
 use structure::ttlhashmap::{TtlHashMap};
 use std::time::{Duration};
-use ic_cdk::{call, print};
+use ic_cdk::{print};
 
 mod structure;
 
