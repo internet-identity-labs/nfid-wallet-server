@@ -22,7 +22,7 @@ use crate::requests::{ConfigurationRequest, AccountRequest, HTTPVerifyPhoneNumbe
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, unauthorized};
 use crate::service::{application_service, ic_service};
-use canister_api_macros::{trace};
+use canister_api_macros::{log_error};
 use crate::logger::logger::{Log, LogLevel, LogRepo};
 
 mod service;
@@ -57,24 +57,28 @@ async fn configure(request: ConfigurationRequest) -> () {
 }
 
 #[update]
+#[log_error]
 async fn validate_phone_number(phone_number: String) -> HttpResponse<bool> {
     let phone_number_service = get_phone_number_service();
     phone_number_service.validate_phone_number(phone_number)
 }
 
 #[update]
+#[log_error]
 async fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
     let phone_number_service = get_phone_number_service();
     phone_number_service.post_token(request)
 }
 
 #[update]
+#[log_error]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     account_service.create_account(account_request)
 }
 
 #[update]
+#[log_error]
 async fn update_account(account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     account_service.update_account(account_request)
@@ -87,30 +91,35 @@ async fn get_account() -> HttpResponse<AccountResponse> {
 }
 
 #[update]
+#[log_error]
 async fn remove_account() -> HttpResponse<bool> {
     let mut account_service = get_account_service();
     account_service.remove_account()
 }
 
 #[update]
+#[log_error]
 async fn create_persona(persona: PersonaVariant) -> HttpResponse<AccountResponse> {
     let persona_service = get_persona_service();
     persona_service.create_persona(persona)
 }
 
 #[update]
+#[log_error]
 async fn read_personas() -> HttpResponse<Vec<PersonaVariant>> {
     let persona_service = get_persona_service();
     persona_service.read_personas()
 }
 
 #[update]
+#[log_error]
 async fn create_application(app: Application) -> HttpResponse<Vec<Application>> {
     let application_service = get_application_service();
     application_service.create_application(app)
 }
 
 #[update]
+#[log_error]
 async fn delete_application(app: String) -> HttpResponse<bool> {
     let application_service = get_application_service();
     application_service.delete_application(app)
@@ -122,26 +131,18 @@ async fn read_applications() -> HttpResponse<Vec<Application>> {
     application_service.read_applications()
 }
 
-
-
-#[update]
-#[trace]
-pub async fn test() -> HttpResponse<bool> {
-    print("Tut");
-    HttpResponse {
-        data: None,
-        error: Some(String::from("dadadada")),
-        status_code: 0,
-    }
+#[query]
+pub async fn get_logs(n : usize) -> Vec<Log> {
+    LogRepo::get(n)
 }
 
 #[query]
-pub async fn testtttt() -> Vec<Log> {
-    print("Tut222222");
-    LogRepo::get(5)
+pub async fn get_all_logs() -> Vec<Log> {
+    LogRepo::get_all()
 }
 
 #[query]
+#[log_error]
 async fn is_over_the_application_limit(domain: String) -> HttpResponse<bool> {
     let application_service = get_application_service();
     application_service.is_over_the_application_limit(&domain)

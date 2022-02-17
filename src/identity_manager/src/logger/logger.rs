@@ -1,7 +1,7 @@
-use ic_cdk::storage;
 use ic_cdk::export::candid::{CandidType, Deserialize};
+use ic_cdk::storage;
 
-#[derive(Debug, Deserialize, CandidType, Clone)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Log {
     pub level: LogLevel,
     pub log: String,
@@ -13,7 +13,7 @@ pub enum LogLevel {
     #[serde(rename = "ERROR")]
     ERROR,
     #[serde(rename = "INFO")]
-    INFO
+    INFO,
 }
 
 pub type Logs = Vec<Log>;
@@ -26,12 +26,16 @@ impl LogRepo {
     }
 
     pub fn get(n: usize) -> Vec<Log> {
-        storage::get::<Logs>().to_vec()
-            .into_iter().take(n).collect()
+        let mut log = storage::get::<Logs>().to_vec();
+        log.reverse();
+        log.into_iter().take(n).collect()
     }
 
     pub fn save(log_entry: Log) {
         let mut logs = storage::get_mut::<Logs>();
+        if logs.len() > 500 {
+            logs.remove(0);
+        }
         logs.push(log_entry)
     }
 }

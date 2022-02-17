@@ -116,7 +116,7 @@ service : () -> {
   read_applications: () -> (HTTPApplicationResponse) query;
   is_over_the_application_limit: (Domain) -> (BoolHttpResponse) query;
 
-  test: () -> (BoolHttpResponse);
-  testtttt: () -> (vec Log);
+  get_logs: (nat64) -> (vec Log);
+  get_all_logs: () -> (vec Log);
 
 }

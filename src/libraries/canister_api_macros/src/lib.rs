@@ -4,7 +4,7 @@ use quote::{format_ident, quote};
 use syn::{parse_macro_input, FnArg, ItemFn, Pat, PatIdent, PatType, Signature};
 
 #[proc_macro_attribute]
-pub fn trace(_: TokenStream, item: TokenStream) -> TokenStream {
+pub fn log_error(_: TokenStream, item: TokenStream) -> TokenStream {
     let mut inner = parse_macro_input!(item as ItemFn);
     let wrapper_sig = inner.sig.clone();
     let inner_method_name = format_ident!("{}_inner_", inner.sig.ident);
