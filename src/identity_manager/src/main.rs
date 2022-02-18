@@ -142,7 +142,6 @@ pub async fn get_all_logs() -> Vec<Log> {
 }
 
 #[query]
-#[log_error]
 async fn is_over_the_application_limit(domain: String) -> HttpResponse<bool> {
     let application_service = get_application_service();
     application_service.is_over_the_application_limit(&domain)
