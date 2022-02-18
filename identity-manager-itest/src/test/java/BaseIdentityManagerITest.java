@@ -21,7 +21,7 @@ public class BaseIdentityManagerITest extends BaseDFXITest {
                 System.exit(1);
 
         } while (identity_manager.isEmpty());
-        call("phone-number/req_post_token_default");
+        call("request/post_token", PHONE, TOKEN, ROOT_IDENTITY);
     }
 
 }

@@ -18,9 +18,9 @@ use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
 use crate::repository::account_repo::AccountRepo;
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
-use crate::requests::{ConfigurationRequest, AccountRequest, HTTPVerifyPhoneNumberRequest};
+use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest};
 use crate::requests::AccountUpdateRequest;
-use crate::response_mapper::{HttpResponse, unauthorized};
+use crate::response_mapper::{HttpResponse, Response};
 use crate::service::{application_service, ic_service};
 use canister_api_macros::{log_error};
 use crate::logger::logger::{Log, LogLevel, LogRepo};
@@ -58,14 +58,20 @@ async fn configure(request: ConfigurationRequest) -> () {
 
 #[update]
 #[log_error]
-async fn validate_phone_number(phone_number: String) -> HttpResponse<bool> {
+async fn verify_token(token: String) -> Response {
     let phone_number_service = get_phone_number_service();
-    phone_number_service.validate_phone_number(phone_number)
+    phone_number_service.verify_token(token)
+}
+
+#[update]
+async fn validate_phone(request: ValidatePhoneRequest) -> Response {
+    let phone_number_service = get_phone_number_service();
+    phone_number_service.validate_phone(request)
 }
 
 #[update]
 #[log_error]
-async fn post_token(request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
+async fn post_token(request: TokenRequest) -> Response {
     let phone_number_service = get_phone_number_service();
     phone_number_service.post_token(request)
 }

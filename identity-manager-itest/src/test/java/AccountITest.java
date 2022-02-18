@@ -28,15 +28,9 @@ public class AccountITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("account/exp_account_upd_name", actual);
     }
 
-    @Test(priority = 40)
-    public void createAccountSecondTimeExpectPhoneNumberExists() {
-        String actual = call("account/req_create_account");
-        validateWithFormatIdentity("account/exp_phone_number_exists", actual);
-    }
-
     @Test(priority = 50)
     public void createAccountSameAnchorExpectError() {
-        call("token/req_post_token_2");
+        call("request/post_token", PHONE, TOKEN, ROOT_IDENTITY);
         String actual = call("account/req_create_exist_account");
         validateWithFormatIdentity("account/exp_anchor_exists", actual);
     }

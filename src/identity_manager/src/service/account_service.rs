@@ -3,6 +3,7 @@ use crate::{ConfigurationRepo, HttpResponse};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::phone_number_service::PhoneNumberServiceTrait;
 use crate::repository::account_repo::AccountRepoTrait;
+use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
 use crate::requests::{AccountRequest, AccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
@@ -19,10 +20,10 @@ pub trait AccountServiceTrait {
 #[derive(Default)]
 pub struct AccountService<T, N> {
     pub account_repo: T,
-    pub phone_number_service: N,
+    pub phone_number_repo: N,
 }
 
-impl<T: AccountRepoTrait, N: PhoneNumberServiceTrait> AccountServiceTrait for AccountService<T, N> {
+impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for AccountService<T, N> {
     fn get_account(&mut self) -> HttpResponse<AccountResponse> {
         match self.account_repo.get_account() {
             Some(content) => to_success_response(account_to_account_response(content.clone())),
@@ -35,26 +36,6 @@ impl<T: AccountRepoTrait, N: PhoneNumberServiceTrait> AccountServiceTrait for Ac
         if ic_service::is_anonymous(princ) {
             return to_error_response("User is anonymous");
         }
-        let phone_number_hash = blake3::keyed_hash(
-            &ConfigurationRepo::get().key,
-            account_request.phone_number.as_bytes(),
-        );
-        let token_hash = blake3::keyed_hash(
-            &ConfigurationRepo::get().key,
-            account_request.token.as_bytes(),
-        );
-
-        let is_whitelisted = ConfigurationRepo::get().whitelisted
-            .contains(&account_request.phone_number);
-
-        if !is_whitelisted && self.phone_number_service.is_exist(&phone_number_hash) {
-            return to_error_response("Phone number already exists");
-        }
-
-        match self.phone_number_service.validate_token(&phone_number_hash, &token_hash) {
-            Ok(_) => (),
-            Err(message) => return to_error_response(message)
-        };
 
         if !validate_name(account_request.name.clone().as_str()) {
             return to_error_response("Name must only contain letters and numbers (5-15 characters)");
@@ -66,7 +47,6 @@ impl<T: AccountRepoTrait, N: PhoneNumberServiceTrait> AccountServiceTrait for Ac
                 to_error_response("It's impossible to link this II anchor, please try another one.")
             }
             Some(_) => {
-                self.phone_number_service.add(phone_number_hash);
                 to_success_response(account_to_account_response(acc))
             }
         }
@@ -88,19 +68,24 @@ impl<T: AccountRepoTrait, N: PhoneNumberServiceTrait> AccountServiceTrait for Ac
     }
 
     fn remove_account(&mut self) -> HttpResponse<bool> {
-        match self.account_repo.remove_account() {
-            Some(content) => {
-                let phone_number_hash = blake3::keyed_hash(
-                    &ConfigurationRepo::get().key,
-                    content.phone_number.as_bytes(),
-                );
-                match self.phone_number_service.remove(&phone_number_hash) {
-                    true => { to_success_response(true) }
-                    false => { to_error_response("Unable to remove Phone Number") }
-                }
-            }
-            None => to_error_response("Unable to remove Account")
+        let result = self.account_repo.remove_account();
+        if result.is_none() {
+           return to_error_response("Unable to remove Account");
         }
+
+        let account = result.unwrap();
+        if account.phone_number.is_none() {
+            return to_success_response(true);
+        }
+
+        let phone_number = account.phone_number.unwrap();
+        let success = self.phone_number_repo.remove(&phone_number);
+
+        if !success {
+            return to_error_response("Unable to remove Phone Number");
+        }
+
+        to_success_response(true)
     }
 }
 

@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -17,6 +18,10 @@ public class BaseDFXITest {
     final static String TTL = "10";
     final static String TTL_REFRESH = "10";
     final static String WHITELISTED_PHONE_NUMBERS = "null";
+    final static String NAME = "NAME";
+    final static String ANCHOR = "1234";
+    final static String PHONE = "123456";
+    final static String TOKEN = "1234";
 
     @AfterClass
     public void stopDfx() {
@@ -30,6 +35,15 @@ public class BaseDFXITest {
                 StandardCharsets.UTF_8
         );
         assertEquals(String.format(expected, ROOT_IDENTITY).trim(), actual.trim());
+    }
+
+    @SneakyThrows
+    public String get(String file, Object... params) {
+        var text = IOUtils.toString(
+                Objects.requireNonNull(this.getClass().getResourceAsStream(file)),
+                StandardCharsets.UTF_8
+        );
+        return String.format(text, params).trim();
     }
 
     @SneakyThrows
@@ -53,13 +67,16 @@ public class BaseDFXITest {
 
     @SneakyThrows
     public String callDfxCommand(String dfxCommand) {
-        String[] bashScript = new String[]{"/bin/bash", "-c",
-                String.format("cd $0 && %s", dfxCommand), getPath(null)};
+        String[] bashScript = new String[]{
+                "/bin/bash",
+                "-c",
+                String.format("cd $0 && %s", dfxCommand),
+                getPath(null)};
         return execute(bashScript);
     }
 
-    public String call(String dfxCommand, Object... params) {
-        return callDfxCommand(String.format(getScript(dfxCommand).trim(), params));
+    public String call(String file, Object... params) {
+        return callDfxCommand(String.format(getScript(file).trim(), params)).trim();
     }
 
     public String getPath(String somePath) {

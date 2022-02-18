@@ -1,7 +1,0 @@
-(
-  record {
-    data = null;
-    error = opt "Too many requests";
-    status_code = 429 : nat16;
-  },
-)

@@ -1,1 +1,0 @@
-dfx canister call identity_manager post_token '(record {"phone_number" = "%s"; "token" = "1234"})'

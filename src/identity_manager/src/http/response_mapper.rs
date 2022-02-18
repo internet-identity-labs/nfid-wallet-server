@@ -9,6 +9,12 @@ pub struct HttpResponse<T> {
     pub status_code: u16,
 }
 
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct Response {
+    pub error: Option<Error>,
+    pub status_code: u16,
+}
+
 pub fn to_error_response<T>(x: &str) -> HttpResponse<T> {
     HttpResponse {
         data: None,
@@ -17,19 +23,17 @@ pub fn to_error_response<T>(x: &str) -> HttpResponse<T> {
     }
 }
 
-pub fn unauthorized() -> HttpResponse<bool> {
-    HttpResponse {
-        data: None,
-        error: Some(Error::from("Unauthorized")),
-        status_code: 404,
+pub fn error_response(code: u16, text: &str) -> Response {
+    Response {
+        error: Some(String::from(text)),
+        status_code: code,
     }
 }
 
-pub fn too_many_requests() -> HttpResponse<bool> {
-    HttpResponse {
-        data: None,
-        error: Some(Error::from("Too many requests")),
-        status_code: 429,
+pub fn response(code: u16) -> Response {
+    Response {
+        error: None,
+        status_code: code,
     }
 }
 
