@@ -10,7 +10,7 @@ use ic_cdk::export::Principal;
 pub struct Account {
     pub anchor: u64,
     pub principal_id: String,
-    pub name: String,
+    pub name: Option<String>,
     pub phone_number: Option<String>,
     pub personas: Vec<Persona>,
     pub base_fields: BasicEntity,

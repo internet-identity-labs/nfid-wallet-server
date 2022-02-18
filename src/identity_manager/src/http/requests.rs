@@ -4,7 +4,6 @@ use ic_cdk::export::Principal;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccountRequest {
-    pub name: String,
     pub anchor: u64,
 }
 
@@ -29,7 +28,7 @@ pub struct ValidatePhoneRequest {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccountResponse {
     pub principal_id: String,
-    pub name: String,
+    pub name: Option<String>,
     pub phone_number: Option<String>,
     pub personas: Vec<PersonaVariant>,
     pub anchor: u64,

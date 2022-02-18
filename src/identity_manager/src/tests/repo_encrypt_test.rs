@@ -10,7 +10,7 @@ fn anchor_ex_test() {
     let acc = Account {
         anchor: 123,
         principal_id: "".to_string(),
-        name: "".to_string(),
+        name: None,
         phone_number: None,
         personas: vec![],
         base_fields: Default::default()

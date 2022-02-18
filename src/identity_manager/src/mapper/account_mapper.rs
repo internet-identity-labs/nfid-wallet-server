@@ -25,7 +25,7 @@ pub fn account_request_to_account(account_request: AccountRequest) -> Account {
     Account {
         anchor: account_request.anchor,
         principal_id,
-        name: account_request.name,
+        name: None,
         phone_number: None,
         personas,
         base_fields: BasicEntity::new(),
