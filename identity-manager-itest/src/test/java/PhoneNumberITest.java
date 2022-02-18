@@ -59,7 +59,7 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
 
     @Test(priority = 2)
     public void validatePhoneWhenPhoneNumberNotExist() {
-        call("request/create_account", NAME, ANCHOR);
+        call("request/create_account", ANCHOR);
         var actual = call("request/validate_phone", ROOT_IDENTITY, PHONE);
         var expected = get("response/response", "null", "200");
         assertEquals(actual, expected);

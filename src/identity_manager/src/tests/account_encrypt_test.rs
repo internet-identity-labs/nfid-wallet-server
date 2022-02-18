@@ -10,7 +10,7 @@ fn encrypt_decrypt_test() {
     let acc = Account {
         anchor: 0,
         principal_id: "".to_string(),
-        name: "".to_string(),
+        name: Some("".to_string()),
         phone_number: Some("".to_string()),
         personas: vec![],
         base_fields: Default::default(),

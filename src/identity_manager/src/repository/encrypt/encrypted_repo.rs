@@ -44,7 +44,7 @@ pub struct EncryptedPersona {
 pub struct EncryptedAccount {
     pub anchor: String,
     pub principal_id: String,
-    pub name: String,
+    pub name: Option<String>,
     pub phone_number: Option<String>,
     pub personas: Vec<EncryptedPersona>,
     pub base_fields: BasicEntity,

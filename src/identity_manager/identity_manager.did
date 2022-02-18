@@ -31,7 +31,7 @@ type EmptyHttpResponse = record {
 type AccountResponse = record {
     anchor: nat64;
     principal_id: text;
-    name: text;
+    name: opt text;
     phone_number: opt text;
     personas: vec PersonaVariant;
 };
@@ -44,7 +44,6 @@ type HTTPAccountResponse = record {
 
 type HTTPAccountRequest = record {
     anchor: nat64;
-    name: text;
 };
 
 type HTTPAccountUpdateRequest = record {

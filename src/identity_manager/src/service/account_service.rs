@@ -37,10 +37,6 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
             return to_error_response("User is anonymous");
         }
 
-        if !validate_name(account_request.name.clone().as_str()) {
-            return to_error_response("Name must only contain letters and numbers (5-15 characters)");
-        }
-
         let acc = account_request_to_account(account_request);
         match { self.account_repo.create_account(acc.clone()) } {
             None => {
@@ -56,8 +52,8 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
         match self.account_repo.get_account() {
             Some(acc) => {
                 let mut new_acc = acc.clone();
-                if !account_request.name.is_none() {
-                    new_acc.name = account_request.name.unwrap();
+                if !&account_request.name.is_none() {
+                    new_acc.name = account_request.name.clone();
                 }
                 new_acc.base_fields.update_modified_date();
                 self.account_repo.store_account(new_acc.clone());

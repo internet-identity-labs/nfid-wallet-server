@@ -15,7 +15,7 @@ fn test_get_account_expect_acc_frm_trait() {
     let v = Account {
         anchor: 5,
         principal_id: "".to_string(),
-        name: "".to_string(),
+        name: None,
         phone_number: None,
         personas: vec![],
         base_fields: BasicEntity::new(),
@@ -34,7 +34,7 @@ fn test_get_account_e2e() {
     let v = Account {
         anchor: 5,
         principal_id: ic_service::get_caller().to_text(),
-        name: "".to_string(),
+        name: None,
         phone_number: None,
         personas: vec![],
         base_fields: BasicEntity::new(),
@@ -53,8 +53,7 @@ fn test_get_account_e2e() {
 fn test_base_entity_on_account_create() {
     init_config();
     let v = AccountRequest {
-        anchor: 10,
-        name: "123".to_string()
+        anchor: 10
     };
     let mut acc_serv = AccountService {
         account_repo:  AccountRepo {},
@@ -72,8 +71,7 @@ fn test_base_entity_on_account_create() {
 fn test_base_entity_on_account_update() {
     init_config();
     let v = AccountRequest {
-        anchor: 11,
-        name: "123".to_string()
+        anchor: 11
     };
     let ar = AccountRepo {};
     let mut acc_serv = AccountService {
