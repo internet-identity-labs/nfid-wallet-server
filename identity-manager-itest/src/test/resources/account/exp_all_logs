@@ -1,0 +1,24 @@
+(
+  vec {
+    record {
+      log = "Name must only contain letters and numbers (5-15 characters)";
+      level = variant { ERROR };
+      timestamp = 1_645_104_004_473_598_002 : nat64;
+    };
+    record {
+      log = "Phone number already exists";
+      level = variant { ERROR };
+      timestamp = 1_645_104_005_937_232_002 : nat64;
+    };
+    record {
+      log = "It's impossible to link this II anchor, please try another one.";
+      level = variant { ERROR };
+      timestamp = 1_645_104_006_458_252_002 : nat64;
+    };
+    record {
+      log = "Unable to remove Account";
+      level = variant { ERROR };
+      timestamp = 1_645_104_006_988_796_002 : nat64;
+    };
+  },
+)

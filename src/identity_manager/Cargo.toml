@@ -5,6 +5,7 @@ edition = "2018"
 
 [lib]
 crate-type = ["cdylib"]
+proc-macro = true
 
 [dependencies]
 ic-cdk = "0.3.2"
@@ -19,3 +20,4 @@ base64 = "0.13.0"
 inject = "0.1.3"
 mockers = "0.21.0"
 mockers_derive = "0.21.0"
+canister_api_macros = { path = "../libraries/canister_api_macros" }

@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-use crate::repository::encrypt::encrypted_repo::{EncryptedAccount, EncryptedRepo};
+use crate::repository::encrypt::encrypted_repo::{EncryptedRepo};
 #[cfg(test)]
 use mockers_derive::mocked;
 use crate::repository::persona_repo::Persona;

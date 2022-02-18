@@ -4,7 +4,8 @@ use std::time::Duration;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::storage;
-use crate::ic_service;
+use crate::{ic_service, Log, LogLevel, LogRepo};
+use crate::logger::logger::Logs;
 use crate::repository::application_repo::Application;
 
 use crate::repository::encrypt::account_encrypt::{decrypt_phone_number, encrypt};
@@ -65,7 +66,6 @@ impl AdminRepo {
 }
 
 
-
 impl ConfigurationRepo {
     //todo fix Principle not implement default!
     pub fn get() -> &'static Configuration {
@@ -97,16 +97,22 @@ pub fn is_anchor_exists(anch: u64) -> bool { //todo move somewhere
 }
 
 pub fn pre_upgrade() {
+    LogRepo::save(Log {
+        level: LogLevel::INFO,
+        log: "Pre upgrade started".to_string(),
+        timestamp: ic_service::get_time(),
+    });
     let mut accounts = Vec::new();
     for p in storage::get_mut::<EncryptedAccounts>().iter() {
         accounts.push(p.1.clone());
     }
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
-    match storage::stable_save((accounts, admin)) { _ => () };
+    let logs = storage::get_mut::<Logs>();
+    match storage::stable_save((accounts, admin, logs)) { _ => () };
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin): (Vec<EncryptedAccount>, Principal) = storage::stable_restore().unwrap();
+    let (old_accs, admin, logs): (Vec<EncryptedAccount>, Principal, Logs) = storage::stable_restore().unwrap();
     let mut phone_numbers = HashSet::default();
     for u in old_accs {
         storage::get_mut::<EncryptedAccounts>().insert(u.clone().principal_id, u.clone());
@@ -115,4 +121,14 @@ pub fn post_upgrade() {
     storage::get_mut::<Option<Principal>>().replace(admin);
     let pn_repo = PhoneNumberRepo {}; //TODO test container
     pn_repo.add_all(phone_numbers);
+
+    for log in logs {
+        storage::get_mut::<Logs>().push(log);
+    }
+
+    LogRepo::save(Log {
+        level: LogLevel::INFO,
+        log: "Post upgrade completed".to_string(),
+        timestamp: ic_service::get_time(),
+    });
 }

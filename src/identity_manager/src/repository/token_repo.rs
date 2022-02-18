@@ -1,7 +1,7 @@
 use std::time::Duration;
 use ic_cdk::api::time;
 use ic_cdk::storage;
-use crate::{ConfigurationRepo, ic_service};
+use crate::{ConfigurationRepo};
 use crate::repository::repo::Tokens;
 #[cfg(test)]
 use mockers_derive::mocked;

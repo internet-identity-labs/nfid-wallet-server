@@ -230,6 +230,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "canister_api_macros"
+version = "0.1.0"
+dependencies = [
+ "ic-cdk",
+ "ic-cdk-macros",
+ "ic-types 0.1.5",
+ "proc-macro2 1.0.32",
+ "quote 1.0.10",
+ "serde",
+ "syn 1.0.81",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -514,6 +527,7 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "blake3",
+ "canister_api_macros",
  "ic-cdk",
  "ic-cdk-macros",
  "ic-types 0.1.5",

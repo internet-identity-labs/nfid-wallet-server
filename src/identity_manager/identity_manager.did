@@ -87,6 +87,17 @@ type HTTPVerifyPhoneNumberRequest = record {
     token: text;
 };
 
+type LogLevel = variant {
+    ERROR;
+    INFO;
+};
+
+type Log = record {
+    log: text;
+    level: LogLevel;
+    timestamp: nat64;
+};
+
 service : () -> {
   configure: (ConfigurationRequest) -> ();
   get_account: () -> (HTTPAccountResponse) query;
@@ -104,5 +115,8 @@ service : () -> {
   delete_application: (Name) -> (BoolHttpResponse);
   read_applications: () -> (HTTPApplicationResponse) query;
   is_over_the_application_limit: (Domain) -> (BoolHttpResponse) query;
+
+  get_logs: (nat64) -> (vec Log);
+  get_all_logs: () -> (vec Log);
 
 }
