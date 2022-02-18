@@ -1,43 +1,48 @@
+use std::collections::HashMap;
 use std::time::Duration;
 use ic_cdk::api::time;
 use ic_cdk::storage;
 use crate::{ConfigurationRepo, ic_service};
-use crate::repository::repo::Tokens;
 #[cfg(test)]
 use mockers_derive::mocked;
 
 #[cfg_attr(test, mocked)]
 pub trait TokenRepoTrait {
-    fn add(&self, phone_number: blake3::Hash, token: blake3::Hash) -> ();
-    fn get(&self, phone_number: &blake3::Hash, duration: Duration) -> Option<&blake3::Hash>;
+    fn add(&self, principal_id_encrypted: String, token_encrypted: String, phone_number_encrypted: String) -> ();
+    fn get(&self, principal_id_encrypted: &String, duration: Duration) -> Option<(&String, &String)>;
 }
 
 #[derive(Default)]
 pub struct TokenRepo {}
 
+pub type Tokens = HashMap<String, (String, String, u64)>;
+
 impl TokenRepoTrait for TokenRepo {
     #[cfg(not(test))]  //todo TEMP move to ic_service
-    fn add(&self, phone_number: blake3::Hash, token: blake3::Hash) -> () {
+    fn add(&self, principal_id_encrypted: String, token_encrypted: String, phone_number_encrypted: String) -> () {
         let time_window: u64 = time() - ConfigurationRepo::get().token_ttl.as_nanos() as u64;
-        storage::get_mut::<Tokens>().retain(|_, (_, t)| *t > time_window);
-        storage::get_mut::<Tokens>().insert(phone_number, (token, time()));
+        storage::get_mut::<Tokens>().retain(|_, (_, _, t)| *t > time_window);
+
+        let value = (token_encrypted, phone_number_encrypted, time());
+        storage::get_mut::<Tokens>().insert(principal_id_encrypted, value);
+    }
+    #[cfg(test)]
+    fn add(&self, principal_id_encrypted: String, token_encrypted: String, phone_number_encrypted: String) -> () {
+        let value = (token_encrypted, phone_number_encrypted, 123);
+        storage::get_mut::<Tokens>().insert(principal_id_encrypted, value);
     }
     #[cfg(not(test))]
-    fn get(&self, phone_number: &blake3::Hash, duration: Duration) -> Option<&blake3::Hash> {
+    fn get(&self, principal_id_encrypted: &String, duration: Duration) -> Option<(&String, &String)> {
         let time_window: u64 = time() - duration.as_nanos() as u64;
         storage::get::<Tokens>()
-            .get(phone_number)
-            .filter(|(_, t)| *t > time_window)
-            .map(|(v, _)| v)
+            .get(principal_id_encrypted)
+            .filter(|(_, _, t)| *t > time_window)
+            .map(|(token, phone_number, _)| (token, phone_number))
     }
     #[cfg(test)]
-    fn add(&self, phone_number: blake3::Hash, token: blake3::Hash) -> () {
-        storage::get_mut::<Tokens>().insert(phone_number, (token, 123));
-    }
-    #[cfg(test)]
-    fn get(&self, phone_number: &blake3::Hash, duration: Duration) -> Option<&blake3::Hash> {
+    fn get(&self, principal_id_encrypted: &String, duration: Duration) -> Option<(&String, &String)> {
         storage::get::<Tokens>()
-            .get(phone_number)
-            .map(|(v, _)| v)
+            .get(principal_id_encrypted)
+            .map(|(token, phone_number, _)| (token, phone_number))
     }
 }

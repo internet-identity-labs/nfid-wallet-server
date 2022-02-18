@@ -11,7 +11,7 @@ fn encrypt_decrypt_test() {
         anchor: 0,
         principal_id: "".to_string(),
         name: "".to_string(),
-        phone_number: "".to_string(),
+        phone_number: Some("".to_string()),
         personas: vec![],
         base_fields: Default::default(),
     };

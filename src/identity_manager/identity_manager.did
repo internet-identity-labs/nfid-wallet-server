@@ -1,4 +1,3 @@
-type PhoneNumber = text;
 type Token = text;
 type Domain = text;
 type Name = text;
@@ -18,6 +17,11 @@ type BoolHttpResponse = record {
     status_code: nat16;
 };
 
+type Response = record {
+    error: opt Error;
+    status_code: nat16;
+};
+
 type EmptyHttpResponse = record {
      data: opt text;
      error: opt Error;
@@ -28,7 +32,7 @@ type AccountResponse = record {
     anchor: nat64;
     principal_id: text;
     name: text;
-    phone_number: text;
+    phone_number: opt text;
     personas: vec PersonaVariant;
 };
 
@@ -41,8 +45,6 @@ type HTTPAccountResponse = record {
 type HTTPAccountRequest = record {
     anchor: nat64;
     name: text;
-    phone_number: text;
-    token: text;
 };
 
 type HTTPAccountUpdateRequest = record {
@@ -82,9 +84,15 @@ type HTTPPersonasResponse = record {
     status_code: nat16;
 };
 
-type HTTPVerifyPhoneNumberRequest = record {
+type TokenRequest = record {
     phone_number: text;
     token: text;
+    principal_id: text;
+};
+
+type ValidatePhoneRequest = record {
+    phone_number: text;
+    principal_id: text;
 };
 
 service : () -> {
@@ -97,8 +105,9 @@ service : () -> {
   create_persona: (PersonaVariant) -> (HTTPAccountResponse);
   read_personas: () -> (HTTPPersonasResponse);
 
-  post_token: (HTTPVerifyPhoneNumberRequest) -> (BoolHttpResponse);
-  validate_phone_number: (PhoneNumber) -> (BoolHttpResponse);
+  validate_phone: (ValidatePhoneRequest) -> (Response);
+  post_token: (TokenRequest) -> (Response);
+  verify_token: (Token) -> (Response);
 
   create_application: (Application) -> (HTTPApplicationResponse);
   delete_application: (Name) -> (BoolHttpResponse);

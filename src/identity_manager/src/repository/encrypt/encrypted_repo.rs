@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use ic_cdk::export::candid::{CandidType, Deserialize};
+use ic_cdk::export::Principal;
 use ic_cdk::storage;
 use crate::repository::account_repo::Account;
 
@@ -45,7 +46,7 @@ pub struct EncryptedAccount {
     pub anchor: String,
     pub principal_id: String,
     pub name: String,
-    pub phone_number: String,
+    pub phone_number: Option<String>,
     pub personas: Vec<EncryptedPersona>,
     pub base_fields: BasicEntity,
 }
@@ -87,6 +88,10 @@ impl EncryptedRepo {
             None => { None }
             Some(acc) => { Option::from(decrypt_account(acc.to_owned())) }
         }
+    }
+
+    pub fn exists(principal: &Principal) -> bool {
+        storage::get::<EncryptedAccounts>().contains_key(&encrypt(principal.to_text()))
     }
 }
 

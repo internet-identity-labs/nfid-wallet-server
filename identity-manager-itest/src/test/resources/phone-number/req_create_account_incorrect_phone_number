@@ -1,1 +1,0 @@
-dfx canister call identity_manager create_account '( record {name = "TEST_USER"; anchor = 12345; email = "TEST_EMAIL"; phone_number = "000000"; is_seed_phrase_copied = true;  token = "1234"})'

@@ -24,12 +24,8 @@ pub struct Configuration {
 pub type EncryptedAccounts = BTreeMap<String, EncryptedAccount>;
 //todo rethink visibility
 pub type Applications = BTreeSet<Application>;
-pub type Tokens = HashMap<blake3::Hash, (blake3::Hash, u64)>;
-pub type PhoneNumbers = HashSet<blake3::Hash>;
-
 
 pub struct AdminRepo {}
-
 pub struct ConfigurationRepo {}
 
 #[derive(Clone, Debug, CandidType, Deserialize, Default, PartialEq, Eq, Copy, Hash)]
@@ -63,8 +59,6 @@ impl AdminRepo {
         storage::get_mut::<Option<Principal>>().replace(principal);
     }
 }
-
-
 
 impl ConfigurationRepo {
     //todo fix Principle not implement default!
@@ -110,7 +104,7 @@ pub fn post_upgrade() {
     let mut phone_numbers = HashSet::default();
     for u in old_accs {
         storage::get_mut::<EncryptedAccounts>().insert(u.clone().principal_id, u.clone());
-        phone_numbers.insert(blake3::keyed_hash(&ConfigurationRepo::get().key, decrypt_phone_number(u).clone().as_bytes()));
+        u.phone_number.map(|x| phone_numbers.insert(x.clone()));
     }
     storage::get_mut::<Option<Principal>>().replace(admin);
     let pn_repo = PhoneNumberRepo {}; //TODO test container

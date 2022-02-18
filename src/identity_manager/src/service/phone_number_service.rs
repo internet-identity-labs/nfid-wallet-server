@@ -1,108 +1,112 @@
-use blake3::Hash;
 use ic_cdk::export::Principal;
-
-use crate::{ConfigurationRepo, ic_service};
+use crate::{AccountRepo, ConfigurationRepo, ic_service, Response, TokenRequest, ValidatePhoneRequest};
 use crate::HttpResponse;
-use crate::HTTPVerifyPhoneNumberRequest;
+use crate::repository::account_repo::AccountRepoTrait;
+use crate::repository::encrypt::account_encrypt::encrypt;
 use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
-use crate::response_mapper::{to_success_response, too_many_requests};
-use crate::unauthorized;
+use crate::response_mapper::{error_response, response, to_error_response, to_success_response, too_many_requests};
 use crate::repository::token_repo::{TokenRepoTrait};
 
 pub trait PhoneNumberServiceTrait {
-    fn add(&self, phone_number_hash: blake3::Hash) -> ();
-    fn is_exist(&self, phone_number_hash: &blake3::Hash) -> bool;
-    fn validate_phone_number(&self, phone_number: String) -> HttpResponse<bool>;
-    fn post_token(&self, request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool>;
-    fn validate_token(&self, phone_number_hash: &Hash, token_hash: &Hash) -> Result<(), &str>;
-    fn remove(&self, phone_number_hash: &blake3::Hash) -> bool;
+    fn validate_phone(&self, request: ValidatePhoneRequest) -> Response;
+    fn post_token(&self, request: TokenRequest) -> Response;
+    fn verify_token(&self, token: String) -> Response;
 }
 
 #[derive(Default)]
-pub struct PhoneNumberService<T, N> {
+pub struct PhoneNumberService<T, N, A> {
     pub(crate) phone_number_repo: T,
     pub(crate) token_repo: N,
+    pub(crate) account_repo: A,
 }
 
-impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait> PhoneNumberServiceTrait for PhoneNumberService<T, N> {
-    fn add(&self, phone_number_hash: blake3::Hash) -> () {
-        self.phone_number_repo.add(phone_number_hash)
-    }
+impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumberServiceTrait for PhoneNumberService<T, N, A> {
 
-    fn is_exist(&self, phone_number_hash: &blake3::Hash) -> bool {
-        self.phone_number_repo.is_exist(phone_number_hash)
-    }
-
-    fn validate_phone_number(&self, phone_number: String) -> HttpResponse<bool> {
-        if !is_lambda(&ic_service::get_caller()) {
-            return unauthorized();
-        }
-
-        if is_whitelisted(&phone_number) {
-            return to_success_response(true);
-        }
-
-        let phone_number_hash = blake3::keyed_hash(
-            &ConfigurationRepo::get().key,
-            phone_number.as_bytes(),
-        );
-
-        if self.token_repo.get(
-            &phone_number_hash,
-            ConfigurationRepo::get().token_refresh_ttl,
-        ).is_some() {
-            return too_many_requests();
-        }
-
-        let is_valid = !self.phone_number_repo.is_exist(&phone_number_hash);
-        to_success_response(is_valid)
-    }
-
-    fn post_token(&self, request: HTTPVerifyPhoneNumberRequest) -> HttpResponse<bool> {
+    fn validate_phone(&self, request: ValidatePhoneRequest) -> Response {
         if !ConfigurationRepo::get().lambda.eq(&ic_service::get_caller()) {
-            return unauthorized();
+            return error_response(403, "Unauthorized.");
         }
 
-        let phone_number_hash = blake3::keyed_hash(
-            &ConfigurationRepo::get().key,
-            request.phone_number.as_bytes(),
-        );
+        if request.principal_id.len() < 10 {
+            return error_response(403, "Anonymous user is forbidden.");
+        }
 
-        let token_hash = blake3::keyed_hash(
-            &ConfigurationRepo::get().key,
-            request.token.as_bytes(),
-        );
+        let result = Principal::from_text(&request.principal_id);
+        if result.is_err() {
+            return error_response(400, "Incorrect format of principal.")
+        }
 
-        self.token_repo.add(phone_number_hash, token_hash);
-        HttpResponse { status_code: 200, data: Some(true), error: None }
+        if !self.account_repo.exists(&result.unwrap()) {
+            return error_response(404, "Account not found.");
+        }
+
+        let principal_id_encrypted = encrypt(request.principal_id);
+        let ttl = ConfigurationRepo::get().token_refresh_ttl;
+        if self.token_repo.get(&principal_id_encrypted, ttl).is_some() {
+            return error_response(429, "Too many requests.");
+        }
+
+        let phone_number_encrypted = encrypt(request.phone_number.clone());
+        if self.phone_number_repo.is_exist(&phone_number_encrypted) {
+            return response(204);
+        }
+
+        response(200)
     }
 
-    fn validate_token(&self, phone_number_hash: &Hash, token_hash: &Hash) -> Result<(), &str> {
-        return match self.token_repo.get(
-            phone_number_hash,
-            ConfigurationRepo::get().token_ttl,
-        ) {
-            None => Err("Phone number not found"),
-            Some(token) => {
-                return match token_hash.eq(token) {
-                    false => Err("Token does not match"),
-                    true => Ok(())
-                };
-            }
-        };
+    fn post_token(&self, request: TokenRequest) -> Response {
+        if !ConfigurationRepo::get().lambda.eq(&ic_service::get_caller()) {
+            return error_response(403, "Unauthorized.");
+        }
+
+        if request.principal_id.len() < 10 {
+            return error_response(403, "Anonymous user is forbidden.");
+        }
+
+        let result = Principal::from_text(request.principal_id);
+        if result.is_err() {
+            return error_response(400, "Incorrect format of principal.")
+        }
+
+        let principal = result.unwrap();
+        if !self.account_repo.exists(&principal) {
+            return error_response(404, "Account not found.");
+        }
+
+        let principal_id_encrypted = encrypt(principal.to_text());
+        let token_encrypted = encrypt(request.token);
+        let phone_number_encrypted = encrypt(request.phone_number);
+        self.token_repo.add(principal_id_encrypted, token_encrypted, phone_number_encrypted);
+
+        response(200)
     }
 
-    fn remove(&self, phone_number_hash: &blake3::Hash) -> bool {
-        self.phone_number_repo.remove(phone_number_hash)
+    fn verify_token(&self, token: String) -> Response {
+        let account_opt = self.account_repo.get_account();
+        if account_opt.is_none() {
+            return error_response(404, "Account not found.");
+        }
+
+        let principal_id_encrypted = encrypt(ic_service::get_caller().to_text());
+        let ttl = ConfigurationRepo::get().token_ttl;
+        let value_opt = self.token_repo.get(&principal_id_encrypted, ttl);
+        if value_opt.is_none() {
+            return error_response(404, "Principal id not found.");
+        }
+
+        let token_encrypted = encrypt(token);
+        let (token_encrypted_persisted, phone_number_encrypted_persisted) = value_opt.unwrap();
+        if !token_encrypted.eq(token_encrypted_persisted) {
+            return error_response(400, "Token does not match.");
+        }
+
+        let mut account = account_opt.unwrap();
+        account.phone_number = Some(phone_number_encrypted_persisted.clone());
+        self.account_repo.store_account(account);
+        self.phone_number_repo.add(phone_number_encrypted_persisted.clone());
+
+        response(200)
     }
-}
-
-fn is_whitelisted(phone_number: &String) -> bool {
-    ConfigurationRepo::get().whitelisted.contains(phone_number)
-}
-
-fn is_lambda(caller: &Principal) -> bool {
-    ConfigurationRepo::get().lambda.eq(caller)
 }
 
 

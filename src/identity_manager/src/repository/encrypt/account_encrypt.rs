@@ -9,7 +9,6 @@ use crate::repository::account_repo::Account;
 use crate::repository::encrypt::encrypted_repo::{EncryptedAccessPoint, EncryptedAccount, EncryptedPersona};
 use crate::repository::persona_repo::Persona;
 
-
 pub fn encrypt_account(account: Account) -> EncryptedAccount {
     let key = get_key();
     let crypt = new_magic_crypt!(key.clone(), 256);
@@ -17,7 +16,7 @@ pub fn encrypt_account(account: Account) -> EncryptedAccount {
         anchor: encrypt_string(&crypt, account.anchor.to_string()),
         principal_id: encrypt_string(&crypt, account.principal_id),
         name: encrypt_string(&crypt, account.name),
-        phone_number: encrypt_string(&crypt, account.phone_number),
+        phone_number: account.phone_number.map(|x| encrypt_string(&crypt, x)),
         personas: account.personas.into_iter().map(|l| encrypt_persona(l)).collect(),
         base_fields: account.base_fields,
     }
@@ -30,16 +29,16 @@ pub fn decrypt_account(account: EncryptedAccount) -> Account {
         anchor: decrypt_number(&crypt, account.anchor),
         principal_id: crypt.decrypt_base64_to_string(account.principal_id).unwrap(),
         name: crypt.decrypt_base64_to_string(account.name).unwrap(),
-        phone_number: crypt.decrypt_base64_to_string(account.phone_number).unwrap(),
+        phone_number: account.phone_number.map(|x| crypt.decrypt_base64_to_string(x).unwrap()),
         personas: account.personas.into_iter().map(|l| decrypt_persona(l)).collect(),
         base_fields: account.base_fields,
     }
 }
 
-pub fn decrypt_phone_number(account: EncryptedAccount) -> String {
+pub fn decrypt_phone_number(account: EncryptedAccount) -> Option<String> {
     let key = get_key();
     let crypt = new_magic_crypt!(key.clone(), 256);
-    crypt.decrypt_base64_to_string(account.phone_number).unwrap()
+    account.phone_number.map(|x| crypt.decrypt_base64_to_string(x).unwrap())
 }
 
 pub fn encrypt_persona(persona: Persona) -> EncryptedPersona {

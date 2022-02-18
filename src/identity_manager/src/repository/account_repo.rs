@@ -5,13 +5,14 @@ use mockers_derive::mocked;
 use crate::repository::persona_repo::Persona;
 use crate::repository::repo::BasicEntity;
 use ic_cdk::export::candid::{CandidType, Deserialize};
+use ic_cdk::export::Principal;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Account {
     pub anchor: u64,
     pub principal_id: String,
     pub name: String,
-    pub phone_number: String,
+    pub phone_number: Option<String>,
     pub personas: Vec<Persona>,
     pub base_fields: BasicEntity,
 }
@@ -22,6 +23,7 @@ pub trait AccountRepoTrait {
     fn create_account(&self, account: Account) -> Option<Account>;
     fn store_account(&self, account: Account) -> Option<Account>;
     fn remove_account(&self) -> Option<Account>;
+    fn exists(&self, principal: &Principal) -> bool;
 }
 
 #[derive(Default)]
@@ -42,5 +44,9 @@ impl AccountRepoTrait for AccountRepo {
 
     fn remove_account(&self) -> Option<Account> {
         EncryptedRepo::remove_account()
+    }
+
+    fn exists(&self, principal: &Principal) -> bool {
+        EncryptedRepo::exists(principal)
     }
 }

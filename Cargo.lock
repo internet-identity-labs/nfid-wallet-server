@@ -513,7 +513,6 @@ name = "identity_manager"
 version = "0.1.0"
 dependencies = [
  "base64",
- "blake3",
  "ic-cdk",
  "ic-cdk-macros",
  "ic-types 0.1.5",

@@ -1,0 +1,1 @@
+dfx canister call identity_manager create_account '( record { name = "%s"; anchor = %s })'
