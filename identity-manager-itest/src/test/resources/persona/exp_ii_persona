@@ -18,7 +18,7 @@
         };
       };
       principal_id = "%s";
-      phone_number = "123456";
+      phone_number = null;
     };
     error = null;
     status_code = 200 : nat16;

@@ -3,12 +3,12 @@ use crate::{PersonaRepo, AccountRepo, AccountService, ApplicationRepo, Applicati
 use crate::repository::phone_number_repo::PhoneNumberRepo;
 use crate::repository::token_repo::TokenRepo;
 
-pub fn get_account_service() -> AccountService<AccountRepo, PhoneNumberService<PhoneNumberRepo, TokenRepo>> {
-    get!(&container![], AccountService<AccountRepo, PhoneNumberService<PhoneNumberRepo, TokenRepo>>).unwrap()
+pub fn get_account_service() -> AccountService<AccountRepo, PhoneNumberRepo> {
+    get!(&container![], AccountService<AccountRepo, PhoneNumberRepo>).unwrap()
 }
 
-pub fn get_phone_number_service() -> PhoneNumberService<PhoneNumberRepo, TokenRepo> {
-    get!(&container![], PhoneNumberService<PhoneNumberRepo, TokenRepo>).unwrap()
+pub fn get_phone_number_service() -> PhoneNumberService<PhoneNumberRepo, TokenRepo, AccountRepo> {
+    get!(&container![], PhoneNumberService<PhoneNumberRepo, TokenRepo, AccountRepo>).unwrap()
 }
 
 pub fn get_persona_service() -> PersonaService<PersonaRepo, ApplicationService<ApplicationRepo, AccountRepo>> {

@@ -1,0 +1,1 @@
+dfx canister call identity_manager validate_phone '( record { principal_id = "%s"; phone_number = "%s" })'

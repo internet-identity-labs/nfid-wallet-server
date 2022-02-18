@@ -5,7 +5,7 @@
       anchor = 12_345 : nat64;
       personas = vec {};
       principal_id = "%s";
-      phone_number = "123456";
+      phone_number = null;
     };
     error = null;
     status_code = 200 : nat16;

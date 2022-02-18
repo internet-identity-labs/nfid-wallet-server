@@ -526,7 +526,6 @@ name = "identity_manager"
 version = "0.1.0"
 dependencies = [
  "base64",
- "blake3",
  "canister_api_macros",
  "ic-cdk",
  "ic-cdk-macros",
