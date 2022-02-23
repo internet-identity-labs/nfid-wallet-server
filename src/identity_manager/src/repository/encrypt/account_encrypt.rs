@@ -92,6 +92,12 @@ pub fn encrypt(str: String) -> String {
     encrypt_string(&crypt, str)
 }
 
+pub fn decrypt(str: String) -> String {
+    let key = get_key();
+    let crypt = new_magic_crypt!(key.clone(), 256);
+    decrypt_as_string(&crypt, str)
+}
+
 fn encrypt_string(crypt: &MagicCrypt256, str: String) -> String {
     let mut reader = Cursor::new(str);
     let mut writer = Vec::new();

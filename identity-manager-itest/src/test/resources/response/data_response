@@ -1,0 +1,7 @@
+(
+  record {
+    data = %s;
+    error = %s;
+    status_code = %s : nat16;
+  },
+)

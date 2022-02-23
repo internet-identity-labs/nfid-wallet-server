@@ -22,6 +22,8 @@ public class BaseDFXITest {
     final static String ANCHOR = "1234";
     final static String PHONE = "123456";
     final static String TOKEN = "1234";
+    final static String ANONYMOUS = "anonymous";
+    final static String DEFAULT = "default";
 
     @AfterClass
     public void stopDfx() {
@@ -43,7 +45,7 @@ public class BaseDFXITest {
                 Objects.requireNonNull(this.getClass().getResourceAsStream(file)),
                 StandardCharsets.UTF_8
         );
-        return String.format(text, params).trim();
+        return String.format(text, params).trim().replaceAll("[\\n\\t ]", "");
     }
 
     @SneakyThrows
@@ -77,6 +79,10 @@ public class BaseDFXITest {
 
     public String call(String file, Object... params) {
         return callDfxCommand(String.format(getScript(file).trim(), params)).trim();
+    }
+
+    public String command(String file, Object... params) {
+        return callDfxCommand(String.format(getScript(file).trim(), params)).trim().replaceAll("[\\n\\t ]", "");
     }
 
     public String getPath(String somePath) {

@@ -120,6 +120,20 @@ type Log = record {
     timestamp: nat64;
 };
 
+type PhoneNumberCredential = record {
+  phone_number: text;
+};
+
+type Credential = variant {
+    phone_number: PhoneNumberCredential;
+};
+
+type CredentialResponse = record {
+    data: opt vec Credential;
+    error: opt Error;
+    status_code: nat16;
+};
+
 service : () -> {
   configure: (ConfigurationRequest) -> ();
   get_account: () -> (HTTPAccountResponse) query;
@@ -133,6 +147,7 @@ service : () -> {
   validate_phone: (ValidatePhoneRequest) -> (Response);
   post_token: (TokenRequest) -> (Response);
   verify_token: (Token) -> (Response);
+  credentials: () -> (CredentialResponse);
 
   create_application: (Application) -> (HTTPApplicationResponse);
   delete_application: (Name) -> (BoolHttpResponse);
