@@ -34,6 +34,7 @@ type AccountResponse = record {
     name: opt text;
     phone_number: opt text;
     personas: vec PersonaVariant;
+    access_points: vec AccessPoint;
 };
 
 type HTTPAccountResponse = record {
@@ -99,6 +100,16 @@ type LogLevel = variant {
     INFO;
 };
 
+type AccessPoint = record {
+    pub_key: blob;
+};
+
+type HTTPAccessPointResponse = record {
+    data: opt vec AccessPoint;
+    error: opt Error;
+    status_code: nat16;
+};
+
 type Log = record {
     log: text;
     level: LogLevel;
@@ -126,5 +137,9 @@ service : () -> {
 
   get_logs: (nat64) -> (vec Log);
   get_all_logs: () -> (vec Log);
+
+  create_access_point: (AccessPoint) -> (HTTPAccessPointResponse);
+  remove_access_point: (AccessPoint) -> (HTTPAccessPointResponse);
+  read_access_points: () -> (HTTPAccessPointResponse);
 
 }

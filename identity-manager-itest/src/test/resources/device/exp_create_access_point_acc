@@ -1,0 +1,14 @@
+(
+  record {
+    data = opt record {
+      name = null;
+      anchor = 12_345 : nat64;
+      access_points = vec { record { pub_key = "PUB_KEY_HASH" } };
+      personas = vec {};
+      principal_id = "sculj-2sjuf-dxqlm-dcv5y-hin5x-zfyvr-tzngf-bt5b5-dwhcc-zbsqf-rae";
+      phone_number = null;
+    };
+    error = null;
+    status_code = 200 : nat16;
+  },
+)

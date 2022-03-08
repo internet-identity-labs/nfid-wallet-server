@@ -2,11 +2,14 @@ extern crate base64;
 
 use std::io::Cursor;
 use std::option::Option;
+
 use magic_crypt::{MagicCrypt256, MagicCryptTrait, new_magic_crypt};
 use magic_crypt::generic_array::typenum::U256;
-use crate::{ConfigurationRepo};
+
+use crate::ConfigurationRepo;
+use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::account_repo::Account;
-use crate::repository::encrypt::encrypted_repo::{EncryptedAccount, EncryptedPersona};
+use crate::repository::encrypt::encrypted_repo::{EncryptedAccessPoint, EncryptedAccount, EncryptedPersona};
 use crate::repository::persona_repo::Persona;
 
 pub fn encrypt_account(account: Account) -> EncryptedAccount {
@@ -18,6 +21,7 @@ pub fn encrypt_account(account: Account) -> EncryptedAccount {
         name: account.name.map(|x| encrypt_string(&crypt, x)),
         phone_number: account.phone_number.map(|x| encrypt_string(&crypt, x)),
         personas: account.personas.into_iter().map(|l| encrypt_persona(l)).collect(),
+        access_points: account.access_points.into_iter().map(|l| encrypt_access_point(l)).collect(),
         base_fields: account.base_fields,
     }
 }
@@ -31,6 +35,7 @@ pub fn decrypt_account(account: EncryptedAccount) -> Account {
         name: account.name.map(|x| crypt.decrypt_base64_to_string(x).unwrap()),
         phone_number: account.phone_number.map(|x| crypt.decrypt_base64_to_string(x).unwrap()),
         personas: account.personas.into_iter().map(|l| decrypt_persona(l)).collect(),
+        access_points: account.access_points.into_iter().map(|l| decrypt_access_point(l)).collect(),
         base_fields: account.base_fields,
     }
 }
@@ -49,6 +54,20 @@ pub fn encrypt_persona(persona: Persona) -> EncryptedPersona {
         domain: encrypt_string(&crypt, persona.domain.to_string()),
         persona_id: encrypt_optional(&crypt, persona.persona_id),
         base_fields: persona.base_fields,
+    }
+}
+
+pub fn encrypt_access_point(access_point: AccessPoint) -> EncryptedAccessPoint {
+    EncryptedAccessPoint {
+        pub_key: access_point.pub_key,
+        base_fields: access_point.base_fields,
+    }
+}
+
+pub fn decrypt_access_point(encrypted_access_point: EncryptedAccessPoint) -> AccessPoint {
+    AccessPoint {
+        pub_key: encrypted_access_point.pub_key,
+        base_fields: encrypted_access_point.base_fields,
     }
 }
 

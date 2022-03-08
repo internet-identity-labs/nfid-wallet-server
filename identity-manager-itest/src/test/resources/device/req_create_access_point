@@ -1,0 +1,1 @@
+dfx canister call identity_manager create_access_point '( record {pub_key = "PUB_KEY_HASH";})'

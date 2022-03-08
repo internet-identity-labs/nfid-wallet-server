@@ -1,0 +1,10 @@
+(
+  record {
+    data = opt vec {
+      record { pub_key = "PKNEWW" };
+      record { pub_key = "PUB_KEY_HASH" };
+    };
+    error = null;
+    status_code = 200 : nat16;
+  },
+)

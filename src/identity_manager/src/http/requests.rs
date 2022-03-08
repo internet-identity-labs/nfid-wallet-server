@@ -1,5 +1,8 @@
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
+use crate::repository::access_point_repo::AccessPoint;
+use serde::Serialize;
+use serde_bytes::{ByteBuf};
 
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -31,6 +34,7 @@ pub struct AccountResponse {
     pub name: Option<String>,
     pub phone_number: Option<String>,
     pub personas: Vec<PersonaVariant>,
+    pub access_points: Vec<AccessPoint>,
     pub anchor: u64,
 }
 
@@ -61,4 +65,14 @@ pub struct ConfigurationRequest {
     pub token_refresh_ttl: u64,
     pub key: [u8; 32],
     pub whitelisted_phone_numbers: Option<Vec<String>>
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct AccessPointResponse {
+    pub pub_key: ByteBuf,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct AccessPointRequest {
+    pub pub_key: ByteBuf,
 }

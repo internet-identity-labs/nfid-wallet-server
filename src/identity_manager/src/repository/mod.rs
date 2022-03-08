@@ -5,3 +5,4 @@ pub mod persona_repo;
 pub mod application_repo;
 pub mod phone_number_repo;
 pub mod token_repo;
+pub mod access_point_repo;

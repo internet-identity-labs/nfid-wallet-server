@@ -9,7 +9,7 @@ use crate::logger::logger::Logs;
 use crate::repository::application_repo::Application;
 
 use crate::repository::encrypt::account_encrypt::{decrypt_phone_number, encrypt};
-use crate::repository::encrypt::encrypted_repo::{EncryptedAccount};
+use crate::repository::encrypt::encrypted_repo::{EncryptedAccount, EncryptedAccounts};
 use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
 
 
@@ -22,7 +22,6 @@ pub struct Configuration {
     pub whitelisted: Vec<String>,
 }
 
-pub type EncryptedAccounts = BTreeMap<String, EncryptedAccount>;
 //todo rethink visibility
 pub type Applications = BTreeSet<Application>;
 

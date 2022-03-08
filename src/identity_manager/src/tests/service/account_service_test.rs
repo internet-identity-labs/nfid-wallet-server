@@ -18,6 +18,7 @@ fn test_get_account_expect_acc_frm_trait() {
         name: None,
         phone_number: None,
         personas: vec![],
+        access_points: Default::default(),
         base_fields: BasicEntity::new(),
     };
     scenario.expect(cond_handle.get_account().and_return(Some(v)));
@@ -37,6 +38,7 @@ fn test_get_account_e2e() {
         name: None,
         phone_number: None,
         personas: vec![],
+        access_points: Default::default(),
         base_fields: BasicEntity::new(),
     };
     EncryptedRepo::create_account(v);
