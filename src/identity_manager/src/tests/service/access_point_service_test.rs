@@ -5,6 +5,7 @@ use crate::{AccessPointRequest, AccessPointServiceTrait, AccountService, Account
 use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::encrypt::account_encrypt::encrypt;
 use crate::repository::encrypt::encrypted_repo::{EncryptedRepo, PrincipalIndex};
+use crate::repository::repo::post_upgrade;
 use crate::tests::test_util::{create_default_account, init_config};
 
 #[test]
