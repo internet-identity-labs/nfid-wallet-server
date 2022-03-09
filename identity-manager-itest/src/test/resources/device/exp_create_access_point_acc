@@ -3,7 +3,11 @@
     data = opt record {
       name = null;
       anchor = 12_345 : nat64;
-      access_points = vec {};
+      access_points = vec {
+        record {
+          principal_id = "wuomy-jshie-5vmse-huyz2-wmuqj-kdsry-nekfo-wvnou-dxqxz-pdpbv-4qe";
+        };
+      };
       personas = vec {};
       principal_id = "%s";
       phone_number = null;

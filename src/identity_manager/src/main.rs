@@ -1,13 +1,14 @@
 use std::time::Duration;
-use ic_cdk::{trap};
+use ic_cdk::{print, trap};
 use ic_cdk_macros::*;
+use ic_types::Principal;
 use service::{account_service, persona_service, phone_number_service};
 use crate::account_service::{AccountService, AccountServiceTrait};
 use crate::persona_service::{PersonaService, PersonaServiceTrait};
 use crate::repository::persona_repo::PersonaRepo;
 use crate::application_service::ApplicationService;
 use crate::container::container_wrapper;
-use crate::container_wrapper::{get_account_service, get_application_service, get_persona_service, get_phone_number_service};
+use crate::container_wrapper::{get_access_point_service, get_account_service, get_application_service, get_persona_service, get_phone_number_service};
 use crate::repository::application_repo::{Application, ApplicationRepo};
 use crate::service::application_service::ApplicationServiceTrait;
 use crate::service::phone_number_service::PhoneNumberServiceTrait;
@@ -18,12 +19,13 @@ use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
 use crate::repository::account_repo::AccountRepo;
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
-use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest};
+use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest};
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response};
 use crate::service::{application_service, ic_service};
 use canister_api_macros::{log_error};
 use crate::logger::logger::{Log, LogLevel, LogRepo};
+use crate::service::access_point_service::AccessPointServiceTrait;
 
 mod service;
 mod http;
@@ -54,6 +56,24 @@ async fn configure(request: ConfigurationRequest) -> () {
     };
 
     ConfigurationRepo::save(configuration);
+}
+
+#[update]
+async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
+    let access_point_service = get_access_point_service();
+    access_point_service.read_access_points()
+}
+
+#[update]
+async fn create_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
+    let access_point_service = get_access_point_service();
+    access_point_service.create_access_point(access_point)
+}
+
+#[update]
+async fn remove_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
+    let access_point_service = get_access_point_service();
+    access_point_service.remove_access_point(access_point)
 }
 
 #[update]
@@ -138,7 +158,7 @@ async fn read_applications() -> HttpResponse<Vec<Application>> {
 }
 
 #[query]
-pub async fn get_logs(n : usize) -> Vec<Log> {
+pub async fn get_logs(n: usize) -> Vec<Log> {
     LogRepo::get(n)
 }
 

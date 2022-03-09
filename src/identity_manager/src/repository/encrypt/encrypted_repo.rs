@@ -1,34 +1,34 @@
+use std::collections::{BTreeMap, HashSet};
 use std::hash::{Hash, Hasher};
+
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
-use ic_cdk::storage;
+use ic_cdk::{storage};
+use serde_bytes::ByteBuf;
+
 use crate::repository::account_repo::Account;
-
-
-use crate::repository::repo::{BasicEntity, EncryptedAccounts, is_anchor_exists};
 use crate::repository::encrypt::account_encrypt::{decrypt_account, encrypt, encrypt_account};
+use crate::repository::repo::{BasicEntity, is_anchor_exists};
 use crate::service::ic_service;
+
+pub type EncryptedAccounts = BTreeMap<String, EncryptedAccount>;
+pub type PrincipalIndex = BTreeMap<String, String>;
 
 #[derive(Default, Clone, Debug, CandidType, Deserialize, Eq)]
 pub struct EncryptedAccessPoint {
-    pub pub_key: String,
-    pub last_used: String,
-    pub make: String,
-    pub model: String,
-    pub browser: String,
-    pub name: String,
+    pub principal_id: String,
     pub base_fields: BasicEntity,
 }
 
 impl PartialEq for EncryptedAccessPoint {
     fn eq(&self, other: &Self) -> bool {
-        self.pub_key == other.pub_key
+        self.principal_id == other.principal_id
     }
 }
 
 impl Hash for EncryptedAccessPoint {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.pub_key.hash(state)
+        self.principal_id.hash(state)
     }
 }
 
@@ -47,6 +47,7 @@ pub struct EncryptedAccount {
     pub name: Option<String>,
     pub phone_number: Option<String>,
     pub personas: Vec<EncryptedPersona>,
+    pub access_points: HashSet<EncryptedAccessPoint>,
     pub base_fields: BasicEntity,
 }
 
@@ -55,10 +56,12 @@ pub struct EncryptedRepo {}
 impl EncryptedRepo {
     pub fn create_account(account: Account) -> Option<Account> {
         let accounts = storage::get_mut::<EncryptedAccounts>();
+        let index = storage::get_mut::<PrincipalIndex>();
         if is_anchor_exists(account.anchor) {
             None
         } else {
             let encr_acc = encrypt_account(account.clone());
+            index.insert(encr_acc.principal_id.clone(), encr_acc.principal_id.clone());
             accounts.insert(encr_acc.principal_id.clone(), encr_acc);
             Some(account)
         }
@@ -73,10 +76,17 @@ impl EncryptedRepo {
 
     pub fn get_account() -> Option<Account> {
         let princ = ic_service::get_caller().to_text();
+        let encrypted_princ = encrypt(princ.to_owned());
+        let index = storage::get_mut::<PrincipalIndex>();
         let accounts = storage::get_mut::<EncryptedAccounts>();
-        match accounts.get(&encrypt(princ.to_owned())) {
+        match index.get_mut(&encrypted_princ) {
             None => { None }
-            Some(acc) => { Option::from(decrypt_account(acc.to_owned())) }
+            Some(key) => {
+                match accounts.get(key) {
+                    None => { None }
+                    Some(acc) => { Option::from(decrypt_account(acc.to_owned())) }
+                }
+            }
         }
     }
 
@@ -87,6 +97,12 @@ impl EncryptedRepo {
             None => { None }
             Some(acc) => { Option::from(decrypt_account(acc.to_owned())) }
         }
+    }
+
+    pub fn update_account_index_with_pub_key(additional_principal_id: String) {
+        let princ = ic_service::get_caller().to_text();
+        let index = storage::get_mut::<PrincipalIndex>();
+        index.insert(encrypt(additional_principal_id), encrypt(princ));
     }
 
     pub fn exists(principal: &Principal) -> bool {

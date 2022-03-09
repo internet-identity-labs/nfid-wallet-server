@@ -1,0 +1,11 @@
+(
+  record {
+    data = opt vec {
+      record {
+        principal_id = "wuomy-jshie-5vmse-huyz2-wmuqj-kdsry-nekfo-wvnou-dxqxz-pdpbv-4qe";
+      };
+    };
+    error = null;
+    status_code = 200 : nat16;
+  },
+)

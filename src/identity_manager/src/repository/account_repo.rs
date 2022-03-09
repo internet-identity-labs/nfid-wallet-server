@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use crate::repository::encrypt::encrypted_repo::{EncryptedRepo};
 #[cfg(test)]
 use mockers_derive::mocked;
@@ -5,6 +6,8 @@ use crate::repository::persona_repo::Persona;
 use crate::repository::repo::BasicEntity;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
+use serde_bytes::ByteBuf;
+use crate::repository::access_point_repo::AccessPoint;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Account {
@@ -13,6 +16,7 @@ pub struct Account {
     pub name: Option<String>,
     pub phone_number: Option<String>,
     pub personas: Vec<Persona>,
+    pub access_points: HashSet<AccessPoint>,
     pub base_fields: BasicEntity,
 }
 
@@ -23,6 +27,7 @@ pub trait AccountRepoTrait {
     fn store_account(&self, account: Account) -> Option<Account>;
     fn remove_account(&self) -> Option<Account>;
     fn exists(&self, principal: &Principal) -> bool;
+    fn update_account_index_with_pub_key(&self, additional_key: String);
 }
 
 #[derive(Default)]
@@ -47,5 +52,9 @@ impl AccountRepoTrait for AccountRepo {
 
     fn exists(&self, principal: &Principal) -> bool {
         EncryptedRepo::exists(principal)
+    }
+
+    fn update_account_index_with_pub_key(&self, additional_principal_id: String) {
+        EncryptedRepo::update_account_index_with_pub_key(additional_principal_id)
     }
 }

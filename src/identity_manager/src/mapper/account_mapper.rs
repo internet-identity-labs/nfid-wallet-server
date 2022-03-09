@@ -16,6 +16,7 @@ pub fn account_to_account_response(account: Account) -> AccountResponse {
         name: account.name,
         phone_number: account.phone_number,
         personas: personas_r,
+        access_points: account.access_points.into_iter().collect()
     }
 }
 
@@ -28,6 +29,7 @@ pub fn account_request_to_account(account_request: AccountRequest) -> Account {
         name: None,
         phone_number: None,
         personas,
+        access_points: Default::default(),
         base_fields: BasicEntity::new(),
     }
 }

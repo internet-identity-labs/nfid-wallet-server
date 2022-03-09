@@ -9,7 +9,7 @@ use crate::logger::logger::Logs;
 use crate::repository::application_repo::Application;
 
 use crate::repository::encrypt::account_encrypt::{decrypt_phone_number, encrypt};
-use crate::repository::encrypt::encrypted_repo::{EncryptedAccount};
+use crate::repository::encrypt::encrypted_repo::{EncryptedAccount, EncryptedAccounts, PrincipalIndex};
 use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
 
 
@@ -22,7 +22,6 @@ pub struct Configuration {
     pub whitelisted: Vec<String>,
 }
 
-pub type EncryptedAccounts = BTreeMap<String, EncryptedAccount>;
 //todo rethink visibility
 pub type Applications = BTreeSet<Application>;
 
@@ -110,8 +109,17 @@ pub fn pre_upgrade() {
 pub fn post_upgrade() {
     let (old_accs, admin, logs): (Vec<EncryptedAccount>, Principal, Logs) = storage::stable_restore().unwrap();
     let mut phone_numbers = HashSet::default();
+    storage::get_mut::<Option<Principal>>().replace(admin);
     for u in old_accs {
-        storage::get_mut::<EncryptedAccounts>().insert(u.clone().principal_id, u.clone());
+        let princ = u.clone().principal_id;
+        storage::get_mut::<EncryptedAccounts>().insert(princ.clone(), u.clone());
+
+        storage::get_mut::<PrincipalIndex>().insert(princ.clone(), princ.clone());
+
+        for x in u.clone().access_points.into_iter() {
+            storage::get_mut::<PrincipalIndex>().insert(x.principal_id, princ.clone());
+        }
+
         u.phone_number.map(|x| phone_numbers.insert(x.clone()));
     }
     storage::get_mut::<Option<Principal>>().replace(admin);

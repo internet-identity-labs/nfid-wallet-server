@@ -13,6 +13,7 @@ fn encrypt_decrypt_test() {
         name: Some("".to_string()),
         phone_number: Some("".to_string()),
         personas: vec![],
+        access_points: Default::default(),
         base_fields: Default::default(),
     };
     let encrypted = encrypt_account(acc.clone());
