@@ -69,7 +69,7 @@ pub struct ConfigurationRequest {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccessPointResponse {
-    pub pub_key: ByteBuf,
+    pub principal_id: String,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

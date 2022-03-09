@@ -1,1 +1,1 @@
-dfx canister call identity_manager remove_access_point '( record {pub_key = "PUB_KEY_HASH"; last_used = "123_2"; make = "CHINA_2"; name = "NAME_2"; browser = "CHROME_2"; model = "IProboval";})'
+dfx canister call identity_manager remove_access_point '( record {pub_key = vec {4; 77; 158; 238; 70; 147; 57; 109; 238; 171; 6; 152; 247; 30; 197; 122; 30; 125; 165; 33; 73; 214; 134; 170; 45; 69; 147; 218; 142; 108; 224; 31; 71; 46; 190; 0; 97; 34; 118; 19; 80; 104; 19; 95; 184; 40; 48; 217; 33; 105; 10; 208; 8; 190; 188; 207; 5; 159; 66; 162; 180; 238; 142; 175; 205};})'

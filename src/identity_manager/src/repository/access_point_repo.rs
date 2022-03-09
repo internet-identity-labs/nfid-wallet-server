@@ -9,25 +9,26 @@ use crate::repository::repo::BasicEntity;
 
 #[derive(Clone, Debug, CandidType, Deserialize, Eq)]
 pub struct AccessPoint {
-    pub pub_key: ByteBuf,
+    pub principal_id: String,
     pub base_fields: BasicEntity,
 }
 
 impl PartialEq for AccessPoint {
     fn eq(&self, other: &Self) -> bool {
-        self.pub_key == other.pub_key
+        self.principal_id == other.principal_id
     }
 }
 
 impl Hash for AccessPoint {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.pub_key.hash(state)
+        self.principal_id.hash(state)
     }
 }
 
 pub trait AccessPointRepoTrait {
     fn get_access_points(&self) -> Option<HashSet<AccessPoint>>;
     fn store_access_points(&self, access_points: HashSet<AccessPoint>) -> Option<Account>;
+    fn update_account_index(&self, principal_id: String);
 }
 
 #[derive(Default)]
@@ -46,12 +47,10 @@ impl AccessPointRepoTrait for AccessPointRepo {
             .unwrap().clone();
         acc.access_points = access_points.clone();
         let resp = self.account_repo.store_account(acc);
-        match &resp {
-            None => {}
-            Some(r) => {
-                access_points.into_iter().map(|ap| self.account_repo.update_account_index_with_pub_key(ap.pub_key));
-            }
-        };
         resp
+    }
+
+    fn update_account_index(&self, principal_id: String) {
+        self.account_repo.update_account_index_with_pub_key(principal_id)
     }
 }

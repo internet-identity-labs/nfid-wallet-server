@@ -58,15 +58,19 @@ pub fn encrypt_persona(persona: Persona) -> EncryptedPersona {
 }
 
 pub fn encrypt_access_point(access_point: AccessPoint) -> EncryptedAccessPoint {
+    let key = get_key();
+    let crypt = new_magic_crypt!(key.clone(), 256);
     EncryptedAccessPoint {
-        pub_key: access_point.pub_key,
+        principal_id: encrypt_string(&crypt, access_point.principal_id),
         base_fields: access_point.base_fields,
     }
 }
 
 pub fn decrypt_access_point(encrypted_access_point: EncryptedAccessPoint) -> AccessPoint {
+    let key = get_key();
+    let crypt = new_magic_crypt!(key.clone(), 256);
     AccessPoint {
-        pub_key: encrypted_access_point.pub_key,
+        principal_id: crypt.decrypt_base64_to_string(encrypted_access_point.principal_id).unwrap(),
         base_fields: encrypted_access_point.base_fields,
     }
 }

@@ -1,6 +1,7 @@
 use std::time::Duration;
-use ic_cdk::{trap};
+use ic_cdk::{print, trap};
 use ic_cdk_macros::*;
+use ic_types::Principal;
 use service::{account_service, persona_service, phone_number_service};
 use crate::account_service::{AccountService, AccountServiceTrait};
 use crate::persona_service::{PersonaService, PersonaServiceTrait};
@@ -157,7 +158,7 @@ async fn read_applications() -> HttpResponse<Vec<Application>> {
 }
 
 #[query]
-pub async fn get_logs(n : usize) -> Vec<Log> {
+pub async fn get_logs(n: usize) -> Vec<Log> {
     LogRepo::get(n)
 }
 

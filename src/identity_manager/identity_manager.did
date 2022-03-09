@@ -100,8 +100,12 @@ type LogLevel = variant {
     INFO;
 };
 
-type AccessPoint = record {
+type AccessPointRequest = record {
     pub_key: blob;
+};
+
+type AccessPoint = record {
+    principal_id: text;
 };
 
 type HTTPAccessPointResponse = record {
@@ -138,8 +142,8 @@ service : () -> {
   get_logs: (nat64) -> (vec Log);
   get_all_logs: () -> (vec Log);
 
-  create_access_point: (AccessPoint) -> (HTTPAccessPointResponse);
-  remove_access_point: (AccessPoint) -> (HTTPAccessPointResponse);
+  create_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
+  remove_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
   read_access_points: () -> (HTTPAccessPointResponse);
 
 }

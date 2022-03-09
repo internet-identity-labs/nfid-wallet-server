@@ -27,7 +27,7 @@ pub trait AccountRepoTrait {
     fn store_account(&self, account: Account) -> Option<Account>;
     fn remove_account(&self) -> Option<Account>;
     fn exists(&self, principal: &Principal) -> bool;
-    fn update_account_index_with_pub_key(&self, additional_key: ByteBuf);
+    fn update_account_index_with_pub_key(&self, additional_key: String);
 }
 
 #[derive(Default)]
@@ -54,7 +54,7 @@ impl AccountRepoTrait for AccountRepo {
         EncryptedRepo::exists(principal)
     }
 
-    fn update_account_index_with_pub_key(&self, additional_key: ByteBuf) {
-        EncryptedRepo::update_account_index_with_pub_key(additional_key)
+    fn update_account_index_with_pub_key(&self, additional_principal_id: String) {
+        EncryptedRepo::update_account_index_with_pub_key(additional_principal_id)
     }
 }

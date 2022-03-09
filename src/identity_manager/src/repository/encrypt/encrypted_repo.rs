@@ -3,7 +3,7 @@ use std::hash::{Hash, Hasher};
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
-use ic_cdk::storage;
+use ic_cdk::{storage};
 use serde_bytes::ByteBuf;
 
 use crate::repository::account_repo::Account;
@@ -16,19 +16,19 @@ pub type PrincipalIndex = BTreeMap<String, String>;
 
 #[derive(Default, Clone, Debug, CandidType, Deserialize, Eq)]
 pub struct EncryptedAccessPoint {
-    pub pub_key: ByteBuf,
+    pub principal_id: String,
     pub base_fields: BasicEntity,
 }
 
 impl PartialEq for EncryptedAccessPoint {
     fn eq(&self, other: &Self) -> bool {
-        self.pub_key == other.pub_key
+        self.principal_id == other.principal_id
     }
 }
 
 impl Hash for EncryptedAccessPoint {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.pub_key.hash(state)
+        self.principal_id.hash(state)
     }
 }
 
@@ -76,11 +76,17 @@ impl EncryptedRepo {
 
     pub fn get_account() -> Option<Account> {
         let princ = ic_service::get_caller().to_text();
-
+        let encrypted_princ = encrypt(princ.to_owned());
+        let index = storage::get_mut::<PrincipalIndex>();
         let accounts = storage::get_mut::<EncryptedAccounts>();
-        match accounts.get(&encrypt(princ.to_owned())) {
+        match index.get_mut(&encrypted_princ) {
             None => { None }
-            Some(acc) => { Option::from(decrypt_account(acc.to_owned())) }
+            Some(key) => {
+                match accounts.get(key) {
+                    None => { None }
+                    Some(acc) => { Option::from(decrypt_account(acc.to_owned())) }
+                }
+            }
         }
     }
 
@@ -93,11 +99,10 @@ impl EncryptedRepo {
         }
     }
 
-    pub fn update_account_index_with_pub_key(additional_key: ByteBuf){
+    pub fn update_account_index_with_pub_key(additional_principal_id: String) {
         let princ = ic_service::get_caller().to_text();
-        let key = Principal::self_authenticating(additional_key);
         let index = storage::get_mut::<PrincipalIndex>();
-        index.insert(encrypt(key.to_text()), encrypt(princ));
+        index.insert(encrypt(additional_principal_id), encrypt(princ));
     }
 
     pub fn exists(principal: &Principal) -> bool {

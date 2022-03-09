@@ -1,6 +1,10 @@
 (
   record {
-    data = opt vec { record { pub_key = "PKNEWW" } };
+    data = opt vec {
+      record {
+        principal_id = "2kqda-6wdqw-2be7y-4c5yg-ijw7q-muznw-qh3tm-55v2s-cnnyp-o2ud4-cqe";
+      };
+    };
     error = null;
     status_code = 200 : nat16;
   },
