@@ -86,10 +86,10 @@ jobs:
 
       - name: Update did files.
         run: |
-          cp ./identity_manager.did.d.ts ./frontend/frontend/services/identity-manager/identity_manager.did.d.ts -f
-          cp ./identity_manager.did.js ./frontend/frontend/services/identity-manager/identity_manager_idl.js -f
-          cp ./pub_sub_channel.did.d.ts ./frontend/frontend/services/pub-sub-channel/pub_sub_channel.did.d.ts -f
-          cp ./pub_sub_channel.did.js ./frontend/frontend/services/pub-sub-channel/pub_sub_channel_idl.js -f
+          cp ./identity_manager.did.d.ts ./frontend/src/services/identity-manager/identity_manager.did.d.ts -f
+          cp ./identity_manager.did.js ./frontend/src/services/identity-manager/identity_manager_idl.js -f
+          cp ./pub_sub_channel.did.d.ts ./frontend/src/services/pub-sub-channel/pub_sub_channel.did.d.ts -f
+          cp ./pub_sub_channel.did.js ./frontend/src/services/pub-sub-channel/pub_sub_channel_idl.js -f
 
       - name: Create a pull request to remote frontend repository.
         uses: peter-evans/create-pull-request@v3
