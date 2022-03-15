@@ -1,6 +1,1 @@
-(
-  record {
-    error = %s;
-    status_code = %s : nat16;
-  },
-)
+(record { error = %s; status_code = %s : nat16; },)

@@ -47,6 +47,17 @@ pub enum PersonaVariant {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum CredentialVariant {
+    #[serde(rename = "phone_number")]
+    PhoneNumber(PhoneNumberCredential),
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct PhoneNumberCredential {
+    pub phone_number: String
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct PersonaII {
     pub anchor: u64,
     pub domain: String,

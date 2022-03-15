@@ -8,7 +8,7 @@ use crate::persona_service::{PersonaService, PersonaServiceTrait};
 use crate::repository::persona_repo::PersonaRepo;
 use crate::application_service::ApplicationService;
 use crate::container::container_wrapper;
-use crate::container_wrapper::{get_access_point_service, get_account_service, get_application_service, get_persona_service, get_phone_number_service};
+use crate::container_wrapper::{get_access_point_service, get_account_service, get_application_service, get_persona_service, get_phone_number_service, get_credential_service};
 use crate::repository::application_repo::{Application, ApplicationRepo};
 use crate::service::application_service::ApplicationServiceTrait;
 use crate::service::phone_number_service::PhoneNumberServiceTrait;
@@ -19,12 +19,13 @@ use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
 use crate::repository::account_repo::AccountRepo;
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
-use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest};
+use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant};
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response};
 use crate::service::{application_service, ic_service};
 use canister_api_macros::{log_error};
 use crate::logger::logger::{Log, LogLevel, LogRepo};
+use crate::service::credential_service::CredentialServiceTrait;
 use crate::service::access_point_service::AccessPointServiceTrait;
 
 mod service;
@@ -56,6 +57,12 @@ async fn configure(request: ConfigurationRequest) -> () {
     };
 
     ConfigurationRepo::save(configuration);
+}
+
+#[query]
+async fn credentials() -> HttpResponse<Vec<CredentialVariant>> {
+    let credential_service = get_credential_service();
+    credential_service.credentials()
 }
 
 #[update]
