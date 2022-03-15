@@ -64,7 +64,7 @@ jobs:
             rm -rf .dfx;
             set +e;
             dfx build --network ic identity_manager;
-            dfx canister --no-wallet --network ic install --mode upgrade identity_manager;
+            dfx canister --no-wallet --network ic install --mode reinstall identity_manager;
             sleep 5;
             im=$(dfx canister --network ic call identity_manager configure '(record {key = blob "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}}; token_refresh_ttl = ${{secrets.TOKEN_REFRESH_TTL}}; whitelisted_phone_numbers = opt vec {${{secrets.WHITELISTED_PHONE_NUMBERS}}} })');
             set -e;
