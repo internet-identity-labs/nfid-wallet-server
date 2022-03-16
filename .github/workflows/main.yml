@@ -91,6 +91,15 @@ jobs:
           cp ./pub_sub_channel.did.d.ts ./frontend/src/services/pub-sub-channel/pub_sub_channel.did.d.ts -f
           cp ./pub_sub_channel.did.js ./frontend/src/services/pub-sub-channel/pub_sub_channel_idl.js -f
 
+      - name: Format did files.
+        run: |
+          cd ./frontend
+          yarn
+          yarn prettier --write ./src/services/identity-manager/identity_manager.did.d.ts
+          yarn prettier --write ./src/services/identity-manager/identity_manager_idl.js
+          yarn prettier --write ./src/services/pub-sub-channel/pub_sub_channel.did.d.ts
+          yarn prettier --write ./src/services/pub-sub-channel/pub_sub_channel_idl.js
+
       - name: Create a pull request to remote frontend repository.
         uses: peter-evans/create-pull-request@v3
         with:
