@@ -93,6 +93,7 @@ async fn remove_access_point(access_point: AccessPointRequest) -> HttpResponse<V
 }
 
 #[update]
+#[replicate_account]
 #[log_error]
 async fn verify_token(token: String) -> Response {
     let phone_number_service = get_phone_number_service();
@@ -194,7 +195,7 @@ async fn is_over_the_application_limit(domain: String) -> HttpResponse<bool> {
 
 #[heartbeat]
 async fn heartbeat_function() {
-    if ConfigurationRepo::get().heartbeat != 0 {
+    if ConfigurationRepo::exists() && ConfigurationRepo::get().heartbeat != 0 {
         let mut i = storage::get_mut::<HearthCount>();
         if (*i % ConfigurationRepo::get().heartbeat) == 0 && !storage::get_mut::<AccountsToReplicate>().is_empty() {
             flush_account().await;

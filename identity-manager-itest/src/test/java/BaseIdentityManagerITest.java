@@ -17,7 +17,7 @@ public class BaseIdentityManagerITest extends BaseDFXITest {
             call("common/init_dfx_project");
             call("common/deploy_dfx_project");
             BACKUP_CANISTER_ID = call("common/get_canister_id", "identity_manager_replica").trim();
-            identity_manager = call("common/configure_dfx_project", "identity_manager", KEY, ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, HEARTBEAT_PERIOD, BACKUP_CANISTER_ID);
+            identity_manager = call("common/configure_dfx_project", "identity_manager", KEY, ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, getHeartBeatPeriod(), BACKUP_CANISTER_ID);
             identity_manager_replica = call("common/configure_dfx_project", "identity_manager_replica", KEY, ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, DISABLED_HEARTBEAT, BACKUP_CANISTER_ID);
             if (++i >= DEFAULT_TRIES)
                 System.exit(1);
@@ -25,5 +25,9 @@ public class BaseIdentityManagerITest extends BaseDFXITest {
         } while (identity_manager.isEmpty() || identity_manager_replica.isEmpty());
         call("request/post_token", PHONE, TOKEN, ROOT_IDENTITY);
     }
+
+    String getHeartBeatPeriod(){
+        return HEARTBEAT_PERIOD;
+    };
 
 }

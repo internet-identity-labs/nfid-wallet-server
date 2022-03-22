@@ -8,7 +8,6 @@ use crate::{ic_service, Log, LogLevel, LogRepo};
 use crate::logger::logger::Logs;
 use crate::repository::account_repo::{Account, Accounts, PrincipalIndex};
 use crate::repository::application_repo::Application;
-use crate::repository::encrypt::account_encrypt::encrypt;
 
 use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
 
@@ -67,6 +66,10 @@ impl ConfigurationRepo {
     //todo fix Principle not implement default!
     pub fn get() -> &'static Configuration {
         storage::get::<Option<Configuration>>().as_ref().unwrap()
+    }
+
+    pub fn exists() -> bool {
+        storage::get::<Option<Configuration>>().is_some()
     }
 
     pub fn save(configuration: Configuration) -> () {

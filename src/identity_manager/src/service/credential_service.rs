@@ -2,7 +2,6 @@ use crate::{CredentialVariant, HttpResponse, ic_service};
 use crate::CredentialVariant::PhoneNumber;
 use crate::http::response_mapper::{DataResponse, ErrorResponse};
 use crate::repository::account_repo::AccountRepoTrait;
-use crate::repository::encrypt::account_encrypt::decrypt;
 use crate::requests::PhoneNumberCredential;
 
 pub trait CredentialServiceTrait {
@@ -30,7 +29,7 @@ impl<T: AccountRepoTrait> CredentialServiceTrait for CredentialService<T> {
         let credentials: Vec<CredentialVariant> = account
             .map(|x| x.phone_number)
             .flatten()
-            .map(|x| decrypt(x))
+            .map(|x| x)
             .map(|phone_number| PhoneNumberCredential {phone_number})
             .map(|x| PhoneNumber(x))
             .map(|x| vec!(x) )

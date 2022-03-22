@@ -199,7 +199,6 @@ service : () -> {
   remove_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
   read_access_points: () -> (HTTPAccessPointResponse);
 
-  replicate_account: (text, text) -> (BoolHttpResponse);
   store_accounts: (vec Account) -> (BoolHttpResponse);
   restore_accounts: (text) -> (BoolHttpResponse);
 }

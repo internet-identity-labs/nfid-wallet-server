@@ -4,6 +4,11 @@ import static org.testng.Assert.assertEquals;
 
 public class PhoneNumberITest extends BaseIdentityManagerITest {
 
+    @Override
+    String getHeartBeatPeriod() {
+        return "100";
+    }
+
     @Test(priority = 1)
     public void validatePhoneWhenNotLambdaUser() {
         command("common/use_test_persona");
