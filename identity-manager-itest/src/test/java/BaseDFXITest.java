@@ -72,7 +72,6 @@ public class BaseDFXITest {
 
     @SneakyThrows
     public String callDfxCommand(String dfxCommand) {
-        System.out.println(dfxCommand);
         String[] bashScript = new String[]{
                 "/bin/bash",
                 "-c",

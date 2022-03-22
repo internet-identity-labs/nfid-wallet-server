@@ -18,7 +18,7 @@ use crate::http::requests;
 use crate::http::requests::{AccountResponse, PersonaVariant};
 use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
-use crate::repository::account_repo::{Account, AccountRepo, AccountRepoTrait};
+use crate::repository::account_repo::{Account, AccountRepo,};
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
 use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant};
 use crate::requests::AccountUpdateRequest;
