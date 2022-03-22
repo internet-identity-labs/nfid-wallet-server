@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::time::Duration;
 use ic_cdk::api::time;
 use ic_cdk::storage;
-use crate::ConfigurationRepo;
 #[cfg(test)]
 use mockers_derive::mocked;
+use crate::ConfigurationRepo;
 
 #[cfg_attr(test, mocked)]
 pub trait TokenRepoTrait {
@@ -40,7 +40,7 @@ impl TokenRepoTrait for TokenRepo {
             .map(|(token, phone_number, _)| (token, phone_number))
     }
     #[cfg(test)]
-    fn get(&self, principal_id_encrypted: &String, duration: Duration) -> Option<(&String, &String)> {
+    fn get(&self, principal_id_encrypted: &String, _duration: Duration) -> Option<(&String, &String)> {
         storage::get::<Tokens>()
             .get(principal_id_encrypted)
             .map(|(token, phone_number, _)| (token, phone_number))

@@ -31,14 +31,6 @@ pub fn to_error_response<T>(x: &str) -> HttpResponse<T> {
     }
 }
 
-pub fn to_error_http_response<T>(code: u16, x: &str) -> HttpResponse<T> {
-    HttpResponse {
-        data: None,
-        error: Some(String::from(x)),
-        status_code: code,
-    }
-}
-
 pub fn error_response(code: u16, text: &str) -> Response {
     Response {
         error: Some(String::from(text)),

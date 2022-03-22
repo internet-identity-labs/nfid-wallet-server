@@ -1,8 +1,8 @@
 use ic_cdk::export::Principal;
-use crate::{AccountRepo, ConfigurationRepo, ic_service, Response, TokenRequest, ValidatePhoneRequest};
-use crate::HttpResponse;
+use crate::{ConfigurationRepo, ic_service, Response, TokenRequest, ValidatePhoneRequest};
+
 use crate::repository::account_repo::AccountRepoTrait;
-use crate::repository::phone_number_repo::{PhoneNumberRepoTrait, PhoneNumbers};
+use crate::repository::phone_number_repo::{PhoneNumberRepoTrait};
 use crate::response_mapper::{error_response, response};
 use crate::repository::token_repo::{TokenRepoTrait};
 

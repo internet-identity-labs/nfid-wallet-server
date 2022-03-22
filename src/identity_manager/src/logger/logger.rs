@@ -32,7 +32,7 @@ impl LogRepo {
     }
 
     pub fn save(log_entry: Log) {
-        let mut logs = storage::get_mut::<Logs>();
+        let logs = storage::get_mut::<Logs>();
         if logs.len() > 500 {
             logs.remove(0);
         }

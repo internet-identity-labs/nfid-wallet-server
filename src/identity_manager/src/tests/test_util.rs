@@ -1,9 +1,9 @@
 use std::time::Duration;
 use ic_cdk::export::Principal;
 use crate::{AccountRequest, AccountServiceTrait, Configuration, ConfigurationRepo, get_account_service};
-use crate::ic_service::get_caller;
-use crate::repository::account_repo::Account;
-use crate::repository::repo::BasicEntity;
+
+
+
 
 pub fn init_config(){
     let a = Configuration {

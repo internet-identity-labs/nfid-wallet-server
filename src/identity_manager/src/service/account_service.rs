@@ -1,14 +1,14 @@
 use crate::http::requests::AccountResponse;
-use crate::{Account, ConfigurationRepo, HttpResponse};
+use crate::{Account, HttpResponse};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
-use crate::phone_number_service::PhoneNumberServiceTrait;
+
 use crate::repository::account_repo::AccountRepoTrait;
 use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
 use crate::requests::{AccountRequest, AccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
-use crate::util::validation_util::validate_name;
+
 
 pub trait AccountServiceTrait {
     fn get_account(&mut self) -> HttpResponse<AccountResponse>;
