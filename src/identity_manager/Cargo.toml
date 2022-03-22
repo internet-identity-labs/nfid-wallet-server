@@ -23,3 +23,4 @@ canister_api_macros = { path = "../libraries/canister_api_macros" }
 serde_bytes = "0.11"
 serde_cbor = "0.11"
 serde_with = "1.6.2"
+itertools = "0.10.3"

@@ -29,3 +29,7 @@ pub fn get_credential_service() -> CredentialService<AccountRepo> {
 pub fn get_access_point_service() -> AccessPointService<AccessPointRepo> {
     get!(&container![], AccessPointService<AccessPointRepo>).unwrap()
 }
+
+pub fn get_account_repo() -> AccountRepo<> {
+    get!(&container![], AccountRepo<>).unwrap()
+}

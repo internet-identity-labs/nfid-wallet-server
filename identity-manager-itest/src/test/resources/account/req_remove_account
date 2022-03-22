@@ -1,1 +1,1 @@
-dfx canister call identity_manager remove_account
+dfx canister call %s remove_account

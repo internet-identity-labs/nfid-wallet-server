@@ -1,5 +1,5 @@
 use crate::http::requests::AccountResponse;
-use crate::{ConfigurationRepo, HttpResponse};
+use crate::{Account, ConfigurationRepo, HttpResponse};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::phone_number_service::PhoneNumberServiceTrait;
 use crate::repository::account_repo::AccountRepoTrait;
@@ -15,6 +15,7 @@ pub trait AccountServiceTrait {
     fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse>;
     fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
     fn remove_account(&mut self) -> HttpResponse<bool>;
+    fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
 }
 
 #[derive(Default)]
@@ -66,7 +67,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
     fn remove_account(&mut self) -> HttpResponse<bool> {
         let result = self.account_repo.remove_account();
         if result.is_none() {
-           return to_error_response("Unable to remove Account");
+            return to_error_response("Unable to remove Account");
         }
 
         let account = result.unwrap();
@@ -81,6 +82,11 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
             return to_error_response("Unable to remove Phone Number");
         }
 
+        to_success_response(true)
+    }
+
+    fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool> {
+        self.account_repo.store_accounts(accounts);
         to_success_response(true)
     }
 }

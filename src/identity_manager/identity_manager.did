@@ -9,6 +9,8 @@ type ConfigurationRequest = record {
     token_refresh_ttl: nat64;
     key: blob;
     whitelisted_phone_numbers: opt vec text;
+    heartbeat: nat32;
+    backup_canister_id: text;
 };
 
 type BoolHttpResponse = record {
@@ -134,6 +136,42 @@ type CredentialResponse = record {
     status_code: nat16;
 };
 
+type EncryptedAccount = record {
+    anchor: text;
+    principal_id: text;
+    name: opt text;
+    phone_number: opt text;
+    personas: vec EncryptedPersona;
+    access_points: vec EncryptedAccessPoint;
+};
+
+type EncryptedPersona = record {
+    anchor: text;
+    persona_id: text;
+    domain: text;
+};
+
+type EncryptedAccessPoint = record {
+     anchor: text;
+     persona_id: text;
+     domain: text;
+};
+
+type Account = record {
+    anchor: nat64;
+    principal_id: text;
+    name: opt text;
+    phone_number: opt text;
+    personas: vec PersonaVariant;
+    access_points: vec AccessPoint;
+    basic_entity: BasicEntity;
+};
+
+type BasicEntity = record {
+    created_date: nat64;
+    modified_date: nat64;
+}
+
 service : () -> {
   configure: (ConfigurationRequest) -> ();
   get_account: () -> (HTTPAccountResponse) query;
@@ -142,7 +180,7 @@ service : () -> {
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
 
   create_persona: (PersonaVariant) -> (HTTPAccountResponse);
-  read_personas: () -> (HTTPPersonasResponse);
+  read_personas: () -> (HTTPPersonasResponse) query;
 
   validate_phone: (ValidatePhoneRequest) -> (Response);
   post_token: (TokenRequest) -> (Response);
@@ -161,4 +199,7 @@ service : () -> {
   remove_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
   read_access_points: () -> (HTTPAccessPointResponse);
 
+  replicate_account: (text, text) -> (BoolHttpResponse);
+  store_accounts: (vec Account) -> (BoolHttpResponse);
+  restore_accounts: (text) -> (BoolHttpResponse);
 }

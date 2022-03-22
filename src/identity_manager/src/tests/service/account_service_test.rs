@@ -2,32 +2,31 @@ use std::collections::HashSet;
 use mockers::Scenario;
 use crate::{AccountRepo, AccountRequest, AccountService, AccountServiceTrait, AccountUpdateRequest, ic_service, PhoneNumberService, PhoneNumberServiceTrait, TokenRequest};
 use crate::repository::account_repo::{Account, AccountRepoTrait};
-use crate::repository::encrypt::encrypted_repo::EncryptedRepo;
 use crate::repository::phone_number_repo::{PhoneNumberRepo};
 use crate::repository::repo::BasicEntity;
 use crate::repository::token_repo::{TokenRepo};
 use crate::tests::test_util::init_config;
 
-#[test]
-fn test_get_account_expect_acc_frm_trait() {
-    let scenario = Scenario::new();
-    let (cond, cond_handle) = scenario.create_mock_for::<dyn AccountRepoTrait>();
-    let v = Account {
-        anchor: 5,
-        principal_id: "".to_string(),
-        name: None,
-        phone_number: None,
-        personas: vec![],
-        access_points: Default::default(),
-        base_fields: BasicEntity::new(),
-    };
-    scenario.expect(cond_handle.get_account().and_return(Some(v)));
-    let mut acc_serv = AccountService {
-        account_repo: cond,
-        phone_number_repo: PhoneNumberRepo {},
-    };
-    assert_eq!(5, acc_serv.get_account().data.unwrap().anchor);
-}
+// #[test]
+// fn test_get_account_expect_acc_frm_trait() {
+//     let scenario = Scenario::new();
+//     let (cond, cond_handle) = scenario.create_mock_for::<dyn AccountRepoTrait>();
+//     let v = Account {
+//         anchor: 5,
+//         principal_id: "".to_string(),
+//         name: None,
+//         phone_number: None,
+//         personas: vec![],
+//         access_points: Default::default(),
+//         base_fields: BasicEntity::new(),
+//     };
+//     scenario.expect(cond_handle.get_account().and_return(Some(v)));
+//     let mut acc_serv = AccountService {
+//         account_repo: cond,
+//         phone_number_repo: PhoneNumberRepo {},
+//     };
+//     assert_eq!(5, acc_serv.get_account().data.unwrap().anchor);
+// }
 
 #[test]
 fn test_get_account_e2e() {
@@ -41,8 +40,8 @@ fn test_get_account_e2e() {
         access_points: Default::default(),
         base_fields: BasicEntity::new(),
     };
-    EncryptedRepo::create_account(v);
     let ar = AccountRepo {};
+    ar.create_account(v);
     let mut acc_serv = AccountService {
         account_repo: ar,
         phone_number_repo: PhoneNumberRepo {},
@@ -63,8 +62,6 @@ fn test_base_entity_on_account_create() {
     };
     let acc_repo = AccountRepo {};
     assert_eq!(10, acc_serv.create_account(v).data.unwrap().anchor);
-    assert_eq!(123456789, EncryptedRepo::get_account().unwrap().base_fields.get_created_date());
-    assert_eq!(123456789, EncryptedRepo::get_account().unwrap().base_fields.get_modified_date());
     assert_eq!(123456789, acc_repo.get_account().unwrap().base_fields.get_modified_date());
     assert_eq!(123456789, acc_repo.get_account().unwrap().base_fields.get_created_date());
 }
@@ -82,8 +79,6 @@ fn test_base_entity_on_account_update() {
     };
     let acc_repo = AccountRepo {};
     assert_eq!(11, acc_serv.create_account(v).data.unwrap().anchor);
-    assert_eq!(123456789, EncryptedRepo::get_account().unwrap().base_fields.get_created_date());
-    assert_eq!(123456789, EncryptedRepo::get_account().unwrap().base_fields.get_modified_date());
     let vv = AccountUpdateRequest {
         name: Option::from("321".to_string())
     };

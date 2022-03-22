@@ -3,8 +3,7 @@ use ic_cdk::storage;
 use serde_bytes::ByteBuf;
 use crate::{AccessPointRequest, AccessPointServiceTrait, AccountService, AccountServiceTrait, create_access_point, get_access_point_service, get_account, get_account_service, ic_service};
 use crate::repository::access_point_repo::AccessPoint;
-use crate::repository::encrypt::account_encrypt::encrypt;
-use crate::repository::encrypt::encrypted_repo::{EncryptedRepo, PrincipalIndex};
+use crate::repository::account_repo::PrincipalIndex;
 use crate::repository::repo::post_upgrade;
 use crate::tests::test_util::{create_default_account, init_config};
 
@@ -17,7 +16,7 @@ fn test_ap_e2e() {
     let mut account_service = get_access_point_service();
     account_service.create_access_point(ap);
     let pr = Principal::self_authenticating(pk.clone()).to_text();
-    let encrypted_princ = encrypt(pr.to_owned());
+    let encrypted_princ = pr.to_owned();
     let index = storage::get_mut::<PrincipalIndex>();
     let mut account_service = get_account_service();
     let acc = account_service.get_account();
@@ -28,7 +27,7 @@ fn test_ap_e2e() {
             assert!(false)
         }
         Some(k) => {
-            assert_eq!(encrypt(ic_service::get_caller().to_text()), k.to_owned())
+            assert_eq!(ic_service::get_caller().to_text(), k.to_owned())
         }
     }
 }

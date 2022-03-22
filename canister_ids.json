@@ -2,6 +2,9 @@
   "identity_manager": {
     "ic": "74gpt-tiaaa-aaaak-aacaa-cai"
   },
+  "identity_manager_replica": {
+    "ic": ""
+  },
   "pub_sub_channel": {
     "ic": "iyvpb-uqaaa-aaaag-qabxa-cai"
   }

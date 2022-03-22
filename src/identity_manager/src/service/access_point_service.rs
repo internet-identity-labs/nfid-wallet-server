@@ -5,7 +5,6 @@ use crate::requests::{AccessPointRequest, AccessPointResponse};
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
 use ic_cdk::export::Principal;
 use ic_cdk::print;
-use crate::repository::encrypt::account_encrypt::encrypt;
 
 pub trait AccessPointServiceTrait {
     fn read_access_points(&self) -> HttpResponse<Vec<AccessPointResponse>>;

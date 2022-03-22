@@ -95,7 +95,7 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
 
     @Test(priority = 7)
     public void validatePhoneNumberExists() throws InterruptedException {
-        command("common/configure_dfx_project", KEY, ROOT_IDENTITY, TTL, "1", WHITELISTED_PHONE_NUMBERS);
+        command("common/configure_dfx_project", "identity_manager", KEY, ROOT_IDENTITY, TTL, "1", WHITELISTED_PHONE_NUMBERS, 0, BACKUP_CANISTER_ID);
         command("request/post_token", PHONE, TOKEN, ROOT_IDENTITY);
 
         Thread.sleep(1000);
@@ -120,7 +120,7 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
 
     @Test(priority = 8)
     public void verifyTokenWhenPrincipalIdNotExists() throws InterruptedException {
-        command("common/configure_dfx_project", KEY, ROOT_IDENTITY, "1", TTL_REFRESH, WHITELISTED_PHONE_NUMBERS);
+        command("common/configure_dfx_project", "identity_manager", KEY, ROOT_IDENTITY, "1", TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, 0, BACKUP_CANISTER_ID);
         command("request/post_token", PHONE, TOKEN, ROOT_IDENTITY);
 
         Thread.sleep(1000);
