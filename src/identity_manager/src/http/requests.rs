@@ -33,17 +33,9 @@ pub struct AccountResponse {
     pub principal_id: String,
     pub name: Option<String>,
     pub phone_number: Option<String>,
-    pub personas: Vec<PersonaVariant>,
+    pub personas: Vec<PersonaResponse>,
     pub access_points: Vec<AccessPoint>,
     pub anchor: u64,
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum PersonaVariant {
-    #[serde(rename = "nfid_persona")]
-    NfidPersona(PersonaNFID),
-    #[serde(rename = "ii_persona")]
-    IiPersona(PersonaII),
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -58,13 +50,13 @@ pub struct PhoneNumberCredential {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct PersonaII {
-    pub anchor: u64,
+pub struct PersonaResponse {
     pub domain: String,
+    pub persona_id: String,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct PersonaNFID {
+pub struct PersonaRequest {
     pub domain: String,
     pub persona_id: String,
 }

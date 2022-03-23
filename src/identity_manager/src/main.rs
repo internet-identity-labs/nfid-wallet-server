@@ -15,12 +15,12 @@ use crate::service::application_service::ApplicationServiceTrait;
 use crate::service::phone_number_service::PhoneNumberServiceTrait;
 
 use crate::http::requests;
-use crate::http::requests::{AccountResponse, PersonaVariant};
+use crate::http::requests::{AccountResponse};
 use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
 use crate::repository::account_repo::{Account, AccountRepo,};
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
-use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant};
+use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant, PersonaRequest, PersonaResponse};
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
@@ -146,13 +146,13 @@ async fn remove_account() -> HttpResponse<bool> {
 #[update]
 #[log_error]
 #[replicate_account]
-async fn create_persona(persona: PersonaVariant) -> HttpResponse<AccountResponse> {
+async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
     let persona_service = get_persona_service();
     persona_service.create_persona(persona)
 }
 
 #[query]
-async fn read_personas() -> HttpResponse<Vec<PersonaVariant>> {
+async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
     let persona_service = get_persona_service();
     persona_service.read_personas()
 }

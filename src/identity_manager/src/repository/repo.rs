@@ -27,6 +27,7 @@ pub struct Configuration {
 pub type Applications = BTreeSet<Application>;
 
 pub struct AdminRepo {}
+
 pub struct ConfigurationRepo {}
 
 #[derive(Clone, Debug, CandidType, Deserialize, Default, PartialEq, Eq, Copy, Hash)]
@@ -77,21 +78,10 @@ impl ConfigurationRepo {
     }
 }
 
-
 pub fn is_anchor_exists(anchor: u64) -> bool { //todo move somewhere
     let accounts = storage::get_mut::<Accounts>();
     accounts.into_iter()
-        .map(|l| {
-            let c = l.1.clone();
-            let mut anchors:Vec<u64> = l.1.personas.iter()
-                .map(|k| k.anchor.clone())
-                .filter(|l| l.is_some())
-                .map(|l| l.unwrap())
-                .collect();
-            anchors.push(c.anchor);
-            anchors
-        })
-        .flat_map(|x| x.into_iter())
+        .map(|l| l.1.anchor)
         .any(|x| x == anchor)
 }
 

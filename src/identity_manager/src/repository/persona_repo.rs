@@ -8,9 +8,8 @@ use mockers_derive::mocked;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Persona {
-    pub anchor: Option<u64>,
     pub domain: String,
-    pub persona_id: Option<String>,
+    pub persona_id: String,
     pub base_fields: BasicEntity,
 }
 

@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use crate::PersonaVariant;
+use crate::requests::PersonaRequest;
 
 pub fn validate_name(name: &str) -> bool {
     lazy_static! {
@@ -10,15 +10,7 @@ pub fn validate_name(name: &str) -> bool {
 }
 
 
-pub fn validate_frontend_length(persona_request: &PersonaVariant) -> bool {
+pub fn validate_frontend_length(persona_request: &PersonaRequest) -> bool {
     const FRONTEND_HOSTNAME_LIMIT: usize = 255;
-
-    match persona_request {
-        PersonaVariant::IiPersona(ii) => {
-            ii.domain.len() < FRONTEND_HOSTNAME_LIMIT
-        }
-        PersonaVariant::NfidPersona(nfid) => {
-            (nfid.persona_id.len() + nfid.domain.len()) < FRONTEND_HOSTNAME_LIMIT
-        }
-    }
+    persona_request.domain.len() < FRONTEND_HOSTNAME_LIMIT
 }

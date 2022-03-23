@@ -5,14 +5,10 @@
       anchor = 12_345 : nat64;
       access_points = vec {};
       personas = vec {
-        variant {
-          nfid_persona = record {
-            domain = "TEST_DOMAIN";
-            persona_id = "PERSONA";
-          }
-        };
+        record { domain = "TEST_DOMAIN"; persona_id = "PERSONA" };
+        record { domain = "TEST_DOMAIN_DD"; persona_id = "TEST_DOMAIN_DD" };
       };
-      principal_id = "%s";
+      principal_id = "sculj-2sjuf-dxqlm-dcv5y-hin5x-zfyvr-tzngf-bt5b5-dwhcc-zbsqf-rae";
       phone_number = null;
     };
     error = null;

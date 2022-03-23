@@ -1,7 +1,5 @@
-type Token = text;
-type Domain = text;
-type Name = text;
 type Error = text;
+type Token = text;
 
 type ConfigurationRequest = record {
     lambda: principal;
@@ -30,12 +28,30 @@ type EmptyHttpResponse = record {
      status_code: nat16;
  };
 
+type LogLevel = variant {
+    ERROR;
+    INFO;
+};
+
+type Log = record {
+    log: text;
+    level: LogLevel;
+    timestamp: nat64;
+};
+
+type BasicEntity = record {
+    created_date: nat64;
+    modified_date: nat64;
+};
+
+ //  ----------------------ACCOUNT SECTION----------------------------
+
 type AccountResponse = record {
     anchor: nat64;
     principal_id: text;
     name: opt text;
     phone_number: opt text;
-    personas: vec PersonaVariant;
+    personas: vec PersonaResponse;
     access_points: vec AccessPoint;
 };
 
@@ -53,6 +69,43 @@ type HTTPAccountUpdateRequest = record {
     name: opt text;
 };
 
+type Account = record {
+    anchor: nat64;
+    principal_id: text;
+    name: opt text;
+    phone_number: opt text;
+    personas: vec Persona;
+    access_points: vec AccessPoint;
+    basic_entity: BasicEntity;
+};
+
+ //  ----------------------PERSONA SECTION----------------------------
+
+type PersonaRequest = record {
+    persona_id: text;
+    domain: text;
+};
+
+type PersonaResponse = record {
+    persona_id: text;
+    domain: text;
+};
+
+type Persona = record {
+    persona_id: text;
+    domain: text;
+    basic_entity: BasicEntity;
+};
+
+type HTTPPersonasResponse = record {
+    data: opt vec PersonaResponse;
+    error: opt Error;
+    status_code: nat16;
+};
+
+
+ //  ----------------------APPLICATION SECTION----------------------------
+
 type Application = record {
     name: text;
     domain: text;
@@ -65,26 +118,8 @@ type HTTPApplicationResponse = record {
     status_code: nat16;
 };
 
-type PersonaVariant = variant {
-  nfid_persona: PersonaNFIDResponse;
-  ii_persona: PersonaIIResponse
-};
 
-type PersonaNFIDResponse = record {
-    persona_id: text;
-    domain: text;
-};
-
-type PersonaIIResponse = record {
-    anchor: nat64;
-    domain: text;
-};
-
-type HTTPPersonasResponse = record {
-    data: opt vec PersonaVariant;
-    error: opt Error;
-    status_code: nat16;
-};
+ //  ----------------------PHONE SECTION----------------------------
 
 type TokenRequest = record {
     phone_number: text;
@@ -95,31 +130,6 @@ type TokenRequest = record {
 type ValidatePhoneRequest = record {
     phone_number: text;
     principal_id: text;
-};
-
-type LogLevel = variant {
-    ERROR;
-    INFO;
-};
-
-type AccessPointRequest = record {
-    pub_key: blob;
-};
-
-type AccessPoint = record {
-    principal_id: text;
-};
-
-type HTTPAccessPointResponse = record {
-    data: opt vec AccessPoint;
-    error: opt Error;
-    status_code: nat16;
-};
-
-type Log = record {
-    log: text;
-    level: LogLevel;
-    timestamp: nat64;
 };
 
 type PhoneNumberCredential = record {
@@ -136,41 +146,25 @@ type CredentialResponse = record {
     status_code: nat16;
 };
 
-type EncryptedAccount = record {
-    anchor: text;
+//  ----------------------ACCESS POINT SECTION----------------------------
+
+type AccessPointRequest = record {
+    pub_key: blob;
+};
+
+type AccessPoint = record {
     principal_id: text;
-    name: opt text;
-    phone_number: opt text;
-    personas: vec EncryptedPersona;
-    access_points: vec EncryptedAccessPoint;
 };
 
-type EncryptedPersona = record {
-    anchor: text;
-    persona_id: text;
-    domain: text;
+type HTTPAccessPointResponse = record {
+    data: opt vec AccessPoint;
+    error: opt Error;
+    status_code: nat16;
 };
 
-type EncryptedAccessPoint = record {
-     anchor: text;
-     persona_id: text;
-     domain: text;
-};
-
-type Account = record {
-    anchor: nat64;
-    principal_id: text;
-    name: opt text;
-    phone_number: opt text;
-    personas: vec PersonaVariant;
-    access_points: vec AccessPoint;
-    basic_entity: BasicEntity;
-};
-
-type BasicEntity = record {
-    created_date: nat64;
-    modified_date: nat64;
-}
+ //  ---------------------------------------------------------
+ //  ----------------------SERVICE----------------------------
+ //  ---------------------------------------------------------
 
 service : () -> {
   configure: (ConfigurationRequest) -> ();
@@ -179,7 +173,7 @@ service : () -> {
   remove_account: () -> (BoolHttpResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
 
-  create_persona: (PersonaVariant) -> (HTTPAccountResponse);
+  create_persona: (PersonaRequest) -> (HTTPAccountResponse);
   read_personas: () -> (HTTPPersonasResponse) query;
 
   validate_phone: (ValidatePhoneRequest) -> (Response);
@@ -188,9 +182,9 @@ service : () -> {
   credentials: () -> (CredentialResponse);
 
   create_application: (Application) -> (HTTPApplicationResponse);
-  delete_application: (Name) -> (BoolHttpResponse);
+  delete_application: (text) -> (BoolHttpResponse);
   read_applications: () -> (HTTPApplicationResponse) query;
-  is_over_the_application_limit: (Domain) -> (BoolHttpResponse) query;
+  is_over_the_application_limit: (text) -> (BoolHttpResponse) query;
 
   get_logs: (nat64) -> (vec Log);
   get_all_logs: () -> (vec Log);

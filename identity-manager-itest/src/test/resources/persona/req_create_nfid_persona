@@ -1,6 +1,0 @@
-dfx canister call identity_manager create_persona '(variant {
-          nfid_persona = record {
-            domain = "TEST_DOMAIN";
-            persona_id = "PERSONA";
-          }
-        })'
