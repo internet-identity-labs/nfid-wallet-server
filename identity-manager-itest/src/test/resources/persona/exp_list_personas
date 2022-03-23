@@ -1,18 +1,8 @@
 (
   record {
     data = opt vec {
-      variant {
-        nfid_persona = record { domain = "TEST_DOMAIN"; persona_id = "PERSONA" }
-      };
-      variant {
-        ii_persona = record { domain = "TEST_DOMAIN"; anchor = 123_456 : nat64 }
-      };
-      variant {
-        nfid_persona = record {
-          domain = "TEST_DOMAIN_DD";
-          persona_id = "PERSONA_DD";
-        }
-      };
+      record { domain = "TEST_DOMAIN"; persona_id = "PERSONA" };
+      record { domain = "TEST_DOMAIN_DD"; persona_id = "TEST_DOMAIN_DD" };
     };
     error = null;
     status_code = 200 : nat16;
