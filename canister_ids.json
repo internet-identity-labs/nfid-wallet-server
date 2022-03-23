@@ -5,6 +5,9 @@
   "identity_manager_replica": {
     "ic": ""
   },
+  "identity_manager_test_replica": {
+    "ic": ""
+  },
   "pub_sub_channel": {
     "ic": "iyvpb-uqaaa-aaaag-qabxa-cai"
   }
