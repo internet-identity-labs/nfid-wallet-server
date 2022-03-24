@@ -12,7 +12,7 @@ public class AccessPointITest extends BaseIdentityManagerITest {
     @Test(priority = 1)
     public void createAccessPointExpectCorrectResponse() {
         validateWithFormatIdentity("device/exp_create_access_point", call("device/req_create_access_point"));
-        validateWithFormatIdentity("device/exp_create_access_point_acc", call("account/req_get_account"));
+        validateWithFormatIdentity("device/exp_create_access_point_acc", call("account/req_get_account", "identity_manager"));
     }
 
     @Test(priority = 2)

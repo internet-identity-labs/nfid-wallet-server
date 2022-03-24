@@ -1,11 +1,10 @@
 use std::collections::HashSet;
-use crate::mapper::access_point_mapper::{access_point_request_to_access_point, access_point_to_access_point_response, access_point_update_request_to_access_point};
+use crate::mapper::access_point_mapper::{access_point_request_to_access_point, access_point_to_access_point_response};
 use crate::repository::access_point_repo::{AccessPoint, AccessPointRepoTrait};
 use crate::requests::{AccessPointRequest, AccessPointResponse};
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
-use ic_cdk::export::Principal;
-use ic_cdk::print;
-use crate::repository::encrypt::account_encrypt::encrypt;
+
+
 
 pub trait AccessPointServiceTrait {
     fn read_access_points(&self) -> HttpResponse<Vec<AccessPointResponse>>;

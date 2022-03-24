@@ -15,9 +15,3 @@ pub fn access_point_request_to_access_point(access_point: AccessPointRequest) ->
         base_fields: BasicEntity::new(),
     }
 }
-
-pub fn access_point_update_request_to_access_point(access_point_update_request: AccessPointRequest, mut access_point: AccessPoint) -> AccessPoint {
-    access_point.principal_id = Principal::self_authenticating(access_point_update_request.pub_key).to_text();
-    access_point.base_fields.update_modified_date();
-    access_point
-}

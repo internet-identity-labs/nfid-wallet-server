@@ -1,1 +1,1 @@
-dfx canister call identity_manager get_account
+dfx canister call %s get_account

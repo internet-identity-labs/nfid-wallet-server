@@ -7,7 +7,7 @@ use syn::{parse_macro_input, FnArg, ItemFn, Pat, PatIdent, PatType, Signature};
 pub fn log_error(_: TokenStream, item: TokenStream) -> TokenStream {
     let mut inner = parse_macro_input!(item as ItemFn);
     let wrapper_sig = inner.sig.clone();
-    let inner_method_name = format_ident!("{}_inner_", inner.sig.ident);
+    let inner_method_name = format_ident!("{}_inner", inner.sig.ident);
     inner.sig.ident = inner_method_name.clone();
 
     let is_async = inner.sig.asyncness.is_some();
@@ -31,6 +31,35 @@ pub fn log_error(_: TokenStream, item: TokenStream) -> TokenStream {
             };
                LogRepo::save(l);
             }
+            result
+        }
+        #inner
+    );
+    TokenStream::from(expanded)
+}
+
+#[proc_macro_attribute]
+pub fn replicate_account(_: TokenStream, item: TokenStream) -> TokenStream {
+    let mut inner = parse_macro_input!(item as ItemFn);
+    let wrapper_sig = inner.sig.clone();
+    let inner_method_name = format_ident!("{}_inner", inner.sig.ident);
+    inner.sig.ident = inner_method_name.clone();
+
+    let is_async = inner.sig.asyncness.is_some();
+    let arg_names = get_arg_names(&inner.sig);
+
+    let function_call = if is_async {
+        quote! { #inner_method_name ( #(#arg_names),* ) .await }
+    } else {
+        quote! { #inner_method_name ( #(#arg_names),* ) }
+    };
+
+    let expanded = quote!(
+        #[allow(unused_mut)]
+        #wrapper_sig {
+            let result = #function_call;
+            let princ = caller().to_text();
+            storage::get_mut::<AccountsToReplicate>().insert(princ);
             result
         }
         #inner

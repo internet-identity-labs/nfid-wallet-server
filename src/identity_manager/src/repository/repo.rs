@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashSet};
 use std::hash::{Hash};
 use std::time::Duration;
 use ic_cdk::export::candid::{CandidType, Deserialize};
@@ -6,10 +6,9 @@ use ic_cdk::export::Principal;
 use ic_cdk::storage;
 use crate::{ic_service, Log, LogLevel, LogRepo};
 use crate::logger::logger::Logs;
+use crate::repository::account_repo::{Account, Accounts, PrincipalIndex};
 use crate::repository::application_repo::Application;
 
-use crate::repository::encrypt::account_encrypt::{decrypt_phone_number, encrypt};
-use crate::repository::encrypt::encrypted_repo::{EncryptedAccount, EncryptedAccounts, PrincipalIndex};
 use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
 
 
@@ -20,12 +19,15 @@ pub struct Configuration {
     pub token_refresh_ttl: Duration,
     pub key: [u8; 32],
     pub whitelisted: Vec<String>,
+    pub heartbeat: u32,
+    pub backup_canister_id: String,
 }
 
 //todo rethink visibility
 pub type Applications = BTreeSet<Application>;
 
 pub struct AdminRepo {}
+
 pub struct ConfigurationRepo {}
 
 #[derive(Clone, Debug, CandidType, Deserialize, Default, PartialEq, Eq, Copy, Hash)]
@@ -67,27 +69,19 @@ impl ConfigurationRepo {
         storage::get::<Option<Configuration>>().as_ref().unwrap()
     }
 
+    pub fn exists() -> bool {
+        storage::get::<Option<Configuration>>().is_some()
+    }
+
     pub fn save(configuration: Configuration) -> () {
         storage::get_mut::<Option<Configuration>>().replace(configuration);
     }
 }
 
-
-pub fn is_anchor_exists(anch: u64) -> bool { //todo move somewhere
-    let anchor = encrypt(anch.to_string());
-    let accounts = storage::get_mut::<EncryptedAccounts>();
+pub fn is_anchor_exists(anchor: u64) -> bool { //todo move somewhere
+    let accounts = storage::get_mut::<Accounts>();
     accounts.into_iter()
-        .map(|l| {
-            let c = l.1.clone();
-            let mut anchors: Vec<String> = l.1.personas.iter()
-                .map(|k| k.anchor.clone())
-                .filter(|l| l.is_some())
-                .map(|l| l.unwrap())
-                .collect();
-            anchors.push(c.anchor);
-            anchors
-        })
-        .flat_map(|x| x.into_iter())
+        .map(|l| l.1.anchor)
         .any(|x| x == anchor)
 }
 
@@ -98,7 +92,7 @@ pub fn pre_upgrade() {
         timestamp: ic_service::get_time(),
     });
     let mut accounts = Vec::new();
-    for p in storage::get_mut::<EncryptedAccounts>().iter() {
+    for p in storage::get_mut::<Accounts>().iter() {
         accounts.push(p.1.clone());
     }
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
@@ -107,12 +101,12 @@ pub fn pre_upgrade() {
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin, logs): (Vec<EncryptedAccount>, Principal, Logs) = storage::stable_restore().unwrap();
+    let (old_accs, admin, logs): (Vec<Account>, Principal, Logs) = storage::stable_restore().unwrap();
     let mut phone_numbers = HashSet::default();
     storage::get_mut::<Option<Principal>>().replace(admin);
     for u in old_accs {
         let princ = u.clone().principal_id;
-        storage::get_mut::<EncryptedAccounts>().insert(princ.clone(), u.clone());
+        storage::get_mut::<Accounts>().insert(princ.clone(), u.clone());
 
         storage::get_mut::<PrincipalIndex>().insert(princ.clone(), princ.clone());
 

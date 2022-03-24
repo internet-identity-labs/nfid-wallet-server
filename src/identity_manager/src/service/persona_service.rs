@@ -1,15 +1,15 @@
 use crate::application_service::ApplicationServiceTrait;
-use crate::http::requests::{AccountResponse, PersonaVariant};
+use crate::http::requests::{AccountResponse};
 use crate::mapper::account_mapper::account_to_account_response;
 use crate::mapper::persona_mapper::{persona_request_to_persona, persona_to_persona_response};
 use crate::repository::persona_repo::{PersonaRepoTrait};
-use crate::repository::repo::{is_anchor_exists};
+use crate::requests::{PersonaRequest, PersonaResponse};
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
 use crate::util::validation_util::validate_frontend_length;
 
 pub trait PersonaServiceTrait {
-    fn create_persona(&self, persona_r: PersonaVariant) -> HttpResponse<AccountResponse>;
-    fn read_personas(&self) -> HttpResponse<Vec<PersonaVariant>>;
+    fn create_persona(&self, persona_r: PersonaRequest) -> HttpResponse<AccountResponse>;
+    fn read_personas(&self) -> HttpResponse<Vec<PersonaResponse>>;
 }
 
 #[derive(Default)]
@@ -19,14 +19,11 @@ pub struct PersonaService<T, N> {
 }
 
 impl<T: PersonaRepoTrait, N: ApplicationServiceTrait> PersonaServiceTrait for PersonaService<T, N> {
-    fn create_persona(&self, persona_r: PersonaVariant) -> HttpResponse<AccountResponse> {
+    fn create_persona(&self, persona_r: PersonaRequest) -> HttpResponse<AccountResponse> {
         if !validate_frontend_length(&persona_r) {
             return to_error_response("Invalid persona");
         }
         let created_persona = persona_request_to_persona(persona_r);
-        if created_persona.anchor.is_some() && is_anchor_exists(created_persona.anchor.unwrap()) {
-            return to_error_response("It's impossible to link this II anchor, please try another one.");
-        }
 
         if self.application_service.is_over_the_limit(&created_persona.domain) {
             return to_error_response("It's impossible to link this domain. Over limit.");
@@ -40,7 +37,7 @@ impl<T: PersonaRepoTrait, N: ApplicationServiceTrait> PersonaServiceTrait for Pe
         }
     }
 
-    fn read_personas(&self) -> HttpResponse<Vec<PersonaVariant>> {
+    fn read_personas(&self) -> HttpResponse<Vec<PersonaResponse>> {
         match self.persona_repo.get_personas() {
             Some(personas) => {
                 let personas_r = personas.iter()

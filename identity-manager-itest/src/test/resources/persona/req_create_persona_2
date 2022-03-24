@@ -1,0 +1,4 @@
+dfx canister call identity_manager create_persona '( record {
+            domain = "TEST_DOMAIN_DD";
+            persona_id = "TEST_DOMAIN_DD";
+        })'

@@ -1,7 +1,8 @@
+
 use std::time::Duration;
-use ic_cdk::{print, trap};
+use ic_cdk::{caller, storage, trap};
+
 use ic_cdk_macros::*;
-use ic_types::Principal;
 use service::{account_service, persona_service, phone_number_service};
 use crate::account_service::{AccountService, AccountServiceTrait};
 use crate::persona_service::{PersonaService, PersonaServiceTrait};
@@ -14,19 +15,21 @@ use crate::service::application_service::ApplicationServiceTrait;
 use crate::service::phone_number_service::PhoneNumberServiceTrait;
 
 use crate::http::requests;
-use crate::http::requests::{AccountResponse, PersonaVariant};
+use crate::http::requests::{AccountResponse};
 use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
-use crate::repository::account_repo::AccountRepo;
+use crate::repository::account_repo::{Account, AccountRepo,};
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
-use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant};
+use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant, PersonaRequest, PersonaResponse};
 use crate::requests::AccountUpdateRequest;
-use crate::response_mapper::{HttpResponse, Response};
-use crate::service::{application_service, ic_service};
-use canister_api_macros::{log_error};
+use crate::response_mapper::{HttpResponse, Response, to_success_response};
+use crate::service::{application_service, ic_service, replica_service};
+use canister_api_macros::{log_error, replicate_account};
 use crate::logger::logger::{Log, LogLevel, LogRepo};
+use crate::replica_service::HearthCount;
 use crate::service::credential_service::CredentialServiceTrait;
 use crate::service::access_point_service::AccessPointServiceTrait;
+use crate::service::replica_service::AccountsToReplicate;
 
 mod service;
 mod http;
@@ -54,6 +57,8 @@ async fn configure(request: ConfigurationRequest) -> () {
         token_refresh_ttl: Duration::from_secs(request.token_refresh_ttl),
         key: request.key,
         whitelisted: request.whitelisted_phone_numbers.unwrap_or(Vec::default()),
+        heartbeat: request.heartbeat,
+        backup_canister_id: request.backup_canister_id,
     };
 
     ConfigurationRepo::save(configuration);
@@ -65,25 +70,30 @@ async fn credentials() -> HttpResponse<Vec<CredentialVariant>> {
     credential_service.credentials()
 }
 
-#[update]
+#[query]
 async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.read_access_points()
 }
 
 #[update]
+#[replicate_account]
+#[log_error]
 async fn create_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.create_access_point(access_point)
 }
 
 #[update]
+#[replicate_account]
+#[log_error]
 async fn remove_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.remove_access_point(access_point)
 }
 
 #[update]
+#[replicate_account]
 #[log_error]
 async fn verify_token(token: String) -> Response {
     let phone_number_service = get_phone_number_service();
@@ -91,6 +101,7 @@ async fn verify_token(token: String) -> Response {
 }
 
 #[update]
+#[log_error]
 async fn validate_phone(request: ValidatePhoneRequest) -> Response {
     let phone_number_service = get_phone_number_service();
     phone_number_service.validate_phone(request)
@@ -105,6 +116,7 @@ async fn post_token(request: TokenRequest) -> Response {
 
 #[update]
 #[log_error]
+#[replicate_account]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     account_service.create_account(account_request)
@@ -112,6 +124,7 @@ async fn create_account(account_request: AccountRequest) -> HttpResponse<Account
 
 #[update]
 #[log_error]
+#[replicate_account]
 async fn update_account(account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     account_service.update_account(account_request)
@@ -132,14 +145,14 @@ async fn remove_account() -> HttpResponse<bool> {
 
 #[update]
 #[log_error]
-async fn create_persona(persona: PersonaVariant) -> HttpResponse<AccountResponse> {
+#[replicate_account]
+async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
     let persona_service = get_persona_service();
     persona_service.create_persona(persona)
 }
 
-#[update]
-#[log_error]
-async fn read_personas() -> HttpResponse<Vec<PersonaVariant>> {
+#[query]
+async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
     let persona_service = get_persona_service();
     persona_service.read_personas()
 }
@@ -178,6 +191,37 @@ pub async fn get_all_logs() -> Vec<Log> {
 async fn is_over_the_application_limit(domain: String) -> HttpResponse<bool> {
     let application_service = get_application_service();
     application_service.is_over_the_application_limit(&domain)
+}
+
+#[heartbeat]
+async fn heartbeat_function() {
+    if ConfigurationRepo::exists() && ConfigurationRepo::get().heartbeat != 0 {
+        let i = storage::get_mut::<HearthCount>();
+        if (*i % ConfigurationRepo::get().heartbeat) == 0 && !storage::get_mut::<AccountsToReplicate>().is_empty() {
+            flush_account().await;
+        }
+        *i += 1;
+    }
+}
+
+#[update]
+#[log_error]
+async fn flush_account() -> HttpResponse<bool> {
+    replica_service::flush().await
+}
+
+#[update]
+#[log_error]
+async fn store_accounts(accounts: Vec<Account>) -> HttpResponse<bool> {  //todo secure
+    let mut account_service = get_account_service();
+    account_service.store_accounts(accounts);
+    to_success_response(true)
+}
+
+#[update]
+#[log_error]
+async fn restore_accounts(canister_id: String) -> HttpResponse<bool> {  //todo secure
+    replica_service::restore_and_flush(canister_id).await
 }
 
 #[pre_upgrade]

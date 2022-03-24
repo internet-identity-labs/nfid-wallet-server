@@ -1,9 +1,8 @@
 use ic_cdk::export::Principal;
-use crate::{AccountRepo, ConfigurationRepo, ic_service, Response, TokenRequest, ValidatePhoneRequest};
-use crate::HttpResponse;
+use crate::{ConfigurationRepo, ic_service, Response, TokenRequest, ValidatePhoneRequest};
+
 use crate::repository::account_repo::AccountRepoTrait;
-use crate::repository::encrypt::account_encrypt::encrypt;
-use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
+use crate::repository::phone_number_repo::{PhoneNumberRepoTrait};
 use crate::response_mapper::{error_response, response};
 use crate::repository::token_repo::{TokenRepoTrait};
 
@@ -21,7 +20,6 @@ pub struct PhoneNumberService<T, N, A> {
 }
 
 impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumberServiceTrait for PhoneNumberService<T, N, A> {
-
     fn validate_phone(&self, request: ValidatePhoneRequest) -> Response {
         if !ConfigurationRepo::get().lambda.eq(&ic_service::get_caller()) {
             return error_response(403, "Unauthorized.");
@@ -33,21 +31,19 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumbe
 
         let result = Principal::from_text(&request.principal_id);
         if result.is_err() {
-            return error_response(400, "Incorrect format of principal.")
+            return error_response(400, "Incorrect format of principal.");
         }
 
         if !self.account_repo.exists(&result.unwrap()) {
             return error_response(404, "Account not found.");
         }
 
-        let principal_id_encrypted = encrypt(request.principal_id);
         let ttl = ConfigurationRepo::get().token_refresh_ttl;
-        if self.token_repo.get(&principal_id_encrypted, ttl).is_some() {
+        if self.token_repo.get(&request.principal_id, ttl).is_some() {
             return error_response(429, "Too many requests.");
         }
 
-        let phone_number_encrypted = encrypt(request.phone_number.clone());
-        if self.phone_number_repo.is_exist(&phone_number_encrypted) {
+        if self.phone_number_repo.is_exist(&request.phone_number.clone()) {
             return response(204);
         }
 
@@ -65,7 +61,7 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumbe
 
         let result = Principal::from_text(request.principal_id);
         if result.is_err() {
-            return error_response(400, "Incorrect format of principal.")
+            return error_response(400, "Incorrect format of principal.");
         }
 
         let principal = result.unwrap();
@@ -73,10 +69,7 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumbe
             return error_response(404, "Account not found.");
         }
 
-        let principal_id_encrypted = encrypt(principal.to_text());
-        let token_encrypted = encrypt(request.token);
-        let phone_number_encrypted = encrypt(request.phone_number);
-        self.token_repo.add(principal_id_encrypted, token_encrypted, phone_number_encrypted);
+        self.token_repo.add(principal.to_text(), request.token, request.phone_number);
 
         response(200)
     }
@@ -87,23 +80,21 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumbe
             return error_response(404, "Account not found.");
         }
 
-        let principal_id_encrypted = encrypt(ic_service::get_caller().to_text());
         let ttl = ConfigurationRepo::get().token_ttl;
-        let value_opt = self.token_repo.get(&principal_id_encrypted, ttl);
+        let value_opt = self.token_repo.get(&ic_service::get_caller().to_text(), ttl);
         if value_opt.is_none() {
             return error_response(404, "Principal id not found.");
         }
 
-        let token_encrypted = encrypt(token);
-        let (token_encrypted_persisted, phone_number_encrypted_persisted) = value_opt.unwrap();
-        if !token_encrypted.eq(token_encrypted_persisted) {
+        let (token_persisted, phone_number_persisted) = value_opt.unwrap();
+        if !token.eq(token_persisted) {
             return error_response(400, "Token does not match.");
         }
 
         let mut account = account_opt.unwrap();
-        account.phone_number = Some(phone_number_encrypted_persisted.clone());
+        account.phone_number = Some(phone_number_persisted.clone());
         self.account_repo.store_account(account);
-        self.phone_number_repo.add(phone_number_encrypted_persisted.clone());
+        self.phone_number_repo.add(phone_number_persisted.clone());
 
         response(200)
     }

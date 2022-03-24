@@ -24,6 +24,9 @@ public class BaseDFXITest {
     final static String TOKEN = "1234";
     final static String ANONYMOUS = "anonymous";
     final static String DEFAULT = "default";
+    static String BACKUP_CANISTER_ID = "";
+    static String HEARTBEAT_PERIOD = "1";
+    final static String DISABLED_HEARTBEAT = "0";
 
     @AfterClass
     public void stopDfx() {

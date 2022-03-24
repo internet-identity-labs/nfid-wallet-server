@@ -1,10 +1,9 @@
 use std::time::Duration;
 use ic_cdk::export::Principal;
 use crate::{AccountRequest, AccountServiceTrait, Configuration, ConfigurationRepo, get_account_service};
-use crate::ic_service::get_caller;
-use crate::repository::account_repo::Account;
-use crate::repository::encrypt::encrypted_repo::EncryptedRepo;
-use crate::repository::repo::BasicEntity;
+
+
+
 
 pub fn init_config(){
     let a = Configuration {
@@ -12,7 +11,9 @@ pub fn init_config(){
         token_ttl: Duration::from_secs(0),
         token_refresh_ttl: Duration::from_secs(0),
         key: [1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5],
-        whitelisted: Vec::default()
+        whitelisted: Vec::default(),
+        heartbeat: 5,
+        backup_canister_id: "rrkah-fqaaa-aaaaa-aaaaq-cai".to_string()
     };
     ConfigurationRepo::save(a);
 }

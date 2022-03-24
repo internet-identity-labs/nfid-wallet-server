@@ -30,9 +30,8 @@ public class ApplicationITest extends BaseIdentityManagerITest {
     @Test(priority = 50)
     public void isOverLimitExpectCorrectResponse() {
         call("account/req_create_account");
-        call("persona/req_create_nfid_persona");
-        call("persona/req_create_ii_persona");
-        call("persona/req_create_nfid2_persona");
+        call("persona/req_create_persona");
+        call("persona/req_create_persona_2");
         validateWithFormatIdentity("persona/exp_under_limit_for_app", call("application/req_is_over_limit"));
         call("application/req_create_application_over_limit");
         validateWithFormatIdentity("persona/exp_over_limit_for_app", call("application/req_is_over_limit"));

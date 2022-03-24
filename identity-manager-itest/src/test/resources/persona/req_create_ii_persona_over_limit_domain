@@ -1,6 +1,0 @@
-dfx canister call identity_manager create_persona '(variant {
-          ii_persona = record {
-            domain = "TEST_DOMAIN";
-            anchor = 123456789;
-          }
-        })'

@@ -21,7 +21,7 @@ pub fn get_time() -> u64 {
 }
 
 #[cfg(test)]
-pub fn is_anonymous(princ: String) -> bool {
+pub fn is_anonymous(_princ: String) -> bool {
     false
 }
 
