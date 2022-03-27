@@ -1,6 +1,6 @@
 
 use std::time::Duration;
-use ic_cdk::{caller, storage, trap};
+use ic_cdk::{caller, print, storage, trap};
 
 use ic_cdk_macros::*;
 use service::{account_service, persona_service, phone_number_service};
@@ -24,7 +24,8 @@ use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, Valida
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
-use canister_api_macros::{log_error, replicate_account};
+use canister_api_macros::{log_error, replicate_account, admin};
+use crate::ic_service::get_caller;
 use crate::logger::logger::{Log, LogLevel, LogRepo};
 use crate::replica_service::HearthCount;
 use crate::service::credential_service::CredentialServiceTrait;
@@ -56,9 +57,10 @@ async fn configure(request: ConfigurationRequest) -> () {
         token_ttl: Duration::from_secs(request.token_ttl),
         token_refresh_ttl: Duration::from_secs(request.token_refresh_ttl),
         key: request.key,
-        whitelisted: request.whitelisted_phone_numbers.unwrap_or(Vec::default()),
+        whitelisted_phone_numbers: request.whitelisted_phone_numbers.unwrap_or(Vec::default()),
         heartbeat: request.heartbeat,
         backup_canister_id: request.backup_canister_id,
+        whitelisted_canisters: request.whitelisted_canisters
     };
 
     ConfigurationRepo::save(configuration);
@@ -212,6 +214,7 @@ async fn flush_account() -> HttpResponse<bool> {
 
 #[update]
 #[log_error]
+#[admin]
 async fn store_accounts(accounts: Vec<Account>) -> HttpResponse<bool> {  //todo secure
     let mut account_service = get_account_service();
     account_service.store_accounts(accounts);

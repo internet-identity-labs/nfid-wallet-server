@@ -70,6 +70,7 @@ pub struct ConfigurationRequest {
     pub whitelisted_phone_numbers: Option<Vec<String>>,
     pub heartbeat: u32,
     pub backup_canister_id: String,
+    pub whitelisted_canisters: Vec<Principal>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
