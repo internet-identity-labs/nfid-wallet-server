@@ -1,25 +1,25 @@
 {
   "canisters": {
     "identity_manager": {
-      "build": "cargo build --target wasm32-unknown-unknown --package identity_manager --release",
+      "build": "src/identity_manager/build.sh",
       "candid": "src/identity_manager/identity_manager.did",
       "wasm": "target/wasm32-unknown-unknown/release/identity_manager.wasm",
       "type": "custom"
     },
     "identity_manager_replica": {
-      "build": "cargo build --target wasm32-unknown-unknown --package identity_manager --release",
+      "build": "src/identity_manager/build.sh",
       "candid": "src/identity_manager/identity_manager.did",
       "wasm": "target/wasm32-unknown-unknown/release/identity_manager.wasm",
       "type": "custom"
     },
     "identity_manager_test_replica": {
-      "build": "cargo build --target wasm32-unknown-unknown --package identity_manager --release",
+      "build": "src/identity_manager/build.sh",
       "candid": "src/identity_manager/identity_manager.did",
       "wasm": "target/wasm32-unknown-unknown/release/identity_manager.wasm",
       "type": "custom"
     },
     "pub_sub_channel": {
-      "build": "cargo build --target wasm32-unknown-unknown --package pub_sub_channel --release",
+      "build": "src/pub_sub_channel/build.sh",
       "candid": "src/pub_sub_channel/pub_sub_channel.did",
       "wasm": "target/wasm32-unknown-unknown/release/pub_sub_channel.wasm",
       "type": "custom"
