@@ -9,6 +9,7 @@ type ConfigurationRequest = record {
     whitelisted_phone_numbers: opt vec text;
     heartbeat: nat32;
     backup_canister_id: text;
+    whitelisted_canisters: vec principal;
 };
 
 type BoolHttpResponse = record {

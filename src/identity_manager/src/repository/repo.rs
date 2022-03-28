@@ -12,15 +12,16 @@ use crate::repository::application_repo::Application;
 use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
 
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, CandidType, Clone)]
 pub struct Configuration {
     pub lambda: Principal,
     pub token_ttl: Duration,
     pub token_refresh_ttl: Duration,
     pub key: [u8; 32],
-    pub whitelisted: Vec<String>,
+    pub whitelisted_phone_numbers: Vec<String>,
     pub heartbeat: u32,
     pub backup_canister_id: String,
+    pub whitelisted_canisters: Vec<Principal>,
 }
 
 //todo rethink visibility
@@ -117,7 +118,7 @@ pub fn post_upgrade() {
         u.phone_number.map(|x| phone_numbers.insert(x.clone()));
     }
     storage::get_mut::<Option<Principal>>().replace(admin);
-    let pn_repo = PhoneNumberRepo {}; //TODO test container
+    let pn_repo = PhoneNumberRepo {};
     pn_repo.add_all(phone_numbers);
 
     for log in logs {

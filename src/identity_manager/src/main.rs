@@ -1,4 +1,3 @@
-
 use std::time::Duration;
 use ic_cdk::{caller, storage, trap};
 
@@ -18,13 +17,14 @@ use crate::http::requests;
 use crate::http::requests::{AccountResponse};
 use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
-use crate::repository::account_repo::{Account, AccountRepo,};
+use crate::repository::account_repo::{Account, AccountRepo};
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
 use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant, PersonaRequest, PersonaResponse};
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
-use canister_api_macros::{log_error, replicate_account};
+use canister_api_macros::{log_error, replicate_account, admin};
+use crate::ic_service::get_caller;
 use crate::logger::logger::{Log, LogLevel, LogRepo};
 use crate::replica_service::HearthCount;
 use crate::service::credential_service::CredentialServiceTrait;
@@ -46,19 +46,17 @@ async fn init() -> () {
 }
 
 #[update]
+#[admin]
 async fn configure(request: ConfigurationRequest) -> () {
-    if !AdminRepo::get().eq(&ic_service::get_caller()) {
-        trap("Unauthorized")
-    }
-
     let configuration = Configuration {
         lambda: request.lambda,
         token_ttl: Duration::from_secs(request.token_ttl),
         token_refresh_ttl: Duration::from_secs(request.token_refresh_ttl),
         key: request.key,
-        whitelisted: request.whitelisted_phone_numbers.unwrap_or(Vec::default()),
+        whitelisted_phone_numbers: request.whitelisted_phone_numbers.unwrap_or(Vec::default()),
         heartbeat: request.heartbeat,
         backup_canister_id: request.backup_canister_id,
+        whitelisted_canisters: request.whitelisted_canisters,
     };
 
     ConfigurationRepo::save(configuration);
@@ -159,6 +157,7 @@ async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
 
 #[update]
 #[log_error]
+#[admin]
 async fn create_application(app: Application) -> HttpResponse<Vec<Application>> {
     let application_service = get_application_service();
     application_service.create_application(app)
@@ -166,6 +165,7 @@ async fn create_application(app: Application) -> HttpResponse<Vec<Application>> 
 
 #[update]
 #[log_error]
+#[admin]
 async fn delete_application(app: String) -> HttpResponse<bool> {
     let application_service = get_application_service();
     application_service.delete_application(app)
@@ -212,7 +212,8 @@ async fn flush_account() -> HttpResponse<bool> {
 
 #[update]
 #[log_error]
-async fn store_accounts(accounts: Vec<Account>) -> HttpResponse<bool> {  //todo secure
+#[admin]
+async fn store_accounts(accounts: Vec<Account>) -> HttpResponse<bool> {
     let mut account_service = get_account_service();
     account_service.store_accounts(accounts);
     to_success_response(true)
@@ -220,7 +221,8 @@ async fn store_accounts(accounts: Vec<Account>) -> HttpResponse<bool> {  //todo 
 
 #[update]
 #[log_error]
-async fn restore_accounts(canister_id: String) -> HttpResponse<bool> {  //todo secure
+#[admin]
+async fn restore_accounts(canister_id: String) -> HttpResponse<bool> {
     replica_service::restore_and_flush(canister_id).await
 }
 

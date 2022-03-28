@@ -11,9 +11,10 @@ pub fn init_config(){
         token_ttl: Duration::from_secs(0),
         token_refresh_ttl: Duration::from_secs(0),
         key: [1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5],
-        whitelisted: Vec::default(),
+        whitelisted_phone_numbers: Vec::default(),
         heartbeat: 5,
-        backup_canister_id: "rrkah-fqaaa-aaaaa-aaaaq-cai".to_string()
+        backup_canister_id: "rrkah-fqaaa-aaaaa-aaaaq-cai".to_string(),
+        whitelisted_canisters: vec![]
     };
     ConfigurationRepo::save(a);
 }

@@ -18,7 +18,6 @@ public class BaseDFXITest {
     final static String TTL = "10";
     final static String TTL_REFRESH = "10";
     final static String WHITELISTED_PHONE_NUMBERS = "null";
-    final static String NAME = "NAME";
     final static String ANCHOR = "1234";
     final static String PHONE = "123456";
     final static String TOKEN = "1234";
