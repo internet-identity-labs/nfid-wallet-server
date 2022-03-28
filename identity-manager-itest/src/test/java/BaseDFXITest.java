@@ -18,14 +18,12 @@ public class BaseDFXITest {
     final static String TTL = "10";
     final static String TTL_REFRESH = "10";
     final static String WHITELISTED_PHONE_NUMBERS = "null";
-    final static String NAME = "NAME";
     final static String ANCHOR = "1234";
     final static String PHONE = "123456";
     final static String TOKEN = "1234";
     final static String ANONYMOUS = "anonymous";
     final static String DEFAULT = "default";
     static String BACKUP_CANISTER_ID = "";
-    static String WHITELISTED_CANISTERS = "";
     static String HEARTBEAT_PERIOD = "1";
     final static String DISABLED_HEARTBEAT = "0";
 

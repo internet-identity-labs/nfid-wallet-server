@@ -12,7 +12,7 @@ use crate::repository::application_repo::Application;
 use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
 
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, CandidType, Clone)]
 pub struct Configuration {
     pub lambda: Principal,
     pub token_ttl: Duration,

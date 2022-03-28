@@ -11,9 +11,27 @@
       "candid": "src/identity_manager/identity_manager.did",
       "wasm": "target/wasm32-unknown-unknown/release/identity_manager.wasm",
       "type": "custom"
+    },
+    "identity_manager_test_replica": {
+      "build": "cargo build --target wasm32-unknown-unknown --package identity_manager --release",
+      "candid": "src/identity_manager/identity_manager.did",
+      "wasm": "target/wasm32-unknown-unknown/release/identity_manager.wasm",
+      "type": "custom"
+    },
+    "pub_sub_channel": {
+      "build": "cargo build --target wasm32-unknown-unknown --package pub_sub_channel --release",
+      "candid": "src/pub_sub_channel/pub_sub_channel.did",
+      "wasm": "target/wasm32-unknown-unknown/release/pub_sub_channel.wasm",
+      "type": "custom"
     }
   },
   "networks": {
+    "dev": {
+      "providers": [
+        "https://ic0.app/"
+      ],
+      "type": "persistent"
+    },
     "local": {
       "bind": "127.0.0.1:8000",
       "type": "ephemeral"

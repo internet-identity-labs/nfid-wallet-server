@@ -87,11 +87,12 @@ pub fn admin(_: TokenStream, item: TokenStream) -> TokenStream {
         #[allow(unused_mut)]
         #wrapper_sig {
             let caller = get_caller();
-            if ConfigurationRepo::get().whitelisted_canisters.contains(&caller)
-                || !AdminRepo::get().eq(&caller) {
+            if AdminRepo::get().eq(&caller)
+                    || ConfigurationRepo::get().whitelisted_canisters.contains(&caller) {
+                #function_call
+            } else {
                 trap("Unauthorized")
             }
-            #function_call
         }
         #inner
     );
