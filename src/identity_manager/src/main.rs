@@ -80,10 +80,13 @@ async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
 #[replicate_account]
 #[log_error]
 async fn create_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
-    ic_service::trap_if_not_authenticated(get_account_service().get_account().data.unwrap().anchor,
-                                          Principal::self_authenticating(access_point.pub_key.clone())).await;
     let access_point_service = get_access_point_service();
-    access_point_service.create_access_point(access_point)
+    let response = access_point_service.create_access_point(access_point.clone());
+    if response.error.is_none() {
+        ic_service::trap_if_not_authenticated(get_account_service().get_account().data.unwrap().anchor,
+                                              Principal::self_authenticating(access_point.pub_key.clone())).await;
+    }
+    response
 }
 
 #[update]
@@ -120,9 +123,12 @@ async fn post_token(request: TokenRequest) -> Response {
 #[log_error]
 #[replicate_account]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
-    ic_service::trap_if_not_authenticated(account_request.anchor.clone(), get_caller()).await;
     let mut account_service = get_account_service();
-    account_service.create_account(account_request)
+    let response = account_service.create_account(account_request.clone());
+    if response.error.is_none() {
+        ic_service::trap_if_not_authenticated(account_request.anchor.clone(), get_caller()).await;
+    }
+    response
 }
 
 #[update]

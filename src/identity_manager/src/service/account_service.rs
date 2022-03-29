@@ -1,5 +1,3 @@
-use ic_cdk::{call, trap};
-use ic_cdk::export::Principal;
 use crate::http::requests::AccountResponse;
 use crate::{Account, HttpResponse};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
