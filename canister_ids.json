@@ -8,7 +8,8 @@
     "ic": "bv5d4-nyaaa-aaaap-qaaba-cai"
   },
   "identity_manager_test_replica": {
-    "ic": "vwali-piaaa-aaaal-qatfq-cai"
+    "ic": "vwali-piaaa-aaaal-qatfq-cai",
+    "dev": "vwali-piaaa-aaaal-qatfq-cai"
   },
   "pub_sub_channel": {
     "ic": "iyvpb-uqaaa-aaaag-qabxa-cai"
