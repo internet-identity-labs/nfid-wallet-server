@@ -1,7 +1,8 @@
 {
   "identity_manager": {
-    "ic": "bryxc-zqaaa-aaaal-aajga-cai",
-    "dev": "74gpt-tiaaa-aaaak-aacaa-cai"
+    "ic": "74gpt-tiaaa-aaaak-aacaa-cai",
+    "dev": "74gpt-tiaaa-aaaak-aacaa-cai",
+    "prod": "bryxc-zqaaa-aaaal-aajga-cai"
   },
   "identity_manager_replica": {
     "ic": "bv5d4-nyaaa-aaaap-qaaba-cai"
