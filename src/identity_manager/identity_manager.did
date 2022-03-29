@@ -10,6 +10,7 @@ type ConfigurationRequest = record {
     heartbeat: nat32;
     backup_canister_id: text;
     whitelisted_canisters: vec principal;
+    env: opt text
 };
 
 type BoolHttpResponse = record {

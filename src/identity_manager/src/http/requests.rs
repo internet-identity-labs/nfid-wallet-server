@@ -71,6 +71,7 @@ pub struct ConfigurationRequest {
     pub heartbeat: u32,
     pub backup_canister_id: String,
     pub whitelisted_canisters: Vec<Principal>,
+    pub env: Option<String>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

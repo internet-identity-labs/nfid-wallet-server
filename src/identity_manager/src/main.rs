@@ -1,5 +1,6 @@
 use std::time::Duration;
 use ic_cdk::{caller, storage, trap};
+use ic_cdk::export::Principal;
 
 use ic_cdk_macros::*;
 use service::{account_service, persona_service, phone_number_service};
@@ -57,6 +58,7 @@ async fn configure(request: ConfigurationRequest) -> () {
         heartbeat: request.heartbeat,
         backup_canister_id: request.backup_canister_id,
         whitelisted_canisters: request.whitelisted_canisters,
+        env: request.env,
     };
 
     ConfigurationRepo::save(configuration);
@@ -78,6 +80,8 @@ async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
 #[replicate_account]
 #[log_error]
 async fn create_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
+    ic_service::trap_if_not_authenticated(get_account_service().get_account().data.unwrap().anchor,
+                                          Principal::self_authenticating(access_point.pub_key.clone())).await;
     let access_point_service = get_access_point_service();
     access_point_service.create_access_point(access_point)
 }
@@ -116,6 +120,7 @@ async fn post_token(request: TokenRequest) -> Response {
 #[log_error]
 #[replicate_account]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
+    ic_service::trap_if_not_authenticated(account_request.anchor.clone(), get_caller()).await;
     let mut account_service = get_account_service();
     account_service.create_account(account_request)
 }

@@ -2,9 +2,6 @@ use std::time::Duration;
 use ic_cdk::export::Principal;
 use crate::{AccountRequest, AccountServiceTrait, Configuration, ConfigurationRepo, get_account_service};
 
-
-
-
 pub fn init_config(){
     let a = Configuration {
         lambda: Principal::anonymous(),
@@ -14,7 +11,8 @@ pub fn init_config(){
         whitelisted_phone_numbers: Vec::default(),
         heartbeat: 5,
         backup_canister_id: "rrkah-fqaaa-aaaaa-aaaaq-cai".to_string(),
-        whitelisted_canisters: vec![]
+        whitelisted_canisters: vec![],
+        env: None
     };
     ConfigurationRepo::save(a);
 }
