@@ -57,8 +57,8 @@ pub fn replicate_account(_: TokenStream, item: TokenStream) -> TokenStream {
     let expanded = quote!(
         #[allow(unused_mut)]
         #wrapper_sig {
-            let result = #function_call;
             let princ = caller().to_text();
+            let result = #function_call;
             storage::get_mut::<AccountsToReplicate>().insert(princ);
             result
         }
