@@ -3,39 +3,35 @@
     "identity_manager": {
       "build": "src/identity_manager/build.sh",
       "candid": "src/identity_manager/identity_manager.did",
-      "wasm": "target/wasm32-unknown-unknown/release/identity_manager.wasm",
+      "wasm": "identity_manager.wasm",
       "type": "custom"
     },
     "identity_manager_replica": {
       "build": "src/identity_manager/build.sh",
       "candid": "src/identity_manager/identity_manager.did",
-      "wasm": "target/wasm32-unknown-unknown/release/identity_manager.wasm",
+      "wasm": "identity_manager.wasm",
       "type": "custom"
     },
     "identity_manager_test_replica": {
       "build": "src/identity_manager/build.sh",
       "candid": "src/identity_manager/identity_manager.did",
-      "wasm": "target/wasm32-unknown-unknown/release/identity_manager.wasm",
+      "wasm": "identity_manager.wasm",
       "type": "custom"
     },
     "pub_sub_channel": {
       "build": "src/pub_sub_channel/build.sh",
       "candid": "src/pub_sub_channel/pub_sub_channel.did",
-      "wasm": "target/wasm32-unknown-unknown/release/pub_sub_channel.wasm",
+      "wasm": "pub_sub_channel.wasm",
       "type": "custom"
     }
   },
   "networks": {
     "dev": {
-      "providers": [
-        "https://ic0.app/"
-      ],
+      "providers": ["https://ic0.app/"],
       "type": "persistent"
     },
     "prod": {
-      "providers": [
-        "https://ic0.app/"
-      ],
+      "providers": ["https://ic0.app/"],
       "type": "persistent"
     },
     "local": {
