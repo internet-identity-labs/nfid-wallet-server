@@ -8,7 +8,7 @@ set -euo pipefail
 if ! command -v ic-cdk-optimizer; then
   echo could not find ic-cdk-optimizer
   echo "ic-cdk-optimizer version 0.3.1 is needed, please run the following command:"
-  echo "  cargo install ic-cdk-optimizer --version 0.3.1"
+  cargo install ic-cdk-optimizer --version 0.3.1
   exit 1
 fi
 
