@@ -53,7 +53,6 @@ async fn configure(request: ConfigurationRequest) -> () {
         lambda: request.lambda,
         token_ttl: Duration::from_secs(request.token_ttl),
         token_refresh_ttl: Duration::from_secs(request.token_refresh_ttl),
-        key: request.key,
         whitelisted_phone_numbers: request.whitelisted_phone_numbers.unwrap_or(Vec::default()),
         heartbeat: request.heartbeat,
         backup_canister_id: request.backup_canister_id,
@@ -206,9 +205,9 @@ async fn is_over_the_application_limit(domain: String) -> HttpResponse<bool> {
 
 #[heartbeat]
 async fn heartbeat_function() {
-    if ConfigurationRepo::exists() && ConfigurationRepo::get().heartbeat != 0 {
+    if ConfigurationRepo::exists() && ConfigurationRepo::get().heartbeat.is_some() {
         let i = storage::get_mut::<HearthCount>();
-        if (*i % ConfigurationRepo::get().heartbeat) == 0 && !storage::get_mut::<AccountsToReplicate>().is_empty() {
+        if (*i % ConfigurationRepo::get().heartbeat.unwrap()) == 0 && !storage::get_mut::<AccountsToReplicate>().is_empty() {
             flush_account().await;
         }
         *i += 1;
