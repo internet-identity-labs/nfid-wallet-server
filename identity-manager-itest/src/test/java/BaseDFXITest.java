@@ -14,7 +14,6 @@ public class BaseDFXITest {
     private final static String PATH = "..";
 
     static String ROOT_IDENTITY = "";
-    final static String KEY = "gq6282SVGQqYxyKGNPu9HZU4BXPdzDAG";
     final static String TTL = "10";
     final static String TTL_REFRESH = "10";
     final static String WHITELISTED_PHONE_NUMBERS = "null";

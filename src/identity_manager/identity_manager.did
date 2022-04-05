@@ -5,7 +5,6 @@ type ConfigurationRequest = record {
     lambda: principal;
     token_ttl: nat64;
     token_refresh_ttl: nat64;
-    key: blob;
     whitelisted_phone_numbers: opt vec text;
     heartbeat: nat32;
     backup_canister_id: text;
