@@ -69,6 +69,7 @@ pub struct ConfigurationRequest {
     pub whitelisted_phone_numbers: Option<Vec<String>>,
     pub heartbeat: Option<u32>,
     pub backup_canister_id: Option<String>,
+    pub ii_canister_id: Option<Principal>,
     pub whitelisted_canisters: Option<Vec<Principal>>,
     pub env: Option<String>,
 }

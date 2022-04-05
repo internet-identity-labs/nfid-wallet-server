@@ -74,7 +74,8 @@ pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) {
         return;
     }
     //TODO update when possible to query call
-    let res: Vec<DeviceData> = match call(Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap(), "lookup", (anchor.clone(), 0)).await {
+    let res: Vec<DeviceData> = match call(ConfigurationRepo::get().ii_canister_id.unwrap_or_else(
+        Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()), "lookup", (anchor.clone(), 0)).await {
         Ok((res, )) => res,
         Err((_, err)) => trap(&format!("failed to get data: {}", err)),
     };

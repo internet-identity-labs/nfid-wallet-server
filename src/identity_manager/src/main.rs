@@ -56,6 +56,7 @@ async fn configure(request: ConfigurationRequest) -> () {
         whitelisted_phone_numbers: request.whitelisted_phone_numbers.unwrap_or(Vec::default()),
         heartbeat: request.heartbeat,
         backup_canister_id: request.backup_canister_id,
+        ii_canister_id: request.ii_canister_id,
         whitelisted_canisters: request.whitelisted_canisters,
         env: request.env,
     };
