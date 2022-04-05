@@ -16,3 +16,5 @@ target
 # frontend code
 node_modules/
 dist/
+identity_manager.wasm
+pub_sub_channel.wasm
