@@ -68,8 +68,8 @@ pub struct ConfigurationRequest {
     pub token_refresh_ttl: u64,
     pub whitelisted_phone_numbers: Option<Vec<String>>,
     pub heartbeat: Option<u32>,
-    pub backup_canister_id: String,
-    pub whitelisted_canisters: Vec<Principal>,
+    pub backup_canister_id: Option<String>,
+    pub whitelisted_canisters: Option<Vec<Principal>>,
     pub env: Option<String>,
 }
 
