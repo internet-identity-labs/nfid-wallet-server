@@ -1,0 +1,79 @@
+name: PROD_Identity_Manager
+on: 
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Confirm your choice by typing "Yes"'
+        required: true
+        type: string
+
+env:
+  ENVIRONMENT: ic
+
+jobs:
+  Deploy:
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /home/ubuntu/identity_manager
+
+    if: ${{ (github.ref == 'refs/heads/master') && (github.event.inputs.confirmation == 'Yes') }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache Cargo dependencies.
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: IDENITY MANAGER | Deploy to ${ENVIRONMENT}
+        run: |
+          sudo dfx identity use gh_mp_admin
+
+          i=0;
+          while :;
+          do
+            sudo rm -rf .dfx;
+            set +e;
+            sudo dfx build --network ${ENVIRONMENT} identity_manager;
+            sudo dfx canister --no-wallet --network ${ENVIRONMENT} install --mode upgrade identity_manager;
+            sleep 5;
+            im=$(sudo dfx canister --network ${ENVIRONMENT} call identity_manager configure '(record {key = blob "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}}; token_refresh_ttl = ${{secrets.TOKEN_REFRESH_TTL}}; whitelisted_phone_numbers = opt vec {${{secrets.WHITELISTED_PHONE_NUMBERS}}} })');
+            set -e;
+            ((i=i+1));
+            printf 'Try #%s with result: im-%s\n' "$i" "$im";
+            [[ 20 -gt $i ]] || exit 255;
+            [[ "()" != $im ]] || break;
+          done
+
+          cp ./.dfx/ic/canisters/identity_manager/identity_manager.did.d.ts ./ -f
+          cp ./.dfx/ic/canisters/identity_manager/identity_manager.did.js ./ -f
+
+      - name: Checkout remote frontend repository to frontend directory.
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.PAT }}
+          repository: InternetIdentityLabs/MultipassFrontend
+          path: frontend
+
+      - name: Update did files.
+        run: |
+          cp ./identity_manager.did.d.ts ./frontend/src/services/identity-manager/identity_manager.did.d.ts -f
+          cp ./identity_manager.did.js ./frontend/src/services/identity-manager/identity_manager_idl.js -f
+
+      - name: Create a pull request to remote frontend repository.
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.PAT }}
+          commit-message: Update did files ${ENVIRONMENT} (identity_manager).
+          title: Update did files.
+          branch: update-did-files
+          path: frontend
+          reviewers: plitzenberger
