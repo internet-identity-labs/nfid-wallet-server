@@ -17,11 +17,11 @@ pub struct Configuration {
     pub lambda: Principal,
     pub token_ttl: Duration,
     pub token_refresh_ttl: Duration,
-    pub key: [u8; 32],
     pub whitelisted_phone_numbers: Vec<String>,
-    pub heartbeat: u32,
-    pub backup_canister_id: String,
-    pub whitelisted_canisters: Vec<Principal>,
+    pub heartbeat: Option<u32>,
+    pub backup_canister_id: Option<String>,
+    pub ii_canister_id: Option<Principal>,
+    pub whitelisted_canisters: Option<Vec<Principal>>,
     pub env: Option<String>,
 }
 

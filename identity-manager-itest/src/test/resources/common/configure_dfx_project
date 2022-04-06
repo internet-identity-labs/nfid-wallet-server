@@ -1,1 +1,1 @@
-dfx canister call %s configure '(record {key = blob "%s"; lambda = principal "%s"; token_ttl = %s;  token_refresh_ttl = %s; whitelisted_phone_numbers = %s; heartbeat = %s; backup_canister_id = "%s"; whitelisted_canisters = vec { principal "%s" }; env = opt "test"})'
+dfx canister call %s configure '(record {lambda = principal "%s"; token_ttl = %s;  token_refresh_ttl = %s; whitelisted_phone_numbers = %s; heartbeat = opt %s; backup_canister_id = opt "%s"; whitelisted_canisters = opt vec { principal "%s" }; env = opt "test"})'

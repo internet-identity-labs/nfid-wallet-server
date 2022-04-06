@@ -20,7 +20,7 @@ pub async fn flush() -> HttpResponse<bool> {
         .collect::<Vec<_>>();
     let account_repo = get_account_repo();
     let accounts = account_repo.get_accounts(keys);
-    let canister_id = &ConfigurationRepo::get().backup_canister_id;
+    let canister_id = ConfigurationRepo::get().backup_canister_id.as_ref().unwrap();
     let resp: HttpResponse<bool> = match call(Principal::from_text(canister_id).unwrap(), "store_accounts", (accounts.clone(), 0)).await
     {
         Ok((res, )) => res,
