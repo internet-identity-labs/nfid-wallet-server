@@ -1,0 +1,96 @@
+name: Docker-test
+on: workflow_dispatch
+jobs:
+  Deploy:
+    runs-on: ubuntu-latest
+    container:
+      image: identitylabs/dfxctl:pre-compiled
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: DFX => write identity.
+        run: |
+          mkdir -p $ID_PATH
+          echo $GH_MP_ADMIN_PEM >> $ID_PATH/identity.pem
+          sed -i 's/\\r\\n/\r\n/g' $ID_PATH/identity.pem
+        env:
+          GH_MP_ADMIN_PEM: ${{secrets.GH_MP_ADMIN_PEM}}
+          ID_PATH: /root/.config/dfx/identity/gh_mp_admin
+
+      - name: DFX => Start.
+        run: |
+          /scripts/dfx_run.sh &
+          sleep 60
+        working-directory: /internet-identity
+        env:
+          HOME: /root
+
+      - name: PubSub => Checkout repo.
+        uses: actions/checkout@v3
+
+      - name: Cache Cargo dependencies.
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            /cargo
+            /cargo_target
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: PubSub => Build and Deploy to production.
+        run: |
+          export HOME=/root
+
+          dfx identity use gh_mp_admin
+          i=0;
+          while :;
+          do
+            rm -rf .dfx;
+            set +e;
+            dfx build --network ic pub_sub_channel;
+            dfx canister --network ic install --mode upgrade pub_sub_channel;
+            sleep 5;
+            ps=$(dfx canister --network ic call pub_sub_channel ping);
+            set -e;
+            ((i=i+1));
+            printf 'Try #%s with result: ps-%s\n' "$i" "$ps";
+            [[ 20 -gt $i ]] || exit 255;
+            [[ "()" != $ps ]] || break;
+          done
+
+          cp ./.dfx/ic/canisters/pub_sub_channel/pub_sub_channel.did.d.ts ./ -f
+          cp ./.dfx/ic/canisters/pub_sub_channel/pub_sub_channel.did.js ./ -f
+
+      - name: Save artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pub_sub_channel.wasm
+          path: ${{ github.workspace }}/pub_sub_channel.wasm
+
+      # - name: Frontend => Checkout repo.
+      #   uses: actions/checkout@v3
+      #   with:
+      #     token: ${{ secrets.PAT }}
+      #     repository: internet-identity-labs/nfid-frontend
+      #     path: frontend
+
+      # - name: Frontend => Update did files.
+      #   run: |
+      #     cp ./pub_sub_channel.did.d.ts ./frontend/src/services/pub-sub-channel/pub_sub_channel.did.d.ts -f
+      #     cp ./pub_sub_channel.did.js ./frontend/src/services/pub-sub-channel/pub_sub_channel_idl.js -f
+
+      # - name: Frontend => Create a pull request.
+      #   uses: peter-evans/create-pull-request@v3
+      #   with:
+      #     token: ${{ secrets.PAT }}
+      #     commit-message: Update did files.
+      #     title: Update did files.
+      #     branch: update-did-files
+      #     path: frontend
+      #     reviewers: plitzenberger
