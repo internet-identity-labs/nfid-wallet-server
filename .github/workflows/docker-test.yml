@@ -73,24 +73,31 @@ jobs:
           name: pub_sub_channel.wasm
           path: ${{ github.workspace }}/pub_sub_channel.wasm
 
-      # - name: Frontend => Checkout repo.
-      #   uses: actions/checkout@v3
-      #   with:
-      #     token: ${{ secrets.PAT }}
-      #     repository: internet-identity-labs/nfid-frontend
-      #     path: frontend
+      - name: Frontend => Checkout repo.
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT }}
+          repository: internet-identity-labs/nfid-frontend
+          path: frontend
 
-      # - name: Frontend => Update did files.
-      #   run: |
-      #     cp ./pub_sub_channel.did.d.ts ./frontend/src/services/pub-sub-channel/pub_sub_channel.did.d.ts -f
-      #     cp ./pub_sub_channel.did.js ./frontend/src/services/pub-sub-channel/pub_sub_channel_idl.js -f
+      - name: Frontend => Update did files.
+        run: |
+          cp ./pub_sub_channel.did.d.ts ./frontend/src/services/pub-sub-channel/pub_sub_channel.did.d.ts -f
+          cp ./pub_sub_channel.did.js ./frontend/src/services/pub-sub-channel/pub_sub_channel_idl.js -f
 
-      # - name: Frontend => Create a pull request.
-      #   uses: peter-evans/create-pull-request@v3
-      #   with:
-      #     token: ${{ secrets.PAT }}
-      #     commit-message: Update did files.
-      #     title: Update did files.
-      #     branch: update-did-files
-      #     path: frontend
-      #     reviewers: plitzenberger
+      - name: Format did files.
+        run: |
+          cd ./frontend
+          yarn
+          yarn prettier --write ./src/services/pub-sub-channel/pub_sub_channel.did.d.ts
+          yarn prettier --write ./src/services/pub-sub-channel/pub_sub_channel_idl.js
+
+      - name: Frontend => Create a pull request.
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.PAT }}
+          commit-message: Update did files.
+          title: Update did files.
+          branch: update-did-files
+          path: frontend
+          reviewers: plitzenberger
