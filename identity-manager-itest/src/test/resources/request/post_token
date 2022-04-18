@@ -1,1 +1,1 @@
-dfx canister call identity_manager post_token '(record { phone_number = "%s"; token = "%s"; principal_id = "%s"})'
+dfx canister call identity_manager post_token '(record { phone_number_encrypted = "%s"; phone_number_hash = "%s"; token = "%s"; principal_id = "%s"})'

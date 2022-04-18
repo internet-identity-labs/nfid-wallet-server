@@ -20,6 +20,7 @@ pub struct Account {
     pub principal_id: String,
     pub name: Option<String>,
     pub phone_number: Option<String>,
+    pub phone_number_sha2: Option<String>,
     pub personas: Vec<Persona>,
     pub access_points: HashSet<AccessPoint>,
     pub base_fields: BasicEntity,

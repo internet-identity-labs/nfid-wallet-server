@@ -124,13 +124,14 @@ type HTTPApplicationResponse = record {
  //  ----------------------PHONE SECTION----------------------------
 
 type TokenRequest = record {
-    phone_number: text;
+    phone_number_encrypted: text;
+    phone_number_hash: text;
     token: text;
     principal_id: text;
 };
 
 type ValidatePhoneRequest = record {
-    phone_number: text;
+    phone_number_hash: text;
     principal_id: text;
 };
 

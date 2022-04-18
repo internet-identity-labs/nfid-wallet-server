@@ -36,6 +36,7 @@ fn test_get_account_e2e() {
         principal_id: ic_service::get_caller().to_text(),
         name: None,
         phone_number: None,
+        phone_number_sha2: None,
         personas: vec![],
         access_points: Default::default(),
         base_fields: BasicEntity::new(),

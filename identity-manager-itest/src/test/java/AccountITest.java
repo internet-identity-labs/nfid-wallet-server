@@ -25,7 +25,7 @@ public class AccountITest extends BaseIdentityManagerITest {
 
     @Test(priority = 50)
     public void createAccountSameAnchorExpectError() {
-        call("request/post_token", PHONE, TOKEN, ROOT_IDENTITY);
+        call("request/post_token", PHONE, PHONE_SHA2, TOKEN, ROOT_IDENTITY);
         String actual = call("account/req_create_exist_account");
         validateWithFormatIdentity("account/exp_anchor_exists", actual);
     }
