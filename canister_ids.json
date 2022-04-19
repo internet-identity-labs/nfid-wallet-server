@@ -13,5 +13,8 @@
   },
   "pub_sub_channel": {
     "ic": "iyvpb-uqaaa-aaaag-qabxa-cai"
+  },
+  "im_addition": {
+    "ic": "5yjgb-gyaaa-aaaao-aabwa-cai"
   }
 }

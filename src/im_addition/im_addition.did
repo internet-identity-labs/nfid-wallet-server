@@ -1,0 +1,5 @@
+
+service : () -> {
+  has_poap: () -> (bool) query;
+  increment_poap: () -> () query;
+}
