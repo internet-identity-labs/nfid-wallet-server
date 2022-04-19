@@ -591,6 +591,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "im_addition"
+version = "0.1.0"
+dependencies = [
+ "ic-cdk",
+ "ic-cdk-macros",
+ "ic-types 0.1.5",
+ "serde",
+]
+
+[[package]]
 name = "indexmap"
 version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -23,6 +23,12 @@
       "candid": "src/pub_sub_channel/pub_sub_channel.did",
       "wasm": "pub_sub_channel.wasm",
       "type": "custom"
+    },
+    "im_addition": {
+      "build": "src/im_addition/build.sh",
+      "candid": "src/im_addition/im_addition.did",
+      "wasm": "im_addition.wasm",
+      "type": "custom"
     }
   },
   "networks": {
