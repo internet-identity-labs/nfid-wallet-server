@@ -1,7 +1,5 @@
-use std::cell::RefCell;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{HashSet};
 
-use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::{storage, trap};
 use ic_cdk_macros::*;
 use ic_cdk::export::Principal;
@@ -34,11 +32,10 @@ async fn pre_upgrade() {
 #[post_upgrade]
 fn post_upgrade() {
     let poap: (HashSet<Principal>, i32) = storage::stable_restore().unwrap();
-    let mut index = storage::get_mut::<ProofOfAttendanceProtocol>();
-    for mut p in poap.0.iter() {
+    let index = storage::get_mut::<ProofOfAttendanceProtocol>();
+    for p in poap.0.iter() {
         index.insert(p.to_owned());
     }
 }
-
 
 fn main() {}

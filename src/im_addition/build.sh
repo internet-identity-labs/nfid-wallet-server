@@ -30,4 +30,4 @@ CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_DIR/../../target/}"
 
 ic-cdk-optimizer \
   "$CARGO_TARGET_DIR/$TARGET/release/im_addition.wasm" \
-  -o "$REPO_DIR/../../pub_sub_channel.wasm"
+  -o "$REPO_DIR/../../im_addition.wasm"

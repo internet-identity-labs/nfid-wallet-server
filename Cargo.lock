@@ -594,12 +594,10 @@ dependencies = [
 name = "im_addition"
 version = "0.1.0"
 dependencies = [
- "blake3",
  "ic-cdk",
  "ic-cdk-macros",
  "ic-types 0.1.5",
  "serde",
- "sha2 0.10.1",
 ]
 
 [[package]]
