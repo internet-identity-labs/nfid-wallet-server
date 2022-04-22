@@ -17,14 +17,15 @@ pub struct AccountUpdateRequest {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct TokenRequest {
-    pub phone_number: String,
+    pub phone_number_encrypted: String,
+    pub phone_number_hash: String,
     pub token: String,
     pub principal_id: String
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct ValidatePhoneRequest {
-    pub phone_number: String,
+    pub phone_number_hash: String,
     pub principal_id: String
 }
 

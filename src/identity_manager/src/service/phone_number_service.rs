@@ -43,7 +43,7 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumbe
             return error_response(429, "Too many requests.");
         }
 
-        if self.phone_number_repo.is_exist(&request.phone_number.clone()) {
+        if self.phone_number_repo.is_exist(&request.phone_number_hash.clone()) {
             return response(204);
         }
 
@@ -69,7 +69,7 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumbe
             return error_response(404, "Account not found.");
         }
 
-        self.token_repo.add(principal.to_text(), request.token, request.phone_number);
+        self.token_repo.add(principal.to_text(), request.token, request.phone_number_encrypted, request.phone_number_hash);
 
         response(200)
     }
@@ -86,15 +86,16 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumbe
             return error_response(404, "Principal id not found.");
         }
 
-        let (token_persisted, phone_number_persisted) = value_opt.unwrap();
+        let (token_persisted, phone_number_persisted, phone_number_sha2) = value_opt.unwrap();
         if !token.eq(token_persisted) {
             return error_response(400, "Token does not match.");
         }
 
         let mut account = account_opt.unwrap();
         account.phone_number = Some(phone_number_persisted.clone());
+        account.phone_number_sha2 = Some(phone_number_sha2.clone());
         self.account_repo.store_account(account);
-        self.phone_number_repo.add(phone_number_persisted.clone());
+        self.phone_number_repo.add(phone_number_sha2.clone());
 
         response(200)
     }

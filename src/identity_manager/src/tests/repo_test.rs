@@ -12,6 +12,7 @@ fn anchor_ex_test() {
         principal_id: "".to_string(),
         name: None,
         phone_number: None,
+        phone_number_sha2: None,
         personas: vec![],
         access_points: Default::default(),
         base_fields: Default::default()

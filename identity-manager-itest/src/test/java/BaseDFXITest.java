@@ -19,6 +19,7 @@ public class BaseDFXITest {
     final static String WHITELISTED_PHONE_NUMBERS = "null";
     final static String ANCHOR = "1234";
     final static String PHONE = "123456";
+    final static String PHONE_SHA2 = "123456_SHA2";
     final static String TOKEN = "1234";
     final static String ANONYMOUS = "anonymous";
     final static String DEFAULT = "default";

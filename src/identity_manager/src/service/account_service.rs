@@ -8,6 +8,7 @@ use crate::requests::{AccountRequest, AccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
+use crate::util::validation_util::validate_name;
 
 
 pub trait AccountServiceTrait {
@@ -54,6 +55,9 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
             Some(acc) => {
                 let mut new_acc = acc.clone();
                 if !&account_request.name.is_none() {
+                    if !validate_name(account_request.name.as_ref().unwrap().as_str()){
+                        return to_error_response("Name must only contain letters and numbers (5-15 characters)");
+                    }
                     new_acc.name = account_request.name.clone();
                 }
                 new_acc.base_fields.update_modified_date();

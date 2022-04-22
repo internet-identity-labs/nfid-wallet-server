@@ -28,6 +28,7 @@ pub fn account_request_to_account(account_request: AccountRequest) -> Account {
         principal_id,
         name: None,
         phone_number: None,
+        phone_number_sha2: None,
         personas,
         access_points: Default::default(),
         base_fields: BasicEntity::new(),
