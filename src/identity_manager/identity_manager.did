@@ -19,6 +19,12 @@ type BoolHttpResponse = record {
     status_code: nat16;
 };
 
+type StringHttpResponse = record {
+    data: opt text;
+    error: opt Error;
+    status_code: nat16;
+};
+
 type Response = record {
     error: opt Error;
     status_code: nat16;
@@ -173,6 +179,7 @@ service : () -> {
   configure: (ConfigurationRequest) -> ();
 
   get_account: () -> (HTTPAccountResponse) query;
+  get_phone_number_sha2: (text) -> (StringHttpResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   remove_account: () -> (BoolHttpResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);

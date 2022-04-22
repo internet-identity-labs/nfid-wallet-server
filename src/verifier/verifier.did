@@ -1,0 +1,28 @@
+type Certificate = record {
+    client_principal: text;
+    domain: text;
+    phone_number_sha2: opt text;
+};
+type ConfigurationRequest = record {
+    identity_manager: text;
+};
+type StringHttpResponse = record {
+    data: opt text;
+    error: opt text;
+    status_code: nat16;
+};
+type BoolHttpResponse = record {
+    data: opt bool;
+    error: opt text;
+    status_code: nat16;
+};
+
+
+service : () -> {
+  configure: (ConfigurationRequest) -> ();
+
+  ping: () -> () query;
+  is_owner: (text) -> (BoolHttpResponse);
+  update_certificate: (blob) -> (opt Certificate);
+  post_certificate: (text) -> (blob);
+}

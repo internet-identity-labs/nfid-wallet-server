@@ -26,6 +26,8 @@ public class BaseDFXITest {
     static String BACKUP_CANISTER_ID = "";
     static String HEARTBEAT_PERIOD = "1";
     final static String DISABLED_HEARTBEAT = "0";
+    final static int DEFAULT_TRIES = 3;
+
 
     @AfterClass
     public void stopDfx() {
@@ -35,7 +37,7 @@ public class BaseDFXITest {
     @SneakyThrows
     public void validateWithFormatIdentity(String pathToExpected, String actual) {
         String expected = IOUtils.toString(
-                this.getClass().getResourceAsStream(pathToExpected),
+                Objects.requireNonNull(this.getClass().getResourceAsStream(pathToExpected)),
                 StandardCharsets.UTF_8
         );
         assertEquals(String.format(expected, ROOT_IDENTITY).trim(), actual.trim());
@@ -53,7 +55,7 @@ public class BaseDFXITest {
     @SneakyThrows
     public String call(String path) {
         String dfxCommand = IOUtils.toString(
-                this.getClass().getResourceAsStream(path),
+                Objects.requireNonNull(this.getClass().getResourceAsStream(path)),
                 StandardCharsets.UTF_8
         );
         String[] bashScript = new String[]{"/bin/bash", "-c",
@@ -64,7 +66,7 @@ public class BaseDFXITest {
     @SneakyThrows
     public String getScript(String path) {
         return IOUtils.toString(
-                this.getClass().getResourceAsStream(path),
+                Objects.requireNonNull(this.getClass().getResourceAsStream(path)),
                 StandardCharsets.UTF_8
         );
     }

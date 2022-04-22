@@ -145,6 +145,14 @@ async fn get_account() -> HttpResponse<AccountResponse> {
     account_service.get_account()
 }
 
+#[query]
+#[admin]
+#[log_error]
+async fn get_phone_number_sha2(principal_id: String) ->HttpResponse<String> {
+    let mut account_service = get_account_service();
+    account_service.get_phone_number_sha2(principal_id)
+}
+
 #[update]
 #[log_error]
 async fn remove_account() -> HttpResponse<bool> {

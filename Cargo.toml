@@ -3,5 +3,6 @@ members = [
     "src/identity_manager",
     "src/pub_sub_channel",
     "src/im_addition",
+    "src/verifier",
     "src/libraries/canister_api_macros",
 ]

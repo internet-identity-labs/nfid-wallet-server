@@ -17,6 +17,7 @@ pub trait AccountServiceTrait {
     fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
     fn remove_account(&mut self) -> HttpResponse<bool>;
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
+    fn get_phone_number_sha2(&self, principal_id: String) -> HttpResponse<String> ;
 }
 
 #[derive(Default)]
@@ -55,7 +56,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
             Some(acc) => {
                 let mut new_acc = acc.clone();
                 if !&account_request.name.is_none() {
-                    if !validate_name(account_request.name.as_ref().unwrap().as_str()){
+                    if !validate_name(account_request.name.as_ref().unwrap().as_str()) {
                         return to_error_response("Name must only contain letters and numbers (5-15 characters)");
                     }
                     new_acc.name = account_request.name.clone();
@@ -92,6 +93,19 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool> {
         self.account_repo.store_accounts(accounts);
         to_success_response(true)
+    }
+
+    fn get_phone_number_sha2(&self, principal_id: String) -> HttpResponse<String> {
+        match self.account_repo.get_account_by_id(principal_id)
+        {
+            None => { to_error_response("Account not exist") }
+            Some(account) => {
+                match account.phone_number_sha2 {
+                    None => { to_error_response("Phone number not verified") }
+                    Some(pn_sha2) => { to_success_response(pn_sha2) }
+                }
+            }
+        }
     }
 }
 

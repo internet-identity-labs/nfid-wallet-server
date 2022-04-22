@@ -29,6 +29,12 @@
       "candid": "src/im_addition/im_addition.did",
       "wasm": "im_addition.wasm",
       "type": "custom"
+    },
+    "verifier": {
+      "build": "src/verifier/build.sh",
+      "candid": "src/verifier/verifier.did",
+      "wasm": "verifier.wasm",
+      "type": "custom"
     }
   },
   "networks": {

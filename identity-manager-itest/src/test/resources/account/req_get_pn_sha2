@@ -1,0 +1,1 @@
+dfx canister call %s get_phone_number_sha2 '("%s")'
