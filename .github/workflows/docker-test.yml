@@ -78,6 +78,7 @@ jobs:
         with:
           token: ${{ secrets.PAT }}
           repository: internet-identity-labs/nfid-frontend
+          ref: main
           path: frontend
 
       - name: Frontend => Update did files.
@@ -87,6 +88,7 @@ jobs:
 
       - name: Format did files.
         run: |
+          apt-get update && apt-get install yarn -y && yarn --version
           cd ./frontend
           yarn
           yarn prettier --write ./src/services/pub-sub-channel/pub_sub_channel.did.d.ts
@@ -95,7 +97,7 @@ jobs:
       - name: Frontend => Create a pull request.
         uses: peter-evans/create-pull-request@v3
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: Update did files.
           title: Update did files.
           branch: update-did-files
