@@ -51,7 +51,7 @@ public class VerifierIITest extends BaseDFXITest {
         call("persona/req_create_persona");
         String upgrade = String.format("dfx canister call verifier resolve_token '(%s)'", key);
         String call_certificate = callDfxCommand(upgrade);
-        assertTrue(call_certificate.contains("client_principal = \"sculj-2sjuf-dxqlm-dcv5y-hin5x-zfyvr-tzngf-bt5b5-dwhcc-zbsqf-rae"));
+        assertTrue(call_certificate.contains("client_principal = \"" + ROOT_IDENTITY));
         assertTrue(call_certificate.contains("phone_number_sha2 = opt \"+380991111111_SHA2\";"));
         assertTrue(call_certificate.contains("domain = \"TEST_DOMAIN\";\n"));
     }

@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use ic_cdk::{call, print, storage, trap};
 use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk::export::Principal;
+
 use ic_cdk_macros::{query, update};
 use ic_cdk_macros::*;
 
@@ -19,10 +19,11 @@ use canister_api_macros::{admin, log_error, replicate_account};
 use crate::credential_repo::Credential;
 use crate::http::request::ConfigurationRequest;
 use crate::http::responses::HttpResponse;
-use crate::repository::configuration_repo::{Configuration, ConfigurationRepo};
+use crate::repository::configuration_repo::{AdminRepo, Configuration, ConfigurationRepo};
 use crate::repository::credential_repo;
 use crate::repository::token_repo::{resolve_certificate, Token, TokenKey};
 use crate::service::credential_service;
+use crate::service::ic_service::get_caller;
 use crate::service::im_service::verify_phone_number_existence;
 
 mod repository;
@@ -30,10 +31,18 @@ mod service;
 mod http;
 
 
+#[init]
+async fn init() -> () {
+    AdminRepo::save(get_caller());
+}
+
 #[update]
+#[admin]
 async fn configure(request: ConfigurationRequest) -> () {
     let configuration = Configuration {
         identity_manager_canister_id: request.identity_manager,
+        whitelisted_canisters: None,
+        token_ttl: request.token_ttl.unwrap_or(60000)
     };
     ConfigurationRepo::save(configuration);
 }

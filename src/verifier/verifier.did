@@ -7,6 +7,7 @@ type Certificate = record {
 
 type ConfigurationRequest = record {
     identity_manager: text;
+    token_ttl: opt nat64;
 };
 
 type StringHttpResponse = record {

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::trap;
 
-use crate::{Credential, HttpResponse};
+use crate::{ConfigurationRepo, Credential, HttpResponse};
 use crate::repository::credential_repo::store_credential;
 
 #[derive(Clone, Debug, Deserialize, CandidType, Hash, Eq, PartialEq)]
@@ -39,7 +39,7 @@ pub fn resolve_token(token: TokenKey) -> String {
     TOKEN_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
         let now = ic_cdk::api::time();
-        st.retain(|_, l| (l.created_date + 60000) > now);
+        // st.retain(|_, l| (l.created_date + ConfigurationRepo::get().token_ttl) > now);
         match st.get(&token) {
             Some(cert) => {
                 cert.domain.clone()
