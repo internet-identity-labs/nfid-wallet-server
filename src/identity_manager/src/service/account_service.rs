@@ -1,8 +1,11 @@
+use std::collections::HashSet;
+use itertools::Itertools;
 use crate::http::requests::AccountResponse;
 use crate::{Account, HttpResponse};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 
 use crate::repository::account_repo::AccountRepoTrait;
+use crate::repository::persona_repo::Persona;
 use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
 use crate::requests::{AccountRequest, AccountUpdateRequest};
 use crate::response_mapper::to_error_response;
@@ -17,7 +20,7 @@ pub trait AccountServiceTrait {
     fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
     fn remove_account(&mut self) -> HttpResponse<bool>;
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
-    fn get_phone_number_sha2(&self, principal_id: String) -> HttpResponse<String> ;
+    fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String>;
 }
 
 #[derive(Default)]
@@ -95,14 +98,30 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
         to_success_response(true)
     }
 
-    fn get_phone_number_sha2(&self, principal_id: String) -> HttpResponse<String> {
+    fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String> {
         match self.account_repo.get_account_by_id(principal_id)
         {
             None => { to_error_response("Account not exist") }
-            Some(account) => {
+            Some(mut account) => {
                 match account.phone_number_sha2 {
                     None => { to_error_response("Phone number not verified") }
-                    Some(pn_sha2) => { to_success_response(pn_sha2) }
+                    Some(ref pn_sha2) => {
+                        if !account.personas.clone().into_iter()
+                            .any(|l| l.domain.eq(&domain)) {
+                            return to_error_response("No persona with such domain");
+                        }
+                        let mut personas = account.personas.clone().into_iter()
+                            .map(|mut l| {
+                                if l.domain.eq(&domain) {
+                                    l.domain_certified = Some(true)
+                                };
+                                l
+                            })
+                            .collect_vec();
+                        account.personas = personas;
+                        self.account_repo.store_account(account.clone());
+                        to_success_response(pn_sha2.to_owned())
+                    }
                 }
             }
         }

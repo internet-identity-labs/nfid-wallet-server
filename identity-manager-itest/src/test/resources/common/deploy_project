@@ -1,1 +1,1 @@
-dfx deploy %s
+dfx deploy %s --no-wallet

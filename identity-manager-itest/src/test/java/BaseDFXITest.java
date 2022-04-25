@@ -25,8 +25,8 @@ public class BaseDFXITest {
     final static String DEFAULT = "default";
     static String BACKUP_CANISTER_ID = "";
     static String HEARTBEAT_PERIOD = "1";
-    final static String DISABLED_HEARTBEAT = "0";
-    final static int DEFAULT_TRIES = 3;
+    final static String DISABLED_HEARTBEAT = "1000000";
+    final static int DEFAULT_TRIES = 5;
 
 
     @AfterClass

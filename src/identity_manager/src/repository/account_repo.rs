@@ -21,7 +21,7 @@ pub struct Account {
     pub name: Option<String>,
     pub phone_number: Option<String>,
     pub phone_number_sha2: Option<String>,
-    pub personas: Vec<Persona>,
+    pub personas: Vec<Persona>, //TODO hashSet
     pub access_points: HashSet<AccessPoint>,
     pub base_fields: BasicEntity,
 }

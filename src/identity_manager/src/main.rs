@@ -148,9 +148,9 @@ async fn get_account() -> HttpResponse<AccountResponse> {
 #[query]
 #[admin]
 #[log_error]
-async fn get_phone_number_sha2(principal_id: String) ->HttpResponse<String> {
+async fn certify_phone_number_sha2(principal_id: String, domain: String) -> HttpResponse<String> {
     let mut account_service = get_account_service();
-    account_service.get_phone_number_sha2(principal_id)
+    account_service.certify_phone_number_sha2(principal_id, domain)
 }
 
 #[update]
