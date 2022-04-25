@@ -2,6 +2,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 
 public class VerifierIITest extends BaseDFXITest {
@@ -12,13 +13,13 @@ public class VerifierIITest extends BaseDFXITest {
         String identity_manager;
         String verifier;
         do {
-            call("common/dfx_stop");
+//            call("common/dfx_stop");
 //            callDfxCommand("rm -rf .dfx");
             call("common/use_default_persona");
             ROOT_IDENTITY = call("common/get_principal").trim();
-            call("common/init_dfx_project");
-            callDfxCommand(String.format(getScript("common/deploy_project").trim(), "verifier"));
-            callDfxCommand(String.format(getScript("common/deploy_project").trim(), "identity_manager"));
+//            call("common/init_dfx_project");
+//            callDfxCommand(String.format(getScript("common/deploy_project").trim(), "verifier"));
+//            callDfxCommand(String.format(getScript("common/deploy_project").trim(), "identity_manager"));
             String im = call("common/get_canister_id", "identity_manager").trim();
             String verifier_id = call("common/get_canister_id", "verifier").trim();
             identity_manager = call("common/configure_dfx_project", "identity_manager", ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, DISABLED_HEARTBEAT, BACKUP_CANISTER_ID, verifier_id);
@@ -48,15 +49,11 @@ public class VerifierIITest extends BaseDFXITest {
         String key = callDfxCommand(init_certificate);
         key = key.replaceAll(",", "");
         call("persona/req_create_persona");
-        String upgrade = String.format("dfx canister call verifier resolve_token '(%s)'", key, "TEST_DOMAIN");
+        String upgrade = String.format("dfx canister call verifier resolve_token '(%s)'", key);
         String call_certificate = callDfxCommand(upgrade);
-        assertEquals("(\n" +
-                "  opt record {\n" +
-                "    domain = \"TEST_DOMAIN\";\n" +
-                "    client_principal = \"sculj-2sjuf-dxqlm-dcv5y-hin5x-zfyvr-tzngf-bt5b5-dwhcc-zbsqf-rae\";\n" +
-                "    phone_number_sha2 = opt \"+380991111111_SHA2\";\n" +
-                "  },\n" +
-                ")\n", call_certificate);
+        assertTrue(call_certificate.contains("client_principal = \"sculj-2sjuf-dxqlm-dcv5y-hin5x-zfyvr-tzngf-bt5b5-dwhcc-zbsqf-rae"));
+        assertTrue(call_certificate.contains("phone_number_sha2 = opt \"+380991111111_SHA2\";"));
+        assertTrue(call_certificate.contains("domain = \"TEST_DOMAIN\";\n"));
     }
 
 

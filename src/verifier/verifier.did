@@ -2,6 +2,7 @@ type Certificate = record {
     client_principal: text;
     domain: text;
     phone_number_sha2: opt text;
+    created_date: nat64;
 };
 
 type ConfigurationRequest = record {

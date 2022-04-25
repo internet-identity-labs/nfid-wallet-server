@@ -3,10 +3,11 @@ use std::convert::TryInto;
 use ic_cdk::{call, trap};
 use ic_cdk::export::Principal;
 
-use crate::{Credential, get_domain, resolve_certificate, TokenKey, verify_phone_number_existence};
+use crate::{Credential, resolve_certificate, TokenKey, verify_phone_number_existence};
 use crate::http::responses::{HttpResponse, to_success_response};
 use crate::repository::credential_repo::get_credential;
-use crate::repository::token_repo::{insert_certificate, Token};
+use crate::repository::token_repo;
+use crate::repository::token_repo::{generate_token, Token};
 
 pub async fn generate_pn_token(domain: String) -> TokenKey {
     let principal = ic_cdk::api::caller().to_text();
@@ -23,12 +24,7 @@ pub async fn generate_pn_token(domain: String) -> TokenKey {
         ));
     });
 
-    let cert = Token {
-        client_principal: principal,
-        domain,
-    };
-
-    insert_certificate(cert.clone(), token_key.clone())
+    generate_token(principal, domain, token_key.clone())
 }
 
 pub fn is_phone_number_approved(who: String) -> HttpResponse<bool> {
@@ -45,7 +41,7 @@ pub fn is_phone_number_approved(who: String) -> HttpResponse<bool> {
 pub async fn resolve_token(token_key: TokenKey) -> Option<Credential> {
     let principal = ic_cdk::api::caller().to_text();
 
-    let domain = get_domain(token_key);
+    let domain = token_repo::resolve_token(token_key);
     let phone_number_sha2 = verify_phone_number_existence(principal, domain).await;
     resolve_certificate(phone_number_sha2, token_key)
 }

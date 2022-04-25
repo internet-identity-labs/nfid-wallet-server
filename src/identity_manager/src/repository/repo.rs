@@ -64,6 +64,22 @@ impl AdminRepo {
     }
 }
 
+
+impl ConfigurationRepo {
+    //todo fix Principle not implement default!
+    pub fn get() -> &'static Configuration {
+        storage::get::<Option<Configuration>>().as_ref().unwrap()
+    }
+
+    pub fn exists() -> bool {
+        storage::get::<Option<Configuration>>().is_some()
+    }
+
+    pub fn save(configuration: Configuration) -> () {
+        storage::get_mut::<Option<Configuration>>().replace(configuration);
+    }
+}
+
 pub fn is_anchor_exists(anchor: u64) -> bool { //todo move somewhere
     let accounts = storage::get_mut::<Accounts>();
     accounts.into_iter()

@@ -12,6 +12,7 @@ use crate::repository::credential_repo::store_credential;
 pub struct Token {
     pub client_principal: String,
     pub domain: String,
+    pub created_date: u64,
 }
 
 pub type TokenKey = [u8; 32];
@@ -21,7 +22,12 @@ thread_local! {
 
 }
 
-pub fn insert_certificate(cert: Token, token: TokenKey) -> TokenKey {
+pub fn generate_token(client_principal: String, domain: String, token: TokenKey) -> TokenKey {
+    let cert = Token {
+        client_principal,
+        domain,
+        created_date: ic_cdk::api::time(),
+    };
     TOKEN_STORAGE.with(|mut storage| {
         let mut st = storage.borrow_mut();
         st.insert(token.clone(), cert.clone());
@@ -29,21 +35,22 @@ pub fn insert_certificate(cert: Token, token: TokenKey) -> TokenKey {
     })
 }
 
-pub fn get_domain(token: TokenKey) -> String {
-    let t = TOKEN_STORAGE.with(|storage| {
+pub fn resolve_token(token: TokenKey) -> String {
+    TOKEN_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
+        let now = ic_cdk::api::time();
+        st.retain(|_, l| (l.created_date + 60000) > now);
         match st.get(&token) {
             Some(cert) => {
                 cert.domain.clone()
             }
             None => { trap("Certificate does not contain domain") }
         }
-    });
-    t
+    })
 }
 
 pub fn resolve_certificate(a: Option<String>, token: TokenKey) -> Option<Credential> {
-    let tt = TOKEN_STORAGE.with(|storage| {
+    let token = TOKEN_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
         match st.remove(&token) {
             Some(token) => {
@@ -53,9 +60,10 @@ pub fn resolve_certificate(a: Option<String>, token: TokenKey) -> Option<Credent
         }
     });
     let cert = Credential {
-        client_principal: tt.client_principal,
-        domain: tt.domain,
+        client_principal: token.client_principal,
+        domain: token.domain,
         phone_number_sha2: a,
+        created_date: ic_cdk::api::time(),
     };
     store_credential(cert)
 }

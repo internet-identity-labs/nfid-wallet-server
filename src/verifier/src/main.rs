@@ -21,7 +21,7 @@ use crate::http::request::ConfigurationRequest;
 use crate::http::responses::HttpResponse;
 use crate::repository::configuration_repo::{Configuration, ConfigurationRepo};
 use crate::repository::credential_repo;
-use crate::repository::token_repo::{get_domain, resolve_certificate, Token, TokenKey};
+use crate::repository::token_repo::{resolve_certificate, Token, TokenKey};
 use crate::service::credential_service;
 use crate::service::im_service::verify_phone_number_existence;
 
@@ -38,7 +38,6 @@ async fn configure(request: ConfigurationRequest) -> () {
     ConfigurationRepo::save(configuration);
 }
 
-
 #[update]
 async fn generate_pn_token(domain: String) -> TokenKey {
     credential_service::generate_pn_token(domain).await
@@ -48,7 +47,6 @@ async fn generate_pn_token(domain: String) -> TokenKey {
 async fn is_phone_number_approved(who: String) -> HttpResponse<bool> {
     credential_service::is_phone_number_approved(who)
 }
-
 
 #[update]
 async fn resolve_token(token_key: TokenKey) -> Option<Credential> {

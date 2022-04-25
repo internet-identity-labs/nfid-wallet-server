@@ -10,6 +10,7 @@ pub struct Credential {
     pub client_principal: String,
     pub domain: String,
     pub phone_number_sha2: Option<String>,
+    pub created_date: u64,
 }
 
 thread_local! {
@@ -41,7 +42,7 @@ pub fn pre_upgrade() {
         let mut certs = HashSet::new();
 
         for cc in st.iter() {
-            certs.insert(cc);
+            certs.insert(cc.1);
         }
         storage::stable_save((certs, 0));
     });
