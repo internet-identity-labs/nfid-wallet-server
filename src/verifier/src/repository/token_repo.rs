@@ -39,12 +39,12 @@ pub fn resolve_token(token: TokenKey) -> String {
     TOKEN_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
         let now = ic_cdk::api::time();
-        // st.retain(|_, l| (l.created_date + ConfigurationRepo::get().token_ttl) > now);
+        st.retain(|_, l| (l.created_date + ConfigurationRepo::get().token_ttl) < now);
         match st.get(&token) {
             Some(cert) => {
                 cert.domain.clone()
             }
-            None => { trap("Certificate does not contain domain") }
+            None => { trap("Certificate missed or expired") }
         }
     })
 }

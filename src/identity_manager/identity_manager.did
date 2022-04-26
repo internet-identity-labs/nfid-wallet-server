@@ -179,7 +179,6 @@ service : () -> {
   configure: (ConfigurationRequest) -> ();
 
   get_account: () -> (HTTPAccountResponse) query;
-  certify_phone_number_sha2: (text, text) -> (StringHttpResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   remove_account: () -> (BoolHttpResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
@@ -206,4 +205,6 @@ service : () -> {
 
   store_accounts: (vec Account) -> (BoolHttpResponse);
   restore_accounts: (text) -> (BoolHttpResponse);
+
+  certify_phone_number_sha2: (text, text) -> (StringHttpResponse) query;
 }

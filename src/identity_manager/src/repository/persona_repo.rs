@@ -11,7 +11,7 @@ pub struct Persona {
     pub domain: String,
     pub persona_id: String,
     pub base_fields: BasicEntity,
-    pub domain_certified: Option<bool>,
+    pub domain_certified: Option<u64>,
 }
 
 #[cfg_attr(test, mocked)]

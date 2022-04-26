@@ -18,8 +18,8 @@ public class VerifierIITest extends BaseDFXITest {
             call("common/use_default_persona");
             ROOT_IDENTITY = call("common/get_principal").trim();
 //            call("common/init_dfx_project");
-//            callDfxCommand(String.format(getScript("common/deploy_project").trim(), "verifier"));
-//            callDfxCommand(String.format(getScript("common/deploy_project").trim(), "identity_manager"));
+            callDfxCommand(String.format(getScript("common/deploy_project").trim(), "verifier"));
+            callDfxCommand(String.format(getScript("common/deploy_project").trim(), "identity_manager"));
             String im = call("common/get_canister_id", "identity_manager").trim();
             String verifier_id = call("common/get_canister_id", "verifier").trim();
             identity_manager = call("common/configure_dfx_project", "identity_manager", ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, DISABLED_HEARTBEAT, BACKUP_CANISTER_ID, verifier_id);
@@ -36,30 +36,42 @@ public class VerifierIITest extends BaseDFXITest {
         var phoneNumber = "+380991111111";
         var phoneNumberSha2 = "+380991111111_SHA2";
         call("request/create_account", "12345");
-        command("request/post_token", phoneNumber, phoneNumberSha2, TOKEN, ROOT_IDENTITY);
-        command("request/verify_token", TOKEN);
-        call("account/req_get_account", "identity_manager");
-        var actual = command("account/req_get_pn_sha2", "identity_manager", ROOT_IDENTITY);
-        assertEquals("(record{data=null;error=opt\"Nopersonawithsuchdomain\";status_code=404:nat16;},)", actual);
+        call("request/post_token", phoneNumber, phoneNumberSha2, TOKEN, ROOT_IDENTITY);
+        call("request/verify_token", TOKEN);
     }
 
     @Test(priority = 11)
-    public void no_such_domain() {
-        String init_certificate = "dfx canister call verifier generate_pn_token '(\"TEST_DOMAIN\")'";
-        String key = callDfxCommand(init_certificate);
-        key = key.replaceAll(",", "");
+    public void test_phone_number_no_requested_domain_error() {
+        var actual = command("account/req_get_pn_sha2", "identity_manager", ROOT_IDENTITY);
+        assertEquals("(record{data=null;error=opt\"Nononcertifiedpersonawithsuchdomain\";status_code=404:nat16;},)", actual);
+    }
+
+    @Test(priority = 20)
+    public void generate_and_resolve_token() {
         call("persona/req_create_persona");
-        String upgrade = String.format("dfx canister call verifier resolve_token '(%s)'", key);
-        String call_certificate = callDfxCommand(upgrade);
-        assertTrue(call_certificate.contains("client_principal = \"" + ROOT_IDENTITY));
+        call("common/use_test_persona");
+        var user = call("common/get_principal").trim();
+        String init_token = "dfx canister call verifier generate_pn_token '(\"TEST_DOMAIN\")'";
+        String key = callDfxCommand(init_token);
+        key = key.replaceAll(",", "");
+        call("common/use_default_persona");
+        String call_certificate = callDfxCommand(String.format("dfx canister call verifier resolve_token '(%s)'", key));
+        assertTrue(call_certificate.contains("client_principal = \"" + user));
         assertTrue(call_certificate.contains("phone_number_sha2 = opt \"+380991111111_SHA2\";"));
         assertTrue(call_certificate.contains("domain = \"TEST_DOMAIN\";\n"));
     }
 
+    @Test(priority = 21)
+    public void test_phone_number_resolved_no_requested_domain_error() {
+        var actual = command("account/req_get_pn_sha2", "identity_manager", ROOT_IDENTITY);
+        assertEquals("(record{data=null;error=opt\"Nononcertifiedpersonawithsuchdomain\";status_code=404:nat16;},)", actual);
+    }
 
     @Test(priority = 30)
-    public void is_owner() {
-        String init_certificate = "dfx canister call verifier is_phone_number_approved '(\"sculj-2sjuf-dxqlm-dcv5y-hin5x-zfyvr-tzngf-bt5b5-dwhcc-zbsqf-rae\")'";
+    public void verify_owner_of_certificate() {
+        call("common/use_test_persona");
+        var user = call("common/get_principal").trim();
+        String init_certificate = "dfx canister call verifier is_phone_number_approved '(\"" + user + "\")'";
         String key = callDfxCommand(init_certificate);
         assertEquals("(record { data = opt true; error = null; status_code = 200 : nat16 })\n", key);
     }

@@ -16,6 +16,6 @@ pub fn persona_request_to_persona(persona_request: PersonaRequest) -> Persona {
         domain: persona_request.domain,
         persona_id: persona_request.persona_id,
         base_fields: BasicEntity::new(),
-        domain_certified: Some(false),
+        domain_certified: None,
     }
 }

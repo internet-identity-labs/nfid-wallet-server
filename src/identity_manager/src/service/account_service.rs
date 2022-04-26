@@ -107,13 +107,13 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
                     None => { to_error_response("Phone number not verified") }
                     Some(ref pn_sha2) => {
                         if !account.personas.clone().into_iter()
-                            .any(|l| l.domain.eq(&domain)) {
-                            return to_error_response("No persona with such domain");
+                            .any(|l| (l.domain.eq(&domain) && l.domain_certified.is_none())) {
+                            return to_error_response("No non certified persona with such domain");
                         }
                         let mut personas = account.personas.clone().into_iter()
                             .map(|mut l| {
                                 if l.domain.eq(&domain) {
-                                    l.domain_certified = Some(true)
+                                    l.domain_certified = Some(ic_cdk::api::time())
                                 };
                                 l
                             })

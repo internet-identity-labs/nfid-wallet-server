@@ -4,6 +4,8 @@ use std::collections::{HashMap, HashSet};
 use ic_cdk::export::candid::{CandidType, Deserialize};
 
 use ic_cdk::storage;
+use ic_cdk::export::Principal;
+use crate::AdminRepo;
 
 #[derive(Clone, Debug, Deserialize, CandidType, Hash, Eq, PartialEq)]
 pub struct Credential {
@@ -44,15 +46,16 @@ pub fn pre_upgrade() {
         for cc in st.iter() {
             certs.insert(cc.1);
         }
-        storage::stable_save((certs, 0));
+        storage::stable_save((certs, AdminRepo::get()));
     });
 }
 
 pub fn post_upgrade() {
-    let poap: (HashSet<Credential>, i32) = storage::stable_restore().unwrap();
+    let (certs, admin): (HashSet<Credential>, Principal) = storage::stable_restore().unwrap();
+    AdminRepo::save(admin);
     CERTIFICATE_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
-        for p in poap.0.iter() {
+        for p in certs.iter() {
             let cert = p.to_owned();
             st.insert(cert.client_principal.clone(), cert);
         }
