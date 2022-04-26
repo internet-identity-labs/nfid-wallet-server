@@ -1,3 +1,4 @@
+import lombok.SneakyThrows;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -13,17 +14,17 @@ public class VerifierIITest extends BaseDFXITest {
         String identity_manager;
         String verifier;
         do {
-//            call("common/dfx_stop");
-//            callDfxCommand("rm -rf .dfx");
+            call("common/dfx_stop");
+            callDfxCommand("rm -rf .dfx");
             call("common/use_default_persona");
             ROOT_IDENTITY = call("common/get_principal").trim();
-//            call("common/init_dfx_project");
+            call("common/init_dfx_project");
             callDfxCommand(String.format(getScript("common/deploy_project").trim(), "verifier"));
             callDfxCommand(String.format(getScript("common/deploy_project").trim(), "identity_manager"));
             String im = call("common/get_canister_id", "identity_manager").trim();
             String verifier_id = call("common/get_canister_id", "verifier").trim();
             identity_manager = call("common/configure_dfx_project", "identity_manager", ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, DISABLED_HEARTBEAT, BACKUP_CANISTER_ID, verifier_id);
-            verifier = call("common/configure_verifier", im);
+            verifier = call("common/configure_verifier", im, TTL);
 
             if (++i >= DEFAULT_TRIES)
                 System.exit(1);
@@ -74,6 +75,21 @@ public class VerifierIITest extends BaseDFXITest {
         String init_certificate = "dfx canister call verifier is_phone_number_approved '(\"" + user + "\")'";
         String key = callDfxCommand(init_certificate);
         assertEquals("(record { data = opt true; error = null; status_code = 200 : nat16 })\n", key);
+    }
+
+    @SneakyThrows
+    @Test(priority = 32)
+    public void test_token_expired() {
+        call("common/use_default_persona");
+        String im = call("common/get_canister_id", "identity_manager").trim();
+        call("common/configure_verifier", im, 1);
+        call("persona/req_create_persona");
+        String init_token = "dfx canister call verifier generate_pn_token '(\"TEST_DOMAIN\")'";
+        String key = callDfxCommand(init_token);
+        Thread.sleep(1000);
+        String cmd = String.format("dfx canister call verifier resolve_token '(%s)'", key.replaceAll(",", ""));
+        String call_certificate = callDfxCommand(cmd);
+        assertTrue(call_certificate.isEmpty());
     }
 
 }

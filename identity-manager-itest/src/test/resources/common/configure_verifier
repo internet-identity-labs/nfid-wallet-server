@@ -1,1 +1,1 @@
-dfx canister call verifier configure '(record {identity_manager = "%s";})'
+dfx canister call verifier configure '(record {identity_manager = "%s"; token_ttl = opt %s})'

@@ -1,7 +1,7 @@
 (
   vec {
     record {
-      log = "It's impossible to link this II anchor, please try another one.";
+      log = "Impossible to link this II anchor, please try another one.";
       level = variant { ERROR };
       timestamp = 1_645_104_006_458_252_002 : nat64;
     };

@@ -1,3 +1,4 @@
+use std::time::Duration;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::storage;
@@ -6,7 +7,7 @@ use ic_cdk::storage;
 pub struct Configuration {
     pub identity_manager_canister_id: String,
     pub whitelisted_canisters: Option<Vec<Principal>>,
-    pub token_ttl: u64,
+    pub token_ttl: Duration,
 }
 
 pub struct ConfigurationRepo {}

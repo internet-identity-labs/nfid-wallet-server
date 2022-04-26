@@ -1,6 +1,7 @@
 use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::time::Duration;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::trap;
@@ -12,7 +13,7 @@ use crate::repository::credential_repo::store_credential;
 pub struct Token {
     pub client_principal: String,
     pub domain: String,
-    pub created_date: u64,
+    pub created_date: Duration,
 }
 
 pub type TokenKey = [u8; 32];
@@ -26,7 +27,7 @@ pub fn generate_token(client_principal: String, domain: String, token: TokenKey)
     let cert = Token {
         client_principal,
         domain,
-        created_date: ic_cdk::api::time(),
+        created_date: Duration::from_nanos(ic_cdk::api::time()),
     };
     TOKEN_STORAGE.with(|mut storage| {
         let mut st = storage.borrow_mut();
@@ -38,8 +39,8 @@ pub fn generate_token(client_principal: String, domain: String, token: TokenKey)
 pub fn resolve_token(token: TokenKey) -> String {
     TOKEN_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
-        let now = ic_cdk::api::time();
-        st.retain(|_, l| (l.created_date + ConfigurationRepo::get().token_ttl) < now);
+        let now = Duration::from_nanos(ic_cdk::api::time());
+        st.retain(|_, l| (now - (*l).created_date) < ConfigurationRepo::get().token_ttl);
         match st.get(&token) {
             Some(cert) => {
                 cert.domain.clone()

@@ -14,8 +14,8 @@ public class BaseDFXITest {
     private final static String PATH = "..";
 
     static String ROOT_IDENTITY = "";
-    final static String TTL = "10";
-    final static String TTL_REFRESH = "10";
+    final static String TTL = "30";
+    final static String TTL_REFRESH = "20";
     final static String WHITELISTED_PHONE_NUMBERS = "null";
     final static String ANCHOR = "1234";
     final static String PHONE = "123456";
@@ -31,7 +31,7 @@ public class BaseDFXITest {
 
     @AfterClass
     public void stopDfx() {
-//        call("common/dfx_stop");
+        call("common/dfx_stop");
     }
 
     @SneakyThrows

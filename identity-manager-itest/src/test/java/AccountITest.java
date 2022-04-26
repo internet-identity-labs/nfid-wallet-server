@@ -3,8 +3,6 @@ import org.testng.Assert;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertEquals;
-
 
 public class AccountITest extends BaseIdentityManagerITest {
 

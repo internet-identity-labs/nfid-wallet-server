@@ -46,7 +46,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
         let acc = account_request_to_account(account_request);
         match { self.account_repo.create_account(acc.clone()) } {
             None => {
-                to_error_response("It's impossible to link this II anchor, please try another one.")
+                to_error_response("Impossible to link this II anchor, please try another one.")
             }
             Some(_) => {
                 to_success_response(account_to_account_response(acc))
