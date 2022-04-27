@@ -21,7 +21,7 @@ pub struct Account {
     pub name: Option<String>,
     pub phone_number: Option<String>,
     pub phone_number_sha2: Option<String>,
-    pub personas: Vec<Persona>,
+    pub personas: Vec<Persona>, //TODO hashSet
     pub access_points: HashSet<AccessPoint>,
     pub base_fields: BasicEntity,
 }
@@ -38,6 +38,7 @@ pub trait AccountRepoTrait {
     fn get_accounts(&self, ids: Vec<String>) -> Vec<Account>;
     fn get_all_accounts(&self) -> Vec<Account>;
     fn store_accounts(&self, accounts: Vec<Account>);
+    fn get_account_by_id(&self, princ: String) -> Option<Account>;
 }
 
 #[derive(Default)]
@@ -128,6 +129,20 @@ impl AccountRepoTrait for AccountRepo {
         for account in accounts {
             accounts_stored.insert(account.principal_id.clone(), account.clone());
             self.update_account_index(account.principal_id.clone());
+        }
+    }
+
+    fn get_account_by_id(&self, princ: String) -> Option<Account> {
+        let index = storage::get_mut::<PrincipalIndex>();
+        let accounts = storage::get_mut::<Accounts>();
+        match index.get_mut(&princ) {
+            None => { None }
+            Some(key) => {
+                match accounts.get(key) {
+                    None => { None }
+                    Some(acc) => { Option::from(acc.to_owned()) }
+                }
+            }
         }
     }
 }

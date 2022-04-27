@@ -1,7 +1,6 @@
 import org.testng.annotations.BeforeClass;
 
 public class BasePSChannelITest extends BaseDFXITest {
-    private final static int DEFAULT_TRIES = 20;
 
     @BeforeClass
     public void initDfxProject() {

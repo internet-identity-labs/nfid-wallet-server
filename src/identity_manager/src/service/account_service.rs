@@ -1,8 +1,11 @@
+use std::collections::HashSet;
+use itertools::Itertools;
 use crate::http::requests::AccountResponse;
 use crate::{Account, HttpResponse};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 
 use crate::repository::account_repo::AccountRepoTrait;
+use crate::repository::persona_repo::Persona;
 use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
 use crate::requests::{AccountRequest, AccountUpdateRequest};
 use crate::response_mapper::to_error_response;
@@ -17,6 +20,7 @@ pub trait AccountServiceTrait {
     fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
     fn remove_account(&mut self) -> HttpResponse<bool>;
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
+    fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String>;
 }
 
 #[derive(Default)]
@@ -42,7 +46,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
         let acc = account_request_to_account(account_request);
         match { self.account_repo.create_account(acc.clone()) } {
             None => {
-                to_error_response("It's impossible to link this II anchor, please try another one.")
+                to_error_response("Impossible to link this II anchor, please try another one.")
             }
             Some(_) => {
                 to_success_response(account_to_account_response(acc))
@@ -55,7 +59,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
             Some(acc) => {
                 let mut new_acc = acc.clone();
                 if !&account_request.name.is_none() {
-                    if !validate_name(account_request.name.as_ref().unwrap().as_str()){
+                    if !validate_name(account_request.name.as_ref().unwrap().as_str()) {
                         return to_error_response("Name must only contain letters and numbers (5-15 characters)");
                     }
                     new_acc.name = account_request.name.clone();
@@ -92,6 +96,35 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool> {
         self.account_repo.store_accounts(accounts);
         to_success_response(true)
+    }
+
+    fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String> {
+        match self.account_repo.get_account_by_id(principal_id)
+        {
+            None => { to_error_response("Account not exist") }
+            Some(mut account) => {
+                match account.phone_number_sha2 {
+                    None => { to_error_response("Phone number not verified") }
+                    Some(ref pn_sha2) => {
+                        if !account.personas.clone().into_iter()
+                            .any(|l| (l.domain.eq(&domain) && l.domain_certified.is_none())) {
+                            return to_error_response("No non certified persona with such domain");
+                        }
+                        let mut personas = account.personas.clone().into_iter()
+                            .map(|mut l| {
+                                if l.domain.eq(&domain) {
+                                    l.domain_certified = Some(ic_cdk::api::time())
+                                };
+                                l
+                            })
+                            .collect_vec();
+                        account.personas = personas;
+                        self.account_repo.store_account(account.clone());
+                        to_success_response(pn_sha2.to_owned())
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -1,0 +1,32 @@
+type Certificate = record {
+    client_principal: text;
+    domain: text;
+    phone_number_sha2: opt text;
+    created_date: nat64;
+};
+
+type ConfigurationRequest = record {
+    identity_manager: text;
+    token_ttl: opt nat64;
+};
+
+type StringHttpResponse = record {
+    data: opt text;
+    error: opt text;
+    status_code: nat16;
+};
+
+type BoolHttpResponse = record {
+    data: opt bool;
+    error: opt text;
+    status_code: nat16;
+};
+
+
+service : () -> {
+  configure: (ConfigurationRequest) -> ();
+
+  is_phone_number_approved: (text) -> (BoolHttpResponse);
+  resolve_token: (blob) -> (opt Certificate);
+  generate_pn_token: (text) -> (blob);
+}

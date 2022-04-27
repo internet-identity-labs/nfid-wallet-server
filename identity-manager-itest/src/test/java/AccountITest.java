@@ -1,4 +1,5 @@
 import lombok.SneakyThrows;
+import org.testng.Assert;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
@@ -11,10 +12,17 @@ public class AccountITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("account/exp_account", actual);
     }
 
-    @Test(priority = 22)
+    @Test(priority = 20)
     public void getAccountCreatedInPreviousTest() {
         String actual = call("account/req_get_account", "identity_manager");
         validateWithFormatIdentity("account/exp_account", actual);
+    }
+
+    @Test(priority = 21)
+    public void getAccountPNSha2CreatedInPreviousTest() {
+        var actual = command("account/req_get_pn_sha2", "identity_manager", ROOT_IDENTITY);
+        var expected = get("response/response_error", "Phone number not verified", "404");
+        Assert.assertEquals(actual, expected);
     }
 
     @Test(priority = 30)

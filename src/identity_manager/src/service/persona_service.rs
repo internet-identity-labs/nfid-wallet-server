@@ -26,7 +26,7 @@ impl<T: PersonaRepoTrait, N: ApplicationServiceTrait> PersonaServiceTrait for Pe
         let created_persona = persona_request_to_persona(persona_r);
 
         if self.application_service.is_over_the_limit(&created_persona.domain) {
-            return to_error_response("It's impossible to link this domain. Over limit.");
+            return to_error_response("Impossible to link this domain. Over limit.");
         }
 
         match self.persona_repo.store_persona(created_persona) {

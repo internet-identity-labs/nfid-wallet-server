@@ -14,8 +14,8 @@ public class BaseDFXITest {
     private final static String PATH = "..";
 
     static String ROOT_IDENTITY = "";
-    final static String TTL = "10";
-    final static String TTL_REFRESH = "10";
+    final static String TTL = "30";
+    final static String TTL_REFRESH = "20";
     final static String WHITELISTED_PHONE_NUMBERS = "null";
     final static String ANCHOR = "1234";
     final static String PHONE = "123456";
@@ -25,7 +25,9 @@ public class BaseDFXITest {
     final static String DEFAULT = "default";
     static String BACKUP_CANISTER_ID = "";
     static String HEARTBEAT_PERIOD = "1";
-    final static String DISABLED_HEARTBEAT = "0";
+    final static String DISABLED_HEARTBEAT = "1000000";
+    final static int DEFAULT_TRIES = 20;
+
 
     @AfterClass
     public void stopDfx() {
@@ -35,7 +37,7 @@ public class BaseDFXITest {
     @SneakyThrows
     public void validateWithFormatIdentity(String pathToExpected, String actual) {
         String expected = IOUtils.toString(
-                this.getClass().getResourceAsStream(pathToExpected),
+                Objects.requireNonNull(this.getClass().getResourceAsStream(pathToExpected)),
                 StandardCharsets.UTF_8
         );
         assertEquals(String.format(expected, ROOT_IDENTITY).trim(), actual.trim());
@@ -53,7 +55,7 @@ public class BaseDFXITest {
     @SneakyThrows
     public String call(String path) {
         String dfxCommand = IOUtils.toString(
-                this.getClass().getResourceAsStream(path),
+                Objects.requireNonNull(this.getClass().getResourceAsStream(path)),
                 StandardCharsets.UTF_8
         );
         String[] bashScript = new String[]{"/bin/bash", "-c",
@@ -64,7 +66,7 @@ public class BaseDFXITest {
     @SneakyThrows
     public String getScript(String path) {
         return IOUtils.toString(
-                this.getClass().getResourceAsStream(path),
+                Objects.requireNonNull(this.getClass().getResourceAsStream(path)),
                 StandardCharsets.UTF_8
         );
     }

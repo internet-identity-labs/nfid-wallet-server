@@ -1,0 +1,17 @@
+[package]
+name = "verifier"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+ic-cdk = "0.3.2"
+ic-cdk-macros = "0.3.3"
+ic-types = "0.1.1"
+serde = "1"
+imp = "0.1.0"
+canister_api_macros = { path = "../libraries/canister_api_macros" }
+
+
