@@ -44,7 +44,7 @@ pub fn pre_upgrade() {
         let mut certs = HashSet::new();
 
         for cc in st.iter() {
-            certs.insert(cc.1);
+            certs.insert(cc.1.to_owned());
         }
         storage::stable_save((certs, AdminRepo::get()));
     });
