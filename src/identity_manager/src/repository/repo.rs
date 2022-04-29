@@ -23,6 +23,8 @@ pub struct Configuration {
     pub ii_canister_id: Option<Principal>,
     pub whitelisted_canisters: Option<Vec<Principal>>,
     pub env: Option<String>,
+    pub git_branch: Option<String>,
+    pub commit_hash: Option<String>,
 }
 
 //todo rethink visibility

@@ -73,6 +73,23 @@ pub struct ConfigurationRequest {
     pub ii_canister_id: Option<Principal>,
     pub whitelisted_canisters: Option<Vec<Principal>>,
     pub env: Option<String>,
+    pub git_branch: Option<String>,
+    pub commit_hash: Option<String>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct ConfigurationResponse {
+    pub lambda: Principal,
+    pub token_ttl: u64,
+    pub token_refresh_ttl: u64,
+    pub whitelisted_phone_numbers: Option<Vec<String>>,
+    pub heartbeat: Option<u32>,
+    pub backup_canister_id: Option<String>,
+    pub ii_canister_id: Option<Principal>,
+    pub whitelisted_canisters: Option<Vec<Principal>>,
+    pub env: Option<String>,
+    pub git_branch: Option<String>,
+    pub commit_hash: Option<String>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

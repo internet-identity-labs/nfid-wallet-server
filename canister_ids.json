@@ -4,7 +4,7 @@
     "dev": "a4gq6-oaaaa-aaaab-qaa4q-cai"
   },
   "identity_manager": {
-    "ic": "bryxc-zqaaa-aaaal-aajga-cai",
+    "ic": "74gpt-tiaaa-aaaak-aacaa-cai",
     "dev": "74gpt-tiaaa-aaaak-aacaa-cai",
     "prod": "bryxc-zqaaa-aaaal-aajga-cai"
   },
@@ -13,7 +13,8 @@
   },
   "identity_manager_test_replica": {
     "ic": "vwali-piaaa-aaaal-qatfq-cai",
-    "dev": "vwali-piaaa-aaaal-qatfq-cai"
+    "dev": "vwali-piaaa-aaaal-qatfq-cai",
+    "wallet": "wookt-ayaaa-aaaaj-addwq-cai"
   },
   "pub_sub_channel": {
     "ic": "iyvpb-uqaaa-aaaag-qabxa-cai"

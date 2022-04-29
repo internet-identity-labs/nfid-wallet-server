@@ -12,7 +12,9 @@ pub fn init_config(){
         backup_canister_id: Option::Some("rrkah-fqaaa-aaaaa-aaaaq-cai".to_string()),
         ii_canister_id: None,
         whitelisted_canisters: Option::None,
-        env: None
+        env: None,
+        git_branch: None,
+        commit_hash: None
     };
     ConfigurationRepo::save(a);
 }

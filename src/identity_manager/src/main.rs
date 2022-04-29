@@ -20,7 +20,7 @@ use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
 use crate::repository::account_repo::{Account, AccountRepo};
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
-use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant, PersonaRequest, PersonaResponse};
+use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant, PersonaRequest, PersonaResponse, ConfigurationResponse};
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
@@ -59,9 +59,30 @@ async fn configure(request: ConfigurationRequest) -> () {
         ii_canister_id: request.ii_canister_id,
         whitelisted_canisters: request.whitelisted_canisters,
         env: request.env,
+        git_branch: request.git_branch,
+        commit_hash: request.commit_hash,
     };
 
     ConfigurationRepo::save(configuration);
+}
+
+#[query]
+#[admin]
+async fn get_config() -> ConfigurationResponse {
+    let config = ConfigurationRepo::get().clone();
+    ConfigurationResponse {
+        lambda: config.lambda,
+        token_ttl: config.token_ttl.as_secs(),
+        token_refresh_ttl: config.token_refresh_ttl.as_secs(),
+        whitelisted_phone_numbers: Some(config.whitelisted_phone_numbers),
+        heartbeat: config.heartbeat,
+        backup_canister_id: config.backup_canister_id,
+        ii_canister_id: config.ii_canister_id,
+        whitelisted_canisters: config.whitelisted_canisters,
+        env: config.env,
+        git_branch: config.git_branch,
+        commit_hash: config.commit_hash,
+    }
 }
 
 #[query]
