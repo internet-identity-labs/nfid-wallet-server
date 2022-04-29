@@ -193,7 +193,7 @@ type HTTPAccessPointResponse = record {
 
 service : () -> {
   configure: (ConfigurationRequest) -> ();
-  get_config: (ConfigurationResponse) -> ();
+  get_config: () -> (ConfigurationResponse);
 
   get_account: () -> (HTTPAccountResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
