@@ -86,20 +86,21 @@ jobs:
           cp ./pub_sub_channel.did.d.ts ./frontend/src/services/pub-sub-channel/pub_sub_channel.did.d.ts -f
           cp ./pub_sub_channel.did.js ./frontend/src/services/pub-sub-channel/pub_sub_channel_idl.js -f
 
-      - name: Format did files.
+      - name: Frontend => Format did files.
         run: |
-          apt-get update && apt-get install yarn -y && yarn --version
+          npm install --global yarn
           cd ./frontend
           yarn
           yarn prettier --write ./src/services/pub-sub-channel/pub_sub_channel.did.d.ts
           yarn prettier --write ./src/services/pub-sub-channel/pub_sub_channel_idl.js
+          git diff
 
       - name: Frontend => Create a pull request.
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: Update did files.
-          title: Update did files.
+          token: ${{ secrets.PAT }}
+          commit-message: Update PubSub did files.
+          title: Update PubSub did files.
           branch: update-did-files
           path: frontend
           reviewers: plitzenberger
