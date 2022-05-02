@@ -146,9 +146,18 @@ async fn post_token(request: TokenRequest) -> Response {
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let response = account_service.create_account(account_request.clone());
-    if response.error.is_none() {
+    if response.error.is_none() {  //todo migrate to macros
         ic_service::trap_if_not_authenticated(account_request.anchor.clone(), get_caller()).await;
     }
+    response
+}
+
+#[update]
+#[log_error]
+async fn recover_account(anchor: u64) -> HttpResponse<AccountResponse> {
+    let mut account_service = get_account_service();
+    ic_service::trap_if_not_authenticated(anchor.clone(), get_caller()).await; //todo add mock II server for autotests
+    let response = account_service.recover_account(anchor);
     response
 }
 

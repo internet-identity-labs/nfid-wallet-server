@@ -29,6 +29,7 @@ pub struct Account {
 #[cfg_attr(test, mocked)]
 pub trait AccountRepoTrait {
     fn get_account(&self) -> Option<Account>;
+    fn get_account_by_anchor(&self, anchor: u64) -> Option<Account>;
     fn create_account(&self, account: Account) -> Option<Account>;
     fn store_account(&self, account: Account) -> Option<Account>;
     fn remove_account(&self) -> Option<Account>;
@@ -56,6 +57,17 @@ impl AccountRepoTrait for AccountRepo {
                     None => { None }
                     Some(acc) => { Option::from(acc.to_owned()) }
                 }
+            }
+        }
+    }
+
+    fn get_account_by_anchor(&self, anchor: u64) -> Option<Account> {
+        let accounts = storage::get_mut::<Accounts>();
+        match accounts.iter()
+            .find(|l| l.1.anchor == anchor) {
+            None => { None }
+            Some(pair) => {
+                Some(pair.1.to_owned())
             }
         }
     }
