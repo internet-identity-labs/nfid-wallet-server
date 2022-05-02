@@ -196,6 +196,7 @@ service : () -> {
   get_config: () -> (ConfigurationResponse);
 
   get_account: () -> (HTTPAccountResponse) query;
+  recover_account: (nat64) -> (HTTPAccountResponse);
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   remove_account: () -> (BoolHttpResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);

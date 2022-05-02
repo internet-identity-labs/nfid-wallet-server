@@ -41,13 +41,19 @@ public class AccountITest extends BaseIdentityManagerITest {
     @SneakyThrows
     @Test(priority = 51)
     public void replicateAccountExpectCopyOfAccountByHeartbeat() {
-        Thread.sleep(1000);
+        Thread.sleep(2000);
         String actual = call("account/req_get_account", "identity_manager_replica");
         validateWithFormatIdentity("account/exp_account", actual);
     }
 
+    @Test(priority = 52)
+    public void recoverAccountExpectAccount() {
+        String actual = call("account/req_recover_account");
+        validateWithFormatIdentity("account/exp_account_upd_name", actual);
+    }
+
     @SneakyThrows
-    @Test(priority = 51)
+    @Test(priority = 53)
     public void restoreAccountExpectCopeByApiCall() {
         validateWithFormatIdentity("common/resp_bool_success", call("account/req_remove_account", "identity_manager_replica"));
         String actual = call("account/req_get_account", "identity_manager_replica");

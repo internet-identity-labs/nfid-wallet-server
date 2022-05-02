@@ -21,6 +21,7 @@ pub trait AccountServiceTrait {
     fn remove_account(&mut self) -> HttpResponse<bool>;
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
     fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String>;
+    fn recover_account(&mut self, anchor: u64) -> HttpResponse<AccountResponse>;
 }
 
 #[derive(Default)]
@@ -49,6 +50,21 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
                 to_error_response("Impossible to link this II anchor, please try another one.")
             }
             Some(_) => {
+                to_success_response(account_to_account_response(acc))
+            }
+        }
+    }
+
+    fn recover_account(&mut self, anchor: u64) -> HttpResponse<AccountResponse> {
+        let princ = ic_service::get_caller().to_text();
+        if ic_service::is_anonymous(princ) {
+            return to_error_response("User is anonymous");
+        }
+        match { self.account_repo.get_account_by_anchor(anchor) } {
+            None => {
+                to_error_response("Anchor not registered.")
+            }
+            Some(acc) => {
                 to_success_response(account_to_account_response(acc))
             }
         }
