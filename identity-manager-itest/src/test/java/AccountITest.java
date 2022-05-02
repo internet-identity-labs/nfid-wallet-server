@@ -41,7 +41,7 @@ public class AccountITest extends BaseIdentityManagerITest {
     @SneakyThrows
     @Test(priority = 51)
     public void replicateAccountExpectCopyOfAccountByHeartbeat() {
-        Thread.sleep(2000);
+        Thread.sleep(1000);
         String actual = call("account/req_get_account", "identity_manager_replica");
         validateWithFormatIdentity("account/exp_account", actual);
     }
