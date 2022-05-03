@@ -5,7 +5,7 @@ use canistergeek_ic_rust::monitor::{PostUpgradeStableData, PreUpgradeStableData}
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::storage;
-use crate::{ic_service, Log, LogLevel, LogRepo};
+use crate::{ic_service, Log, LogLevel};
 use crate::logger::logger::Logs;
 use crate::repository::account_repo::{Account, Accounts, PrincipalIndex};
 use crate::repository::application_repo::Application;
@@ -98,13 +98,14 @@ pub fn pre_upgrade() {
         accounts.push(p.1.clone());
     }
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
-    let logs = canistergeek_ic_rust::logger::pre_upgrade_stable_data();
+    let logs = storage::get_mut::<Logs>(); //todo remove somehow
+    let logs_new = canistergeek_ic_rust::logger::pre_upgrade_stable_data();
     let monitor_stable_data = canistergeek_ic_rust::monitor::pre_upgrade_stable_data();
-    match storage::stable_save((accounts, admin, Some(logs), Some(monitor_stable_data))) { _ => () }; //todo migrate to object
+    match storage::stable_save((accounts, admin, logs, Some(monitor_stable_data), Some(logs_new), )) { _ => () }; //todo migrate to object
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin, logs, monitor_data): (Vec<Account>, Principal, Option<canistergeek_ic_rust::logger::PostUpgradeStableData>, Option<canistergeek_ic_rust::monitor::PostUpgradeStableData>) = storage::stable_restore().unwrap();
+    let (old_accs, admin, logs, monitor_data, logs_new): (Vec<Account>, Principal, Logs, Option<canistergeek_ic_rust::monitor::PostUpgradeStableData>, Option<canistergeek_ic_rust::logger::PostUpgradeStableData>) = storage::stable_restore().unwrap();
     let mut phone_numbers = HashSet::default();
     storage::get_mut::<Option<Principal>>().replace(admin);
     for u in old_accs {
@@ -128,7 +129,7 @@ pub fn post_upgrade() {
             canistergeek_ic_rust::monitor::post_upgrade_stable_data(data);
         }
     }
-    match logs {
+    match logs_new {
         None => {}
         Some(log) => {
             canistergeek_ic_rust::logger::post_upgrade_stable_data(log);

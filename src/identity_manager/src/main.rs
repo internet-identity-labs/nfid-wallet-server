@@ -26,7 +26,7 @@ use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
 use canister_api_macros::{log_error, replicate_account, admin, collect_metrics};
 use crate::ic_service::get_caller;
-use crate::logger::logger::{Log, LogLevel, LogRepo};
+use crate::logger::logger::{Log, LogLevel};
 use crate::replica_service::HearthCount;
 use crate::service::credential_service::CredentialServiceTrait;
 use crate::service::access_point_service::AccessPointServiceTrait;
@@ -234,16 +234,6 @@ async fn delete_application(app: String) -> HttpResponse<bool> {
 async fn read_applications() -> HttpResponse<Vec<Application>> {
     let application_service = get_application_service();
     application_service.read_applications()
-}
-
-#[query]
-pub async fn get_logs(n: usize) -> Vec<Log> {
-    LogRepo::get(n)
-}
-
-#[query]
-pub async fn get_all_logs() -> Vec<Log> {
-    LogRepo::get_all()
 }
 
 #[query]

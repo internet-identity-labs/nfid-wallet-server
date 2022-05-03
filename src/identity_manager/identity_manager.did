@@ -52,17 +52,6 @@ type EmptyHttpResponse = record {
      status_code: nat16;
  };
 
-type LogLevel = variant {
-    ERROR;
-    INFO;
-};
-
-type Log = record {
-    log: text;
-    level: LogLevel;
-    timestamp: nat64;
-};
-
 type BasicEntity = record {
     created_date: nat64;
     modified_date: nat64;
@@ -187,10 +176,11 @@ type HTTPAccessPointResponse = record {
     status_code: nat16;
 };
 
- //  ---------------------------------------------------------
- //  ----------------------SERVICE----------------------------
- //  ---------------------------------------------------------
+
+//  ----------------------CANISTER GEEK SECTION----------------------------
+
 type UpdateCallsAggregatedData = vec nat64;
+
 type NumericEntity =
  record {
    avg: nat64;
@@ -199,17 +189,21 @@ type NumericEntity =
    max: nat64;
    min: nat64;
  };
+
 type Nanos = nat64;
+
 type MetricsGranularity =
  variant {
    daily;
    hourly;
  };
+
 type LogMessagesData =
  record {
    message: text;
    timeNanos: Nanos;
  };
+
 type HourlyMetricsData =
  record {
    canisterCycles: CanisterCyclesAggregatedData;
@@ -218,30 +212,35 @@ type HourlyMetricsData =
    timeMillis: int;
    updateCalls: UpdateCallsAggregatedData;
  };
+
 type GetMetricsParameters =
  record {
    dateFromMillis: nat;
    dateToMillis: nat;
    granularity: MetricsGranularity;
  };
+
 type GetLogMessagesParameters =
  record {
    count: nat32;
    filter: opt GetLogMessagesFilter;
    fromTimeNanos: opt Nanos;
  };
+
 type GetLogMessagesFilter =
  record {
    analyzeCount: nat32;
    messageContains: opt text;
    messageRegex: opt text;
  };
+
 type GetLatestLogMessagesParameters =
  record {
    count: nat32;
    filter: opt GetLogMessagesFilter;
    upToTimeNanos: opt Nanos;
  };
+
 type DailyMetricsData =
  record {
    canisterCycles: NumericEntity;
@@ -250,24 +249,30 @@ type DailyMetricsData =
    timeMillis: int;
    updateCalls: nat64;
  };
+
 type CanisterMetricsData =
  variant {
    daily: vec DailyMetricsData;
    hourly: vec HourlyMetricsData;
  };
+
 type CanisterMetrics = record {data: CanisterMetricsData;};
+
 type CanisterMemoryAggregatedData = vec nat64;
+
 type CanisterLogResponse =
  variant {
    messages: CanisterLogMessages;
    messagesInfo: CanisterLogMessagesInfo;
  };
+
 type CanisterLogRequest =
  variant {
    getLatestMessages: GetLatestLogMessagesParameters;
    getMessages: GetLogMessagesParameters;
    getMessagesInfo;
  };
+
 type CanisterLogMessagesInfo =
  record {
    count: nat32;
@@ -275,18 +280,26 @@ type CanisterLogMessagesInfo =
    firstTimeNanos: opt Nanos;
    lastTimeNanos: opt Nanos;
  };
+
 type CanisterLogMessages =
  record {
    data: vec LogMessagesData;
    lastAnalyzedMessageTimeNanos: opt Nanos;
  };
+
 type CanisterLogFeature =
  variant {
    filterMessageByContains;
    filterMessageByRegex;
  };
+
 type CanisterHeapMemoryAggregatedData = vec nat64;
+
 type CanisterCyclesAggregatedData = vec nat64;
+
+ //  ---------------------------------------------------------
+ //  ----------------------SERVICE----------------------------
+ //  ---------------------------------------------------------
 
 service : () -> {
   configure: (ConfigurationRequest) -> ();
@@ -310,9 +323,6 @@ service : () -> {
   delete_application: (text) -> (BoolHttpResponse);
   read_applications: () -> (HTTPApplicationResponse) query;
   is_over_the_application_limit: (text) -> (BoolHttpResponse) query;
-
-  get_logs: (nat64) -> (vec Log);
-  get_all_logs: () -> (vec Log);
 
   create_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
   remove_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);

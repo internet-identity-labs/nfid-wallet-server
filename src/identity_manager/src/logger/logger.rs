@@ -16,26 +16,5 @@ pub enum LogLevel {
     INFO,
 }
 
+//deprecated
 pub type Logs = Vec<Log>;
-
-pub struct LogRepo {}
-
-impl LogRepo {
-    pub fn get_all() -> Vec<Log> {
-        storage::get::<Logs>().to_vec()
-    }
-
-    pub fn get(n: usize) -> Vec<Log> {
-        let mut log = storage::get::<Logs>().to_vec();
-        log.reverse();
-        log.into_iter().take(n).collect()
-    }
-
-    pub fn save(log_entry: Log) {
-        let logs = storage::get_mut::<Logs>();
-        if logs.len() > 500 {
-            logs.remove(0);
-        }
-        logs.push(log_entry)
-    }
-}
