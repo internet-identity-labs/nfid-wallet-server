@@ -6,6 +6,7 @@
   "identity_manager": {
     "ic": "74gpt-tiaaa-aaaak-aacaa-cai",
     "dev": "74gpt-tiaaa-aaaak-aacaa-cai",
+    "test": "vwali-piaaa-aaaal-qatfq-cai",
     "prod": "bryxc-zqaaa-aaaal-aajga-cai"
   },
   "identity_manager_replica": {

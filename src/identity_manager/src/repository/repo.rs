@@ -1,6 +1,7 @@
 use std::collections::{BTreeSet, HashSet};
 use std::hash::{Hash};
 use std::time::Duration;
+use canistergeek_ic_rust::monitor::{PostUpgradeStableData, PreUpgradeStableData};
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::storage;
@@ -90,22 +91,20 @@ pub fn is_anchor_exists(anchor: u64) -> bool { //todo move somewhere
 }
 
 pub fn pre_upgrade() {
-    LogRepo::save(Log {
-        level: LogLevel::INFO,
-        log: "Pre upgrade started".to_string(),
-        timestamp: ic_service::get_time(),
-    });
+    canistergeek_ic_rust::logger
+    ::log_message("Pre upgrade started".to_string());
     let mut accounts = Vec::new();
     for p in storage::get_mut::<Accounts>().iter() {
         accounts.push(p.1.clone());
     }
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
-    let logs = storage::get_mut::<Logs>();
-    match storage::stable_save((accounts, admin, logs)) { _ => () };
+    let logs = canistergeek_ic_rust::logger::pre_upgrade_stable_data();
+    let monitor_stable_data = canistergeek_ic_rust::monitor::pre_upgrade_stable_data();
+    match storage::stable_save((accounts, admin, Some(logs), Some(monitor_stable_data))) { _ => () }; //todo migrate to object
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin, logs): (Vec<Account>, Principal, Logs) = storage::stable_restore().unwrap();
+    let (old_accs, admin, logs, monitor_data): (Vec<Account>, Principal, Option<canistergeek_ic_rust::logger::PostUpgradeStableData>, Option<canistergeek_ic_rust::monitor::PostUpgradeStableData>) = storage::stable_restore().unwrap();
     let mut phone_numbers = HashSet::default();
     storage::get_mut::<Option<Principal>>().replace(admin);
     for u in old_accs {
@@ -123,14 +122,18 @@ pub fn post_upgrade() {
     storage::get_mut::<Option<Principal>>().replace(admin);
     let pn_repo = PhoneNumberRepo {};
     pn_repo.add_all(phone_numbers);
-
-    for log in logs {
-        storage::get_mut::<Logs>().push(log);
+    match monitor_data {
+        None => {}
+        Some(data) => {
+            canistergeek_ic_rust::monitor::post_upgrade_stable_data(data);
+        }
     }
-
-    LogRepo::save(Log {
-        level: LogLevel::INFO,
-        log: "Post upgrade completed".to_string(),
-        timestamp: ic_service::get_time(),
-    });
+    match logs {
+        None => {}
+        Some(log) => {
+            canistergeek_ic_rust::logger::post_upgrade_stable_data(log);
+        }
+    }
+    canistergeek_ic_rust::logger
+    ::log_message("Post upgrade completed".to_string());
 }
