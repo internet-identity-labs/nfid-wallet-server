@@ -1,7 +1,7 @@
 import org.testng.annotations.BeforeClass;
 
 public class BaseIdentityManagerITest extends BaseDFXITest {
-    private final static int DEFAULT_TRIES = 20;
+    private final static int DEFAULT_TRIES = 2;
 
     @BeforeClass
     public void initDfxProject() {
@@ -20,8 +20,10 @@ public class BaseIdentityManagerITest extends BaseDFXITest {
             String im = call("common/get_canister_id", "identity_manager").trim();
             identity_manager = call("common/configure_dfx_project", "identity_manager", ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, getHeartBeatPeriod(), BACKUP_CANISTER_ID, im);
             identity_manager_replica = call("common/configure_dfx_project", "identity_manager_replica", ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, DISABLED_HEARTBEAT, BACKUP_CANISTER_ID, im);
-            if (++i >= DEFAULT_TRIES)
+            if (++i >= DEFAULT_TRIES) {
+                call("common/dfx_stop");
                 System.exit(1);
+            }
 
         } while (identity_manager.isEmpty() || identity_manager_replica.isEmpty());
         call("request/post_token", PHONE, PHONE_SHA2, TOKEN, ROOT_IDENTITY);
