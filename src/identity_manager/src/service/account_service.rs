@@ -56,10 +56,6 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
     }
 
     fn recover_account(&mut self, anchor: u64) -> HttpResponse<AccountResponse> {
-        let princ = ic_service::get_caller().to_text();
-        if ic_service::is_anonymous(princ) {
-            return to_error_response("User is anonymous");
-        }
         match { self.account_repo.get_account_by_anchor(anchor) } {
             None => {
                 to_error_response("Anchor not registered.")
