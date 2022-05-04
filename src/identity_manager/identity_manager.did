@@ -177,6 +177,10 @@ type HTTPAccessPointResponse = record {
 };
 
 
+ //  ---------------------------------------------------------
+ //  ----------------------THIRD PARTY LIBRARIES--------------
+ //  ---------------------------------------------------------
+
 //  ----------------------CANISTER GEEK SECTION----------------------------
 
 type UpdateCallsAggregatedData = vec nat64;
@@ -297,6 +301,7 @@ type CanisterHeapMemoryAggregatedData = vec nat64;
 
 type CanisterCyclesAggregatedData = vec nat64;
 
+
  //  ---------------------------------------------------------
  //  ----------------------SERVICE----------------------------
  //  ---------------------------------------------------------
@@ -335,4 +340,5 @@ service : () -> {
 
   getCanisterMetrics: (GetMetricsParameters) -> (opt CanisterMetrics) query;
   getCanisterLog: (opt CanisterLogRequest) -> (opt CanisterLogResponse) query;
+  collectCanisterMetrics: () -> ();
 }

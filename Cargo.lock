@@ -672,6 +672,7 @@ dependencies = [
 name = "im_addition"
 version = "0.1.0"
 dependencies = [
+ "canistergeek_ic_rust",
  "ic-cdk",
  "ic-cdk-macros",
  "ic-types 0.1.5",
@@ -1135,6 +1136,7 @@ name = "pub_sub_channel"
 version = "0.1.0"
 dependencies = [
  "blake3",
+ "canistergeek_ic_rust",
  "ic-cdk",
  "ic-cdk-macros",
  "ic-types 0.1.5",
@@ -1507,6 +1509,7 @@ name = "verifier"
 version = "0.1.0"
 dependencies = [
  "canister_api_macros",
+ "canistergeek_ic_rust",
  "ic-cdk",
  "ic-cdk-macros",
  "ic-types 0.1.5",

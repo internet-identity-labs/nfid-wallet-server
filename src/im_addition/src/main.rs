@@ -38,4 +38,19 @@ fn post_upgrade() {
     }
 }
 
+#[ic_cdk_macros::query(name = "getCanisterMetrics")]
+pub async fn get_canister_metrics(parameters: canistergeek_ic_rust::api_type::GetMetricsParameters) -> Option<canistergeek_ic_rust::api_type::CanisterMetrics<'static>> {
+    canistergeek_ic_rust::monitor::get_metrics(&parameters)
+}
+
+#[ic_cdk_macros::update(name = "collectCanisterMetrics")]
+pub async fn collect_canister_metrics() -> () {
+    canistergeek_ic_rust::monitor::collect_metrics();
+}
+
+#[ic_cdk_macros::query(name = "getCanisterLog")]
+pub async fn get_canister_log(request: Option<canistergeek_ic_rust::api_type::CanisterLogRequest>) -> Option<canistergeek_ic_rust::api_type::CanisterLogResponse<'static>> {
+    canistergeek_ic_rust::logger::get_canister_log(request)
+}
+
 fn main() {}

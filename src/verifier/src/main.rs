@@ -14,7 +14,7 @@ use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk_macros::{query, update};
 use ic_cdk_macros::*;
 
-use canister_api_macros::{admin, log_error, replicate_account};
+use canister_api_macros::{admin, log_error, replicate_account, collect_metrics};
 
 use crate::credential_repo::Credential;
 use crate::http::request::ConfigurationRequest;
@@ -39,6 +39,7 @@ async fn init() -> () {
 
 #[update]
 #[admin]
+#[collect_metrics]
 async fn configure(request: ConfigurationRequest) -> () {
     let configuration = Configuration {
         identity_manager_canister_id: request.identity_manager,
@@ -49,6 +50,7 @@ async fn configure(request: ConfigurationRequest) -> () {
 }
 
 #[update]
+#[collect_metrics]
 async fn generate_pn_token(domain: String) -> TokenKey {
     credential_service::generate_pn_token(domain).await
 }
@@ -59,13 +61,10 @@ async fn is_phone_number_approved(who: String) -> HttpResponse<bool> {
 }
 
 #[update]
+#[collect_metrics]
 async fn resolve_token(token_key: TokenKey) -> Option<Credential> {
     credential_service::resolve_token(token_key).await
 }
-
-
-fn main() {}
-
 
 #[pre_upgrade]
 async fn pre_upgrade() {
@@ -76,3 +75,21 @@ async fn pre_upgrade() {
 fn post_upgrade() {
     credential_repo::post_upgrade();
 }
+
+
+#[ic_cdk_macros::query(name = "getCanisterMetrics")]
+pub async fn get_canister_metrics(parameters: canistergeek_ic_rust::api_type::GetMetricsParameters) -> Option<canistergeek_ic_rust::api_type::CanisterMetrics<'static>> {
+    canistergeek_ic_rust::monitor::get_metrics(&parameters)
+}
+
+#[ic_cdk_macros::update(name = "collectCanisterMetrics")]
+pub async fn collect_canister_metrics() -> () {
+    canistergeek_ic_rust::monitor::collect_metrics();
+}
+
+#[ic_cdk_macros::query(name = "getCanisterLog")]
+pub async fn get_canister_log(request: Option<canistergeek_ic_rust::api_type::CanisterLogRequest>) -> Option<canistergeek_ic_rust::api_type::CanisterLogResponse<'static>> {
+    canistergeek_ic_rust::logger::get_canister_log(request)
+}
+
+fn main() {}
