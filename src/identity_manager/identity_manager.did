@@ -175,10 +175,23 @@ type CredentialResponse = record {
 
 type AccessPointRequest = record {
     pub_key: blob;
+    icon: text;
+    device: text;
+    browser: text;
 };
 
 type AccessPoint = record {
     principal_id: text;
+    icon: text;
+    device: text;
+    browser: text;
+    last_used: nat32; // unix timestamp set by `use_access_point` and updated on `caller`s device.
+};
+
+type HTTPUseAccessPointResponse = record {
+    data: opt AccessPoint;
+    error: opt Error;
+    status_code: nat16;
 };
 
 type HTTPAccessPointResponse = record {
@@ -219,7 +232,8 @@ service : () -> {
 
   create_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
   remove_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
-  read_access_points: () -> (HTTPAccessPointResponse);
+  read_access_points: () -> (HTTPAccessPointResponse) query;
+  use_access_point: () -> (HTTPUseAccessPointResponse); // updates `last_used` field
 
   store_accounts: (vec Account) -> (BoolHttpResponse);
   restore_accounts: (text) -> (BoolHttpResponse);
