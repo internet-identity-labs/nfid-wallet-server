@@ -2,6 +2,8 @@ use std::cell::RefCell;
 
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk_macros::*;
+use canister_api_macros::{collect_metrics};
+
 
 type Topic = String;
 type Message = String;
@@ -29,6 +31,7 @@ thread_local! {
 async fn ping() -> () {}
 
 #[update]
+#[collect_metrics]
 async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpResponse {
     let princ = &ic_cdk::api::caller().to_text();
     if princ.len() < 10 {
@@ -82,6 +85,7 @@ async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpR
 }
 
 #[update]
+#[collect_metrics]
 async fn get_messages(topic: Topic) -> MessageHttpResponse {
     let mut rsp = MessageHttpResponse {
         status_code: 0,
@@ -112,6 +116,7 @@ async fn get_messages(topic: Topic) -> MessageHttpResponse {
 }
 
 #[update]
+#[collect_metrics]
 async fn create_topic(topic: Topic) -> MessageHttpResponse {
     let princ = &ic_cdk::api::caller().to_text();
     if princ.len() < 10 {
@@ -178,5 +183,21 @@ fn pre_upgrade() {}
 
 #[post_upgrade]
 fn post_upgrade() {}
+
+
+#[ic_cdk_macros::query(name = "getCanisterMetrics")]
+pub async fn get_canister_metrics(parameters: canistergeek_ic_rust::api_type::GetMetricsParameters) -> Option<canistergeek_ic_rust::api_type::CanisterMetrics<'static>> {
+    canistergeek_ic_rust::monitor::get_metrics(&parameters)
+}
+
+#[ic_cdk_macros::update(name = "collectCanisterMetrics")]
+pub async fn collect_canister_metrics() -> () {
+    canistergeek_ic_rust::monitor::collect_metrics();
+}
+
+#[ic_cdk_macros::query(name = "getCanisterLog")]
+pub async fn get_canister_log(request: Option<canistergeek_ic_rust::api_type::CanisterLogRequest>) -> Option<canistergeek_ic_rust::api_type::CanisterLogResponse<'static>> {
+    canistergeek_ic_rust::logger::get_canister_log(request)
+}
 
 fn main() {}

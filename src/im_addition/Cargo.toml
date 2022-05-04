@@ -12,4 +12,5 @@ ic-cdk-macros = "0.3.3"
 ic-types = "0.1.1"
 serde = "1"
 canistergeek_ic_rust = "0.2.2"
+canister_api_macros = { path = "../libraries/canister_api_macros" }
 
