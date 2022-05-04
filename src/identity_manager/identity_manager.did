@@ -65,7 +65,7 @@ type AccountResponse = record {
     name: opt text;
     phone_number: opt text;
     personas: vec PersonaResponse;
-    access_points: vec AccessPoint;
+    access_points: vec AccessPointResponse;
 };
 
 type HTTPAccountResponse = record {
@@ -88,7 +88,7 @@ type Account = record {
     name: opt text;
     phone_number: opt text;
     personas: vec Persona;
-    access_points: vec AccessPoint;
+    access_points: vec AccessPointRequest;
     basic_entity: BasicEntity;
 };
 
@@ -169,22 +169,20 @@ type AccessPointRequest = record {
     browser: text;
 };
 
-type AccessPoint = record {
+type AccessPointRemoveRequest = record {
+    pub_key: blob;
+};
+
+type AccessPointResponse = record {
     principal_id: text;
     icon: text;
     device: text;
     browser: text;
-    last_used: nat32; // unix timestamp set by `use_access_point` and updated on `caller`s device.
-};
-
-type HTTPUseAccessPointResponse = record {
-    data: opt AccessPoint;
-    error: opt Error;
-    status_code: nat16;
+    last_used: nat64;
 };
 
 type HTTPAccessPointResponse = record {
-    data: opt vec AccessPoint;
+    data: opt vec AccessPointResponse;
     error: opt Error;
     status_code: nat16;
 };
@@ -343,9 +341,9 @@ service : () -> {
   is_over_the_application_limit: (text) -> (BoolHttpResponse) query;
 
   create_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
-  remove_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
+  remove_access_point: (AccessPointRemoveRequest) -> (HTTPAccessPointResponse);
   read_access_points: () -> (HTTPAccessPointResponse) query;
-  use_access_point: () -> (HTTPUseAccessPointResponse); // updates `last_used` field
+  use_access_point: () -> (HTTPAccessPointResponse);
 
   store_accounts: (vec Account) -> (BoolHttpResponse);
   restore_accounts: (text) -> (BoolHttpResponse);

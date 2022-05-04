@@ -20,7 +20,7 @@ use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
 use crate::repository::account_repo::{Account, AccountRepo};
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
-use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant, PersonaRequest, PersonaResponse, ConfigurationResponse};
+use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant, PersonaRequest, PersonaResponse, ConfigurationResponse, AccessPointRemoveRequest};
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
@@ -97,6 +97,15 @@ async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
     access_point_service.read_access_points()
 }
 
+
+#[update]
+#[replicate_account]
+#[collect_metrics]
+async fn use_access_point() -> HttpResponse<AccessPointResponse> {
+    let access_point_service = get_access_point_service();
+    access_point_service.use_access_point()
+}
+
 #[update]
 #[replicate_account]
 #[log_error]
@@ -115,7 +124,7 @@ async fn create_access_point(access_point: AccessPointRequest) -> HttpResponse<V
 #[replicate_account]
 #[log_error]
 #[collect_metrics]
-async fn remove_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
+async fn remove_access_point(access_point: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.remove_access_point(access_point)
 }
