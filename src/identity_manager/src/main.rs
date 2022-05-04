@@ -24,9 +24,9 @@ use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, Valida
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
-use canister_api_macros::{log_error, replicate_account, admin};
+use canister_api_macros::{log_error, replicate_account, admin, collect_metrics};
 use crate::ic_service::get_caller;
-use crate::logger::logger::{Log, LogLevel, LogRepo};
+use crate::logger::logger::{Log, LogLevel};
 use crate::replica_service::HearthCount;
 use crate::service::credential_service::CredentialServiceTrait;
 use crate::service::access_point_service::AccessPointServiceTrait;
@@ -48,6 +48,7 @@ async fn init() -> () {
 
 #[update]
 #[admin]
+#[collect_metrics]
 async fn configure(request: ConfigurationRequest) -> () {
     let configuration = Configuration {
         lambda: request.lambda,
@@ -62,7 +63,6 @@ async fn configure(request: ConfigurationRequest) -> () {
         git_branch: request.git_branch,
         commit_hash: request.commit_hash,
     };
-
     ConfigurationRepo::save(configuration);
 }
 
@@ -100,6 +100,7 @@ async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
 #[update]
 #[replicate_account]
 #[log_error]
+#[collect_metrics]
 async fn create_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     let response = access_point_service.create_access_point(access_point.clone());
@@ -113,6 +114,7 @@ async fn create_access_point(access_point: AccessPointRequest) -> HttpResponse<V
 #[update]
 #[replicate_account]
 #[log_error]
+#[collect_metrics]
 async fn remove_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.remove_access_point(access_point)
@@ -121,6 +123,7 @@ async fn remove_access_point(access_point: AccessPointRequest) -> HttpResponse<V
 #[update]
 #[replicate_account]
 #[log_error]
+#[collect_metrics]
 async fn verify_token(token: String) -> Response {
     let phone_number_service = get_phone_number_service();
     phone_number_service.verify_token(token)
@@ -128,6 +131,7 @@ async fn verify_token(token: String) -> Response {
 
 #[update]
 #[log_error]
+#[collect_metrics]
 async fn validate_phone(request: ValidatePhoneRequest) -> Response {
     let phone_number_service = get_phone_number_service();
     phone_number_service.validate_phone(request)
@@ -135,6 +139,7 @@ async fn validate_phone(request: ValidatePhoneRequest) -> Response {
 
 #[update]
 #[log_error]
+#[collect_metrics]
 async fn post_token(request: TokenRequest) -> Response {
     let phone_number_service = get_phone_number_service();
     phone_number_service.post_token(request)
@@ -143,6 +148,7 @@ async fn post_token(request: TokenRequest) -> Response {
 #[update]
 #[log_error]
 #[replicate_account]
+#[collect_metrics]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let response = account_service.create_account(account_request.clone());
@@ -154,6 +160,7 @@ async fn create_account(account_request: AccountRequest) -> HttpResponse<Account
 
 #[update]
 #[log_error]
+#[collect_metrics]
 async fn recover_account(anchor: u64) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     ic_service::trap_if_not_authenticated(anchor.clone(), get_caller()).await; //todo add mock II server for autotests
@@ -164,6 +171,7 @@ async fn recover_account(anchor: u64) -> HttpResponse<AccountResponse> {
 #[update]
 #[log_error]
 #[replicate_account]
+#[collect_metrics]
 async fn update_account(account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     account_service.update_account(account_request)
@@ -207,6 +215,7 @@ async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
 #[update]
 #[log_error]
 #[admin]
+#[collect_metrics]
 async fn create_application(app: Application) -> HttpResponse<Vec<Application>> {
     let application_service = get_application_service();
     application_service.create_application(app)
@@ -215,6 +224,7 @@ async fn create_application(app: Application) -> HttpResponse<Vec<Application>> 
 #[update]
 #[log_error]
 #[admin]
+#[collect_metrics]
 async fn delete_application(app: String) -> HttpResponse<bool> {
     let application_service = get_application_service();
     application_service.delete_application(app)
@@ -224,16 +234,6 @@ async fn delete_application(app: String) -> HttpResponse<bool> {
 async fn read_applications() -> HttpResponse<Vec<Application>> {
     let application_service = get_application_service();
     application_service.read_applications()
-}
-
-#[query]
-pub async fn get_logs(n: usize) -> Vec<Log> {
-    LogRepo::get(n)
-}
-
-#[query]
-pub async fn get_all_logs() -> Vec<Log> {
-    LogRepo::get_all()
 }
 
 #[query]
@@ -283,6 +283,21 @@ fn pre_upgrade() {
 #[post_upgrade]
 fn post_upgrade() {
     repository::repo::post_upgrade()
+}
+
+#[ic_cdk_macros::query(name = "getCanisterMetrics")]
+pub async fn get_canister_metrics(parameters: canistergeek_ic_rust::api_type::GetMetricsParameters) -> Option<canistergeek_ic_rust::api_type::CanisterMetrics<'static>> {
+    canistergeek_ic_rust::monitor::get_metrics(&parameters)
+}
+
+#[ic_cdk_macros::update(name = "collectCanisterMetrics")]
+pub async fn collect_canister_metrics() -> () {
+    canistergeek_ic_rust::monitor::collect_metrics();
+}
+
+#[ic_cdk_macros::query(name = "getCanisterLog")]
+pub async fn get_canister_log(request: Option<canistergeek_ic_rust::api_type::CanisterLogRequest>) -> Option<canistergeek_ic_rust::api_type::CanisterLogResponse<'static>> {
+    canistergeek_ic_rust::logger::get_canister_log(request)
 }
 
 fn main() {}

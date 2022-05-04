@@ -13,5 +13,5 @@ ic-types = "0.1.1"
 serde = "1"
 imp = "0.1.0"
 canister_api_macros = { path = "../libraries/canister_api_macros" }
-
+canistergeek_ic_rust = "0.2.2"
 
