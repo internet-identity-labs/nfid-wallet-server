@@ -1,5 +1,4 @@
-
-use crate::AccountRepo;
+use crate::{AccountRepo, Principal};
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::repo::is_anchor_exists;
 use crate::tests::test_util::init_config;
@@ -20,5 +19,6 @@ fn anchor_ex_test() {
     let ar = AccountRepo {};
     ar.store_account(acc);
     let a = is_anchor_exists(123);
+    let t = Principal::from_text("qoctq-giaaa-aaaaa-aaaea-cai").unwrap();
     assert!(a)
 }

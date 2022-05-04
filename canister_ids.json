@@ -4,25 +4,23 @@
     "dev": "a4gq6-oaaaa-aaaab-qaa4q-cai"
   },
   "identity_manager": {
-    "ic": "74gpt-tiaaa-aaaak-aacaa-cai",
     "dev": "74gpt-tiaaa-aaaak-aacaa-cai",
     "prod": "bryxc-zqaaa-aaaal-aajga-cai"
   },
   "identity_manager_replica": {
-    "ic": "bv5d4-nyaaa-aaaap-qaaba-cai"
+    "prod": "bv5d4-nyaaa-aaaap-qaaba-cai"
   },
   "identity_manager_test_replica": {
-    "ic": "vwali-piaaa-aaaal-qatfq-cai",
     "dev": "vwali-piaaa-aaaal-qatfq-cai",
     "wallet": "wookt-ayaaa-aaaaj-addwq-cai"
   },
   "pub_sub_channel": {
-    "ic": "iyvpb-uqaaa-aaaag-qabxa-cai"
+    "prod": "iyvpb-uqaaa-aaaag-qabxa-cai"
   },
   "im_addition": {
-    "ic": "5yjgb-gyaaa-aaaao-aabwa-cai"
+    "prod": "5yjgb-gyaaa-aaaao-aabwa-cai"
   },
   "verifier": {
-    "ic": "gzqxf-kqaaa-aaaak-qakba-cai"
+    "dev": "gzqxf-kqaaa-aaaak-qakba-cai"
   }
 }

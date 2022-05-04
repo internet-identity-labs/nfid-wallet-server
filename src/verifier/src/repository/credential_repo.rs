@@ -37,6 +37,11 @@ pub fn get_credential(who: String) -> Option<Credential> {
     })
 }
 
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct PreUpgradeData {
+    pub certs: Option<HashSet<Credential>>,
+    pub admin: Option<Principal>,
+}
 
 pub fn pre_upgrade() {
     CERTIFICATE_STORAGE.with(|storage| {
@@ -46,16 +51,26 @@ pub fn pre_upgrade() {
         for cc in st.iter() {
             certs.insert(cc.1.to_owned());
         }
-        storage::stable_save((certs, AdminRepo::get()));
+        let pre_upgrade_data = PreUpgradeData {
+            certs: Some(certs),
+            admin: Some(AdminRepo::get()),
+        };
+        storage::stable_save((pre_upgrade_data, 0));
     });
 }
 
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct PostUpgradeData {
+    pub certs: Option<HashSet<Credential>>,
+    pub admin: Option<Principal>,
+}
+
 pub fn post_upgrade() {
-    let (certs, admin): (HashSet<Credential>, Principal) = storage::stable_restore().unwrap();
-    AdminRepo::save(admin);
+    let (post_data, hnia): (PostUpgradeData, i32) = storage::stable_restore().unwrap();
+    AdminRepo::save(post_data.admin.unwrap());
     CERTIFICATE_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
-        for p in certs.iter() {
+        for p in post_data.certs.unwrap().iter() {
             let cert = p.to_owned();
             st.insert(cert.client_principal.clone(), cert);
         }

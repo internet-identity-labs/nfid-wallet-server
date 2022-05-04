@@ -24,13 +24,38 @@ pub fn log_error(_: TokenStream, item: TokenStream) -> TokenStream {
         #wrapper_sig {
             let result = #function_call;
             if(result.error.is_some()) {
-                 let l = Log {
-                 level: LogLevel::ERROR,
-                 log: result.error.clone().unwrap().to_string(),
-                 timestamp: ic_service::get_time()
+                    canistergeek_ic_rust::logger
+                        ::log_message(result.error.clone().unwrap().to_string());
             };
-               LogRepo::save(l);
-            }
+            result
+        }
+        #inner
+    );
+    TokenStream::from(expanded)
+}
+
+
+#[proc_macro_attribute]
+pub fn collect_metrics(_: TokenStream, item: TokenStream) -> TokenStream {
+    let mut inner = parse_macro_input!(item as ItemFn);
+    let wrapper_sig = inner.sig.clone();
+    let inner_method_name = format_ident!("{}_log_error", inner.sig.ident);
+    inner.sig.ident = inner_method_name.clone();
+
+    let is_async = inner.sig.asyncness.is_some();
+    let arg_names = get_arg_names(&inner.sig);
+
+    let function_call = if is_async {
+        quote! { #inner_method_name ( #(#arg_names),* ) .await }
+    } else {
+        quote! { #inner_method_name ( #(#arg_names),* ) }
+    };
+
+    let expanded = quote!(
+        #[allow(unused_mut)]
+        #wrapper_sig {
+            let result = #function_call;
+            canistergeek_ic_rust::monitor::collect_metrics();
             result
         }
         #inner
