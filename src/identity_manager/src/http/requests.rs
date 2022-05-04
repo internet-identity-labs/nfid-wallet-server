@@ -35,7 +35,7 @@ pub struct AccountResponse {
     pub name: Option<String>,
     pub phone_number: Option<String>,
     pub personas: Vec<PersonaResponse>,
-    pub access_points: Vec<AccessPoint>,
+    pub access_points: Vec<AccessPointResponse>,
     pub anchor: u64,
 }
 
@@ -47,7 +47,7 @@ pub enum CredentialVariant {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct PhoneNumberCredential {
-    pub phone_number: String
+    pub phone_number: String,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -95,9 +95,21 @@ pub struct ConfigurationResponse {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccessPointResponse {
     pub principal_id: String,
+    pub icon: String,
+    pub device: String,
+    pub browser: String,
+    pub last_used: u64,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccessPointRequest {
+    pub pub_key: ByteBuf,
+    pub icon: String,
+    pub device: String,
+    pub browser: String,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct AccessPointRemoveRequest {
     pub pub_key: ByteBuf,
 }

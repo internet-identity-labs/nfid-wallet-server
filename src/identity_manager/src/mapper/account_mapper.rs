@@ -1,6 +1,7 @@
 use crate::mapper::persona_mapper::persona_to_persona_response;
 use crate::http::requests::AccountResponse;
 use crate::{AccountRequest};
+use crate::mapper::access_point_mapper::access_point_to_access_point_response;
 use crate::repository::account_repo::Account;
 use crate::repository::persona_repo::Persona;
 use crate::repository::repo::BasicEntity;
@@ -16,7 +17,9 @@ pub fn account_to_account_response(account: Account) -> AccountResponse {
         name: account.name,
         phone_number: account.phone_number,
         personas: personas_r,
-        access_points: account.access_points.into_iter().collect()
+        access_points: account.access_points.into_iter()
+            .map(access_point_to_access_point_response)
+            .collect(),
     }
 }
 

@@ -2,6 +2,9 @@
   record {
     data = opt vec {
       record {
+        icon = "icon";
+        device = "device";
+        browser = "browser";
         principal_id = "wuomy-jshie-5vmse-huyz2-wmuqj-kdsry-nekfo-wvnou-dxqxz-pdpbv-4qe";
       };
     };

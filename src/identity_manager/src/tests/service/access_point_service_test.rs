@@ -12,7 +12,7 @@ fn test_ap_e2e() {
     init_config();
     create_default_account();
     let pk = ByteBuf::from([4, 77, 158, 238, 70, 147, 57, 109, 238, 171, 6, 152, 247, 30, 197, 122, 30, 125, 165, 33, 73, 214, 134, 170, 45, 69, 147, 218, 142, 108, 224, 31, 71, 46, 190, 0, 97, 34, 118, 19, 80, 104, 19, 95, 184, 40, 48, 217, 33, 105, 10, 208, 8, 190, 188, 207, 5, 159, 66, 162, 180, 238, 142, 175, 205]);
-    let ap = AccessPointRequest { pub_key: pk.clone() };
+    let ap = AccessPointRequest { pub_key: pk.clone(), icon: "".to_string(), device: "".to_string(), browser: "".to_string() };
     let account_service = get_access_point_service();
     account_service.create_access_point(ap);
     let pr = Principal::self_authenticating(pk.clone()).to_text();
