@@ -3,6 +3,7 @@ use std::collections::{HashSet};
 use ic_cdk::{storage, trap};
 use ic_cdk_macros::*;
 use ic_cdk::export::Principal;
+use canister_api_macros::{collect_metrics};
 
 pub type ProofOfAttendanceProtocol = HashSet<Principal>;
 
@@ -18,6 +19,7 @@ async fn has_poap() -> bool {
 }
 
 #[update]
+#[collect_metrics]
 async fn increment_poap() {
     let princ = ic_cdk::api::caller();
     let index = storage::get_mut::<ProofOfAttendanceProtocol>();
