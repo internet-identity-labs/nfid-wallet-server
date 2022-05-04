@@ -1,7 +1,7 @@
 import org.testng.annotations.BeforeClass;
 
 public class BaseIdentityManagerITest extends BaseDFXITest {
-    private final static int DEFAULT_TRIES = 2;
+    private final static int DEFAULT_TRIES = 5;
 
     @BeforeClass
     public void initDfxProject() {
