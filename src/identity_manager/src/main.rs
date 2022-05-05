@@ -172,7 +172,15 @@ async fn create_account(account_request: AccountRequest) -> HttpResponse<Account
 async fn recover_account(anchor: u64) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     ic_service::trap_if_not_authenticated(anchor.clone(), get_caller()).await; //todo add mock II server for autotests
-    let response = account_service.recover_account(anchor);
+    let response = account_service.get_account_by_anchor(anchor);
+    response
+}
+
+#[query]
+#[admin]
+async fn get_account_by_anchor(anchor: u64) -> HttpResponse<AccountResponse> {
+    let mut account_service = get_account_service();
+    let response = account_service.get_account_by_anchor(anchor);
     response
 }
 

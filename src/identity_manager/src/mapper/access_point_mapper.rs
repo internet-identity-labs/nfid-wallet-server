@@ -6,10 +6,10 @@ use crate::requests::{AccessPointRequest, AccessPointResponse};
 pub fn access_point_to_access_point_response(access_point: AccessPoint) -> AccessPointResponse {
     AccessPointResponse {
         principal_id: access_point.principal_id,
-        icon: access_point.icon.unwrap_or("Unknown".to_string()),
-        device: access_point.device.unwrap_or("Unknown".to_string()),
-        browser: access_point.browser.unwrap_or("Unknown".to_string()),
-        last_used: access_point.last_used.unwrap(),
+        icon: access_point.icon.unwrap_or("".to_string()),
+        device: access_point.device.unwrap_or("".to_string()),
+        browser: access_point.browser.unwrap_or("".to_string()),
+        last_used: access_point.last_used.unwrap_or(0),
     }
 }
 

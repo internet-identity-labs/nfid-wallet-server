@@ -323,6 +323,7 @@ service : () -> {
 
   get_account: () -> (HTTPAccountResponse) query;
   recover_account: (nat64) -> (HTTPAccountResponse);
+  get_account_by_anchor: (nat64) -> (HTTPAccountResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   remove_account: () -> (BoolHttpResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
