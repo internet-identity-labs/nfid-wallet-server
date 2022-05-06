@@ -87,7 +87,7 @@ type Account = record {
     principal_id: text;
     name: opt text;
     phone_number: opt text;
-    personas: vec Persona;
+    personas: vec PersonaResponse;
     access_points: vec AccessPointRequest;
     basic_entity: BasicEntity;
 };
@@ -97,17 +97,20 @@ type Account = record {
 type PersonaRequest = record {
     persona_id: text;
     domain: text;
+    persona_name: text;
 };
 
 type PersonaResponse = record {
     persona_id: text;
     domain: text;
+    persona_name: text;
 };
 
 type Persona = record {
     persona_id: text;
     domain: text;
     basic_entity: BasicEntity;
+    persona_name: text;
 };
 
 type HTTPPersonasResponse = record {
