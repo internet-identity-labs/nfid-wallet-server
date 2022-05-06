@@ -54,11 +54,13 @@ pub struct PhoneNumberCredential {
 pub struct PersonaResponse {
     pub domain: String,
     pub persona_id: String,
+    pub persona_name: String,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct PersonaRequest {
     pub domain: String,
+    pub persona_name: String,
     pub persona_id: String,
 }
 

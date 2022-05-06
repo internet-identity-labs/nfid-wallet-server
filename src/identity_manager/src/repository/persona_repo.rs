@@ -10,6 +10,7 @@ use mockers_derive::mocked;
 pub struct Persona {
     pub domain: String,
     pub persona_id: String,
+    pub persona_name: Option<String>,
     pub base_fields: BasicEntity,
     pub domain_certified: Option<u64>,
 }

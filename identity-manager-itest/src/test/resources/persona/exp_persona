@@ -5,7 +5,11 @@
       anchor = 12_345 : nat64;
       access_points = vec {};
       personas = vec {
-        record { domain = "TEST_DOMAIN"; persona_id = "PERSONA" };
+        record {
+          domain = "TEST_DOMAIN";
+          persona_name = "PERSONA_NAME";
+          persona_id = "PERSONA";
+        };
       };
       principal_id = "%s";
       phone_number = null;
