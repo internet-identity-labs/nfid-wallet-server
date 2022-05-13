@@ -11,6 +11,7 @@ pub trait AccessPointServiceTrait {
     fn read_access_points(&self) -> HttpResponse<Vec<AccessPointResponse>>;
     fn use_access_point(&self) -> HttpResponse<AccessPointResponse>;
     fn create_access_point(&self, access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>>;
+    fn update_access_point(&self, access_point_request: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>>;
     fn remove_access_point(&self, access_point: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>>;
 }
 
@@ -47,8 +48,28 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
             Some(mut content) => {
                 let access_point = access_point_request_to_access_point(access_point_request.clone());
                 if content.clone().iter()
-                    .any(|x| x.principal_id == access_point.principal_id) {
+                    .any(|x| x.eq(&access_point)) {
                     return to_error_response("Access Point exists.");
+                }
+                content.insert(access_point.clone());
+                self.access_point_repo.store_access_points(content.clone());
+                self.access_point_repo.update_account_index(access_point.principal_id);
+                let response: Vec<AccessPointResponse> = content.into_iter()
+                    .map(access_point_to_access_point_response)
+                    .collect();
+                to_success_response(response)
+            }
+            None => to_error_response("Unable to find Account.")
+        }
+    }
+
+    fn update_access_point(&self, access_point_request: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
+        match self.access_point_repo.get_access_points() {
+            Some(mut content) => {
+                let access_point = access_point_request_to_access_point(access_point_request.clone());
+                if !content.clone().iter()
+                    .any(|x| x.eq(&access_point)) {
+                    return to_error_response("Access Point not exists.");
                 }
                 content.insert(access_point.clone());
                 self.access_point_repo.store_access_points(content.clone());

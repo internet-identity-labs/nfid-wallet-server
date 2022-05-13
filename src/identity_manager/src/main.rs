@@ -26,7 +26,6 @@ use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
 use canister_api_macros::{log_error, replicate_account, admin, collect_metrics};
 use crate::ic_service::get_caller;
-use crate::logger::logger::{Log, LogLevel};
 use crate::replica_service::HearthCount;
 use crate::service::credential_service::CredentialServiceTrait;
 use crate::service::access_point_service::AccessPointServiceTrait;
@@ -117,6 +116,15 @@ async fn create_access_point(access_point: AccessPointRequest) -> HttpResponse<V
                                               Principal::self_authenticating(access_point.pub_key.clone())).await;
     }
     response
+}
+
+#[update]
+#[replicate_account]
+#[log_error]
+#[collect_metrics]
+async fn update_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
+    let access_point_service = get_access_point_service();
+    access_point_service.update_access_point(access_point.clone())
 }
 
 #[update]

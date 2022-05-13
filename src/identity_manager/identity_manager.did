@@ -345,6 +345,7 @@ service : () -> {
   is_over_the_application_limit: (text) -> (BoolHttpResponse) query;
 
   create_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
+  update_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
   remove_access_point: (AccessPointRemoveRequest) -> (HTTPAccessPointResponse);
   read_access_points: () -> (HTTPAccessPointResponse) query;
   use_access_point: () -> (HTTPAccessPointResponse);

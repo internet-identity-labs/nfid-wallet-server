@@ -1,11 +1,9 @@
-use std::collections::HashSet;
 use itertools::Itertools;
 use crate::http::requests::AccountResponse;
 use crate::{Account, HttpResponse};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 
 use crate::repository::account_repo::AccountRepoTrait;
-use crate::repository::persona_repo::Persona;
 use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
 use crate::requests::{AccountRequest, AccountUpdateRequest};
 use crate::response_mapper::to_error_response;

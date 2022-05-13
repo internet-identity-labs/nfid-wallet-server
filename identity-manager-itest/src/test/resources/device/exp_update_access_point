@@ -2,20 +2,16 @@
   record {
     data = opt vec {
       record {
-        model = "IProboval_2";
-        make = "CHINA_2";
-        name = "NAME";
-        pub_key = "PKNEWW";
-        browser = "CHROME_2";
-        last_used = "123_2";
+        icon = "icon2";
+        device = "device2";
+        browser = "browser2";
+        principal_id = "2kqda-6wdqw-2be7y-4c5yg-ijw7q-muznw-qh3tm-55v2s-cnnyp-o2ud4-cqe";
       };
       record {
-        model = "IProboval";
-        make = "CHINA_2";
-        name = "NAME_2";
-        pub_key = "PUB_KEY_HASH";
-        browser = "CHROME_2";
-        last_used = "123_2";
+        icon = "icon";
+        device = "device";
+        browser = "browser";
+        principal_id = "wuomy-jshie-5vmse-huyz2-wmuqj-kdsry-nekfo-wvnou-dxqxz-pdpbv-4qe";
       };
     };
     error = null;

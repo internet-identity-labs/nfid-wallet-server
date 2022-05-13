@@ -1,6 +1,5 @@
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
-use crate::repository::access_point_repo::AccessPoint;
 
 use serde_bytes::{ByteBuf};
 
