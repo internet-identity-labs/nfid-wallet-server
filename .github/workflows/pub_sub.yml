@@ -1,0 +1,164 @@
+name: Pub Sub
+on: 
+  workflow_dispatch:
+    inputs:
+      network_name:
+        description: 'Choose applicable network'
+        required: true
+        type: choice
+        options: 
+          - dev
+      canister_name:
+        description: 'Choose applicable canister'
+        required: true
+        type: choice
+        options:
+          - pub_sub_channel
+      debug_messages:
+        description: 'Show debug messages'
+        type: choice
+        options: 
+          - 'false'
+          - 'true'
+
+env:
+  NETWORK_NAME: ${{ github.event.inputs.network_name }}
+  CANISTER_NAME: ${{ github.event.inputs.canister_name }}
+  DEBUG: ${{ github.event.inputs.debug_messages }}
+
+
+jobs:
+  Deploy:
+    runs-on: ubuntu-latest
+    container:
+      image: identitylabs/dfxctl:pre-compiled
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: DFX => Write identity.
+        run: |
+          mkdir -p $ID_PATH
+          echo $GH_MP_ADMIN_PEM >> $ID_PATH/identity.pem
+          sed -i 's/\\r\\n/\r\n/g' $ID_PATH/identity.pem
+        env:
+          GH_MP_ADMIN_PEM: ${{secrets.GH_MP_ADMIN_PEM}}
+          ID_PATH: /root/.config/dfx/identity/gh_mp_admin
+
+      - name: DFX => Start.
+        run: |
+          /scripts/dfx_run.sh &
+          sleep 60
+        working-directory: /internet-identity
+        env:
+          HOME: /root
+
+      - name: Checkout repo.
+        uses: actions/checkout@v3
+
+      - name: Cache Cargo dependencies.
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            /cargo
+            /cargo_target
+            target/
+          key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: PRE-BUILD => Populate env vars.
+        run: |
+          source .github/workflows/CI_LIBS.sh
+          export HOME=/root
+
+          echo_debug "Installing jq"
+          apt-get update && apt-get install -y --no-install-recommends jq
+
+          echo_debug "Getting values from dfx.json"
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
+            echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json"
+            exit 1
+          fi
+
+          CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
+          CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
+          CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
+            
+          echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
+          echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
+          echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
+          
+          echo_info "NETWORK_NAME=${NETWORK_NAME}"
+          echo_info "CANISTER_NAME=${CANISTER_NAME}"
+          echo_info "CANISTER_DID=${CANISTER_DID}"
+          echo_info "CANISTER_WASM=${CANISTER_WASM}"
+          echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}"
+        env:
+          DEBIAN_FRONTEND: noninteractive
+
+      - name: BUILD => Build the canister.
+        run: |
+          source .github/workflows/CI_LIBS.sh
+          export HOME=/root
+
+          dfx identity use gh_mp_admin
+
+          rm -rf .dfx;
+          echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'"
+          dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+      - name: DEPLOY => Upgrade the canister.
+        run: |
+          source .github/workflows/CI_LIBS.sh
+          export HOME=/root
+
+          dfx identity use gh_mp_admin
+
+          echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'"
+          dfx canister --network "${NETWORK_NAME}" install --mode upgrade "${CANISTER_NAME}"
+    
+      - name: Save artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.CANISTER_WASM }}
+          path: ${{ github.workspace }}/${{ env.CANISTER_WASM }}
+
+      - name: Frontend => Checkout repo.
+        uses: actions/checkout@v3
+        if: ${{ github.event.inputs.canister_name == 'pub_sub_channel' }}
+        with:
+          token: ${{ secrets.PAT }}
+          repository: internet-identity-labs/nfid-frontend
+          ref: main
+          path: frontend
+
+      - name: Frontend => Update did files.
+        if: ${{ github.event.inputs.canister_name == 'pub_sub_channel' }}
+        run: |
+          cp -f "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.d.ts" "./frontend/src/services/pub-sub-channel/${CANISTER_NAME}.did.d.ts"
+          cp -f "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.js" "./frontend/src/services/pub-sub-channel/${CANISTER_NAME}_idl.js"
+
+      - name: Frontend => Format did files.
+        if: ${{ github.event.inputs.canister_name == 'pub_sub_channel' }}
+        run: |
+          npm install --global yarn
+          cd ./frontend
+          yarn
+          yarn prettier --write ./src/services/pub-sub-channel/${CANISTER_NAME}.did.d.ts
+          yarn prettier --write ./src/services/pub-sub-channel/${CANISTER_NAME}_idl.js
+          git diff
+
+      - name: Frontend => Create a pull request.
+        if: ${{ github.event.inputs.canister_name == 'pub-sub-channel' }}
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.PAT }}
+          commit-message: "ci: update ${{ env.NETWORK_NAME }} - ${{ env.CANISTER_NAME }} did files"
+          title: "ci: update ${{ env.NETWORK_NAME }} - ${{ env.CANISTER_NAME }} did files"
+          branch: update-did-files
+          path: frontend
+          reviewers: plitzenberger
