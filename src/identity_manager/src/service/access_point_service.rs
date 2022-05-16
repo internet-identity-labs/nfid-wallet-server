@@ -71,7 +71,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
                     .any(|x| x.eq(&access_point)) {
                     return to_error_response("Access Point not exists.");
                 }
-                content.insert(access_point.clone());
+                content.replace(access_point.clone());
                 self.access_point_repo.store_access_points(content.clone());
                 self.access_point_repo.update_account_index(access_point.principal_id);
                 let response: Vec<AccessPointResponse> = content.into_iter()
