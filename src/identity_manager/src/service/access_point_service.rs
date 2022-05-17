@@ -73,7 +73,6 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
                 }
                 content.replace(access_point.clone());
                 self.access_point_repo.store_access_points(content.clone());
-                self.access_point_repo.update_account_index(access_point.principal_id);
                 let response: Vec<AccessPointResponse> = content.into_iter()
                     .map(access_point_to_access_point_response)
                     .collect();
