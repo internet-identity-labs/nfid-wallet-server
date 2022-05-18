@@ -1,0 +1,7 @@
+(
+  record {
+    data = null;
+    error = opt "Access Point not exists.";
+    status_code = 404 : nat16;
+  },
+)

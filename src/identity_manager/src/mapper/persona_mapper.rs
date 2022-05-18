@@ -1,5 +1,3 @@
-use mockers::matchers::some;
-
 use crate::repository::persona_repo::Persona;
 use crate::repository::repo::BasicEntity;
 use crate::requests::{PersonaRequest, PersonaResponse};

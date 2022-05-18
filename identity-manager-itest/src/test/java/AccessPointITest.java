@@ -53,6 +53,17 @@ public class AccessPointITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("device/exp_create_access_point_exists", call("device/req_create_access_point"));
     }
 
+    @Test(priority = 60)
+    public void updateNotExistentAccessPointExpectErrorResponse() {
+        validateWithFormatIdentity("device/exp_create_access_point_not_exists", call("device/req_update_not_existent_access_point"));
+    }
+
+    @Test(priority = 61)
+    public void updateExistentAccessPointExpectVec() {
+        Pair<String, String> tuple = cutField(call("device/req_update_existent_point"), "last_used");
+        validateWithFormatIdentity("device/exp_update_access_point", tuple.first());
+    }
+
     @Test(priority = 70)
     public void removeExistentAccessPointExpectVector() {
         validateWithFormatIdentity("device/exp_remove_access_point", callAndCutLastUsed("device/req_remove_access_point"));
