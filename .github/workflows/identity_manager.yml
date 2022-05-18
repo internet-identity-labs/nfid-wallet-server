@@ -81,7 +81,7 @@ jobs:
 
           echo_debug "Getting values from dfx.json"
           if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
-            echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json"
+            echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
             exit 1
           fi
 
@@ -93,11 +93,11 @@ jobs:
           echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
           echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
           
-          echo_info "NETWORK_NAME=${NETWORK_NAME}"
-          echo_info "CANISTER_NAME=${CANISTER_NAME}"
-          echo_info "CANISTER_DID=${CANISTER_DID}"
-          echo_info "CANISTER_WASM=${CANISTER_WASM}"
-          echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}"
+          echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
+          echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
+          echo_info "CANISTER_DID=${CANISTER_DID}" >&2
+          echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
+          echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
         env:
           DEBIAN_FRONTEND: noninteractive
 
@@ -108,7 +108,7 @@ jobs:
 
           dfx identity use gh_mp_admin
 
-          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_config"
+          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_config" >&2
           dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_config
 
       - name: BUILD => Build the canister.
@@ -119,7 +119,7 @@ jobs:
           dfx identity use gh_mp_admin
 
           rm -rf .dfx;
-          echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'"
+          echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
       - name: DEPLOY => Upgrade the canister.
@@ -129,8 +129,19 @@ jobs:
 
           dfx identity use gh_mp_admin
 
-          echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'"
-          dfx canister --network "${NETWORK_NAME}" install --mode upgrade "${CANISTER_NAME}"
+          echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "${CANISTER_NAME}"); then
+            echo_error "Upgrade failed ${result}" >&2
+            exit 1
+          fi
+
+          # If hash the same - than fail deploy
+          if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
+            echo_error "${result}" >&2
+            exit 1
+          else
+            echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
+          fi
 
       - name: DEPLOY => Send configuration to the canister.
         run: |
@@ -141,8 +152,19 @@ jobs:
 
           CANISTER_CONFIG_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${CANISTER_CONFIG_DATA}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
 
-          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' configure '${CANISTER_CONFIG_DATA}'"
-          dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" configure "${CANISTER_CONFIG_DATA}"
+          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' configure '${CANISTER_CONFIG_DATA}'" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" configure "${CANISTER_CONFIG_DATA}"); then
+            echo_error "Configure failed ${result}" >&2
+            exit 1
+          fi
+
+          # If '()' not found - than fail
+          if ! echo "${result}" | grep -q '()'; then
+            echo_error "${result}" >&2
+            exit 1
+          else
+            echo_success "${result}" >&2
+          fi
         env:
           CANISTER_CONFIG_DATA: >-
             (
@@ -162,14 +184,18 @@ jobs:
 
           dfx identity use gh_mp_admin
 
-          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_account"
+          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_account" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_account) || [ -z "${result}" ]; then
-            echo_error "Test failed - call to canister unsuccessful"
+            echo_error "Test failed - call to canister unsuccessful" >&2
             exit 1
           fi
+
+          # If 'anchor' not found - than fail
           if ! echo "${result}" | grep -q 'anchor'; then
-            echo_error "Test failed - 'anchor' - was not found"
+            echo_error "Test failed - 'anchor' - was not found" >&2
             exit 1
+          else
+            echo_success "${result}"
           fi
 
       - name: Save artifact

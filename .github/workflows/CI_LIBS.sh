@@ -23,19 +23,19 @@ function echo_error() {
     send_mesage "${FONT_RED}" 'ERROR' "${message}"
 }
 
-function echo_warn {
+function echo_warn() {
     local message
     message="${1}"
     send_mesage "${FONT_YELLOW}" 'WARN ' "${message}"
 }
 
-function echo_info {
+function echo_info() {
     local message
     message="${1}"
     send_mesage "${FONT_CYAN}" 'INFO ' "${message}"
 }
 
-function echo_debug {
+function echo_debug() {
     local message
     message="${1}"
     if [ "${DEBUG}" == 'true' ]; then
@@ -43,7 +43,7 @@ function echo_debug {
     fi
 }
 
-function echo_success {
+function echo_success() {
     local message
     message="${1}"
     send_mesage "${FONT_GREEN}" ' OK  ' "${message}"
