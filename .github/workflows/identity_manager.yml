@@ -32,7 +32,7 @@ jobs:
   Deploy:
     runs-on: ubuntu-latest
     container:
-      image: identitylabs/dfxctl:pre-compiled
+      image: identitylabs/dfxctl:0.10.0-compiled
     defaults:
       run:
         shell: bash
