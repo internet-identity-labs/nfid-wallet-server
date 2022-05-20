@@ -18,3 +18,5 @@ node_modules/
 dist/
 identity_manager.wasm
 pub_sub_channel.wasm
+im_addition.wasm
+verifier.wasm

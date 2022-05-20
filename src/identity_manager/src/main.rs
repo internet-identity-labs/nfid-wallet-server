@@ -1,5 +1,5 @@
 use std::time::Duration;
-use ic_cdk::{caller, storage, trap};
+use ic_cdk::{call, caller, storage, trap};
 use ic_cdk::export::Principal;
 
 use ic_cdk_macros::*;
@@ -9,7 +9,13 @@ use crate::persona_service::{PersonaService, PersonaServiceTrait};
 use crate::repository::persona_repo::PersonaRepo;
 use crate::application_service::ApplicationService;
 use crate::container::container_wrapper;
-use crate::container_wrapper::{get_access_point_service, get_account_service, get_application_service, get_persona_service, get_phone_number_service, get_credential_service};
+use crate::container_wrapper::get_access_point_service;
+use crate::container_wrapper::get_account_service;
+use crate::container_wrapper::get_application_service;
+use crate::container_wrapper::get_persona_service;
+use crate::container_wrapper::get_phone_number_service;
+use crate::container_wrapper::get_credential_service;
+use crate::container_wrapper::get_account_repo;
 use crate::repository::application_repo::{Application, ApplicationRepo};
 use crate::service::application_service::ApplicationServiceTrait;
 use crate::service::phone_number_service::PhoneNumberServiceTrait;
@@ -18,15 +24,16 @@ use crate::http::requests;
 use crate::http::requests::{AccountResponse};
 use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
-use crate::repository::account_repo::{Account, AccountRepo};
-use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
+use crate::repository::account_repo::{Account, AccountRepo, AccountRepoTrait, PrincipalIndex};
+use crate::repository::repo::{AdminRepo, BasicEntity, Configuration, ConfigurationRepo};
 use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant, PersonaRequest, PersonaResponse, ConfigurationResponse, AccessPointRemoveRequest};
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
 use canister_api_macros::{log_error, replicate_account, admin, collect_metrics};
-use crate::ic_service::get_caller;
+use crate::ic_service::{DeviceData, get_caller, KeyType};
 use crate::replica_service::HearthCount;
+use crate::repository::access_point_repo::AccessPoint;
 use crate::service::credential_service::CredentialServiceTrait;
 use crate::service::access_point_service::AccessPointServiceTrait;
 use crate::service::replica_service::AccountsToReplicate;
@@ -81,6 +88,66 @@ async fn get_config() -> ConfigurationResponse {
         env: config.env,
         git_branch: config.git_branch,
         commit_hash: config.commit_hash,
+    }
+}
+
+#[update]
+#[admin]
+async fn sync_recovery_phrases() -> () {
+    let account_repo = get_account_repo();
+    let mut account_service = get_account_service();
+    let accounts = account_service.get_all_accounts();
+    let ii_canister = ConfigurationRepo::get().ii_canister_id.unwrap();
+
+    for account in accounts {
+        let anchor = account.anchor;
+        let devices: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor.clone(), 0)).await {
+            Ok((res, )) => res,
+            Err((_, err)) => continue
+        };
+
+        for device in devices {
+            match device.key_type {
+                KeyType::SeedPhrase => {
+                    let basic = BasicEntity::new();
+                    let access_point = AccessPoint {
+                        principal_id: Principal::self_authenticating(device.pubkey).to_text(),
+                        icon: Some("recovery".to_string()),
+                        device: Some("recovery".to_string()),
+                        browser: Some("".to_string()),
+                        last_used: Some(basic.get_created_date().clone()),
+                        base_fields: basic
+                    };
+
+                    let index_key = access_point.principal_id.clone();
+                    let index_value = account.principal_id.clone();
+                    let mut new_account = account.clone();
+                    new_account.access_points.insert(access_point);
+                    account_repo.store_account(new_account);
+
+                    let index = storage::get_mut::<PrincipalIndex>();
+                    index.insert(index_key, index_value);
+                },
+                _ => ()
+            }
+        }
+    }
+}
+
+#[query]
+#[admin]
+async fn anchors() -> HttpResponse<Vec<u64>> {
+    let mut account_service = get_account_service();
+
+    let anchors = account_service.get_all_accounts()
+        .iter()
+        .map(|a| a.anchor)
+        .collect();
+
+    HttpResponse {
+        data: Some(anchors),
+        error: None,
+        status_code: 200
     }
 }
 

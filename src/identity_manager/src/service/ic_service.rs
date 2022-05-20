@@ -4,12 +4,12 @@ use crate::ConfigurationRepo;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use serde_bytes::ByteBuf;
 
-type CredentialId = ByteBuf;
-type PublicKey = ByteBuf;
-type DeviceKey = PublicKey;
+pub type CredentialId = ByteBuf;
+pub type PublicKey = ByteBuf;
+pub type DeviceKey = PublicKey;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-enum Purpose {
+pub enum Purpose {
     #[serde(rename = "recovery")]
     Recovery,
     #[serde(rename = "authentication")]
@@ -17,16 +17,16 @@ enum Purpose {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-struct DeviceData {
-    pubkey: DeviceKey,
-    alias: String,
-    credential_id: Option<CredentialId>,
-    purpose: Purpose,
-    key_type: KeyType,
+pub struct DeviceData {
+    pub pubkey: DeviceKey,
+    pub alias: String,
+    pub credential_id: Option<CredentialId>,
+    pub purpose: Purpose,
+    pub key_type: KeyType,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-enum KeyType {
+pub enum KeyType {
     #[serde(rename = "unknown")]
     Unknown,
     #[serde(rename = "platform")]
