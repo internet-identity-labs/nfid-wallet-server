@@ -103,7 +103,7 @@ async fn sync_recovery_phrases() -> () {
         let anchor = account.anchor;
         let devices: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor.clone(), 0)).await {
             Ok((res, )) => res,
-            Err((_, err)) => continue
+            Err((_, err)) => Vec::new()
         };
 
         for device in devices {
