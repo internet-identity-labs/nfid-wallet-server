@@ -20,6 +20,7 @@ pub trait AccountServiceTrait {
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
     fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String>;
     fn get_account_by_anchor(&mut self, anchor: u64) -> HttpResponse<AccountResponse>;
+    fn get_all_accounts(&mut self) -> Vec<Account>;
 }
 
 #[derive(Default)]
@@ -135,6 +136,10 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
                 to_success_response(account_to_account_response(acc))
             }
         }
+    }
+
+    fn get_all_accounts(&mut self) -> Vec<Account> {
+        self.account_repo.get_all_accounts()
     }
 }
 

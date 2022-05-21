@@ -74,6 +74,12 @@ type HTTPAccountResponse = record {
     status_code: nat16;
 };
 
+type HTTPAnchorsResponse = record {
+    data: opt vec nat64;
+    error: opt Error;
+    status_code: nat16;
+};
+
 type HTTPAccountRequest = record {
     anchor: nat64;
 };
@@ -323,6 +329,8 @@ type CanisterCyclesAggregatedData = vec nat64;
 service : () -> {
   configure: (ConfigurationRequest) -> ();
   get_config: () -> (ConfigurationResponse);
+  sync_recovery_phrases: () -> ();
+  anchors: () -> (HTTPAnchorsResponse) query;
 
   get_account: () -> (HTTPAccountResponse) query;
   recover_account: (nat64) -> (HTTPAccountResponse);
