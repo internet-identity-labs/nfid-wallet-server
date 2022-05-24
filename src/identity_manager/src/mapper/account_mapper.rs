@@ -1,3 +1,7 @@
+use serde_bytes::ByteBuf;
+use std::collections::HashSet;
+use crate::Principal;
+use crate::AccessPoint;
 use crate::mapper::persona_mapper::persona_to_persona_response;
 use crate::http::requests::AccountResponse;
 use crate::{AccountRequest};
@@ -26,6 +30,9 @@ pub fn account_to_account_response(account: Account) -> AccountResponse {
 pub fn account_request_to_account(account_request: AccountRequest) -> Account {
     let principal_id = ic_service::get_caller().to_text();
     let personas: Vec<Persona> = Vec::new();
+    let basic = BasicEntity::new();
+    let access_points: HashSet<AccessPoint> = get_access_points(account_request.pub_key, basic);
+
     Account {
         anchor: account_request.anchor,
         principal_id,
@@ -33,7 +40,29 @@ pub fn account_request_to_account(account_request: AccountRequest) -> Account {
         phone_number: None,
         phone_number_sha2: None,
         personas,
-        access_points: Default::default(),
-        base_fields: BasicEntity::new(),
+        access_points: access_points,
+        base_fields: basic,
     }
+}
+
+fn get_access_points(recovery_phrase: Option<ByteBuf>, basic: BasicEntity) -> HashSet<AccessPoint> {
+    recovery_phrase
+        .map(|byte_buf| Principal::self_authenticating(byte_buf))
+        .map(|principal| principal.to_text())
+        .map(|principal_text| {
+             AccessPoint {
+                principal_id: principal_text,
+                icon: Some("recovery".to_string()),
+                device: Some("recovery".to_string()),
+                browser: Some("".to_string()),
+                last_used: Some(basic.get_created_date().clone()),
+                base_fields: basic
+            }
+        })
+        .map(|access_point| {
+            let mut set = HashSet::new();
+            set.insert(access_point);
+            set
+        })
+        .unwrap_or(Default::default())
 }

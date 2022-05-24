@@ -2,6 +2,7 @@ import lombok.SneakyThrows;
 import org.testng.Assert;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
+import org.testng.internal.collections.Pair;
 
 
 public class AccountITest extends BaseIdentityManagerITest {
@@ -76,6 +77,12 @@ public class AccountITest extends BaseIdentityManagerITest {
     public void getLogsExpectSuccess() {
         validateWithFormatIdentity("account/exp_logs", call("common/req_get_logs"));
         validateWithFormatIdentity("account/exp_all_logs", call("common/req_get_all_logs"));
+    }
+
+    @Test(priority = 80)
+    public void createAccountWithRecoveryPhraseExpectCorrectResponse() {
+        Pair<String, String> account = TestUtils.cutField(call("request/create_account_pub_key", "11111"), "last_used");
+        validateWithFormatIdentity("account/exp_account_3", account.first());
     }
 
 }

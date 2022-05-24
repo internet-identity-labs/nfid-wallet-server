@@ -7,6 +7,7 @@ use serde_bytes::{ByteBuf};
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccountRequest {
     pub anchor: u64,
+    pub pub_key: Option<ByteBuf>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

@@ -22,6 +22,7 @@ pub fn init_config(){
 pub fn create_default_account(){
     let acc = AccountRequest {
         anchor: 5,
+        pub_key: None
     };
     let mut account_service = get_account_service();
     account_service.create_account(acc);

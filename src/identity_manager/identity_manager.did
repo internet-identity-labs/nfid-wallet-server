@@ -82,6 +82,7 @@ type HTTPAnchorsResponse = record {
 
 type HTTPAccountRequest = record {
     anchor: nat64;
+    pub_key: opt blob;
 };
 
 type HTTPAccountUpdateRequest = record {

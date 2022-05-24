@@ -55,7 +55,8 @@ fn test_get_account_e2e() {
 fn test_base_entity_on_account_create() {
     init_config();
     let v = AccountRequest {
-        anchor: 10
+        anchor: 10,
+        pub_key: None
     };
     let mut acc_serv = AccountService {
         account_repo:  AccountRepo {},
@@ -71,7 +72,8 @@ fn test_base_entity_on_account_create() {
 fn test_base_entity_on_account_update() {
     init_config();
     let v = AccountRequest {
-        anchor: 11
+        anchor: 11,
+        pub_key: None
     };
     let ar = AccountRepo {};
     let mut acc_serv = AccountService {
