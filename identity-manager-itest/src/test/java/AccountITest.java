@@ -81,7 +81,6 @@ public class AccountITest extends BaseIdentityManagerITest {
 
     @Test(priority = 80)
     public void createAccountWithRecoveryPhraseExpectCorrectResponse() {
-        call("common/use_test_persona");
         Pair<String, String> account = TestUtils.cutField(call("request/create_account_pub_key", "11111"), "last_used");
         validateWithFormatIdentity("account/exp_account_3", account.first());
     }

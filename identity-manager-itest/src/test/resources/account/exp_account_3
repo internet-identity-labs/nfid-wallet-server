@@ -12,7 +12,7 @@
         };
       };
       personas = vec {};
-      principal_id = "aiuad-m2sjl-7ek2a-n7zr4-bdijr-tvkoz-ie65z-hlsml-egtuv-ngh4r-yqe";
+      principal_id = "%s";
       phone_number = null;
     };
     error = null;
