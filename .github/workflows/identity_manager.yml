@@ -8,6 +8,7 @@ on:
         type: choice
         options: 
           - dev
+          - ic
       canister_name:
         description: 'Choose applicable canister'
         required: true
@@ -21,6 +22,9 @@ on:
         options: 
           - 'false'
           - 'true'
+      confirmation:
+        description: 'For the ic deployment - confirm your choice by typing "Yes"'
+        type: string
 
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
@@ -38,6 +42,12 @@ jobs:
         shell: bash
 
     steps:
+      - name: INPUT => Checks.
+        if: ${{ (github.event.inputs.network_name == 'ic') && (github.event.inputs.confirmation != 'Yes') }}
+        run: |
+          echo "[ERROR] You have try release to network 'ic' without or with wrong confirmation phrase" >&2
+          exit 1
+
       - name: DFX => Write identity.
         run: |
           mkdir -p $ID_PATH
@@ -122,6 +132,100 @@ jobs:
           echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
+      - name: DEPLOY PROD => Upgrade the identity_manager_replica canister.
+        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
+        run: |
+          source .github/workflows/CI_LIBS.sh
+          export HOME=/root
+
+          dfx identity use gh_mp_admin
+
+          DEBUG="true"
+
+          echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade 'identity_manager_replica'" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "identity_manager_replica"); then
+            echo_error "Upgrade failed ${result}" >&2
+            exit 1
+          fi
+
+          echo_debug "Command output was '${result}'" >&2
+
+          # If hash the same - than fail deploy
+          if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
+            echo_error "${result}" >&2
+            exit 1
+          else
+            echo_success "Canister 'identity_manager_replica' was upgraded" >&2
+          fi
+
+      - name: DEPLOY PROD => Send configuration to the identity_manager_replica canister.
+        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
+        run: |
+          source .github/workflows/CI_LIBS.sh
+          export HOME=/root
+
+          dfx identity use gh_mp_admin
+
+          DEBUG="true"
+
+          CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_TEST_DATA"
+
+          CANISTER_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${!CANISTER_DATA_NAME_VAR}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
+
+          echo_debug "dfx canister --network '${NETWORK_NAME}' call 'identity_manager_replica' configure '${CANISTER_DATA}'" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "identity_manager_replica" configure "${CANISTER_DATA}"); then
+            echo_error "Configure failed ${result}" >&2
+            exit 1
+          fi
+
+          echo_debug "Command output was '${result}'" >&2
+
+          # If '()' not found - than fail
+          if ! echo "${result}" | grep -q '()'; then
+            echo_error "${result}" >&2
+            exit 1
+          else
+            echo_success "${result}" >&2
+          fi
+        env:
+          CANISTER_CONFIG_TEST_DATA: >-
+            (
+                record {
+                    lambda = principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
+                    token_ttl = 60;
+                    token_refresh_ttl = 60;
+                    whitelisted_canisters = opt vec {principal "bryxc-zqaaa-aaaal-aajga-cai"};
+                    git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
+                    commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
+                }
+            )
+
+      - name: TEST PROD => Get Account from the identity_manager_replica canister.
+        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
+        run: |
+          source .github/workflows/CI_LIBS.sh
+          export HOME=/root
+
+          dfx identity use gh_mp_admin
+
+          DEBUG="true"
+
+          echo_debug "dfx canister --network '${NETWORK_NAME}' call 'identity_manager_replica' get_account" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "identity_manager_replica" get_account) || [ -z "${result}" ]; then
+            echo_error "Test failed - call to canister unsuccessful" >&2
+            exit 1
+          fi
+
+          echo_debug "Command output was '${result}'" >&2
+
+          # If 'anchor' not found - than fail
+          if ! echo "${result}" | grep -q 'anchor'; then
+            echo_error "Test failed - 'anchor' - was not found" >&2
+            exit 1
+          else
+            echo_success "${result}"
+          fi
+
       - name: DEPLOY => Upgrade the canister.
         run: |
           source .github/workflows/CI_LIBS.sh
@@ -129,11 +233,18 @@ jobs:
 
           dfx identity use gh_mp_admin
 
+          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
+            echo_warn "Performing PROD canister Upgrade" >&2
+            DEBUG="true"
+          fi
+
           echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "${CANISTER_NAME}"); then
             echo_error "Upgrade failed ${result}" >&2
             exit 1
           fi
+
+          echo_debug "Command output was '${result}'" >&2
 
           # If hash the same - than fail deploy
           if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
@@ -150,13 +261,23 @@ jobs:
 
           dfx identity use gh_mp_admin
 
-          CANISTER_CONFIG_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${CANISTER_CONFIG_DATA}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
+          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
+            echo_warn "Performing PROD config Update" >&2
+            DEBUG="true"
+            CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_PROD_DATA"
+          else
+            CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_DATA"
+          fi
 
-          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' configure '${CANISTER_CONFIG_DATA}'" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" configure "${CANISTER_CONFIG_DATA}"); then
+          CANISTER_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${!CANISTER_DATA_NAME_VAR}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
+
+          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' configure '${CANISTER_DATA}'" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" configure "${CANISTER_DATA}"); then
             echo_error "Configure failed ${result}" >&2
             exit 1
           fi
+
+          echo_debug "Command output was '${result}'" >&2
 
           # If '()' not found - than fail
           if ! echo "${result}" | grep -q '()'; then
@@ -176,6 +297,18 @@ jobs:
                 commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
               }
             )
+          CANISTER_CONFIG_PROD_DATA: >-
+            (
+              record {
+                lambda = principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
+                token_ttl = 60;
+                token_refresh_ttl = 60;
+                heartbeat = opt 900;
+                backup_canister_id = opt "bv5d4-nyaaa-aaaap-qaaba-cai";
+                git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
+                commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
+              }
+            )
 
       - name: TEST => Get Account from the canister.
         run: |
@@ -189,6 +322,8 @@ jobs:
             echo_error "Test failed - call to canister unsuccessful" >&2
             exit 1
           fi
+
+          echo_debug "Command output was '${result}'" >&2
 
           # If 'anchor' not found - than fail
           if ! echo "${result}" | grep -q 'anchor'; then
