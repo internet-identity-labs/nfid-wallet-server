@@ -1,0 +1,21 @@
+(
+  record {
+    data = opt record {
+      name = null;
+      anchor = 11_111 : nat64;
+      access_points = vec {
+        record {
+          icon = "recovery";
+          device = "recovery";
+          browser = "";
+          principal_id = "wuomy-jshie-5vmse-huyz2-wmuqj-kdsry-nekfo-wvnou-dxqxz-pdpbv-4qe";
+        };
+      };
+      personas = vec {};
+      principal_id = "aiuad-m2sjl-7ek2a-n7zr4-bdijr-tvkoz-ie65z-hlsml-egtuv-ngh4r-yqe";
+      phone_number = null;
+    };
+    error = null;
+    status_code = 200 : nat16;
+  },
+)
