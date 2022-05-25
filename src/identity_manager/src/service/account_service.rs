@@ -1,6 +1,7 @@
 use itertools::Itertools;
+use ic_cdk::export::Principal;
 use crate::http::requests::AccountResponse;
-use crate::{Account, HttpResponse};
+use crate::{Account, DeviceData, HttpResponse};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 
 use crate::repository::account_repo::AccountRepoTrait;
@@ -14,7 +15,7 @@ use crate::util::validation_util::validate_name;
 
 pub trait AccountServiceTrait {
     fn get_account(&mut self) -> HttpResponse<AccountResponse>;
-    fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse>;
+    fn create_account(&mut self, principal: Principal, account_request: AccountRequest, devices: Vec<DeviceData>) -> HttpResponse<AccountResponse>;
     fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
     fn remove_account(&mut self) -> HttpResponse<bool>;
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
@@ -37,13 +38,12 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
         }
     }
 
-    fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse> {
-        let princ = ic_service::get_caller().to_text();
-        if ic_service::is_anonymous(princ) {
+    fn create_account(&mut self, principal: Principal, account_request: AccountRequest, devices: Vec<DeviceData>) -> HttpResponse<AccountResponse> {
+        if ic_service::is_anonymous(principal.to_text()) {
             return to_error_response("User is anonymous");
         }
 
-        let acc = account_request_to_account(account_request);
+        let acc = account_request_to_account(principal.to_text(), account_request, devices);
         match { self.account_repo.create_account(acc.clone()) } {
             None => {
                 to_error_response("Impossible to link this II anchor, please try another one.")
