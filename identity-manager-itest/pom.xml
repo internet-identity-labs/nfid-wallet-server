@@ -25,11 +25,62 @@
             <version>7.4.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.ic4j</groupId>
+            <artifactId>ic4j-agent</artifactId>
+            <version>0.6.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ic4j</groupId>
+            <artifactId>ic4j-candid</artifactId>
+            <version>0.6.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.68</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ic4j</groupId>
+            <artifactId>ic4j-java11transport</artifactId>
+            <version>0.6.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ic4j</groupId>
+            <artifactId>ic4j-java11transport</artifactId>
+            <version>${ic4j.agent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ic4j</groupId>
+            <artifactId>ic4j-candid</artifactId>
+            <version>${ic4j.candid.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.13.1</version>
+        </dependency>
     </dependencies>
 
 
     <properties>
-        <maven.compiler.source>13</maven.compiler.source>
-        <maven.compiler.target>13</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <ic4j.agent.version>0.6.8</ic4j.agent.version>
+        <ic4j.candid.version>0.6.8</ic4j.candid.version>
+        <slf4j.version>1.7.36</slf4j.version>
+        <mainClass>org.ic4j.samples.jackson.Main</mainClass>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
+        <!-- plugin versions -->
+        <version.plugin.compiler>3.8.1</version.plugin.compiler>
+        <version.plugin.dependency>3.0.0</version.plugin.dependency>
+        <version.plugin.jar>3.0.2</version.plugin.jar>
+        <version.plugin.resources>2.7</version.plugin.resources>
     </properties>
 </project>
