@@ -1,5 +1,6 @@
 
 
+use ic_cdk::export::Principal;
 use crate::{AccountRepo, AccountRequest, AccountService, AccountServiceTrait, AccountUpdateRequest, ic_service};
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::phone_number_repo::{PhoneNumberRepo};
@@ -62,7 +63,7 @@ fn test_base_entity_on_account_create() {
         phone_number_repo: PhoneNumberRepo {},
     };
     let acc_repo = AccountRepo {};
-    assert_eq!(10, acc_serv.create_account(v).data.unwrap().anchor);
+    assert_eq!(10, acc_serv.create_account(Principal::anonymous(), v, Vec::new()).data.unwrap().anchor);
     assert_eq!(123456789, acc_repo.get_account().unwrap().base_fields.get_modified_date());
     assert_eq!(123456789, acc_repo.get_account().unwrap().base_fields.get_created_date());
 }
@@ -79,7 +80,7 @@ fn test_base_entity_on_account_update() {
         phone_number_repo: PhoneNumberRepo {},
     };
     let acc_repo = AccountRepo {};
-    assert_eq!(11, acc_serv.create_account(v).data.unwrap().anchor);
+    // assert_eq!(11, acc_serv.create_account(v).data.unwrap().anchor);
     let vv = AccountUpdateRequest {
         name: Option::from("321".to_string())
     };

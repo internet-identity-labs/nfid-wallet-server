@@ -16,24 +16,24 @@ public class AccessPointITest extends BaseIdentityManagerITest {
     @Test(priority = 10)
     public void createAccessPointExpectCorrectResponse() {
         String accessPoint = call("device/req_create_access_point");
-        Pair<String, String> tuple = cutField(accessPoint, "last_used");
+        Pair<String, String> tuple = TestUtils.cutField(accessPoint, "last_used");
         validateWithFormatIdentity("device/exp_create_access_point", tuple.first());
-        Pair<String, String> account = cutField(call("account/req_get_account", "identity_manager"), "last_used");
+        Pair<String, String> account = TestUtils.cutField(call("account/req_get_account", "identity_manager"), "last_used");
         validateWithFormatIdentity("device/exp_create_access_point_acc", account.first());
         assertEquals(tuple.second().trim(), account.second().trim());
     }
 
     @Test(priority = 11)
     public void useAccountExpectNewTimestamp() {
-        Pair<String, String> account = cutField(call("account/req_get_account", "identity_manager"), "last_used");
+        Pair<String, String> account = TestUtils.cutField(call("account/req_get_account", "identity_manager"), "last_used");
         validateWithFormatIdentity("device/exp_create_access_point_acc", account.first());
-        Pair<String, String> lastUsed = cutField(call("device/req_use_access_points"), "last_used");
+        Pair<String, String> lastUsed = TestUtils.cutField(call("device/req_use_access_points"), "last_used");
         assertNotSame(lastUsed.second().trim(), account.second().trim());
     }
 
     @Test(priority = 20)
     public void getAccessPointExpectVector() {
-        Pair<String, String> tuple = cutField(call("device/req_read_access_points"), "last_used");
+        Pair<String, String> tuple = TestUtils.cutField(call("device/req_read_access_points"), "last_used");
         validateWithFormatIdentity("device/exp_read_access_points", tuple.first());
     }
 
@@ -60,7 +60,7 @@ public class AccessPointITest extends BaseIdentityManagerITest {
 
     @Test(priority = 61)
     public void updateExistentAccessPointExpectVec() {
-        Pair<String, String> tuple = cutField(call("device/req_update_existent_point"), "last_used");
+        Pair<String, String> tuple = TestUtils.cutField(call("device/req_update_existent_point"), "last_used");
         validateWithFormatIdentity("device/exp_update_access_point", tuple.first());
     }
 
@@ -70,27 +70,8 @@ public class AccessPointITest extends BaseIdentityManagerITest {
     }
 
     private String callAndCutLastUsed(String doc) {
-        Pair<String, String> result = cutField(call(doc), "last_used");
+        Pair<String, String> result = TestUtils.cutField(call(doc), "last_used");
         return result.first();
-    }
-
-
-    private Pair<String, String> cutField(String result, String field) {
-        String[] lines = result.split(System.getProperty("line.separator"));
-        String fieldValue = "";
-        for (int i = 0; i < lines.length; i++) {
-            if (lines[i].contains(field)) {
-                fieldValue = lines[i];
-                lines[i] = "";
-            }
-        }
-        StringBuilder finalStringBuilder = new StringBuilder("");
-        for (String s : lines) {
-            if (!s.equals("")) {
-                finalStringBuilder.append(s).append(System.getProperty("line.separator"));
-            }
-        }
-        return new Pair(finalStringBuilder.toString(), fieldValue);
     }
 
 }

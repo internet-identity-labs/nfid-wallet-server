@@ -233,12 +233,12 @@ async fn post_token(request: TokenRequest) -> Response {
 #[replicate_account]
 #[collect_metrics]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
+    let principal: Principal = get_caller();
     let mut account_service = get_account_service();
-    let response = account_service.create_account(account_request.clone());
-    if response.error.is_none() {  //todo migrate to macros
-        ic_service::trap_if_not_authenticated(account_request.anchor.clone(), get_caller()).await;
-    }
-    response
+    let devices: Vec<DeviceData> = ic_service::lookup(account_request.anchor.clone()).await;
+
+    ic_service::trap_if_not_authenticated_by_devices(devices.clone(), principal);
+    account_service.create_account(principal, account_request.clone(), devices)
 }
 
 #[update]
