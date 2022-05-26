@@ -44,7 +44,7 @@ public class ApplicationITest extends BaseDFXITest {
             call("common/init_dfx_project_full");
             call("common/deploy_im");
 
-            String icLocation = ("http://localhost:8000");
+            String icLocation = "http://localhost:8000";
             String icCanister = call("common/get_canister_id", "identity_manager").trim();
             Path path = Paths.get(this.getClass().getClassLoader().getResource("identity/identity.pem").getPath());
             Identity identity = BasicIdentity.fromPEMFile(path);
@@ -59,7 +59,7 @@ public class ApplicationITest extends BaseDFXITest {
                 log.error("Stopping ApplicationITest");
                 System.exit(1);
             }
-        } while (identity_manager.isEmpty() );
+        } while (identity_manager.isEmpty());
 
     }
 
@@ -142,18 +142,18 @@ public class ApplicationITest extends BaseDFXITest {
         return Application.builder()
                 .domain(domain)
                 .name(name)
-                .userLimit(Short.valueOf(String.valueOf(userLimit)))
+                .userLimit((short) userLimit)
                 .build();
     }
 
     @SneakyThrows
-    HttpResponse callUpdateHttp(Object application, String methodName) {
+    private HttpResponse callUpdateHttp(Object application, String methodName) {
         IDLValue idlValue = IDLValue.create(application, new PojoSerializer());
         List<IDLValue> idlArgs = new ArrayList<IDLValue>();
         idlArgs.add(idlValue);
         byte[] buf = IDLArgs.create(idlArgs).toBytes();
-        var response = UpdateBuilder.
-                create(agent, canister, methodName)
+        var response = UpdateBuilder
+                .create(agent, canister, methodName)
                 .arg(buf)
                 .callAndWait(Waiter.create(5, 2));
         byte[] output = response.get();
@@ -162,7 +162,7 @@ public class ApplicationITest extends BaseDFXITest {
     }
 
     @SneakyThrows
-    HttpResponse callQueryHttp(String methodName, Optional<Object> params) {
+    private HttpResponse callQueryHttp(String methodName, Optional<Object> params) {
         IDLValue idlValue = params.isEmpty() ?
                 IDLValue.create(new PojoSerializer())
                 : IDLValue.create(params.get(), new PojoSerializer());
