@@ -33,6 +33,4 @@ public class BaseIdentityManagerITest extends BaseDFXITest {
         return HEARTBEAT_PERIOD;
     }
 
-    ;
-
 }

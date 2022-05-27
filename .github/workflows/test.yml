@@ -23,22 +23,28 @@ jobs:
           distribution: 'adopt'
           java-version: '13'
 
-      - name: DFX SETUP  | Provision Linux
-        run: bash .github/workflows/dfx-provision-linux.sh
-
       - name: Install Rust
         run: |
           rustup update 1.57.0 --no-self-update
           rustup default 1.57.0
           rustup target add wasm32-unknown-unknown
 
-      - name: DFX SETUP  | Provision Linux
-        run: bash .github/workflows/dfx-provision-linux.sh
+      - name: Install DFX
+        uses: aviate-labs/setup-dfx@v0.2.3
+        with:
+          dfx-version: 0.9.3
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.x
 
       - name: BE Unit Test
         run: cargo test -- --test-threads=1
 
       - name: BE ITest
         run: |
+          dfx identity new test_admin
+          cp -f identity-manager-itest/src/test/resources/identity/identity.pem ~/.config/dfx/identity/test_admin
           cd identity-manager-itest
-          mvn test
+          mvn test --no-transfer-progress
