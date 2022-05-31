@@ -67,49 +67,31 @@ pub fn is_anonymous(princ: String) -> bool {
     princ.len() < 10
 }
 
-pub async fn lookup(anchor: u64) -> Vec<DeviceData> {
-    if is_test_env() {
-        return Vec::new();
+pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) {
+    if ConfigurationRepo::get().env.as_ref().is_some()
+        && ConfigurationRepo::get().env.as_ref().unwrap().eq(&"test".to_string()) {
+        return;
     }
 
-    let ii_canister = ConfigurationRepo::get().ii_canister_id.unwrap();
+    let ii_canister = ConfigurationRepo::get().ii_canister_id.
+        unwrap_or(Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap());
 
     //TODO update when possible to query call
-    match call(ii_canister, "lookup", (anchor.clone(), 0)).await {
+    let res: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor.clone(), 0)).await {
         Ok((res, )) => res,
-        Err((_, err)) => Vec::new()
-    }
+        Err((_, err)) => trap(&format!("failed to request II: {}", err)),
+    };
+
+    verify(principal, res.iter().map(|e| &e.pubkey));
 }
 
-pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) {
-    if is_test_env() {
-        return;
-    }
-
-    let devices: Vec<DeviceData> = lookup(anchor.clone()).await;
-    verify(principal, devices);
-}
-
-pub fn trap_if_not_authenticated_by_devices(devices: Vec<DeviceData>, principal: Principal) {
-    if is_test_env() {
-        return;
-    }
-
-    verify(principal, devices);
-}
-
-pub fn verify(principal: Principal, devices: Vec<DeviceData>) {
-    for device in devices {
-        if principal.clone() == Principal::self_authenticating(&device.pubkey) {
+fn verify<'a>(princ: Principal, public_keys: impl Iterator<Item=&'a PublicKey>) {
+    for pk in public_keys {
+        if princ.clone() == Principal::self_authenticating(pk) {
             return;
         }
     }
-    trap(&format!("{} could not be authenticated.", principal))
-}
-
-fn is_test_env() -> bool {
-    ConfigurationRepo::get().env.as_ref().is_some()
-        && ConfigurationRepo::get().env.as_ref().unwrap().eq(&"test".to_string())
+    ic_cdk::trap(&format!("{} could not be authenticated.", princ))
 }
 
 
