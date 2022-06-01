@@ -24,5 +24,5 @@ pub fn create_default_account(){
         anchor: 5,
     };
     let mut account_service = get_account_service();
-    account_service.create_account(Principal::anonymous(), acc, Vec::new());
+    account_service.create_account(acc);
 }
