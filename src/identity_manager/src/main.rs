@@ -56,14 +56,15 @@ async fn init() -> () {
 #[admin]
 #[collect_metrics]
 async fn configure(request: ConfigurationRequest) -> () {
+    let lambda = Principal::self_authenticating("mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe");
     let configuration = Configuration {
-        lambda: request.lambda,
-        token_ttl: Duration::from_secs(request.token_ttl),
-        token_refresh_ttl: Duration::from_secs(request.token_refresh_ttl),
+        lambda: request.lambda.unwrap_or(lambda),
+        token_ttl: Duration::from_secs(request.token_ttl.unwrap_or(60)),
+        token_refresh_ttl: Duration::from_secs(request.token_refresh_ttl.unwrap_or(60)),
         whitelisted_phone_numbers: request.whitelisted_phone_numbers.unwrap_or(Vec::default()),
         heartbeat: request.heartbeat,
         backup_canister_id: request.backup_canister_id,
-        ii_canister_id: request.ii_canister_id,
+        ii_canister_id: request.ii_canister_id.unwrap_or(Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()),
         whitelisted_canisters: request.whitelisted_canisters,
         env: request.env,
         git_branch: request.git_branch,
@@ -77,13 +78,13 @@ async fn configure(request: ConfigurationRequest) -> () {
 async fn get_config() -> ConfigurationResponse {
     let config = ConfigurationRepo::get().clone();
     ConfigurationResponse {
-        lambda: config.lambda,
-        token_ttl: config.token_ttl.as_secs(),
-        token_refresh_ttl: config.token_refresh_ttl.as_secs(),
+        lambda: Some(config.lambda),
+        token_ttl: Some(config.token_ttl.as_secs()),
+        token_refresh_ttl: Some(config.token_refresh_ttl.as_secs()),
         whitelisted_phone_numbers: Some(config.whitelisted_phone_numbers),
         heartbeat: config.heartbeat,
         backup_canister_id: config.backup_canister_id,
-        ii_canister_id: config.ii_canister_id,
+        ii_canister_id: Some(config.ii_canister_id),
         whitelisted_canisters: config.whitelisted_canisters,
         env: config.env,
         git_branch: config.git_branch,
@@ -97,7 +98,7 @@ async fn sync_recovery_phrases() -> () {
     let account_repo = get_account_repo();
     let mut account_service = get_account_service();
     let accounts = account_service.get_all_accounts();
-    let ii_canister = ConfigurationRepo::get().ii_canister_id.unwrap();
+    let ii_canister = ConfigurationRepo::get().ii_canister_id;
 
     for account in accounts {
         let anchor = account.anchor;
@@ -116,7 +117,7 @@ async fn sync_recovery_phrases() -> () {
                         device: Some("recovery".to_string()),
                         browser: Some("".to_string()),
                         last_used: Some(basic.get_created_date().clone()),
-                        base_fields: basic
+                        base_fields: basic,
                     };
 
                     let index_key = access_point.principal_id.clone();
@@ -127,7 +128,7 @@ async fn sync_recovery_phrases() -> () {
 
                     let index = storage::get_mut::<PrincipalIndex>();
                     index.insert(index_key, index_value);
-                },
+                }
                 _ => ()
             }
         }
@@ -147,7 +148,7 @@ async fn anchors() -> HttpResponse<Vec<u64>> {
     HttpResponse {
         data: Some(anchors),
         error: None,
-        status_code: 200
+        status_code: 200,
     }
 }
 

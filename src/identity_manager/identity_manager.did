@@ -2,9 +2,9 @@ type Error = text;
 type Token = text;
 
 type ConfigurationRequest = record {
-    lambda: principal;
-    token_ttl: nat64;
-    token_refresh_ttl: nat64;
+    lambda: opt principal;
+    token_ttl: opt nat64;
+    token_refresh_ttl: opt nat64;
     whitelisted_phone_numbers: opt vec text;
     heartbeat: opt nat32;
     backup_canister_id: opt text;
@@ -16,9 +16,9 @@ type ConfigurationRequest = record {
 };
 
 type ConfigurationResponse = record {
-    lambda: principal;
-    token_ttl: nat64;
-    token_refresh_ttl: nat64;
+    lambda: opt principal;
+    token_ttl: opt nat64;
+    token_refresh_ttl: opt nat64;
     whitelisted_phone_numbers: opt vec text;
     heartbeat: opt nat32;
     backup_canister_id: opt text;

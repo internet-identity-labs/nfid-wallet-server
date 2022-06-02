@@ -191,9 +191,7 @@ jobs:
           CANISTER_CONFIG_TEST_DATA: >-
             (
                 record {
-                    lambda = principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
-                    token_ttl = 60;
-                    token_refresh_ttl = 60;
+                    lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                     whitelisted_canisters = opt vec {principal "bryxc-zqaaa-aaaal-aajga-cai"};
                     git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                     commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
@@ -290,9 +288,7 @@ jobs:
           CANISTER_CONFIG_DATA: >-
             (
               record {
-                lambda = principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
-                token_ttl = 60;
-                token_refresh_ttl = 60;
+                lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                 commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
               }
@@ -300,9 +296,7 @@ jobs:
           CANISTER_CONFIG_PROD_DATA: >-
             (
               record {
-                lambda = principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
-                token_ttl = 60;
-                token_refresh_ttl = 60;
+                lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                 heartbeat = opt 900;
                 backup_canister_id = opt "bv5d4-nyaaa-aaaap-qaaba-cai";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";

@@ -73,8 +73,7 @@ pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) {
         return;
     }
 
-    let ii_canister = ConfigurationRepo::get().ii_canister_id.
-        unwrap_or(Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap());
+    let ii_canister = ConfigurationRepo::get().ii_canister_id;
 
     //TODO update when possible to query call
     let res: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor.clone(), 0)).await {
