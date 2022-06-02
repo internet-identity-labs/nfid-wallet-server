@@ -45,7 +45,7 @@ jobs:
             dfx build --network ${ENVIRONMENT} identity_manager;
             dfx canister --no-wallet --network ${ENVIRONMENT} install --mode upgrade identity_manager;
             sleep 5;
-            im=$(dfx canister --network ${ENVIRONMENT} call identity_manager configure '(record {key = blob "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = ${{secrets.TOKEN_TTL}}; token_refresh_ttl = ${{secrets.TOKEN_REFRESH_TTL}}; whitelisted_phone_numbers = opt vec {${{secrets.WHITELISTED_PHONE_NUMBERS}}} })');
+            im=$(dfx canister --network ${ENVIRONMENT} call identity_manager configure '(record {key = blob "${{secrets.KEY}}"; lambda = principal "${{secrets.LAMBDA_PRINCIPAL}}"; token_ttl = opt ${{secrets.TOKEN_TTL}}; token_refresh_ttl = opt ${{secrets.TOKEN_REFRESH_TTL}}; whitelisted_phone_numbers = opt vec {${{secrets.WHITELISTED_PHONE_NUMBERS}}} })');
 
             ((i=i+1));
             printf 'Try #%s with result: im-%s\n' "$i" "$im";

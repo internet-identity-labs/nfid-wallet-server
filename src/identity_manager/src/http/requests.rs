@@ -65,9 +65,9 @@ pub struct PersonaRequest {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct ConfigurationRequest {
-    pub lambda: Principal,
-    pub token_ttl: u64,
-    pub token_refresh_ttl: u64,
+    pub lambda: Option<Principal>,
+    pub token_ttl: Option<u64>,
+    pub token_refresh_ttl: Option<u64>,
     pub whitelisted_phone_numbers: Option<Vec<String>>,
     pub heartbeat: Option<u32>,
     pub backup_canister_id: Option<String>,
@@ -80,9 +80,9 @@ pub struct ConfigurationRequest {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct ConfigurationResponse {
-    pub lambda: Principal,
-    pub token_ttl: u64,
-    pub token_refresh_ttl: u64,
+    pub lambda: Option<Principal>,
+    pub token_ttl: Option<u64>,
+    pub token_refresh_ttl: Option<u64>,
     pub whitelisted_phone_numbers: Option<Vec<String>>,
     pub heartbeat: Option<u32>,
     pub backup_canister_id: Option<String>,
