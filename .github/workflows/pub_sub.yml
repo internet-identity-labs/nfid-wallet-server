@@ -48,9 +48,9 @@ jobs:
 
       - name: DFX => Start.
         run: |
-          /scripts/dfx_run.sh &
+          dfx_run &
           sleep 60
-        working-directory: /internet-identity
+        working-directory: /default_project
         env:
           HOME: /root
 
