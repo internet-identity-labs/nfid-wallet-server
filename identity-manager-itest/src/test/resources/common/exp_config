@@ -3,13 +3,13 @@
     env = opt "test";
     whitelisted_phone_numbers = opt vec {};
     backup_canister_id = opt "ai7t5-aibaq-aaaaa-aaaaa-c";
-    ii_canister_id = null;
+    ii_canister_id = opt principal "rdmx6-jaaaa-aaaaa-aaadq-cai";
     whitelisted_canisters = opt vec { principal "ai7t5-aibaq-aaaaa-aaaaa-c" };
     git_branch = opt "master";
-    lambda = principal "%s";
-    token_refresh_ttl = 20 : nat64;
+    lambda = opt principal "%s";
+    token_refresh_ttl = opt (20 : nat64);
     heartbeat = opt (0 : nat32);
-    token_ttl = 30 : nat64;
+    token_ttl = opt (30 : nat64);
     commit_hash = opt "test_commit";
   },
 )
