@@ -44,6 +44,7 @@ impl<T: ApplicationRepoTrait, N: AccountRepoTrait> ApplicationServiceTrait for A
     }
 
     fn is_over_the_limit(&self, domain: &String) -> bool {
+        let default_limit = 5;
         match self.account_repo.get_account() {
             None => { false }
             Some(acc) => {
@@ -52,7 +53,7 @@ impl<T: ApplicationRepoTrait, N: AccountRepoTrait> ApplicationServiceTrait for A
                     .find(|l| l.domain.eq(domain))
                     .map(|x| x.user_limit)
                     .map(|x| compare_limits(&acc, &domain, x))
-                    .unwrap_or(false)
+                    .unwrap_or(compare_limits(&acc, &domain, default_limit))
             }
         }
     }
