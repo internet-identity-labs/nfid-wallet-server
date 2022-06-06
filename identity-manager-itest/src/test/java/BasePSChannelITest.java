@@ -12,7 +12,7 @@ public class BasePSChannelITest extends BaseDFXITest {
             call("common/use_default_persona");
             ROOT_IDENTITY = call("common/get_principal").trim();
             call("common/init_dfx_project");
-            var command = String.format(getScript("common/deploy_dfx_project").trim(), ROOT_IDENTITY);
+            var command = String.format(getScript("common/deploy_project").trim(), "pub_sub_channel");
             callDfxCommand(command);
             channel = call("common/req_create_topic");
 
