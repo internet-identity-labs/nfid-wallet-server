@@ -138,6 +138,18 @@ public class ApplicationITest extends BaseDFXITest {
         assertEquals(Optional.empty(), httpResponse.error);
     }
 
+    @Test(priority = 61)
+    public void isOverDefaultLimitExpectCorrectResponse() {
+        call("persona/req_create_persona"); //TODO migrate to new flow when account and persona classes ready
+        call("persona/req_create_persona");
+        call("persona/req_create_persona");
+        call("persona/req_create_persona");
+        call("persona/req_create_persona");
+        validateWithFormatIdentity("persona/exp_create_persona_over_limit_domain",  call("persona/req_create_persona"));
+        call("application/req_create_application_over_limit");
+        validateWithFormatIdentity("persona/exp_over_limit_for_app", call("application/req_is_over_limit"));
+    }
+
     private Application application(String domain, String name, int userLimit) {
         return Application.builder()
                 .domain(domain)
