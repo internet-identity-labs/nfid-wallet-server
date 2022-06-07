@@ -117,7 +117,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
                             .any(|l| (l.domain.eq(&domain) && l.domain_certified.is_none())) {
                             return to_error_response("No non certified persona with such domain");
                         }
-                        let mut personas = account.personas.clone().into_iter()
+                        let personas = account.personas.clone().into_iter()
                             .map(|mut l| {
                                 if l.domain.eq(&domain) {
                                     l.domain_certified = Some(ic_cdk::api::time())

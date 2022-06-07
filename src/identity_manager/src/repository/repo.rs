@@ -44,9 +44,6 @@ impl BasicEntity {
     pub fn get_created_date(self) -> u64 {
         self.created_date
     }
-    pub fn get_modified_date(self) -> u64 {
-        self.modified_date
-    }
     pub fn update_modified_date(mut self) -> u64 {
         self.modified_date = ic_service::get_time();
         self.modified_date
