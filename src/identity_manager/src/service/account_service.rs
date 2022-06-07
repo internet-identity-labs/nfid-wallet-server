@@ -49,8 +49,8 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
         if ic_service::is_anonymous(princ) {
             return to_error_response("User is anonymous");
         }
-        ic_service::trap_if_not_authenticated(account_request.anchor.clone(), get_caller()).await;
         let acc = account_request_to_account(account_request);
+        ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
         match { self.account_repo.create_account(acc.clone()) } {
             None => {
                 to_error_response("Impossible to link this II anchor, please try another one.")
