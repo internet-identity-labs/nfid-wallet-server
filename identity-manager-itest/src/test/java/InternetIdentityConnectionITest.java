@@ -79,7 +79,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
   }
 
   @Test(priority = 10)
-  public void createAccount_whenError() {
+  public void createAccountWhenError() {
     var accountRequest = new HTTPAccountRequest(10001l);
     
     try {
@@ -92,7 +92,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
 
   @Test(priority = 20)
   @SneakyThrows
-  public void createAccount_whenOk() {
+  public void createAccountWhenOk() {
     var anchor = register();
     var accountRequest = new HTTPAccountRequest(anchor);
 
@@ -103,7 +103,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
   }
 
   @Test(priority = 30)
-  public void createAccessPoint_whenError() {
+  public void createAccessPointWhenError() {
     var pbk = identity.derEncodedPublickey.clone();
     pbk[0] = 0;
     var accessPointRequest = new HTTPAccessPointRequest(pbk, "icon", "device", "browser");
@@ -118,7 +118,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
 
   @Test(priority = 40)
   @SneakyThrows
-  public void createAccessPoint_whenOk() {    
+  public void createAccessPointWhenOk() {    
     var accessPointRequest = new HTTPAccessPointRequest(identity.derEncodedPublickey, "icon", "device", "browser");
     var response = callUpdateHttp("create_access_point", IDLValue.create(accessPointRequest, new PojoSerializer()));
 
@@ -129,7 +129,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
 
   @Test(priority = 50)
   @SneakyThrows
-  public void recoverAccount_whenOk() {
+  public void recoverAccountWhenOk() {
     var response = callUpdateHttp("recover_account", IDLValue.create(10000l, Type.NAT64));
 
     assertEquals(200, response.statusCode.intValue());
@@ -138,7 +138,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
   }
 
   @Test(priority = 60)
-  public void recoverAccount_whenError() {
+  public void recoverAccountWhenError() {
     try {
       callUpdateHttp("recover_account", IDLValue.create(10002l, Type.NAT64));
       assertTrue(false);
