@@ -20,3 +20,4 @@ identity_manager.wasm
 pub_sub_channel.wasm
 im_addition.wasm
 verifier.wasm
+internet_identity.wasm
