@@ -20,7 +20,7 @@ pub struct Configuration {
     pub whitelisted_phone_numbers: Vec<String>,
     pub heartbeat: Option<u32>,
     pub backup_canister_id: Option<String>,
-    pub ii_canister_id: Principal,
+    pub ii_canister_id: Option<Principal>,
     pub whitelisted_canisters: Option<Vec<Principal>>,
     pub env: Option<String>,
     pub git_branch: Option<String>,
@@ -43,6 +43,9 @@ pub struct BasicEntity {
 impl BasicEntity {
     pub fn get_created_date(self) -> u64 {
         self.created_date
+    }
+    pub fn get_modified_date(self) -> u64 {
+        self.modified_date
     }
     pub fn update_modified_date(mut self) -> u64 {
         self.modified_date = ic_service::get_time();
