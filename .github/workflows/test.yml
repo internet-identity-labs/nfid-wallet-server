@@ -25,8 +25,8 @@ jobs:
 
       - name: Install Rust
         run: |
-          rustup update 1.57.0 --no-self-update
-          rustup default 1.57.0
+          rustup update 1.59.0 --no-self-update
+          rustup default 1.59.0
           rustup target add wasm32-unknown-unknown
 
       - name: Install DFX
