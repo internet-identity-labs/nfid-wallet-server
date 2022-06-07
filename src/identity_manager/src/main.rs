@@ -43,6 +43,7 @@ mod http;
 mod repository;
 mod mapper;
 mod util;
+#[cfg(test)]
 mod tests;
 mod container;
 mod logger;
