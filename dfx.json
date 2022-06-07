@@ -35,6 +35,11 @@
       "candid": "src/verifier/verifier.did",
       "wasm": "verifier.wasm",
       "type": "custom"
+    },
+    "internet_identity_test": {
+      "type": "custom",
+      "candid": "src/internet_identity_test/internet_identity.did",
+      "wasm": "src/internet_identity_test/internet_identity.wasm"
     }
   },
   "networks": {

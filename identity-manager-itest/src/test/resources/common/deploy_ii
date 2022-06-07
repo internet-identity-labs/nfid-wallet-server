@@ -1,0 +1,1 @@
+dfx deploy internet_identity_test --no-wallet --argument '(null)'
