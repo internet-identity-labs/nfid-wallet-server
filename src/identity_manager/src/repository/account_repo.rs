@@ -29,12 +29,13 @@ pub struct Account {
 #[cfg_attr(test, mocked)]
 pub trait AccountRepoTrait {
     fn get_account(&self) -> Option<Account>;
+    fn get_account_by_principal(&self, princ: String) -> Option<Account>;
     fn get_account_by_anchor(&self, anchor: u64) -> Option<Account>;
     fn create_account(&self, account: Account) -> Option<Account>;
     fn store_account(&self, account: Account) -> Option<Account>;
     fn remove_account(&self) -> Option<Account>;
     fn exists(&self, principal: &Principal) -> bool;
-    fn update_account_index_with_pub_key(&self, additional_key: String);
+    fn update_account_index_with_pub_key(&self, additional_key: String, princ: String);
     fn update_account_index(&self, additional_principal_id: String);
     fn get_accounts(&self, ids: Vec<String>) -> Vec<Account>;
     fn get_all_accounts(&self) -> Vec<Account>;
@@ -48,6 +49,20 @@ pub struct AccountRepo {}
 impl AccountRepoTrait for AccountRepo {
     fn get_account(&self) -> Option<Account> {
         let princ = ic_service::get_caller().to_text();
+        let index = storage::get_mut::<PrincipalIndex>();
+        let accounts = storage::get_mut::<Accounts>();
+        match index.get_mut(&princ) {
+            None => { None }
+            Some(key) => {
+                match accounts.get(key) {
+                    None => { None }
+                    Some(acc) => { Option::from(acc.to_owned()) }
+                }
+            }
+        }
+    }
+
+    fn get_account_by_principal(&self, princ: String) -> Option<Account> {
         let index = storage::get_mut::<PrincipalIndex>();
         let accounts = storage::get_mut::<Accounts>();
         match index.get_mut(&princ) {
@@ -103,8 +118,7 @@ impl AccountRepoTrait for AccountRepo {
         storage::get::<Accounts>().contains_key(&principal.to_text())
     }
 
-    fn update_account_index_with_pub_key(&self, additional_principal_id: String) {
-        let princ = ic_service::get_caller().to_text();
+    fn update_account_index_with_pub_key(&self, additional_principal_id: String, princ: String) {
         let index = storage::get_mut::<PrincipalIndex>();
         index.insert(additional_principal_id, princ);
     }

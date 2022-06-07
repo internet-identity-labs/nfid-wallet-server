@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use crate::http::requests::AccountResponse;
-use crate::{Account, HttpResponse};
+use crate::{Account, get_caller, HttpResponse};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 
 use crate::repository::account_repo::AccountRepoTrait;
@@ -10,11 +10,13 @@ use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
 use crate::util::validation_util::validate_name;
+use async_trait::async_trait;
 
-
+#[async_trait(?Send)]
 pub trait AccountServiceTrait {
-    fn get_account(&mut self) -> HttpResponse<AccountResponse>;
-    fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse>;
+    fn get_account_response(&mut self) -> HttpResponse<AccountResponse>;
+    fn get_account(&mut self) -> Option<Account>;
+    async fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse>;
     fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
     fn remove_account(&mut self) -> HttpResponse<bool>;
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
@@ -29,20 +31,25 @@ pub struct AccountService<T, N> {
     pub phone_number_repo: N,
 }
 
+#[async_trait(?Send)]
 impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for AccountService<T, N> {
-    fn get_account(&mut self) -> HttpResponse<AccountResponse> {
+    fn get_account_response(&mut self) -> HttpResponse<AccountResponse> {
         match self.account_repo.get_account() {
             Some(content) => to_success_response(account_to_account_response(content.clone())),
             None => to_error_response("Unable to find Account")
         }
     }
 
-    fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse> {
+    fn get_account(&mut self) -> Option<Account> {
+       self.account_repo.get_account()
+    }
+
+    async fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse> {
         let princ = ic_service::get_caller().to_text();
         if ic_service::is_anonymous(princ) {
             return to_error_response("User is anonymous");
         }
-
+        ic_service::trap_if_not_authenticated(account_request.anchor.clone(), get_caller()).await;
         let acc = account_request_to_account(account_request);
         match { self.account_repo.create_account(acc.clone()) } {
             None => {
