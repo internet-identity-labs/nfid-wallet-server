@@ -57,7 +57,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
                     return to_error_response("Access Point exists.");
                 }
                 access_points.insert(access_point.clone());
-                self.access_point_repo.store_access_points(access_points.clone());
+                self.access_point_repo.store_access_points_by_principal(access_points.clone(), acc.principal_id.clone());
                 self.access_point_repo.update_account_index(access_point.principal_id, acc.principal_id);
                 let response: Vec<AccessPointResponse> = access_points.into_iter()
                     .map(access_point_to_access_point_response)
