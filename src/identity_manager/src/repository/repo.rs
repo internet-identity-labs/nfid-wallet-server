@@ -70,6 +70,9 @@ impl AdminRepo {
 impl ConfigurationRepo {
     //todo fix Principle not implement default!
     pub fn get() -> &'static Configuration {
+        if (storage::get::<Option<Configuration>>()).is_none() {
+            ConfigurationRepo::save(ConfigurationRepo::get_default_config());
+        }
         storage::get::<Option<Configuration>>().as_ref().unwrap()
     }
 
@@ -79,6 +82,23 @@ impl ConfigurationRepo {
 
     pub fn save(configuration: Configuration) -> () {
         storage::get_mut::<Option<Configuration>>().replace(configuration);
+    }
+
+    pub fn get_default_config() -> Configuration {
+        let lambda = Principal::self_authenticating("mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe");
+        Configuration {
+            lambda: lambda,
+            token_ttl: Duration::from_secs(60),
+            token_refresh_ttl: Duration::from_secs(60),
+            whitelisted_phone_numbers: Vec::default(),
+            heartbeat: Option::None,
+            backup_canister_id: None,
+            ii_canister_id: Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap(),
+            whitelisted_canisters: None,
+            env: None,
+            git_branch: None,
+            commit_hash: None,
+        }
     }
 }
 
