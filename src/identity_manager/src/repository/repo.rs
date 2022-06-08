@@ -71,7 +71,7 @@ impl ConfigurationRepo {
     //todo fix Principle not implement default!
     pub fn get() -> &'static Configuration {
         if (storage::get::<Option<Configuration>>()).is_none() {
-            ConfigurationRepo::save(ConfigurationRepo::get_default_config())
+            ConfigurationRepo::save(ConfigurationRepo::get_default_config());
         }
         storage::get::<Option<Configuration>>().as_ref().unwrap()
     }
