@@ -50,7 +50,7 @@ public class ApplicationITest extends BaseDFXITest {
             Path path = Paths.get(this.getClass().getClassLoader().getResource("identity/identity.pem").getPath());
             Identity identity = BasicIdentity.fromPEMFile(path);
 
-            identity_manager = callDfxCommand(String.format("dfx canister call %s configure '(record {})'", "identity_manager", ROOT_IDENTITY, TTL, TTL_REFRESH));
+            identity_manager = callDfxCommand(String.format("dfx canister call %s configure '(record {env = opt \"test\";})'", "identity_manager"));
 
             ReplicaTransport transport = ReplicaJavaHttpTransport.create(icLocation);
             agent = new AgentBuilder().transport(transport).identity(identity).build();

@@ -43,6 +43,7 @@ mod http;
 mod repository;
 mod mapper;
 mod util;
+#[cfg(test)]
 mod tests;
 mod container;
 mod logger;
@@ -104,7 +105,7 @@ async fn sync_recovery_phrases() -> () {
         let anchor = account.anchor;
         let devices: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor.clone(), 0)).await {
             Ok((res, )) => res,
-            Err((_, err)) => Vec::new()
+            Err(_) => Vec::new()
         };
 
         for device in devices {
@@ -176,13 +177,9 @@ async fn use_access_point() -> HttpResponse<AccessPointResponse> {
 #[replicate_account]
 #[log_error]
 #[collect_metrics]
-async fn create_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
+async fn create_access_point(access_point_request: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
-    let response = access_point_service.create_access_point(access_point.clone());
-    if response.error.is_none() {
-        ic_service::trap_if_not_authenticated(get_account_service().get_account().data.unwrap().anchor,
-                                              Principal::self_authenticating(access_point.pub_key.clone())).await;
-    }
+    let response = access_point_service.create_access_point(access_point_request.clone()).await;
     response
 }
 
@@ -235,10 +232,7 @@ async fn post_token(request: TokenRequest) -> Response {
 #[collect_metrics]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
-    let response = account_service.create_account(account_request.clone());
-    if response.error.is_none() {  //todo migrate to macros
-        ic_service::trap_if_not_authenticated(account_request.anchor.clone(), get_caller()).await;
-    }
+    let response = account_service.create_account(account_request.clone()).await;
     response
 }
 
@@ -272,14 +266,14 @@ async fn update_account(account_request: AccountUpdateRequest) -> HttpResponse<A
 #[query]
 async fn get_account() -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
-    account_service.get_account()
+    account_service.get_account_response()
 }
 
 #[query]
 #[admin]
 #[log_error]
 async fn certify_phone_number_sha2(principal_id: String, domain: String) -> HttpResponse<String> {
-    let mut account_service = get_account_service();
+    let account_service = get_account_service();
     account_service.certify_phone_number_sha2(principal_id, domain)
 }
 

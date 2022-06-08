@@ -19,6 +19,5 @@ fn anchor_ex_test() {
     let ar = AccountRepo {};
     ar.store_account(acc);
     let a = is_anchor_exists(123);
-    let t = Principal::from_text("qoctq-giaaa-aaaaa-aaaea-cai").unwrap();
     assert!(a)
 }

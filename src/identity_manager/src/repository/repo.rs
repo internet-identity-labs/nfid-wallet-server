@@ -104,7 +104,7 @@ pub fn pre_upgrade() {
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin, logs, monitor_data, logs_new): (Vec<Account>, Principal, Logs, Option<canistergeek_ic_rust::monitor::PostUpgradeStableData>, Option<canistergeek_ic_rust::logger::PostUpgradeStableData>) = storage::stable_restore().unwrap();
+    let (old_accs, admin, _logs, monitor_data, logs_new): (Vec<Account>, Principal, Logs, Option<canistergeek_ic_rust::monitor::PostUpgradeStableData>, Option<canistergeek_ic_rust::logger::PostUpgradeStableData>) = storage::stable_restore().unwrap();
     let mut phone_numbers = HashSet::default();
     storage::get_mut::<Option<Principal>>().replace(admin);
     for u in old_accs {

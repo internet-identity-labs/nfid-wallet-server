@@ -30,9 +30,11 @@ impl Hash for AccessPoint {
 
 pub trait AccessPointRepoTrait {
     fn get_access_points(&self) -> Option<HashSet<AccessPoint>>;
+    fn get_access_points_by_principal(&self, princ: String) -> Option<HashSet<AccessPoint>>;
     fn use_access_point(&self, ap_principal: String, time: u64) -> Option<AccessPoint>;
     fn store_access_points(&self, access_points: HashSet<AccessPoint>) -> Option<Account>;
-    fn update_account_index(&self, principal_id: String);
+    fn store_access_points_by_principal(&self, access_points: HashSet<AccessPoint>, root_princ: String) -> Option<Account>;
+    fn update_account_index(&self, additional_principal_id: String, root_princ: String);
 }
 
 #[derive(Default)]
@@ -43,6 +45,11 @@ pub struct AccessPointRepo {
 impl AccessPointRepoTrait for AccessPointRepo {
     fn get_access_points(&self) -> Option<HashSet<AccessPoint>> {
         self.account_repo.get_account()
+            .map(|x| x.access_points.clone()) //todo &
+    }
+
+    fn get_access_points_by_principal(&self, princ: String) -> Option<HashSet<AccessPoint>> {
+        self.account_repo.get_account_by_principal(princ)
             .map(|x| x.access_points.clone()) //todo &
     }
 
@@ -70,7 +77,15 @@ impl AccessPointRepoTrait for AccessPointRepo {
         resp
     }
 
-    fn update_account_index(&self, principal_id: String) {
-        self.account_repo.update_account_index_with_pub_key(principal_id)
+    fn store_access_points_by_principal(&self, access_points: HashSet<AccessPoint>, root_princ: String) -> Option<Account> {
+        let mut acc = self.account_repo.get_account_by_principal(root_princ)
+            .unwrap().clone();
+        acc.access_points = access_points.clone();
+        let resp = self.account_repo.store_account(acc);
+        resp
+    }
+
+    fn update_account_index(&self, additional_principal_id: String, root_princ: String) {
+        self.account_repo.update_account_index_with_pub_key(additional_principal_id, root_princ)
     }
 }

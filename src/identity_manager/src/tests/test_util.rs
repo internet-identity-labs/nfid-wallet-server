@@ -12,17 +12,17 @@ pub fn init_config(){
         backup_canister_id: Option::Some("rrkah-fqaaa-aaaaa-aaaaq-cai".to_string()),
         ii_canister_id: Principal::anonymous(),
         whitelisted_canisters: Option::None,
-        env: None,
+        env: Option::Some("test".to_string()),
         git_branch: None,
         commit_hash: None
     };
     ConfigurationRepo::save(a);
 }
 
-pub fn create_default_account(){
+pub(crate) async fn create_default_account(){
     let acc = AccountRequest {
         anchor: 5,
     };
     let mut account_service = get_account_service();
-    account_service.create_account(acc);
+    account_service.create_account(acc).await;
 }

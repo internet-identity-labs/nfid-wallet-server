@@ -6,6 +6,7 @@ use crate::repository::phone_number_repo::{PhoneNumberRepo};
 use crate::repository::repo::BasicEntity;
 
 use crate::tests::test_util::init_config;
+use async_std::test;
 
 // #[test]
 // fn test_get_account_expect_acc_frm_trait() {
@@ -28,8 +29,8 @@ use crate::tests::test_util::init_config;
 //     assert_eq!(5, acc_serv.get_account().data.unwrap().anchor);
 // }
 
-#[test]
-fn test_get_account_e2e() {
+#[async_std::test]
+async fn test_get_account_e2e() {
     init_config();
     let v = Account {
         anchor: 5,
@@ -47,12 +48,12 @@ fn test_get_account_e2e() {
         account_repo: ar,
         phone_number_repo: PhoneNumberRepo {},
     };
-    assert_eq!(5, acc_serv.get_account().data.unwrap().anchor);
-    assert_eq!(ic_service::get_caller().to_text(), acc_serv.get_account().data.unwrap().principal_id);
+    assert_eq!(5, acc_serv.get_account().unwrap().anchor);
+    assert_eq!(ic_service::get_caller().to_text(), acc_serv.get_account().unwrap().principal_id);
 }
 
-#[test]
-fn test_base_entity_on_account_create() {
+#[async_std::test]
+async fn test_base_entity_on_account_create() {
     init_config();
     let v = AccountRequest {
         anchor: 10
@@ -62,13 +63,14 @@ fn test_base_entity_on_account_create() {
         phone_number_repo: PhoneNumberRepo {},
     };
     let acc_repo = AccountRepo {};
-    assert_eq!(10, acc_serv.create_account(v).data.unwrap().anchor);
+    let anch = acc_serv.create_account(v).await.data.unwrap().anchor;
+    assert_eq!(10, anch);
     assert_eq!(123456789, acc_repo.get_account().unwrap().base_fields.get_modified_date());
     assert_eq!(123456789, acc_repo.get_account().unwrap().base_fields.get_created_date());
 }
 
-#[test]
-fn test_base_entity_on_account_update() {
+#[async_std::test]
+async fn test_base_entity_on_account_update() {
     init_config();
     let v = AccountRequest {
         anchor: 11
@@ -79,7 +81,7 @@ fn test_base_entity_on_account_update() {
         phone_number_repo: PhoneNumberRepo {},
     };
     let acc_repo = AccountRepo {};
-    assert_eq!(11, acc_serv.create_account(v).data.unwrap().anchor);
+    assert_eq!(11, acc_serv.create_account(v).await.data.unwrap().anchor);
     let vv = AccountUpdateRequest {
         name: Option::from("321".to_string())
     };
