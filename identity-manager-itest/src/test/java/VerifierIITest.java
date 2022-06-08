@@ -1,11 +1,12 @@
 import lombok.SneakyThrows;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-
+@Ignore
 public class VerifierIITest extends BaseDFXITest {
 
     @BeforeClass
