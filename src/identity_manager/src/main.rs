@@ -57,19 +57,19 @@ async fn init() -> () {
 #[admin]
 #[collect_metrics]
 async fn configure(request: ConfigurationRequest) -> () {
-    let lambda = Principal::self_authenticating("mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe");
+    let default = ConfigurationRepo::get_default_config();
     let configuration = Configuration {
-        lambda: request.lambda.unwrap_or(lambda),
-        token_ttl: Duration::from_secs(request.token_ttl.unwrap_or(60)),
-        token_refresh_ttl: Duration::from_secs(request.token_refresh_ttl.unwrap_or(60)),
-        whitelisted_phone_numbers: request.whitelisted_phone_numbers.unwrap_or(Vec::default()),
-        heartbeat: request.heartbeat,
-        backup_canister_id: request.backup_canister_id,
-        ii_canister_id: request.ii_canister_id.unwrap_or(Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()),
-        whitelisted_canisters: request.whitelisted_canisters,
-        env: request.env,
-        git_branch: request.git_branch,
-        commit_hash: request.commit_hash,
+        lambda: request.lambda.unwrap_or(default.lambda),
+        token_ttl: if request.token_ttl.is_some() { Duration::from_secs(request.token_ttl.unwrap()) } else { default.token_ttl },
+        token_refresh_ttl: if request.token_ttl.is_some() { Duration::from_secs(request.token_refresh_ttl.unwrap()) } else { default.token_refresh_ttl },
+        whitelisted_phone_numbers: if request.whitelisted_phone_numbers.is_some() { request.whitelisted_phone_numbers.unwrap() } else { default.whitelisted_phone_numbers },
+        heartbeat: if request.heartbeat.is_some() { request.heartbeat } else { default.heartbeat },
+        backup_canister_id: if request.backup_canister_id.is_some() { request.backup_canister_id } else { default.backup_canister_id },
+        ii_canister_id: if request.ii_canister_id.is_some() { request.ii_canister_id.unwrap() } else { default.ii_canister_id },
+        whitelisted_canisters: if request.whitelisted_canisters.is_some() { request.whitelisted_canisters } else { default.whitelisted_canisters },
+        env: if request.env.is_some() { request.env } else { default.env },
+        git_branch: if request.git_branch.is_some() { request.git_branch } else { default.git_branch },
+        commit_hash: if request.commit_hash.is_some() { request.commit_hash } else { default.commit_hash },
     };
     ConfigurationRepo::save(configuration);
 }

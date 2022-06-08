@@ -46,12 +46,6 @@ type Response = record {
     status_code: nat16;
 };
 
-type EmptyHttpResponse = record {
-     data: opt text;
-     error: opt Error;
-     status_code: nat16;
- };
-
 type BasicEntity = record {
     created_date: nat64;
     modified_date: nat64;
@@ -109,13 +103,6 @@ type PersonaRequest = record {
 type PersonaResponse = record {
     persona_id: text;
     domain: text;
-    persona_name: text;
-};
-
-type Persona = record {
-    persona_id: text;
-    domain: text;
-    basic_entity: BasicEntity;
     persona_name: text;
 };
 
