@@ -316,7 +316,6 @@ type CanisterCyclesAggregatedData = vec nat64;
 service : () -> {
   configure: (ConfigurationRequest) -> ();
   get_config: () -> (ConfigurationResponse);
-  sync_recovery_phrases: () -> ();
   anchors: () -> (HTTPAnchorsResponse) query;
 
   get_account: () -> (HTTPAccountResponse) query;
