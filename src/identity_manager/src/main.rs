@@ -24,7 +24,7 @@ use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, Valida
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
-use canister_api_macros::{log_error, replicate_account, admin, collect_metrics};
+use canister_api_macros::{log_error, replicate_account, admin, lambda, collect_metrics};
 use crate::ic_service::get_caller;
 use crate::replica_service::HearthCount;
 use crate::service::credential_service::CredentialServiceTrait;
