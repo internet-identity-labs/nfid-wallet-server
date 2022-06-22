@@ -204,6 +204,14 @@ async fn get_account_by_anchor(anchor: u64) -> HttpResponse<AccountResponse> {
     response
 }
 
+#[query]
+#[lambda]
+async fn get_account_by_principal(princ: String) -> HttpResponse<AccountResponse> {
+    let mut account_service = get_account_service();
+    let response = account_service.get_account_by_principal(princ);
+    response
+}
+
 #[update]
 #[log_error]
 #[replicate_account]

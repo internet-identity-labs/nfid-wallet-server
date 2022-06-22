@@ -1,0 +1,1 @@
+dfx canister call %s get_account_by_principal '("%s")'
