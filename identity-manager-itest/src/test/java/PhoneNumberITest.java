@@ -70,6 +70,16 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
         assertEquals(actual, expected);
     }
 
+    @Test(priority = 22)
+    public void validatePhoneWhenPhoneNumberNotExistByAccessPoint() {
+        String accessPoint = call("device/req_create_access_point");
+        String principle = TestUtils.cutField(accessPoint, "principal_id").second().split("\"")[1];
+        var actual = command("request/validate_phone", principle, PHONE_SHA2);
+        System.out.println(actual);
+        var expected = get("response/response", "null", "200");
+        assertEquals(actual, expected);
+    }
+
     @Test(priority = 31)
     public void postTokenWhenPhoneNumberNotExist() {
         var actual = command("request/post_token", PHONE, PHONE_SHA2, TOKEN, ROOT_IDENTITY);

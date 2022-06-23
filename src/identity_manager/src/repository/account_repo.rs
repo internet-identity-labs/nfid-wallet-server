@@ -115,7 +115,7 @@ impl AccountRepoTrait for AccountRepo {
     }
 
     fn exists(&self, principal: &Principal) -> bool {
-        storage::get::<Accounts>().contains_key(&principal.to_text())
+        storage::get_mut::<PrincipalIndex>().contains_key(&principal.to_text())
     }
 
     fn update_account_index_with_pub_key(&self, additional_principal_id: String, princ: String) {
