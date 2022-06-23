@@ -137,7 +137,7 @@ pub fn post_upgrade() {
             storage::get_mut::<PrincipalIndex>().insert(x.principal_id, princ.clone());
         }
 
-        u.phone_number.map(|x| phone_numbers.insert(x.clone()));
+        u.phone_number_sha2.map(|x| phone_numbers.insert(x.clone()));
     }
     storage::get_mut::<Option<Principal>>().replace(admin);
     let pn_repo = PhoneNumberRepo {};
