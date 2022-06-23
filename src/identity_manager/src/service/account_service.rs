@@ -149,7 +149,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
     fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse> {
         match { self.account_repo.get_account_by_principal(princ) } {
             None => {
-                to_error_response("Anchor not registered.")
+                to_error_response("Principal not registered.")
             }
             Some(acc) => {
                 to_success_response(account_to_account_response(acc))
