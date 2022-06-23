@@ -19,6 +19,12 @@ public class AccountITest extends BaseIdentityManagerITest {
     }
 
     @Test(priority = 21)
+    public void getAccountCreatedInPreviousTestByPrincipal() {
+        String actual = call("account/req_get_account_by_principal", "identity_manager", ROOT_IDENTITY);
+        validateWithFormatIdentity("account/exp_account", actual);
+    }
+
+    @Test(priority = 21)
     public void getAccountPNSha2CreatedInPreviousTest() {
         var actual = command("account/req_get_pn_sha2", "identity_manager", ROOT_IDENTITY);
         var expected = get("response/response_error", "Phone number not verified", "404");

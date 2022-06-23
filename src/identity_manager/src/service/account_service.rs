@@ -22,6 +22,7 @@ pub trait AccountServiceTrait {
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
     fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String>;
     fn get_account_by_anchor(&mut self, anchor: u64) -> HttpResponse<AccountResponse>;
+    fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse>;
     fn get_all_accounts(&mut self) -> Vec<Account>;
 }
 
@@ -138,6 +139,17 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
         match { self.account_repo.get_account_by_anchor(anchor) } {
             None => {
                 to_error_response("Anchor not registered.")
+            }
+            Some(acc) => {
+                to_success_response(account_to_account_response(acc))
+            }
+        }
+    }
+
+    fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse> {
+        match { self.account_repo.get_account_by_principal(princ) } {
+            None => {
+                to_error_response("Principal not registered.")
             }
             Some(acc) => {
                 to_success_response(account_to_account_response(acc))
