@@ -6,7 +6,6 @@ import org.testng.annotations.Test;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-@Ignore
 public class VerifierIITest extends BaseDFXITest {
 
     @BeforeClass
@@ -73,7 +72,7 @@ public class VerifierIITest extends BaseDFXITest {
     public void verify_owner_of_certificate() {
         call("common/use_test_persona");
         var user = call("common/get_principal").trim();
-        String init_certificate = "dfx canister call verifier is_phone_number_approved '(\"" + user + "\")'";
+        String init_certificate = "dfx canister call verifier is_phone_number_approved '(\"" + user + "\", \"+380991111111_SHA2\")'";
         String key = callDfxCommand(init_certificate);
         assertEquals("(record { data = opt true; error = null; status_code = 200 : nat16 })\n", key);
     }
