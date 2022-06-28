@@ -29,9 +29,7 @@ import static org.testng.AssertJUnit.*;
 @Slf4j
 public class InternetIdentityConnectionITest extends BaseDFXITest {
     private BasicIdentity identity;
-    private BasicIdentity recoveryIdentity;
     private Agent agent;
-    private Agent recoveryAgent;
     private InternetIdentityProxy iiProxy;
     private Principal im;
 
@@ -58,8 +56,6 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
                 String icLocation = "http://localhost:8000";
                 ReplicaTransport transport = ReplicaJavaHttpTransport.create(icLocation);
                 identity = BasicIdentity.fromPEMFile(Paths.get(this.getClass().getClassLoader().getResource("identity/" + "identity.pem").getPath()));
-                recoveryIdentity = BasicIdentity.fromPEMFile(Paths.get(this.getClass().getClassLoader().getResource("identity/" + "recover_identity.pem").getPath()));
-                recoveryAgent = new AgentBuilder().transport(transport).identity(recoveryIdentity).build();
                 agent = new AgentBuilder().transport(transport).identity(identity).build();
                 im = Principal.fromString(imCanisterId);
 
@@ -174,15 +170,10 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
     public void recoverAccountWhenNotExistsInIdentityManager() {
         register();
         call("account/register_seed_phrase");
+        var path = Paths.get(this.getClass().getClassLoader().getResource("identity/" + "recover_identity.pem").getPath()).toAbsolutePath().toString();
+        callDfxCommand("dfx identity import testii " + path);
+        callDfxCommand("dfx identity use testii");
         callDfxCommand("dfx canister call identity_manager recover_account '(10000)'");
-        HttpResponse<Account> response = callRecoverUpdateHttp("recover_account", IDLValue.create(10000l, Type.NAT64));
-        var label = Label.createNamedLabel("access_points");
-        var account = IDLValue.create(response.data.get());
-        var acc_points = Arrays.asList(IDLValue.create(((TreeMap) account.getValue()).get(label), Type.VARIANT))
-                .stream()
-                .map(IDLValue::create)
-                .collect(Collectors.toList());
-        assertFalse(acc_points.isEmpty());
         String actual = call("account/req_get_account", "identity_manager");
         Pair<String, String> tuple = TestUtils.cutField(actual, "last_used");
         validateWithFormatIdentity("account/exp_account_recovered", tuple.first());
@@ -212,18 +203,6 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
     private HttpResponse callUpdateHttp(String methodName, IDLValue... idls) {
         var response = UpdateBuilder
                 .create(agent, im, methodName)
-                .arg(IDLArgs.create(Arrays.asList(idls)).toBytes())
-                .callAndWait(Waiter.create(120, 2));
-        return IDLArgs.fromBytes(response.get())
-                .getArgs()
-                .get(0)
-                .getValue(PojoDeserializer.create(), HttpResponse.class);
-    }
-
-    @SneakyThrows
-    private HttpResponse callRecoverUpdateHttp(String methodName, IDLValue... idls) {
-        var response = UpdateBuilder
-                .create(recoveryAgent, im, methodName)
                 .arg(IDLArgs.create(Arrays.asList(idls)).toBytes())
                 .callAndWait(Waiter.create(120, 2));
         return IDLArgs.fromBytes(response.get())
