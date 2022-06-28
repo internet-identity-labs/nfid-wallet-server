@@ -1,0 +1,1 @@
+dfx canister call internet_identity_test add '(10000, record { alias = "RecoveryDevice";  pubkey = blob "0*0\05\06\03+ep\03!\00B\05,\8d\da\b1\06\ab\fbr\0a~\a0\98\b01\f8\18Kd^xz,n\d6\ef>\97\e1\d4\f0"; key_type = variant { seed_phrase }; purpose = variant { authentication }; credential_id = null })'

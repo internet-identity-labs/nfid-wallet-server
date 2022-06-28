@@ -1,11 +1,14 @@
 use std::collections::HashSet;
+
+use async_trait::async_trait;
 use ic_cdk::export::Principal;
-use crate::{AccessPointRemoveRequest, AccountServiceTrait, get_account_service, ic_service};
-use crate::mapper::access_point_mapper::{access_point_request_to_access_point, access_point_to_access_point_response};
+
+use crate::{AccessPointRemoveRequest, Account, AccountServiceTrait, get_account_service, ic_service};
+use crate::ic_service::DeviceData;
+use crate::mapper::access_point_mapper::{access_point_request_to_access_point, access_point_to_access_point_response, recovery_device_data_to_access_point};
 use crate::repository::access_point_repo::{AccessPoint, AccessPointRepoTrait};
 use crate::requests::{AccessPointRequest, AccessPointResponse};
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
-use async_trait::async_trait;
 
 #[async_trait(? Send)]
 pub trait AccessPointServiceTrait {
@@ -14,6 +17,7 @@ pub trait AccessPointServiceTrait {
     async fn create_access_point(&self, access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>>;
     fn update_access_point(&self, access_point_request: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>>;
     fn remove_access_point(&self, access_point: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>>;
+    fn migrate_recovery_device(&self, device_data: DeviceData, account: &Account) -> Account;
 }
 
 #[derive(Default)]
@@ -66,6 +70,16 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
             }
             None => to_error_response("Unable to find Account.")
         }
+    }
+
+    fn migrate_recovery_device(&self, device_data: DeviceData, account: &Account) -> Account {
+        let mut devices = HashSet::new();
+        let ap = recovery_device_data_to_access_point(device_data);
+        let princ = ap.principal_id.clone();
+        devices.insert(ap);
+        let acc = self.access_point_repo.store_access_points_by_principal(devices, account.principal_id.clone());
+        self.access_point_repo.update_account_index(princ, account.principal_id.clone());
+        acc.unwrap()
     }
 
     fn update_access_point(&self, access_point_request: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {

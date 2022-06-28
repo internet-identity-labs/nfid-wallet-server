@@ -4,12 +4,12 @@ use crate::ConfigurationRepo;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use serde_bytes::ByteBuf;
 
-type CredentialId = ByteBuf;
-type PublicKey = ByteBuf;
-type DeviceKey = PublicKey;
+pub type CredentialId = ByteBuf;
+pub type PublicKey = ByteBuf;
+pub type DeviceKey = PublicKey;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-enum Purpose {
+pub enum Purpose {
     #[serde(rename = "recovery")]
     Recovery,
     #[serde(rename = "authentication")]
@@ -17,16 +17,16 @@ enum Purpose {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-struct DeviceData {
-    pubkey: DeviceKey,
-    alias: String,
-    credential_id: Option<CredentialId>,
-    purpose: Purpose,
-    key_type: KeyType,
+pub struct DeviceData {
+    pub pubkey: DeviceKey,
+    pub alias: String,
+    pub credential_id: Option<CredentialId>,
+    pub purpose: Purpose,
+    pub key_type: KeyType,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
-enum KeyType {
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
+pub enum KeyType {
     #[serde(rename = "unknown")]
     Unknown,
     #[serde(rename = "platform")]
@@ -67,10 +67,10 @@ pub fn is_anonymous(princ: String) -> bool {
     princ.len() < 10
 }
 
-pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) {
+pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) -> Vec<DeviceData> {
     if ConfigurationRepo::get().env.as_ref().is_some()
         && ConfigurationRepo::get().env.as_ref().unwrap().eq(&"test".to_string()) {
-        return;
+        return Vec::default();
     }
 
     let ii_canister = ConfigurationRepo::get().ii_canister_id;
@@ -82,6 +82,7 @@ pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) {
     };
 
     verify(principal, res.iter().map(|e| &e.pubkey));
+    res
 }
 
 fn verify<'a>(princ: Principal, public_keys: impl Iterator<Item=&'a PublicKey>) {

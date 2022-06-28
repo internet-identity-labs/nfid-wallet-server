@@ -21,7 +21,8 @@ pub struct Account {
     pub name: Option<String>,
     pub phone_number: Option<String>,
     pub phone_number_sha2: Option<String>,
-    pub personas: Vec<Persona>, //TODO hashSet
+    pub personas: Vec<Persona>,
+    //TODO hashSet
     pub access_points: HashSet<AccessPoint>,
     pub base_fields: BasicEntity,
 }
@@ -43,7 +44,7 @@ pub trait AccountRepoTrait {
     fn get_account_by_id(&self, princ: String) -> Option<Account>;
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct AccountRepo {}
 
 impl AccountRepoTrait for AccountRepo {
@@ -105,12 +106,18 @@ impl AccountRepoTrait for AccountRepo {
         Some(account)
     }
 
-    fn remove_account(&self) -> Option<Account> {
+    fn remove_account(&self) -> Option<Account> { //todo not properly tested, used for e2e tests
         let princ = ic_service::get_caller().to_text();
         let accounts = storage::get_mut::<Accounts>();
+        let mut index = storage::get_mut::<PrincipalIndex>();
         match accounts.remove(&princ) {
             None => { None }
-            Some(acc) => { Option::from(acc.to_owned()) }
+            Some(acc) => {
+                (&acc.access_points).into_iter()
+                    .for_each(|ap| { index.remove(&ap.principal_id); });
+                index.remove(&acc.principal_id.clone());
+                Option::from(acc.to_owned())
+            }
         }
     }
 

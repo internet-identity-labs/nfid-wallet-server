@@ -1,5 +1,3 @@
-
-
 use crate::{AccountRepo, AccountRequest, AccountService, AccountServiceTrait, AccountUpdateRequest, ic_service};
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::phone_number_repo::{PhoneNumberRepo};
@@ -7,6 +5,8 @@ use crate::repository::repo::BasicEntity;
 
 use crate::tests::test_util::init_config;
 use async_std::test;
+use crate::repository::access_point_repo::AccessPointRepo;
+use crate::service::access_point_service::AccessPointService;
 
 // #[test]
 // fn test_get_account_expect_acc_frm_trait() {
@@ -47,6 +47,7 @@ async fn test_get_account_e2e() {
     let mut acc_serv = AccountService {
         account_repo: ar,
         phone_number_repo: PhoneNumberRepo {},
+        access_point_service: AccessPointService { access_point_repo: AccessPointRepo { account_repo: ar } },
     };
     assert_eq!(5, acc_serv.get_account().unwrap().anchor);
     assert_eq!(ic_service::get_caller().to_text(), acc_serv.get_account().unwrap().principal_id);
@@ -58,9 +59,11 @@ async fn test_base_entity_on_account_create() {
     let v = AccountRequest {
         anchor: 10
     };
+    let ar = AccountRepo {};
     let mut acc_serv = AccountService {
-        account_repo:  AccountRepo {},
+        account_repo: ar,
         phone_number_repo: PhoneNumberRepo {},
+        access_point_service: AccessPointService { access_point_repo: AccessPointRepo { account_repo: ar } },
     };
     let acc_repo = AccountRepo {};
     let anch = acc_serv.create_account(v).await.data.unwrap().anchor;
@@ -79,6 +82,7 @@ async fn test_base_entity_on_account_update() {
     let mut acc_serv = AccountService {
         account_repo: ar,
         phone_number_repo: PhoneNumberRepo {},
+        access_point_service: AccessPointService { access_point_repo: AccessPointRepo { account_repo: ar } },
     };
     let acc_repo = AccountRepo {};
     assert_eq!(11, acc_serv.create_account(v).await.data.unwrap().anchor);
