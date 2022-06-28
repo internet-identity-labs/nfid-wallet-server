@@ -7,24 +7,21 @@ import org.ic4j.candid.parser.IDLArgs;
 import org.ic4j.candid.parser.IDLValue;
 import org.ic4j.candid.pojo.PojoDeserializer;
 import org.ic4j.candid.pojo.PojoSerializer;
-import org.ic4j.candid.types.Label;
 import org.ic4j.candid.types.Type;
 import org.ic4j.internetidentity.*;
 import org.ic4j.types.Principal;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.internal.collections.Pair;
-import records.Account;
 import records.HTTPAccessPointRequest;
 import records.HTTPAccountRequest;
 import records.HttpResponse;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Slf4j
 public class InternetIdentityConnectionITest extends BaseDFXITest {
@@ -142,18 +139,6 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
             assertTrue(e.getMessage().contains("could not be authenticated"));
         }
     }
-
-
-    @Test(priority = 63)
-    @SneakyThrows
-    public void recoverAccountWhenNotExistsInIM() {
-        HttpResponse<Account> response = callUpdateHttp("recover_account", IDLValue.create(10000l, Type.NAT64));
-        assertEquals(200, response.statusCode.intValue());
-        assertTrue(response.error.isEmpty());
-        var aa = IDLValue.create(response.data.get());
-        assertTrue(response.data.isPresent());
-    }
-
 
     @Test(priority = 70)
     @SneakyThrows
