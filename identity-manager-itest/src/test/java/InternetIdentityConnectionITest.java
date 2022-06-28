@@ -153,7 +153,6 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
     @Test(priority = 71)
     @SneakyThrows
     public void recoverAccountWhenNotExistsInIdentityManager() {
-        register();
         call("account/register_seed_phrase");
         var path = Paths.get(this.getClass().getClassLoader().getResource("identity/" + "recover_identity.pem").getPath()).toAbsolutePath().toString();
         callDfxCommand("dfx identity import testii " + path);
