@@ -6,8 +6,8 @@ use crate::repository::token_repo::TokenRepo;
 use crate::service::access_point_service::AccessPointService;
 use crate::service::credential_service::CredentialService;
 
-pub fn get_account_service() -> AccountService<AccountRepo, PhoneNumberRepo> {
-    get!(&container![], AccountService<AccountRepo, PhoneNumberRepo>).unwrap()
+pub fn get_account_service() -> AccountService<AccountRepo, PhoneNumberRepo, AccessPointService<AccessPointRepo>> {
+    get!(&container![], AccountService<AccountRepo, PhoneNumberRepo, AccessPointService<AccessPointRepo>>).unwrap()
 }
 
 pub fn get_phone_number_service() -> PhoneNumberService<PhoneNumberRepo, TokenRepo, AccountRepo> {

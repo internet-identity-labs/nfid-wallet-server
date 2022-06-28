@@ -1,8 +1,12 @@
+use std::collections::HashSet;
+use async_trait::async_trait;
 use itertools::Itertools;
-use crate::http::requests::AccountResponse;
-use crate::{Account, get_caller, HttpResponse};
-use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 
+use crate::{AccessPointServiceTrait, Account, get_caller, HttpResponse};
+use crate::http::requests::AccountResponse;
+use crate::ic_service::{DeviceData, DeviceKey, KeyType};
+use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
+use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::account_repo::AccountRepoTrait;
 use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
 use crate::requests::{AccountRequest, AccountUpdateRequest};
@@ -10,9 +14,8 @@ use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
 use crate::util::validation_util::validate_name;
-use async_trait::async_trait;
 
-#[async_trait(?Send)]
+#[async_trait(? Send)]
 pub trait AccountServiceTrait {
     fn get_account_response(&mut self) -> HttpResponse<AccountResponse>;
     fn get_account(&mut self) -> Option<Account>;
@@ -23,17 +26,19 @@ pub trait AccountServiceTrait {
     fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String>;
     fn get_account_by_anchor(&mut self, anchor: u64) -> HttpResponse<AccountResponse>;
     fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse>;
+    async fn recover_account(&mut self, anchor: u64) -> HttpResponse<AccountResponse>;
     fn get_all_accounts(&mut self) -> Vec<Account>;
 }
 
 #[derive(Default)]
-pub struct AccountService<T, N> {
+pub struct AccountService<T, N, A> {
     pub account_repo: T,
     pub phone_number_repo: N,
+    pub access_point_service: A,
 }
 
-#[async_trait(?Send)]
-impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for AccountService<T, N> {
+#[async_trait(? Send)]
+impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for AccountService<T, N, A> {
     fn get_account_response(&mut self) -> HttpResponse<AccountResponse> {
         match self.account_repo.get_account() {
             Some(content) => to_success_response(account_to_account_response(content.clone())),
@@ -42,7 +47,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
     }
 
     fn get_account(&mut self) -> Option<Account> {
-       self.account_repo.get_account()
+        self.account_repo.get_account()
     }
 
     async fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse> {
@@ -50,13 +55,21 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
         if ic_service::is_anonymous(princ) {
             return to_error_response("User is anonymous");
         }
-        let acc = account_request_to_account(account_request);
-        ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
+        let mut acc = account_request_to_account(account_request);
+        let devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
         match { self.account_repo.create_account(acc.clone()) } {
             None => {
                 to_error_response("Impossible to link this II anchor, please try another one.")
             }
             Some(_) => {
+                let recovery_device = devices.into_iter()
+                    .find(|dd| dd.key_type.eq(&KeyType::SeedPhrase));
+                match recovery_device {
+                    None => {}
+                    Some(rd) => {
+                        acc = self.access_point_service.migrate_recovery_device(rd, &acc);
+                    }
+                }
                 to_success_response(account_to_account_response(acc))
             }
         }
@@ -152,6 +165,19 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait> AccountServiceTrait for Accou
                 to_error_response("Principal not registered.")
             }
             Some(acc) => {
+                to_success_response(account_to_account_response(acc))
+            }
+        }
+    }
+
+    async fn recover_account(&mut self, anchor: u64) -> HttpResponse<AccountResponse> {
+        match { self.account_repo.get_account_by_anchor(anchor) } {
+            None => {
+                let account = AccountRequest { anchor };
+                self.create_account(account).await
+            }
+            Some(acc) => {
+                ic_service::trap_if_not_authenticated(anchor.clone(), get_caller()).await;
                 to_success_response(account_to_account_response(acc))
             }
         }

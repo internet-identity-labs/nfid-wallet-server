@@ -26,7 +26,6 @@ public class HttpResponse<T> {
                 .map(IDLValue::create)
                 .map(l -> l.getValue(PojoDeserializer.create(), clazz))
                 .collect(Collectors.toList());
-
     }
 }
 
