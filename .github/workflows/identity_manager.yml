@@ -288,6 +288,7 @@ jobs:
           CANISTER_CONFIG_DATA: >-
             (
               record {
+                ii_canister_id = opt principal "wookt-ayaaa-aaaaj-addwq-cai";
                 lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                 commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
@@ -296,6 +297,7 @@ jobs:
           CANISTER_CONFIG_PROD_DATA: >-
             (
               record {
+                ii_canister_id = opt principal "rdmx6-jaaaa-aaaaa-aaadq-cai";
                 lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                 heartbeat = opt 900;
                 backup_canister_id = opt "bv5d4-nyaaa-aaaap-qaaba-cai";
