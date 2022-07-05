@@ -7,12 +7,14 @@
     "dev": "74gpt-tiaaa-aaaak-aacaa-cai",
     "ic": "bryxc-zqaaa-aaaal-aajga-cai"
   },
+  "internet_identity_test": {
+    "dev": "wookt-ayaaa-aaaaj-addwq-cai"
+  },
   "identity_manager_replica": {
     "ic": "bv5d4-nyaaa-aaaap-qaaba-cai"
   },
   "identity_manager_test_replica": {
-    "dev": "vwali-piaaa-aaaal-qatfq-cai",
-    "wallet": "wookt-ayaaa-aaaaj-addwq-cai"
+    "dev": "vwali-piaaa-aaaal-qatfq-cai"
   },
   "pub_sub_channel": {
     "dev": "iyvpb-uqaaa-aaaag-qabxa-cai"
