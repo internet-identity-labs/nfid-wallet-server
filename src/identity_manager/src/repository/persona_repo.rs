@@ -19,8 +19,15 @@ pub struct Persona {
 pub trait PersonaRepoTrait {
     fn get_personas(&self) -> Option<Vec<Persona>>;
     fn store_persona(&self, persona: Persona) -> Option<Account>;
+    fn store_personas(&self, persona: Vec<Persona>) -> Option<Account>;
 }
 
+impl PartialEq for Persona {
+    fn eq(&self, other: &Self) -> bool {
+        self.persona_id == other.persona_id
+        && self.domain == other.domain
+    }
+}
 #[derive(Default)]
 pub struct PersonaRepo {
     pub account_repo: AccountRepo,
@@ -29,7 +36,7 @@ pub struct PersonaRepo {
 impl PersonaRepoTrait for PersonaRepo {
     fn get_personas(&self) -> Option<Vec<Persona>> {
         self.account_repo.get_account()
-            .map(|x| x.personas.clone()) //todo &
+            .map(|x| x.personas)
     }
 
     fn store_persona(&self, persona: Persona) -> Option<Account> {
@@ -37,6 +44,14 @@ impl PersonaRepoTrait for PersonaRepo {
         if acc.is_none() { return None; }
         let mut account = acc.unwrap().clone();
         account.personas.push(persona);
+        self.account_repo.store_account(account)
+    }
+
+    fn store_personas(&self, personas: Vec<Persona>) -> Option<Account> {
+        let acc = self.account_repo.get_account();
+        if acc.is_none() { return None; }
+        let mut account = acc.unwrap().clone();
+        account.personas = personas;
         self.account_repo.store_account(account)
     }
 }

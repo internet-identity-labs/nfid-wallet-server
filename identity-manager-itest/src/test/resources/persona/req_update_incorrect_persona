@@ -1,0 +1,5 @@
+dfx canister call identity_manager update_persona '( record {
+            domain = "TEST_DOMAIN_INCORRECT";
+            persona_id = "PERSONA";
+            persona_name = "PERSONA_NAME_UPDATED";
+        })'

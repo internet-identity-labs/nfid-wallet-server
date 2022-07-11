@@ -3,7 +3,7 @@
     env = opt "test";
     whitelisted_phone_numbers = opt vec {};
     backup_canister_id = opt "ai7t5-aibaq-aaaaa-aaaaa-c";
-    ii_canister_id = opt principal "rdmx6-jaaaa-aaaaa-aaadq-cai";
+    ii_canister_id = opt principal "wookt-ayaaa-aaaaj-addwq-cai";
     whitelisted_canisters = opt vec { principal "ai7t5-aibaq-aaaaa-aaaaa-c" };
     git_branch = opt "master";
     lambda = opt principal "%s";

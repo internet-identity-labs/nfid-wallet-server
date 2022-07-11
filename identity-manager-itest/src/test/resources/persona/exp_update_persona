@@ -1,0 +1,25 @@
+(
+  record {
+    data = opt record {
+      name = null;
+      anchor = 12_345 : nat64;
+      access_points = vec {};
+      personas = vec {
+        record {
+          domain = "TEST_DOMAIN_DD";
+          persona_name = "TEST_NAME_DD";
+          persona_id = "TEST_ID_DD";
+        };
+        record {
+          domain = "TEST_DOMAIN";
+          persona_name = "PERSONA_NAME_UPDATED";
+          persona_id = "PERSONA";
+        };
+      };
+      principal_id = "%s";
+      phone_number = null;
+    };
+    error = null;
+    status_code = 200 : nat16;
+  },
+)
