@@ -38,4 +38,14 @@ public class PersonaITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("persona/exp_create_persona_over_limit_domain", call("persona/req_create_persona_over_limit_domain"));
     }
 
+    @Test(priority = 50)
+    public void updatePersona() {
+        validateWithFormatIdentity("persona/exp_update_persona", call("persona/req_update_persona"));
+    }
+
+    @Test(priority = 51)
+    public void updateUnExistentPersona() {
+        validateWithFormatIdentity("persona/exp_incorrect_update_persona", call("persona/req_update_incorrect_persona"));
+    }
+
 }

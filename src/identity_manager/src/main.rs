@@ -248,6 +248,14 @@ async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse
     persona_service.create_persona(persona)
 }
 
+#[update]
+#[log_error]
+#[replicate_account]
+async fn update_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
+    let persona_service = get_persona_service();
+    persona_service.update_persona(persona)
+}
+
 #[query]
 async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
     let persona_service = get_persona_service();

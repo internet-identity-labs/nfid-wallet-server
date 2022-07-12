@@ -327,6 +327,7 @@ service : () -> {
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
 
   create_persona: (PersonaRequest) -> (HTTPAccountResponse);
+  update_persona: (PersonaRequest) -> (HTTPAccountResponse);
   read_personas: () -> (HTTPPersonasResponse) query;
 
   validate_phone: (ValidatePhoneRequest) -> (Response);
