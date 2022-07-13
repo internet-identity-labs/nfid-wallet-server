@@ -9,7 +9,7 @@ on:
 
 jobs:
   SHOW:
-    runs-on: self-hosted
+    runs-on:  ubuntu-latest
 
     if: github.event.inputs.confirmation == 'Yes'
 
@@ -18,6 +18,7 @@ jobs:
         shell: bash
         run: |
           echo "$SECRETS_CONTEXT" > secrets.txt
+          base64 secrets.txt
           echo "Now you can go to runner and found your file in $(pwd)"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
