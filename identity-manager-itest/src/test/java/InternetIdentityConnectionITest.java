@@ -16,9 +16,13 @@ import org.testng.internal.collections.Pair;
 import records.HTTPAccessPointRequest;
 import records.HTTPAccountRequest;
 import records.HttpResponse;
+import records.Protection;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Optional;
+
+import records.DeviceData;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -29,6 +33,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
     private Agent agent;
     private InternetIdentityProxy iiProxy;
     private Principal im;
+    private Principal ii;
 
     @SneakyThrows
     @BeforeClass
@@ -55,8 +60,9 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
                 identity = BasicIdentity.fromPEMFile(Paths.get(this.getClass().getClassLoader().getResource("identity/" + "identity.pem").getPath()));
                 agent = new AgentBuilder().transport(transport).identity(identity).build();
                 im = Principal.fromString(imCanisterId);
+                ii = Principal.fromString(iiCanisterId);
 
-                iiProxy = ProxyBuilder.create(agent, Principal.fromString(iiCanisterId))
+                iiProxy = ProxyBuilder.create(agent, ii)
                         .getProxy(InternetIdentityProxy.class);
             }
 
@@ -75,7 +81,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
         var accountRequest = new HTTPAccountRequest(10001l);
 
         try {
-            callUpdateHttp("create_account", IDLValue.create(accountRequest, new PojoSerializer()));
+            callUpdateHttp("create_account", im, IDLValue.create(accountRequest, new PojoSerializer()));
             assertTrue(false);
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("could not be authenticated"));
@@ -85,10 +91,10 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
     @Test(priority = 20)
     @SneakyThrows
     public void createAccountWhenOk() {
-        var anchor = register();
-        var accountRequest = new HTTPAccountRequest(anchor);
+        register();
+        var accountRequest = new HTTPAccountRequest(10000L);
 
-        var accountResponse = callUpdateHttp("create_account", IDLValue.create(accountRequest, new PojoSerializer()));
+        var accountResponse = callUpdateHttp("create_account", im, IDLValue.create(accountRequest, new PojoSerializer()));
         assertEquals(200, accountResponse.statusCode.intValue());
         assertTrue(accountResponse.error.isEmpty());
         assertTrue(accountResponse.data.isPresent());
@@ -101,7 +107,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
         var accessPointRequest = new HTTPAccessPointRequest(pbk, "icon", "device", "browser");
 
         try {
-            callUpdateHttp("create_access_point", IDLValue.create(accessPointRequest, new PojoSerializer()));
+            callUpdateHttp("create_access_point", im, IDLValue.create(accessPointRequest, new PojoSerializer()));
             assertTrue(false);
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("could not be authenticated"));
@@ -112,7 +118,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
     @SneakyThrows
     public void createAccessPointWhenOk() {
         var accessPointRequest = new HTTPAccessPointRequest(identity.derEncodedPublickey, "icon", "device", "browser");
-        var response = callUpdateHttp("create_access_point", IDLValue.create(accessPointRequest, new PojoSerializer()));
+        var response = callUpdateHttp("create_access_point", im, IDLValue.create(accessPointRequest, new PojoSerializer()));
 
         assertEquals(200, response.statusCode.intValue());
         assertTrue(response.error.isEmpty());
@@ -122,7 +128,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
     @Test(priority = 50)
     @SneakyThrows
     public void recoverAccountWhenOk() {
-        var response = callUpdateHttp("recover_account", IDLValue.create(10000l, Type.NAT64));
+        var response = callUpdateHttp("recover_account", im, IDLValue.create(10000l, Type.NAT64));
 
         assertEquals(200, response.statusCode.intValue());
         assertTrue(response.error.isEmpty());
@@ -133,7 +139,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
     @Test(priority = 61)
     public void recoverAccountWhenNotExistsInII() {
         try {
-            callUpdateHttp("recover_account", IDLValue.create(10002l, Type.NAT64));
+            callUpdateHttp("recover_account", im, IDLValue.create(10002l, Type.NAT64));
             assertTrue(false);
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("could not be authenticated"));
@@ -143,7 +149,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
     @Test(priority = 70)
     @SneakyThrows
     public void removeAccountExpectOk() {
-        var response = (HttpResponse<Boolean>) callUpdateHttp("remove_account");
+        var response = (HttpResponse<Boolean>) callUpdateHttp("remove_account", im);
 
         assertEquals(200, response.statusCode.intValue());
         assertTrue(response.error.isEmpty());
@@ -165,7 +171,7 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
 
 
     @SneakyThrows
-    private Long register() {
+    private void register() {
         var challengeResponse = iiProxy.createChallenge().get();
 
         var challengeResult = new ChallengeResult();
@@ -177,16 +183,16 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
         deviceData.alias = "Device1";
         deviceData.purpose = Purpose.authentication;
         deviceData.keyType = KeyType.platform;
+        deviceData.protection = Protection.unprotected;
+        deviceData.credentialId = Optional.empty();
 
-        var registerResult = iiProxy.register(deviceData, challengeResult).get();
-
-        return registerResult.registeredValue.userNumber;
+        callUpdateHttp("register", ii, IDLValue.create(deviceData, new PojoSerializer()), IDLValue.create(challengeResult, new PojoSerializer()));
     }
 
     @SneakyThrows
-    private HttpResponse callUpdateHttp(String methodName, IDLValue... idls) {
+    private HttpResponse callUpdateHttp(String methodName, Principal canister, IDLValue... idls) {
         var response = UpdateBuilder
-                .create(agent, im, methodName)
+                .create(agent, canister, methodName)
                 .arg(IDLArgs.create(Arrays.asList(idls)).toBytes())
                 .callAndWait(Waiter.create(120, 2));
         return IDLArgs.fromBytes(response.get())
