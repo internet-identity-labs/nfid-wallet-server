@@ -1,8 +1,8 @@
 use std::time::Duration;
 use ic_cdk::{caller, storage, trap};
-use ic_cdk::export::Principal;
 
 use ic_cdk_macros::*;
+use service::ic_service::get_controllers;
 use service::{account_service, persona_service, phone_number_service};
 use crate::account_service::{AccountService, AccountServiceTrait};
 use crate::persona_service::{PersonaService, PersonaServiceTrait};
@@ -59,7 +59,7 @@ async fn configure(request: ConfigurationRequest) -> () {
         heartbeat: if request.heartbeat.is_some() { request.heartbeat } else { default.heartbeat },
         backup_canister_id: if request.backup_canister_id.is_some() { request.backup_canister_id } else { default.backup_canister_id },
         ii_canister_id: if request.ii_canister_id.is_some() { request.ii_canister_id.unwrap() } else { default.ii_canister_id },
-        whitelisted_canisters: if request.whitelisted_canisters.is_some() { request.whitelisted_canisters } else { default.whitelisted_canisters },
+        whitelisted_canisters: if request.whitelisted_canisters.is_some() { request.whitelisted_canisters } else { Some(get_controllers().await) },
         env: if request.env.is_some() { request.env } else { default.env },
         git_branch: if request.git_branch.is_some() { request.git_branch } else { default.git_branch },
         commit_hash: if request.commit_hash.is_some() { request.commit_hash } else { default.commit_hash },

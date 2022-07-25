@@ -1,0 +1,1 @@
+dfx canister update-settings --add-controller "%s" %s
