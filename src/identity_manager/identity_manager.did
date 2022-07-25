@@ -354,4 +354,6 @@ service : () -> {
   getCanisterMetrics: (GetMetricsParameters) -> (opt CanisterMetrics) query;
   getCanisterLog: (opt CanisterLogRequest) -> (opt CanisterLogResponse) query;
   collectCanisterMetrics: () -> ();
+
+  validate_signature: (text, text) -> (nat64, text) query;
 }
