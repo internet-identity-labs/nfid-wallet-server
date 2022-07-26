@@ -46,6 +46,8 @@ jobs:
         run: |
           dfx identity new test_admin
           cp -f identity-manager-itest/src/test/resources/identity/identity.pem ~/.config/dfx/identity/test_admin
+          cd identity-manager-itest
+          mvn test --no-transfer-progress
 
       - name: BE Integration Tests JS
         run: npm i && npm run test
