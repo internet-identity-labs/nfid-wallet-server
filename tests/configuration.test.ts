@@ -21,7 +21,7 @@ describe("configuration", () => {
         expect(result.whitelisted_phone_numbers[0]).to.be.an("array").that.is.empty;
         expect(result.backup_canister_id).to.be.an("array").that.is.empty;
         expect(result.ii_canister_id[0]?.toText()).to.be.equal("rdmx6-jaaaa-aaaaa-aaadq-cai");
-        expect(result.whitelisted_canisters[0].map(x => x.toString())).contain(configuration.principal);
+        expect(result.whitelisted_canisters).to.be.an("array").that.is.empty;
         expect(result.git_branch).to.be.an("array").that.is.empty;
         expect(result.lambda[0]?.toText()).to.be.equal("25uuv-mb7qi-uxovp-ucbzz-ddung-opxmb-ip4j2-nzrnk-sec53-jusbp-bae");
         expect(result.token_refresh_ttl[0]).to.be.equal(60n);
@@ -52,7 +52,7 @@ describe("configuration", () => {
         expect(configureResponse.whitelisted_phone_numbers[0]).to.be.an("array").that.is.empty;
         expect(configureResponse.backup_canister_id).to.be.an("array").that.is.empty;
         expect(configureResponse.ii_canister_id[0]?.toText()).to.be.equal("rdmx6-jaaaa-aaaaa-aaadq-cai");
-        expect(configureResponse.whitelisted_canisters[0].map(x => x.toString())).contain(configuration.principal);
+        expect(configureResponse.whitelisted_canisters).to.be.an("array").that.is.empty;
         expect(configureResponse.git_branch).to.be.an("array").that.is.empty;
         expect(configureResponse.lambda[0]?.toText()).to.be.equal("25uuv-mb7qi-uxovp-ucbzz-ddung-opxmb-ip4j2-nzrnk-sec53-jusbp-bae");
         expect(configureResponse.token_refresh_ttl[0]).to.be.equal(60n);

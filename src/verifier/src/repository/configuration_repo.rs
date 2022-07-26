@@ -14,6 +14,8 @@ pub struct ConfigurationRepo {}
 
 pub struct AdminRepo {}
 
+pub struct ControllersRepo {}
+
 
 impl ConfigurationRepo {
     //todo fix Principle not implement default!
@@ -38,5 +40,21 @@ impl AdminRepo {
 
     pub fn save(principal: Principal) -> () {
         storage::get_mut::<Option<Principal>>().replace(principal);
+    }
+}
+
+impl ControllersRepo {
+    pub fn get() -> Vec<Principal> {
+        storage::get_mut::<Vec<Principal>>().to_vec()
+    }
+
+    pub fn save(principals: Vec<Principal>) -> () {
+        let vec = storage::get_mut::<Vec<Principal>>();
+        vec.clear();
+        vec.extend(principals);
+    }
+
+    pub fn contains(principal: &Principal) -> bool {
+        storage::get_mut::<Vec<Principal>>().to_vec().contains(principal)
     }
 }

@@ -244,6 +244,7 @@ export interface _SERVICE {
   'remove_account' : () => Promise<BoolHttpResponse>,
   'restore_accounts' : (arg_0: string) => Promise<BoolHttpResponse>,
   'store_accounts' : (arg_0: Array<Account>) => Promise<BoolHttpResponse>,
+  'sync_controllers' : () => Promise<Array<string>>,
   'update_access_point' : (arg_0: AccessPointRequest) => Promise<
       HTTPAccessPointResponse
     >,

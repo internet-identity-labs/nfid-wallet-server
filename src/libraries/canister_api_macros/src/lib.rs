@@ -113,9 +113,10 @@ pub fn admin(_: TokenStream, item: TokenStream) -> TokenStream {
         #wrapper_sig {
             let caller = get_caller();
             if AdminRepo::get().eq(&caller)
-                    || (ConfigurationRepo::exists() &&
-                ConfigurationRepo::get().whitelisted_canisters.is_some() &&
-                ConfigurationRepo::get().whitelisted_canisters.as_ref().unwrap().contains(&caller)) {
+                    || ControllersRepo::contains(&caller)
+                    || (ConfigurationRepo::exists() 
+                        &&  ConfigurationRepo::get().whitelisted_canisters.is_some() 
+                        &&  ConfigurationRepo::get().whitelisted_canisters.as_ref().unwrap().contains(&caller)) {
                 #function_call
             } else {
                 trap("Unauthorized")

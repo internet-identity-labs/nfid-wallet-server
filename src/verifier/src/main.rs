@@ -19,7 +19,7 @@ use canister_api_macros::{admin, log_error, replicate_account, collect_metrics};
 use crate::credential_repo::Credential;
 use crate::http::request::ConfigurationRequest;
 use crate::http::responses::HttpResponse;
-use crate::repository::configuration_repo::{AdminRepo, Configuration, ConfigurationRepo};
+use crate::repository::configuration_repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo};
 use crate::repository::credential_repo;
 use crate::repository::token_repo::{resolve_certificate, Token, TokenKey};
 use crate::service::credential_service;

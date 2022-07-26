@@ -1,4 +1,4 @@
-use crate::{AccountRepo, Principal};
+use crate::{AccountRepo};
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::repo::is_anchor_exists;
 use crate::tests::test_util::init_config;

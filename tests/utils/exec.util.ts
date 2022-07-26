@@ -38,9 +38,6 @@ export const deploy = async (): Promise<Configuration> => {
     var imCanisterId: string;
     var exitCode: string;
 
-    const identity = getIdentity();
-    const principal = identity.getPrincipal().toString();
-
     do {
         execFile("/common/dfx_stop");
         exec("rm -rf .dfx");
@@ -50,12 +47,6 @@ export const deploy = async (): Promise<Configuration> => {
         execFile("/common/init_dfx_project_full");
         execFile("/common/deploy_im");
 
-        imCanisterId = execFile("/common/get_canister_id", "pipe", "identity_manager");
-
-        console.log(">> ", imCanisterId);
-
-        execFile("/common/add_controller", "inherit", imCanisterId, "identity_manager");
-        execFile("/common/add_controller", "inherit", principal, "identity_manager");
         exec("dfx canister call identity_manager configure '(record {env = opt \"test\"})'");
         
         exitCode = exec("echo $?", "pipe");
@@ -67,7 +58,16 @@ export const deploy = async (): Promise<Configuration> => {
         }
     } while(exitCode === "0");
 
+    imCanisterId = execFile("/common/get_canister_id", "pipe", "identity_manager");
+    console.log(">> ", imCanisterId);
+
+    const identity = getIdentity();
+    const principal = identity.getPrincipal().toString();
     const actor = await getActor(imCanisterId, identity);
+
+    execFile("/common/add_controller", "inherit", imCanisterId, "identity_manager");
+    execFile("/common/add_controller", "inherit", principal, "identity_manager");
+    execFile("/common/sync_controllers", "inherit");
 
     return {rootIdentity, principal, actor};
 };
