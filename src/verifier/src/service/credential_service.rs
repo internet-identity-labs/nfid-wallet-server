@@ -27,10 +27,10 @@ pub async fn generate_pn_token(domain: String) -> TokenKey {
     generate_token(principal, domain, token_key.clone())
 }
 
-pub fn is_phone_number_approved(who: String, phone_number_sha2: String) -> HttpResponse<bool> {
+pub fn is_phone_number_approved(who: String) -> HttpResponse<bool> {
     return match get_credential(who) {
         Some(credential) => {
-            let resp = credential.phone_number_sha2.unwrap().eq(&phone_number_sha2);
+            let resp = credential.phone_number_sha2.is_some();
             to_success_response(resp)
         }
         None => {

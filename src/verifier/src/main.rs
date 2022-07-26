@@ -56,8 +56,8 @@ async fn generate_pn_token(domain: String) -> TokenKey {
 }
 
 #[query]
-async fn is_phone_number_approved(who: String, phone_number_sha2: String) -> HttpResponse<bool> {
-    credential_service::is_phone_number_approved(who, phone_number_sha2)
+async fn is_phone_number_approved(who: String) -> HttpResponse<bool> {
+    credential_service::is_phone_number_approved(who)
 }
 
 #[update]
