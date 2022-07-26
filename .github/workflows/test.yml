@@ -37,7 +37,7 @@ jobs:
       - name: Install NodeJS
         uses: actions/setup-node@v3
         with:
-          node-version: 14.x
+          node-version: 18.x
 
       - name: BE Unit Test
         run: cargo test -- --test-threads=1
@@ -48,3 +48,6 @@ jobs:
           cp -f identity-manager-itest/src/test/resources/identity/identity.pem ~/.config/dfx/identity/test_admin
           cd identity-manager-itest
           mvn test --no-transfer-progress
+
+      - name: BE Integration Tests JS
+        run: npm i && npm run test

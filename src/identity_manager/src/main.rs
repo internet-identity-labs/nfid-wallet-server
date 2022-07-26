@@ -1,6 +1,5 @@
 use std::time::Duration;
 use ic_cdk::{caller, storage, trap};
-use ic_cdk::export::Principal;
 
 use ic_cdk_macros::*;
 use service::{account_service, persona_service, phone_number_service};
@@ -19,7 +18,7 @@ use crate::http::requests::{AccountResponse};
 use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
 use crate::repository::account_repo::{Account, AccountRepo};
-use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo};
+use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo};
 use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant, PersonaRequest, PersonaResponse, ConfigurationResponse, AccessPointRemoveRequest};
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response, to_success_response};
@@ -44,6 +43,14 @@ mod logger;
 #[init]
 async fn init() -> () {
     AdminRepo::save(ic_service::get_caller());
+}
+
+#[update]
+#[admin]
+async fn sync_controllers() -> Vec<String> {
+    let controllers = ic_service::get_controllers().await;
+    ControllersRepo::save(controllers);
+    ControllersRepo::get().iter().map(|x| x.to_text()).collect()
 }
 
 #[update]

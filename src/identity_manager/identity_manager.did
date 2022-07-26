@@ -317,6 +317,7 @@ service : () -> {
   configure: (ConfigurationRequest) -> ();
   get_config: () -> (ConfigurationResponse);
   anchors: () -> (HTTPAnchorsResponse) query;
+  sync_controllers: () -> (vec text);
 
   get_account: () -> (HTTPAccountResponse) query;
   recover_account: (nat64) -> (HTTPAccountResponse);

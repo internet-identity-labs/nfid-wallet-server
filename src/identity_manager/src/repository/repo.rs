@@ -32,6 +32,8 @@ pub type Applications = BTreeSet<Application>;
 
 pub struct AdminRepo {}
 
+pub struct ControllersRepo {}
+
 pub struct ConfigurationRepo {}
 
 #[derive(Clone, Debug, CandidType, Deserialize, Default, PartialEq, Eq, Copy, Hash)]
@@ -66,6 +68,21 @@ impl AdminRepo {
     }
 }
 
+impl ControllersRepo {
+    pub fn get() -> Vec<Principal> {
+        storage::get_mut::<Vec<Principal>>().to_vec()
+    }
+
+    pub fn save(principals: Vec<Principal>) -> () {
+        let vec = storage::get_mut::<Vec<Principal>>();
+        vec.clear();
+        vec.extend(principals);
+    }
+
+    pub fn contains(principal: &Principal) -> bool {
+        storage::get_mut::<Vec<Principal>>().to_vec().contains(principal)
+    }
+}
 
 impl ConfigurationRepo {
     //todo fix Principle not implement default!

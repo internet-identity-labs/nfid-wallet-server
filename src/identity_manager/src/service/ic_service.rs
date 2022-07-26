@@ -1,7 +1,8 @@
-use ic_cdk::{call, trap};
-use ic_cdk::export::Principal;
 use crate::ConfigurationRepo;
-use ic_cdk::export::candid::{CandidType, Deserialize};
+use ic_cdk::api::call::CallResult;
+use ic_cdk::export::candid::{CandidType, Deserialize, Nat, Principal};
+use ic_cdk::{call, trap, id};
+use serde::Serialize;
 use serde_bytes::ByteBuf;
 
 pub type CredentialId = ByteBuf;
@@ -37,6 +38,40 @@ pub enum KeyType {
     SeedPhrase,
 }
 
+#[derive(Serialize, Deserialize, CandidType, Clone, PartialEq, Eq, Debug)]
+pub enum CanisterStatus {
+    #[serde(rename = "running")]
+    running,
+    #[serde(rename = "stopping")]
+    stopping,
+    #[serde(rename = "stopped")]
+    stopped,
+}
+
+#[derive(Deserialize, CandidType, Clone, PartialEq, Eq, Debug)]
+pub struct DefiniteCanisterSettings {
+    controllers: Vec<Principal>,
+    compute_allocation: Nat,
+    memory_allocation: Nat,
+    freezing_threshold: Nat,
+}
+
+#[derive(Deserialize, CandidType, Clone, PartialEq, Eq, Debug)]
+pub struct CanisterStatusResponse {
+    status: CanisterStatus,
+    settings: DefiniteCanisterSettings,
+    module_hash: Option<Vec<u8>>,
+    memory_size: Nat,
+    cycles: Nat,
+    freezing_threshold: Nat,
+}
+
+#[derive(CandidType, Debug, Clone, Deserialize)]
+pub struct CanisterIdRequest {
+    #[serde(rename = "canister_id")]
+    pub canister_id: Principal,
+}
+
 #[cfg(test)]
 pub fn get_caller() -> Principal {
     Principal::anonymous()
@@ -67,6 +102,19 @@ pub fn is_anonymous(princ: String) -> bool {
     princ.len() < 10
 }
 
+pub async fn get_controllers() -> Vec<Principal> {
+    let res: CallResult<(CanisterStatusResponse,)> = call(
+        Principal::management_canister(),
+        "canister_status",
+        (CanisterIdRequest {
+            canister_id: id(),
+        },),
+    )
+    .await;
+
+    return res.unwrap().0.settings.controllers;
+}
+
 pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) -> Vec<DeviceData> {
     if ConfigurationRepo::get().env.as_ref().is_some()
         && ConfigurationRepo::get().env.as_ref().unwrap().eq(&"test".to_string()) {
@@ -93,5 +141,3 @@ fn verify<'a>(princ: Principal, public_keys: impl Iterator<Item=&'a PublicKey>) 
     }
     ic_cdk::trap(&format!("{} could not be authenticated.", princ))
 }
-
-
