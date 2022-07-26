@@ -37,4 +37,10 @@ impl TokenRepoTrait for TokenRepo {
             .filter(|(_, _, _, t)| *t > time_window)
             .map(|(token, phone_number_encrypted, phone_number_hash, _)| (token, phone_number_encrypted, phone_number_hash))
     }
+    #[cfg(test)]
+    fn get(&self, principal_id_encrypted: &String, _duration: Duration) -> Option<(&String, &String, &String)> {
+        storage::get::<Tokens>()
+            .get(principal_id_encrypted)
+            .map(|(token, phone_number, phone_number_hash, _)| (token, phone_number, phone_number_hash))
+    }
 }
