@@ -263,10 +263,7 @@ async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
 }
 
 #[query]
-async fn validate_signature(public_key: String, payload: String) -> (u64, String) {
-    if !public_key.eq(&caller().to_text()) {
-        trap("401")
-    }
+async fn validate_signature(payload: Option<String>) -> (u64, Option<String>) {
     let mut account_service = get_account_service();
     match account_service.get_account() {
         None => {
