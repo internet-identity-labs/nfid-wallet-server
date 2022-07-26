@@ -104,7 +104,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
             return to_success_response(true);
         }
 
-        let phone_number = account.phone_number.unwrap();
+        let phone_number = account.phone_number_sha2.unwrap();
         let success = self.phone_number_repo.remove(&phone_number);
 
         if !success {

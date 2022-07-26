@@ -195,7 +195,7 @@ async fn recover_account(anchor: u64) -> HttpResponse<AccountResponse> {
 }
 
 #[query]
-#[admin]
+#[lambda]
 async fn get_account_by_anchor(anchor: u64) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let response = account_service.get_account_by_anchor(anchor);
@@ -260,6 +260,19 @@ async fn update_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse
 async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
     let persona_service = get_persona_service();
     persona_service.read_personas()
+}
+
+#[query]
+async fn validate_signature(payload: Option<String>) -> (u64, Option<String>) {
+    let mut account_service = get_account_service();
+    match account_service.get_account() {
+        None => {
+            trap("Not registered")
+        }
+        Some(account) => {
+            (account.anchor, payload)
+        }
+    }
 }
 
 #[update]
