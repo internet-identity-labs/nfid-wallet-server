@@ -4,6 +4,7 @@ import { spawnSync, StdioOptions } from "child_process";
 import { readFileSync } from "fs";
 import { Configuration } from "../types/configuration";
 import { idlFactory } from "../idls/idl";
+import { TextEncoder } from "util";
 
 const path: string = "identity-manager-itest/src/test/resources";
 const localhost: string = "http://127.0.0.1:8000";
@@ -73,9 +74,8 @@ export const deploy = async (): Promise<Configuration> => {
 };
 
 const getIdentity = (): Identity => {
-    const seed = new Array(32).fill(0);
-    seed[0] = "seed";
-    return Ed25519KeyIdentity.generate(new Uint8Array(seed));
+    let seed = new TextEncoder().encode("87654321876543218765432187654321");
+    return Ed25519KeyIdentity.generate(seed);
 };
 
 const getActor = async (imCanisterId: string, identity: Identity): Promise<Record<string, ActorMethod>> => {
