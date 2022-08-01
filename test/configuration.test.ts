@@ -1,22 +1,24 @@
 import "mocha";
 import { expect } from "chai";
-import { ConfigurationRequest, ConfigurationResponse } from "./idls/identity_manager";
-import { deploy, execFile } from "./utils/exec.util";
-import { Configuration } from "./types/configuration";
+import { ConfigurationRequest, ConfigurationResponse } from "./idl/identity_manager";
+import { deploy } from "./util/deployment.util";
+import { Dfx } from "./type/dfx";
+import { App } from "./constanst/app.enum";
+import { DFX } from "./constanst/dfx.const";
 
-describe("configuration", () => {
-    var configuration: Configuration;
+describe("Configuration", () => {
+    var dfx: Dfx;
 
     before(async () => {
-        configuration = await deploy();
+        dfx = await deploy(App.IdentityManager);
     });
 
     after(() => {
-        execFile("/common/dfx_stop");
+        DFX.STOP();
     });
 
     it("should respond with correct configuration", async function () {
-        const result: ConfigurationResponse = (await configuration.actor.get_config()) as ConfigurationResponse;
+        const result: ConfigurationResponse = (await dfx.im.actor.get_config()) as ConfigurationResponse;
         expect(result.env[0]).to.be.eq("test");
         expect(result.whitelisted_phone_numbers[0]).to.be.an("array").that.is.empty;
         expect(result.backup_canister_id).to.be.an("array").that.is.empty;
@@ -44,10 +46,10 @@ describe("configuration", () => {
             'token_ttl': [],
             'commit_hash': []
         } as ConfigurationRequest;
-        const configureResult = await configuration.actor.configure(request);
+        const configureResult = await dfx.im.actor.configure(request);
         expect(configureResult).to.be.undefined;
 
-        const configureResponse: ConfigurationResponse = (await configuration.actor.get_config()) as ConfigurationResponse;
+        const configureResponse: ConfigurationResponse = (await dfx.im.actor.get_config()) as ConfigurationResponse;
         expect(configureResponse.env[0]).to.be.eq("dev");
         expect(configureResponse.whitelisted_phone_numbers[0]).to.be.an("array").that.is.empty;
         expect(configureResponse.backup_canister_id).to.be.an("array").that.is.empty;
