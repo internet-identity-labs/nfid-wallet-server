@@ -8,7 +8,8 @@
     "ic": "bryxc-zqaaa-aaaal-aajga-cai"
   },
   "internet_identity_test": {
-    "dev": "wookt-ayaaa-aaaaj-addwq-cai"
+    "dev-old": "wookt-ayaaa-aaaaj-addwq-cai",
+    "ic": "nprnb-waaaa-aaaaj-qax4a-cai"
   },
   "identity_manager_replica": {
     "ic": "bv5d4-nyaaa-aaaap-qaaba-cai"
