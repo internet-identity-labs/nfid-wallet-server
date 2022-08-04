@@ -223,6 +223,7 @@ describe("Account", () => {
             await dfx.im.actor.add_all_accounts_json(backup);
             response = (await dfx.im.actor.get_account()) as HTTPAccountResponse;
             expect(response.error).empty;
+            expect(response.data[0].anchor).eq(anchorNew);
         });
     });
 });

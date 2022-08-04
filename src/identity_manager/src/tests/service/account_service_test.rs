@@ -52,20 +52,20 @@ async fn test_get_account_e2e() {
     };
     let acc = AccountRepo {};
     let app = ApplicationRepo {};
-    let pppr = PersonaService {
+    let persona_service = PersonaService {
         persona_repo: PersonaRepo { account_repo: acc },
         application_service: ApplicationService { account_repo: acc, application_repo: app },
     };
-    let acc_upd = pppr.update_persona(persona_request);
+    let acc_upd = persona_service.update_persona(persona_request);
 
     let acc =  acc_serv.get_account().unwrap();
-    let j = serde_json::to_string(&acc);
-    let str = j.unwrap();
-    let rr: Account = serde_json::from_str(&str).unwrap();
+    let json_string = serde_json::to_string(&acc);
+    let str = json_string.unwrap();
+    let rest_acc: Account = serde_json::from_str(&str).unwrap();
     assert_eq!(true, acc_upd.error.is_some());
-    assert_eq!(acc.base_fields, rr.base_fields);
-    assert_eq!(acc.anchor, rr.anchor);
-    assert_eq!(acc.principal_id, rr.principal_id);
+    assert_eq!(acc.base_fields, rest_acc.base_fields);
+    assert_eq!(acc.anchor, rest_acc.anchor);
+    assert_eq!(acc.principal_id, rest_acc.principal_id);
 
 }
 
