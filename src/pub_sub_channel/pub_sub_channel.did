@@ -143,7 +143,7 @@ type CanisterCyclesAggregatedData = vec nat64;
 service : () -> {
   ping: () -> () query;
   post_messages: (Topic, vec Message) -> (MessageHttpResponse);
-  get_messages: (Topic) -> (MessageHttpResponse);
+  get_messages: (Topic) -> (MessageHttpResponse) query;
   create_topic: (Topic) -> (MessageHttpResponse);
   delete_topic: (Topic) -> (MessageHttpResponse);
 
