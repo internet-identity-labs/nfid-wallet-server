@@ -162,7 +162,7 @@ async fn clean() {
             MESSAGE_STORAGE.with(|storage| {
                 storage.borrow_mut().cleanup();
             });
-            *heart_tick = 0;
+            *heart_tick = 1;
         } else {
             *heart_tick += 1;
         }
