@@ -4,9 +4,10 @@ use crate::repository::repo::BasicEntity;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 #[cfg(test)]
 use mockers_derive::mocked;
+use serde::{Serialize};
 
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct Persona {
     pub domain: String,
     pub persona_id: String,

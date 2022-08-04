@@ -8,7 +8,7 @@ use crate::persona_service::{PersonaService, PersonaServiceTrait};
 use crate::repository::persona_repo::PersonaRepo;
 use crate::application_service::ApplicationService;
 use crate::container::container_wrapper;
-use crate::container_wrapper::{get_access_point_service, get_account_service, get_application_service, get_persona_service, get_phone_number_service, get_credential_service};
+use crate::container_wrapper::{get_access_point_service, get_account_service, get_application_service, get_persona_service, get_phone_number_service, get_credential_service, get_account_repo};
 use crate::repository::application_repo::{Application, ApplicationRepo};
 use crate::service::application_service::ApplicationServiceTrait;
 use crate::service::phone_number_service::PhoneNumberServiceTrait;
@@ -17,7 +17,7 @@ use crate::http::requests;
 use crate::http::requests::{AccountResponse};
 use crate::http::response_mapper;
 use crate::phone_number_service::PhoneNumberService;
-use crate::repository::account_repo::{Account, AccountRepo};
+use crate::repository::account_repo::{Account, AccountRepo, AccountRepoTrait};
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo};
 use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant, PersonaRequest, PersonaResponse, ConfigurationResponse, AccessPointRemoveRequest};
 use crate::requests::AccountUpdateRequest;
@@ -343,6 +343,22 @@ async fn store_accounts(accounts: Vec<Account>) -> HttpResponse<bool> {
 #[admin]
 async fn restore_accounts(canister_id: String) -> HttpResponse<bool> {
     replica_service::restore_and_flush(canister_id).await
+}
+
+#[query]
+#[admin]
+async fn get_all_accounts_json() -> String {
+    let account_repo = get_account_repo();
+    let accounts = account_repo.get_all_accounts();
+    serde_json::to_string(&accounts).unwrap()
+}
+
+#[update]
+#[admin]
+async fn add_all_accounts_json(accounts_json: String) {
+    let account_repo = get_account_repo();
+    let accounts: Vec<Account> = serde_json::from_str(&accounts_json).unwrap();
+    account_repo.store_accounts(accounts);
 }
 
 #[pre_upgrade]

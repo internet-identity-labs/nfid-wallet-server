@@ -286,6 +286,8 @@ export const idlFactory = ({ IDL }) => {
     'remove_account' : IDL.Func([], [BoolHttpResponse], []),
     'restore_accounts' : IDL.Func([IDL.Text], [BoolHttpResponse], []),
     'store_accounts' : IDL.Func([IDL.Vec(Account)], [BoolHttpResponse], []),
+    'get_all_accounts_json' : IDL.Func([], [IDL.Text], []),
+    'add_all_accounts_json' : IDL.Func([IDL.Text], [], []),
     'sync_controllers' : IDL.Func([], [IDL.Vec(IDL.Text)], []),
     'update_access_point' : IDL.Func(
         [AccessPointRequest],
