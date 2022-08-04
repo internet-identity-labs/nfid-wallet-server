@@ -23,8 +23,8 @@ struct MessageHttpResponse {
 const DEFAULT_TOKEN_TTL: Duration = Duration::from_secs(90);
 
 thread_local! {
-    //TODO remove RefCell
     static MESSAGE_STORAGE: RefCell<TtlHashMap<Topic, Vec<Message>>> = RefCell::new(TtlHashMap::new(DEFAULT_TOKEN_TTL));
+    static HEARTBEAT_STORAGE: RefCell<u64> = RefCell::new(1);
 }
 
 #[query]
@@ -33,14 +33,6 @@ async fn ping() -> () {}
 #[update]
 #[collect_metrics]
 async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpResponse {
-    let princ = &ic_cdk::api::caller().to_text();
-    if princ.len() < 10 {
-        return MessageHttpResponse {
-            status_code: 401,
-            body: None,
-            error: Some(String::from("User is anonymous")),
-        };
-    }
     MESSAGE_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
         match st.get(&topic) {
@@ -84,26 +76,26 @@ async fn post_messages(topic: Topic, mut messages: Vec<Message>) -> MessageHttpR
     })
 }
 
-#[update]
+#[query]
 #[collect_metrics]
 async fn get_messages(topic: Topic) -> MessageHttpResponse {
     let mut rsp = MessageHttpResponse {
         status_code: 0,
         body: None,
-        error: None
+        error: None,
     };
     MESSAGE_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
         match st.get(&topic) {
             Some(messages) => {
-               rsp = MessageHttpResponse {
+                rsp = MessageHttpResponse {
                     status_code: 200,
                     body: Some(messages.clone()),
                     error: None,
                 }
             }
             None => {
-               rsp = MessageHttpResponse {
+                rsp = MessageHttpResponse {
                     status_code: 404,
                     body: None,
                     error: Some(String::from("No such topic")),
@@ -118,14 +110,6 @@ async fn get_messages(topic: Topic) -> MessageHttpResponse {
 #[update]
 #[collect_metrics]
 async fn create_topic(topic: Topic) -> MessageHttpResponse {
-    let princ = &ic_cdk::api::caller().to_text();
-    if princ.len() < 10 {
-        return MessageHttpResponse {
-            status_code: 401,
-            body: None,
-            error: Some(String::from("User is anonymous")),
-        };
-    }
     MESSAGE_STORAGE.with(|storage| {
         let mut st = storage.borrow_mut();
         return match st.get(&topic) {
@@ -150,14 +134,6 @@ async fn create_topic(topic: Topic) -> MessageHttpResponse {
 
 #[update]
 async fn delete_topic(topic: Topic) -> MessageHttpResponse {
-    let princ = &ic_cdk::api::caller().to_text();
-    if princ.len() < 10 {
-        return MessageHttpResponse {
-            status_code: 401,
-            body: None,
-            error: Some(String::from("User is anonymous")),
-        };
-    }
     MESSAGE_STORAGE.with(|storage| {
         return match storage.borrow_mut().remove(&topic) {
             Some(_o) => {
@@ -176,6 +152,21 @@ async fn delete_topic(topic: Topic) -> MessageHttpResponse {
             }
         };
     })
+}
+
+#[heartbeat]
+async fn clean() {
+    HEARTBEAT_STORAGE.with(|hb| {
+        let mut heart_tick = hb.borrow_mut();
+        if (*heart_tick % DEFAULT_TOKEN_TTL.as_secs()) == 0 {
+            MESSAGE_STORAGE.with(|storage| {
+                storage.borrow_mut().cleanup();
+            });
+            *heart_tick = 1;
+        } else {
+            *heart_tick += 1;
+        }
+    });
 }
 
 #[pre_upgrade]

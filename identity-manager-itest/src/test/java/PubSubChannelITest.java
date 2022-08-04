@@ -41,16 +41,6 @@ public class PubSubChannelITest extends BasePSChannelITest {
         validateWithFormatIdentity("channel/exp_long_messages", actual);
     }
 
-
-    @Test(priority = 7)
-    public void postMoreThanNumberExpectError1() {
-        call("channel/req_post_message");
-        call("channel/req_post_message");
-        call("channel/req_get_messages");
-        String actual = call("channel/req_post_message");
-        validateWithFormatIdentity("channel/exp_post_message", actual);
-    }
-
     @Test(priority = 7)
     public void deleteTopicExpectCorrectResponse() {
         String actual = call("channel/req_delete_topic");
