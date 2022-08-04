@@ -14,6 +14,9 @@
   "identity_manager_replica": {
     "ic": "bv5d4-nyaaa-aaaap-qaaba-cai"
   },
+  "identity_manager_test_replica": {
+    "dev": "vwali-piaaa-aaaal-qatfq-cai"
+  },
   "pub_sub_channel": {
     "dev": "wmxhg-4iaaa-aaaam-aanzq-cai",
     "ic": "iyvpb-uqaaa-aaaag-qabxa-cai"
