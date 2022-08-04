@@ -349,6 +349,8 @@ service : () -> {
 
   store_accounts: (vec Account) -> (BoolHttpResponse);
   restore_accounts: (text) -> (BoolHttpResponse);
+  get_all_accounts_json: () -> (text) query; 
+  add_all_accounts_json: (text) -> ();
 
   certify_phone_number_sha2: (text, text) -> (StringHttpResponse) query;
 

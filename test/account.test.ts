@@ -1,10 +1,10 @@
 import "mocha";
-import { expect } from "chai";
-import { sleep } from "./util/call.util";
-import { Dfx } from "./type/dfx";
-import { App } from "./constanst/app.enum";
-import { deploy, getActor, getIdentity } from "./util/deployment.util";
-import { register } from "./util/internet_identity.util";
+import {expect} from "chai";
+import {sleep} from "./util/call.util";
+import {Dfx} from "./type/dfx";
+import {App} from "./constanst/app.enum";
+import {deploy, getActor, getIdentity} from "./util/deployment.util";
+import {register} from "./util/internet_identity.util";
 import {
     AccessPointRequest,
     BoolHttpResponse,
@@ -12,10 +12,10 @@ import {
     HTTPAccountRequest,
     HTTPAccountResponse,
 } from "./idl/identity_manager";
-import { DeviceData } from "./idl/internet_identity_test";
-import { DFX } from "./constanst/dfx.const";
-import { idlFactory as imIdl } from "./idl/identity_manager_idl";
-import { Expected } from "./constanst/expected.const";
+import {DeviceData} from "./idl/internet_identity_test";
+import {DFX} from "./constanst/dfx.const";
+import {idlFactory as imIdl} from "./idl/identity_manager_idl";
+import {Expected} from "./constanst/expected.const";
 
 const PHONE = "123456";
 const PHONE_SHA2 = "123456_SHA2";
@@ -207,6 +207,23 @@ describe("Account", () => {
             expect(response.status_code).eq(200);
             expect(response.data[0].anchor).eq(anchor);
             expect(response.error).empty;
+        });
+
+        it("should backup and restore account.", async function () {
+            let  anchorNew = await register(dfx.iit.actor, dfx.user.identity);
+            var accountRequest: HTTPAccountRequest = {
+                anchor: anchorNew,
+            };
+            await dfx.im.actor.create_account(accountRequest);
+            const backup = await dfx.im.actor.get_all_accounts_json();
+            const remove = (await dfx.im.actor.remove_account()) as BoolHttpResponse;
+            expect(remove.data[0]).eq(true);
+            var response: HTTPAccountResponse = (await dfx.im.actor.get_account()) as HTTPAccountResponse;
+            expect(response.error[0]).eq("Unable to find Account");
+            await dfx.im.actor.add_all_accounts_json(backup);
+            response = (await dfx.im.actor.get_account()) as HTTPAccountResponse;
+            expect(response.error).empty;
+            expect(response.data[0].anchor).eq(anchorNew);
         });
     });
 });

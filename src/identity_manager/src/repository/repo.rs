@@ -8,6 +8,7 @@ use crate::{ic_service};
 use crate::logger::logger::Logs;
 use crate::repository::account_repo::{Account, Accounts, PrincipalIndex};
 use crate::repository::application_repo::Application;
+use serde::{Serialize};
 
 use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
 
@@ -36,7 +37,7 @@ pub struct ControllersRepo {}
 
 pub struct ConfigurationRepo {}
 
-#[derive(Clone, Debug, CandidType, Deserialize, Default, PartialEq, Eq, Copy, Hash)]
+#[derive(Clone, Debug, CandidType, Deserialize, Default, PartialEq, Eq, Copy, Hash, Serialize)]
 pub struct BasicEntity {
     created_date: u64,
     modified_date: u64,

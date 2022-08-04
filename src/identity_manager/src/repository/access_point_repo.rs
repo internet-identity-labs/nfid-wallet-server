@@ -4,9 +4,10 @@ use crate::{AccountRepo};
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use crate::repository::repo::BasicEntity;
+use serde::{Serialize};
 
 
-#[derive(Clone, Debug, CandidType, Deserialize, Eq)]
+#[derive(Clone, Debug, CandidType, Deserialize, Eq, Serialize)]
 pub struct AccessPoint {
     pub principal_id: String,
     pub icon: Option<String>,

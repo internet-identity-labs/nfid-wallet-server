@@ -7,14 +7,14 @@ use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::{storage};
 use itertools::Itertools;
-
 use crate::ic_service;
 use crate::repository::access_point_repo::AccessPoint;
+use serde::{ Serialize, Deserialize as JSONDeserialize};
 
 pub type Accounts = BTreeMap<String, Account>;
 pub type PrincipalIndex = BTreeMap<String, String>;
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct Account {
     pub anchor: u64,
     pub principal_id: String,
@@ -109,7 +109,7 @@ impl AccountRepoTrait for AccountRepo {
     fn remove_account(&self) -> Option<Account> { //todo not properly tested, used for e2e tests
         let princ = ic_service::get_caller().to_text();
         let accounts = storage::get_mut::<Accounts>();
-        let mut index = storage::get_mut::<PrincipalIndex>();
+        let index = storage::get_mut::<PrincipalIndex>();
         match accounts.remove(&princ) {
             None => { None }
             Some(acc) => {
