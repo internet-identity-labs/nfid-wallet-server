@@ -1,10 +1,10 @@
 use ic_cdk::export::Principal;
-use crate::{ConfigurationRepo, get_account, ic_service, Response, TokenRequest, ValidatePhoneRequest};
 
+use crate::{ConfigurationRepo, ic_service, Response, TokenRequest, ValidatePhoneRequest};
 use crate::repository::account_repo::AccountRepoTrait;
-use crate::repository::phone_number_repo::{PhoneNumberRepoTrait};
+use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
+use crate::repository::token_repo::TokenRepoTrait;
 use crate::response_mapper::{error_response, response};
-use crate::repository::token_repo::{TokenRepoTrait};
 
 pub trait PhoneNumberServiceTrait {
     fn validate_phone(&self, request: ValidatePhoneRequest) -> Response;
