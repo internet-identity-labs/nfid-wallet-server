@@ -349,8 +349,9 @@ service : () -> {
 
   store_accounts: (vec Account) -> (BoolHttpResponse);
   restore_accounts: (text) -> (BoolHttpResponse);
-  get_all_accounts_json: () -> (text) query; 
+  get_all_accounts_json: (nat32, nat32) -> (text) query;
   add_all_accounts_json: (text) -> ();
+  count_anchors: () -> (nat64) query;
 
   certify_phone_number_sha2: (text, text) -> (StringHttpResponse) query;
 
