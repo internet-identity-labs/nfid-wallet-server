@@ -275,6 +275,8 @@ jobs:
             exit 1
           fi
 
+          dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" sync_controllers;
+
           echo_debug "Command output was '${result}'" >&2
 
           # If '()' not found - than fail
@@ -288,7 +290,7 @@ jobs:
           CANISTER_CONFIG_DATA: >-
             (
               record {
-                ii_canister_id = opt principal "wookt-ayaaa-aaaaj-addwq-cai";
+                ii_canister_id = opt principal "nprnb-waaaa-aaaaj-qax4a-cai";
                 lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                 commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
