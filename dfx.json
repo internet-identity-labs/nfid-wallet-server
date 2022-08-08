@@ -18,6 +18,12 @@
       "wasm": "identity_manager.wasm",
       "type": "custom"
     },
+    "test_im": {
+      "build": "src/identity_manager/build.sh",
+      "candid": "src/identity_manager/identity_manager.did",
+      "wasm": "identity_manager.wasm",
+      "type": "custom"
+    },
     "pub_sub_channel": {
       "build": "src/pub_sub_channel/build.sh",
       "candid": "src/pub_sub_channel/pub_sub_channel.did",
