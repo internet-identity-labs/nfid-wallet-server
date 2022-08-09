@@ -9,7 +9,7 @@ use ic_cdk::{storage};
 use itertools::Itertools;
 use crate::ic_service;
 use crate::repository::access_point_repo::AccessPoint;
-use serde::{ Serialize, Deserialize as JSONDeserialize};
+use serde::{ Serialize};
 
 pub type Accounts = BTreeMap<String, Account>;
 pub type PrincipalIndex = BTreeMap<String, String>;

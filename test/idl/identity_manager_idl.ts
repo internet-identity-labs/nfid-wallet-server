@@ -220,6 +220,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Token = IDL.Text;
   return IDL.Service({
+    'add_all_accounts_json' : IDL.Func([IDL.Text], [], []),
     'anchors' : IDL.Func([], [HTTPAnchorsResponse], ['query']),
     'certify_phone_number_sha2' : IDL.Func(
         [IDL.Text, IDL.Text],
@@ -228,6 +229,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'collectCanisterMetrics' : IDL.Func([], [], []),
     'configure' : IDL.Func([ConfigurationRequest], [], []),
+    'count_anchors' : IDL.Func([], [IDL.Nat64], ['query']),
     'create_access_point' : IDL.Func(
         [AccessPointRequest],
         [HTTPAccessPointResponse],
@@ -267,6 +269,11 @@ export const idlFactory = ({ IDL }) => {
         [HTTPAccountResponse],
         ['query'],
       ),
+    'get_all_accounts_json' : IDL.Func(
+        [IDL.Nat32, IDL.Nat32],
+        [IDL.Text],
+        ['query'],
+      ),
     'get_config' : IDL.Func([], [ConfigurationResponse], []),
     'is_over_the_application_limit' : IDL.Func(
         [IDL.Text],
@@ -286,8 +293,6 @@ export const idlFactory = ({ IDL }) => {
     'remove_account' : IDL.Func([], [BoolHttpResponse], []),
     'restore_accounts' : IDL.Func([IDL.Text], [BoolHttpResponse], []),
     'store_accounts' : IDL.Func([IDL.Vec(Account)], [BoolHttpResponse], []),
-    'get_all_accounts_json' : IDL.Func([], [IDL.Text], []),
-    'add_all_accounts_json' : IDL.Func([IDL.Text], [], []),
     'sync_controllers' : IDL.Func([], [IDL.Vec(IDL.Text)], []),
     'update_access_point' : IDL.Func(
         [AccessPointRequest],
@@ -302,6 +307,11 @@ export const idlFactory = ({ IDL }) => {
     'update_persona' : IDL.Func([PersonaRequest], [HTTPAccountResponse], []),
     'use_access_point' : IDL.Func([], [HTTPAccessPointResponse], []),
     'validate_phone' : IDL.Func([ValidatePhoneRequest], [Response], []),
+    'validate_signature' : IDL.Func(
+        [IDL.Opt(IDL.Text)],
+        [IDL.Nat64, IDL.Opt(IDL.Text)],
+        ['query'],
+      ),
     'verify_token' : IDL.Func([Token], [Response], []),
   });
 };

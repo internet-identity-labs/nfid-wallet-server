@@ -210,12 +210,12 @@ describe("Account", () => {
         });
 
         it("should backup and restore account.", async function () {
-            let  anchorNew = await register(dfx.iit.actor, dfx.user.identity);
+            let anchorNew = await register(dfx.iit.actor, dfx.user.identity);
             var accountRequest: HTTPAccountRequest = {
                 anchor: anchorNew,
             };
             await dfx.im.actor.create_account(accountRequest);
-            const backup = await dfx.im.actor.get_all_accounts_json(0,5);
+            const backup = await dfx.im.actor.get_all_accounts_json(0, 5);
             const remove = (await dfx.im.actor.remove_account()) as BoolHttpResponse;
             expect(remove.data[0]).eq(true);
             var response: HTTPAccountResponse = (await dfx.im.actor.get_account()) as HTTPAccountResponse;
