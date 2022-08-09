@@ -210,7 +210,7 @@ describe("Account", () => {
         });
 
         it("should backup and restore account.", async function () {
-            let  anchorNew = await register(dfx.iit.actor, dfx.user.identity);
+            let anchorNew = await register(dfx.iit.actor, dfx.user.identity);
             var accountRequest: HTTPAccountRequest = {
                 anchor: anchorNew,
             };
