@@ -347,10 +347,14 @@ async fn restore_accounts(canister_id: String) -> HttpResponse<bool> {
 
 #[query]
 #[admin]
-async fn get_all_accounts_json(from: u32, to: u32) -> String {
+async fn get_all_accounts_json(from: u32, mut to: u32) -> String {
     let account_repo = get_account_repo();
     let mut accounts: Vec<Account> = account_repo.get_all_accounts();
     accounts.sort_by(|a, b| a.base_fields.get_created_date().cmp(&b.base_fields.get_created_date()));
+    let len = accounts.len() as u32;
+    if to > len {
+        to = len;
+    }
     let b = &accounts[from as usize..to as usize];
     serde_json::to_string(&b).unwrap()
 }
