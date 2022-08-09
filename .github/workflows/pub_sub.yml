@@ -24,7 +24,7 @@ on:
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   CANISTER_NAME: ${{ github.event.inputs.canister_name }}
-  DEBUG: ${{ github.event.inputs.debug_messages }}
+  CI_DEBUG: ${{ github.event.inputs.debug_messages }}
 
 
 jobs:
@@ -158,8 +158,8 @@ jobs:
       - name: Frontend => Update did files.
         if: ${{ github.event.inputs.canister_name == 'pub_sub_channel' }}
         run: |
-          cp -f "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.d.ts" "./frontend/src/services/pub-sub-channel/${CANISTER_NAME}.did.d.ts"
-          cp -f "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.js" "./frontend/src/services/pub-sub-channel/${CANISTER_NAME}_idl.js"
+          cp -f "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.d.ts" "./frontend/src/integration/_ic_api/${CANISTER_NAME}.did.d.ts"
+          cp -f "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.js" "./frontend/src/integration/_ic_api/${CANISTER_NAME}_idl.js"
 
       - name: Frontend => Format did files.
         if: ${{ github.event.inputs.canister_name == 'pub_sub_channel' }}
@@ -167,8 +167,8 @@ jobs:
           npm install --global yarn
           cd ./frontend
           yarn
-          yarn prettier --write ./src/services/pub-sub-channel/${CANISTER_NAME}.did.d.ts
-          yarn prettier --write ./src/services/pub-sub-channel/${CANISTER_NAME}_idl.js
+          yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}.did.d.ts
+          yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}_idl.js
           git diff
 
       - name: Frontend => Create a pull request.

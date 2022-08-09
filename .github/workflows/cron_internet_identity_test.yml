@@ -7,7 +7,7 @@ on:
 env:
   NETWORK_NAME: 'dev'
   CANISTER_NAME: 'internet_identity_test'
-  DEBUG: 'true'
+  CI_DEBUG: 'true'
 
 jobs:
   Deploy:

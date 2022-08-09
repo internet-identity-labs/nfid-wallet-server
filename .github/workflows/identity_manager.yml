@@ -29,7 +29,7 @@ on:
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   CANISTER_NAME: ${{ github.event.inputs.canister_name }}
-  DEBUG: ${{ github.event.inputs.debug_messages }}
+  CI_DEBUG: ${{ github.event.inputs.debug_messages }}
 
 
 jobs:
@@ -148,7 +148,7 @@ jobs:
 
           dfx identity use gh_mp_admin
 
-          DEBUG="true"
+          CI_DEBUG="true"
 
           ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade 'identity_manager_replica'" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "identity_manager_replica"); then
@@ -174,7 +174,7 @@ jobs:
 
           dfx identity use gh_mp_admin
 
-          DEBUG="true"
+          CI_DEBUG="true"
 
           CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_TEST_DATA"
 
@@ -214,7 +214,7 @@ jobs:
 
           dfx identity use gh_mp_admin
 
-          DEBUG="true"
+          CI_DEBUG="true"
 
           ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call 'identity_manager_replica' get_account" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" call "identity_manager_replica" get_account) || [ -z "${result}" ]; then
@@ -241,7 +241,7 @@ jobs:
 
           if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
             ci_echo_warn "Performing PROD canister Upgrade" >&2
-            DEBUG="true"
+            CI_DEBUG="true"
           fi
 
           ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'" >&2
@@ -269,7 +269,7 @@ jobs:
 
           if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
             ci_echo_warn "Performing PROD config Update" >&2
-            DEBUG="true"
+            CI_DEBUG="true"
             CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_PROD_DATA"
           else
             CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_DATA"
@@ -369,8 +369,8 @@ jobs:
         if: ${{ github.event.inputs.canister_name == 'identity_manager' }}
         run: |
           ci_echo_info "Updating DID file" >&2
-          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.d.ts" "./frontend/src/services/identity-manager/${CANISTER_NAME}.did.d.ts"
-          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.js" "./frontend/src/services/identity-manager/${CANISTER_NAME}_idl.js"
+          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.d.ts" "./frontend/src/integration/_ic_api/${CANISTER_NAME}.did.d.ts"
+          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.js" "./frontend/src/integration/_ic_api/${CANISTER_NAME}_idl.js"
         env:
           START_PLACEHOLDER: '\/\/---BEGIN-CUT---'
           STOP_PLACEHOLDER: '\/\/---END-CUT---'
@@ -381,8 +381,8 @@ jobs:
           npm install --global yarn
           cd ./frontend
           yarn
-          yarn prettier --write ./src/services/identity-manager/${CANISTER_NAME}.did.d.ts
-          yarn prettier --write ./src/services/identity-manager/${CANISTER_NAME}_idl.js
+          yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}.did.d.ts
+          yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}_idl.js
           git diff
 
       - name: Frontend => Create a pull request.
