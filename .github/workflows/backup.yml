@@ -28,7 +28,7 @@ on:
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   CANISTER_NAME: ${{ github.event.inputs.canister_name }}
-  DEBUG: ${{ github.event.inputs.debug_messages }}
+  CI_DEBUG: ${{ github.event.inputs.debug_messages }}
 
 
 jobs:
@@ -56,14 +56,6 @@ jobs:
           GH_MP_ADMIN_PEM: ${{secrets.GH_MP_ADMIN_PEM}}
           ID_PATH: /home/ubuntu/.config/dfx/identity/gh_mp_admin
 
-      - name: DFX => Start.
-        run: |
-          dfx_run &
-          sleep 60
-        working-directory: /default_project
-        # env:
-        #   HOME: /root
-
       - name: Checkout repo.
         uses: actions/checkout@v3
 
@@ -90,11 +82,12 @@ jobs:
 
       - name: PRE-BUILD => Populate env vars.
         run: |
+          dfx start --background --clean --host 0.0.0.0:8000 &
           source ./ci_libs/CI_LIBS.sh
           # export HOME=/root
 
-          ci_echo_debug "Installing jq" >&2
-          apt-get update && apt-get install -y --no-install-recommends jq
+          # ci_echo_debug "Installing jq" >&2
+          # apt-get update && apt-get install -y --no-install-recommends jq
 
           ci_echo_debug "Getting values from dfx.json" >&2
           if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
@@ -123,7 +116,7 @@ jobs:
           source ./ci_libs/CI_LIBS.sh
           # export HOME=/root
 
-          DEBUG="true"
+          CI_DEBUG="true"
 
           dfx identity use gh_mp_admin
 
@@ -156,10 +149,14 @@ jobs:
           fi
           ci_echo_debug "Command output was '${result}'" >&2
           
+          # Cleaning result output
+          result="$(echo ${result#(} | cut -d' ' -f 1)"
+          ci_echo_debug "Result after modification is '${result}'" >&2
+
           start=0
           saved=0
           iteration=0
-          DATE=$(date '+%F %T')
+          DATE=$(date +%s)
           while [ "${saved}" -lt "${result}" ]; do
             if [ "${iteration}" -eq 0 ]; then
               let "start=BACKUP_SIZE*iteration"
@@ -167,7 +164,11 @@ jobs:
               let "start=BACKUP_SIZE*iteration+1"
             fi
             let "iteration+=1"
-            let "end=BACKUP_SIZE*iteration"
+            let "end=start+BACKUP_SIZE"
+
+            if [ ${end} -gt ${result} ]; then
+              end=${result}
+            fi
 
             ci_echo_info "Iteration ${iteration} - ${start}:${end}" >&2
             BACKUP_FILE="${DATE}-${CANISTER_NAME}-${NETWORK_NAME}-${start}-${end}.json"
@@ -178,7 +179,7 @@ jobs:
             fi
 
             ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_all_accounts_json(${start}, ${end})" >&2
-            dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_all_accounts_json("${start}", "${end}") > "${BACKUP_FOLDER}/${BACKUP_FILE}"
+            dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" "get_all_accounts_json(${start}, ${end})" > "${BACKUP_FOLDER}/${BACKUP_FILE}"
             if [ $? -ne 0 ]; then
               ci_echo_error "Command failed" >&2
               exit 1
