@@ -108,7 +108,7 @@ export PATH="$PATH:/cargo/bin"
 
 # Install DFINITY SDK.
 echo_info "Installing DFX ${DFX_VERSION}" >&2
-sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+DFX_VERSION=${DFX_VERSION} sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
 
 rustup target add wasm32-unknown-unknown
 cargo install ic-cdk-optimizer --version 0.3.1
@@ -120,8 +120,7 @@ echo_info "RUN_INTERNET_IDENTITY = ${RUN_INTERNET_IDENTITY}" >&2
 echo_success " \n \
 ######################################################\n \
 Current result : \n \
-$(node --ver
-sion && rustup --version && dfx --version)\n \
+$(node --version && rustup --version && dfx --version)\n \
 \n
 You need add /opt/cargo/bin into your PATH var
 ######################################################" >&2
