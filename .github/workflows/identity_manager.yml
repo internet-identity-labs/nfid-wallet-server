@@ -303,6 +303,7 @@ jobs:
                 lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                 commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
+                whitelisted_canisters = opt vec { principal "gzqxf-kqaaa-aaaak-qakba-cai" };
               }
             )
           CANISTER_CONFIG_PROD_DATA: >-
@@ -314,6 +315,7 @@ jobs:
                 backup_canister_id = opt "bv5d4-nyaaa-aaaap-qaaba-cai";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                 commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
+                whitelisted_canisters = opt vec { principal "sgk26-7yaaa-aaaan-qaovq-cai" };
               }
             )
 
