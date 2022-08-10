@@ -32,7 +32,7 @@ env:
 
 
 jobs:
-  Deploy:
+  Backup:
     runs-on: [self-hosted, Linux, X64]
     # container:
     #   image: identitylabs/dfxctl:0.10.1-compiled
@@ -80,14 +80,11 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: PRE-BUILD => Populate env vars.
+      - name: PRE-BACKUP => Populate env vars.
         run: |
           dfx start --background --clean --host 0.0.0.0:8000 &
           source ./ci_libs/CI_LIBS.sh
           # export HOME=/root
-
-          # ci_echo_debug "Installing jq" >&2
-          # apt-get update && apt-get install -y --no-install-recommends jq
 
           ci_echo_debug "Getting values from dfx.json" >&2
           if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
@@ -114,9 +111,6 @@ jobs:
       - name: BACKUP => Backup.
         run: |
           source ./ci_libs/CI_LIBS.sh
-          # export HOME=/root
-
-          CI_DEBUG="true"
 
           dfx identity use gh_mp_admin
 
@@ -139,7 +133,7 @@ jobs:
           fi
 
           ci_echo_info "Listing of the '${BACKUP_FOLDER}' folder: " >&2
-          ls -lsa "${BACKUP_FOLDER}"
+          ci_echo_info "$(ls -lhA "${BACKUP_FOLDER}")" >&2
 
           ci_echo_info "Get amount of anchors" >&2
           ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' count_anchors" >&2
@@ -148,7 +142,7 @@ jobs:
             exit 1
           fi
           ci_echo_debug "Command output was '${result}'" >&2
-          
+
           # Cleaning result output
           result="$(echo ${result#(} | cut -d' ' -f 1)"
           ci_echo_debug "Result after modification is '${result}'" >&2
@@ -161,8 +155,9 @@ jobs:
             if [ "${iteration}" -eq 0 ]; then
               let "start=BACKUP_SIZE*iteration"
             else
-              let "start=BACKUP_SIZE*iteration+1"
+              start=${end}
             fi
+
             let "iteration+=1"
             let "end=start+BACKUP_SIZE"
 
@@ -171,7 +166,7 @@ jobs:
             fi
 
             ci_echo_info "Iteration ${iteration} - ${start}:${end}" >&2
-            BACKUP_FILE="${DATE}-${CANISTER_NAME}-${NETWORK_NAME}-${start}-${end}.json"
+            BACKUP_FILE="${DATE}-${CANISTER_NAME}-${NETWORK_NAME}-${start}-${end}"
 
             if [ -f "${BACKUP_FOLDER}/${BACKUP_FILE}" ]; then
               ci_echo_error "File '${BACKUP_FOLDER}/${BACKUP_FILE}' already exist." >&2
@@ -185,14 +180,15 @@ jobs:
               exit 1
             fi
 
-            ls -lsa "${BACKUP_FOLDER}/${BACKUP_FILE}"
+            ci_echo_debug "$(ls -lhA "${BACKUP_FOLDER}/${BACKUP_FILE}")" >&2
 
             let "saved+=BACKUP_SIZE"
           done
 
-          ci_echo_success "Backup action was Success" >&2
-          ci_echo_success "Listing of the '${BACKUP_FOLDER}' folder: " >&2
-          ls -lsa "${BACKUP_FOLDER}" | grep ${DATE}
+          ci_echo_success "Backup: \n
+          Listing of the '${BACKUP_FOLDER}' folder: \n
+          $(ls -lhA "${BACKUP_FOLDER}" | grep ${DATE})" >&2
+
         env:
           BACKUP_FOLDER: /home/ubuntu/backup/
           BACKUP_SIZE: 3000
