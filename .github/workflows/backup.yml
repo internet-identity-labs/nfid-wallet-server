@@ -178,8 +178,8 @@ jobs:
               exit 1
             fi
 
-            ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_all_accounts_json(${start}, ${end})" >&2
-            dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" "get_all_accounts_json(${start}, ${end})" > "${BACKUP_FOLDER}/${BACKUP_FILE}"
+            ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_all_accounts_json '(${start}, ${end})'" >&2
+            dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_all_accounts_json "(${start}, ${end})" > "${BACKUP_FOLDER}/${BACKUP_FILE}"
             if [ $? -ne 0 ]; then
               ci_echo_error "Command failed" >&2
               exit 1
@@ -190,7 +190,8 @@ jobs:
             let "saved+=BACKUP_SIZE"
           done
 
-          ci_echo_info "Listing of the '${BACKUP_FOLDER}' folder: " >&2
+          ci_echo_success "Backup action was Success" >&2
+          ci_echo_success "Listing of the '${BACKUP_FOLDER}' folder: " >&2
           ls -lsa "${BACKUP_FOLDER}" | grep ${DATE}
         env:
           BACKUP_FOLDER: /home/ubuntu/backup/
