@@ -269,6 +269,7 @@ jobs:
 
           CANISTER_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${!CANISTER_DATA_NAME_VAR}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
 
+          # Configure command
           echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' configure '${CANISTER_DATA}'" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" configure "${CANISTER_DATA}"); then
             echo_error "Configure failed ${result}" >&2
@@ -284,11 +285,21 @@ jobs:
           else
             echo_success "${result}" >&2
           fi
+
+          # Sync command
+          echo_info "Synching controllers for the canister." >&2
+          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' sync_controllers" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" sync_controllers); then
+            echo_warn "Synching controllers failed ${result}" >&2
+          else
+            echo_success "${result}" >&2
+          fi
+          
         env:
           CANISTER_CONFIG_DATA: >-
             (
               record {
-                ii_canister_id = opt principal "wookt-ayaaa-aaaaj-addwq-cai";
+                ii_canister_id = opt principal "nprnb-waaaa-aaaaj-qax4a-cai";
                 lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                 commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
