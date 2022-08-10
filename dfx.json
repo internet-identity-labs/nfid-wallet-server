@@ -47,6 +47,11 @@
       "candid": "src/internet_identity_test/internet_identity.did",
       "wasm": "internet_identity.wasm",
       "build": "curl -sSL https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_test.wasm -o internet_identity.wasm"
+    },
+    "test_ledger": {
+      "type": "custom",
+      "wasm": "ledger.wasm",
+      "candid": "ledger.public.did"
     }
   },
   "networks": {
