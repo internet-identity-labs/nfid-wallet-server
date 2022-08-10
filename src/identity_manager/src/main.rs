@@ -203,7 +203,6 @@ async fn recover_account(anchor: u64) -> HttpResponse<AccountResponse> {
 
 #[query]
 #[lambda]
-#[admin]
 async fn get_account_by_anchor(anchor: u64) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let response = account_service.get_account_by_anchor(anchor);
@@ -212,7 +211,6 @@ async fn get_account_by_anchor(anchor: u64) -> HttpResponse<AccountResponse> {
 
 #[query]
 #[lambda]
-#[admin]
 async fn get_account_by_principal(princ: String) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let response = account_service.get_account_by_principal(princ);
