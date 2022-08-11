@@ -1,6 +1,8 @@
 type Error = text;
 type Token = text;
 
+//---BEGIN-CUT---
+
 type ConfigurationRequest = record {
     lambda: opt principal;
     token_ttl: opt nat64;
@@ -28,6 +30,8 @@ type ConfigurationResponse = record {
     git_branch: opt text;
     commit_hash: opt text;
 };
+
+//---END-CUT---
 
 type BoolHttpResponse = record {
     data: opt bool;
@@ -183,6 +187,7 @@ type HTTPAccessPointResponse = record {
     status_code: nat16;
 };
 
+//---BEGIN-CUT---
 
  //  ---------------------------------------------------------
  //  ----------------------THIRD PARTY LIBRARIES--------------
@@ -308,17 +313,19 @@ type CanisterHeapMemoryAggregatedData = vec nat64;
 
 type CanisterCyclesAggregatedData = vec nat64;
 
+//---END-CUT---
 
  //  ---------------------------------------------------------
  //  ----------------------SERVICE----------------------------
  //  ---------------------------------------------------------
 
 service : () -> {
+//---BEGIN-CUT---
   configure: (ConfigurationRequest) -> ();
   get_config: () -> (ConfigurationResponse);
   anchors: () -> (HTTPAnchorsResponse) query;
   sync_controllers: () -> (vec text);
-
+//---END-CUT---
   get_account: () -> (HTTPAccountResponse) query;
   recover_account: (nat64) -> (HTTPAccountResponse);
   get_account_by_anchor: (nat64) -> (HTTPAccountResponse) query;
@@ -354,10 +361,10 @@ service : () -> {
   count_anchors: () -> (nat64) query;
 
   certify_phone_number_sha2: (text, text) -> (StringHttpResponse) query;
-
+//---BEGIN-CUT---
   getCanisterMetrics: (GetMetricsParameters) -> (opt CanisterMetrics) query;
   getCanisterLog: (opt CanisterLogRequest) -> (opt CanisterLogResponse) query;
   collectCanisterMetrics: () -> ();
-
+//---END-CUT---
   validate_signature: (opt text) -> (nat64, opt text) query;
 }
