@@ -68,6 +68,14 @@ jobs:
       - name: Checkout repo.
         uses: actions/checkout@v3
 
+      - name: Checkout CI repo.
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT }}
+          repository: internet-identity-labs/ci_libs
+          ref: main
+          path: ci_libs
+
       - name: Cache Cargo dependencies.
         uses: actions/cache@v3
         with:
@@ -83,15 +91,15 @@ jobs:
 
       - name: PRE-BUILD => Populate env vars.
         run: |
-          source .github/workflows/CI_LIBS.sh
+          source ./ci_libs/CI_LIBS.sh
           export HOME=/root
 
-          echo_debug "Installing jq"
+          ci_echo_debug "Installing jq" >&2
           apt-get update && apt-get install -y --no-install-recommends jq
 
-          echo_debug "Getting values from dfx.json"
+          ci_echo_debug "Getting values from dfx.json" >&2
           if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
-            echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
+            ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
             exit 1
           fi
 
@@ -103,65 +111,65 @@ jobs:
           echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
           echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
           
-          echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
-          echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
-          echo_info "CANISTER_DID=${CANISTER_DID}" >&2
-          echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
-          echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
+          ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
+          ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
+          ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
+          ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
+          ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
         env:
           DEBIAN_FRONTEND: noninteractive
 
       - name: BUILD => Show current configuration.
         run: |
-          source .github/workflows/CI_LIBS.sh
+          source ./ci_libs/CI_LIBS.sh
           export HOME=/root
 
           dfx identity use gh_mp_admin
 
-          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_config" >&2
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_config" >&2
           dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_config
 
       - name: BUILD => Build the canister.
         run: |
-          source .github/workflows/CI_LIBS.sh
+          source ./ci_libs/CI_LIBS.sh
           export HOME=/root
 
           dfx identity use gh_mp_admin
 
           rm -rf .dfx;
-          echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
+          ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
       - name: DEPLOY PROD => Upgrade the identity_manager_replica canister.
         if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
         run: |
-          source .github/workflows/CI_LIBS.sh
+          source ./ci_libs/CI_LIBS.sh
           export HOME=/root
 
           dfx identity use gh_mp_admin
 
           DEBUG="true"
 
-          echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade 'identity_manager_replica'" >&2
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade 'identity_manager_replica'" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "identity_manager_replica"); then
-            echo_error "Upgrade failed ${result}" >&2
+            ci_echo_error "Upgrade failed ${result}" >&2
             exit 1
           fi
 
-          echo_debug "Command output was '${result}'" >&2
+          ci_echo_debug "Command output was '${result}'" >&2
 
           # If hash the same - than fail deploy
           if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
-            echo_error "${result}" >&2
+            ci_echo_error "${result}" >&2
             exit 1
           else
-            echo_success "Canister 'identity_manager_replica' was upgraded" >&2
+            ci_echo_success "Canister 'identity_manager_replica' was upgraded" >&2
           fi
 
       - name: DEPLOY PROD => Send configuration to the identity_manager_replica canister.
         if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
         run: |
-          source .github/workflows/CI_LIBS.sh
+          source ./ci_libs/CI_LIBS.sh
           export HOME=/root
 
           dfx identity use gh_mp_admin
@@ -172,20 +180,20 @@ jobs:
 
           CANISTER_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${!CANISTER_DATA_NAME_VAR}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
 
-          echo_debug "dfx canister --network '${NETWORK_NAME}' call 'identity_manager_replica' configure '${CANISTER_DATA}'" >&2
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call 'identity_manager_replica' configure '${CANISTER_DATA}'" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" call "identity_manager_replica" configure "${CANISTER_DATA}"); then
-            echo_error "Configure failed ${result}" >&2
+            ci_echo_error "Configure failed ${result}" >&2
             exit 1
           fi
 
-          echo_debug "Command output was '${result}'" >&2
+          ci_echo_debug "Command output was '${result}'" >&2
 
           # If '()' not found - than fail
           if ! echo "${result}" | grep -q '()'; then
-            echo_error "${result}" >&2
+            ci_echo_error "${result}" >&2
             exit 1
           else
-            echo_success "${result}" >&2
+            ci_echo_success "${result}" >&2
           fi
         env:
           CANISTER_CONFIG_TEST_DATA: >-
@@ -201,66 +209,66 @@ jobs:
       - name: TEST PROD => Get Account from the identity_manager_replica canister.
         if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
         run: |
-          source .github/workflows/CI_LIBS.sh
+          source ./ci_libs/CI_LIBS.sh
           export HOME=/root
 
           dfx identity use gh_mp_admin
 
           DEBUG="true"
 
-          echo_debug "dfx canister --network '${NETWORK_NAME}' call 'identity_manager_replica' get_account" >&2
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call 'identity_manager_replica' get_account" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" call "identity_manager_replica" get_account) || [ -z "${result}" ]; then
-            echo_error "Test failed - call to canister unsuccessful" >&2
+            ci_echo_error "Test failed - call to canister unsuccessful" >&2
             exit 1
           fi
 
-          echo_debug "Command output was '${result}'" >&2
+          ci_echo_debug "Command output was '${result}'" >&2
 
           # If 'anchor' not found - than fail
           if ! echo "${result}" | grep -q 'anchor'; then
-            echo_error "Test failed - 'anchor' - was not found" >&2
+            ci_echo_error "Test failed - 'anchor' - was not found" >&2
             exit 1
           else
-            echo_success "${result}"
+            ci_echo_success "${result}" >&2
           fi
 
       - name: DEPLOY => Upgrade the canister.
         run: |
-          source .github/workflows/CI_LIBS.sh
+          source ./ci_libs/CI_LIBS.sh
           export HOME=/root
 
           dfx identity use gh_mp_admin
 
           if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
-            echo_warn "Performing PROD canister Upgrade" >&2
+            ci_echo_warn "Performing PROD canister Upgrade" >&2
             DEBUG="true"
           fi
 
-          echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'" >&2
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "${CANISTER_NAME}"); then
-            echo_error "Upgrade failed ${result}" >&2
+            ci_echo_error "Upgrade failed ${result}" >&2
             exit 1
           fi
 
-          echo_debug "Command output was '${result}'" >&2
+          ci_echo_debug "Command output was '${result}'" >&2
 
           # If hash the same - than fail deploy
           if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
-            echo_error "${result}" >&2
+            ci_echo_error "${result}" >&2
             exit 1
           else
-            echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
+            ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
           fi
 
       - name: DEPLOY => Send configuration to the canister.
         run: |
-          source .github/workflows/CI_LIBS.sh
+          source ./ci_libs/CI_LIBS.sh
           export HOME=/root
 
           dfx identity use gh_mp_admin
 
           if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
-            echo_warn "Performing PROD config Update" >&2
+            ci_echo_warn "Performing PROD config Update" >&2
             DEBUG="true"
             CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_PROD_DATA"
           else
@@ -270,20 +278,20 @@ jobs:
           CANISTER_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${!CANISTER_DATA_NAME_VAR}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
 
           # Configure command
-          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' configure '${CANISTER_DATA}'" >&2
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' configure '${CANISTER_DATA}'" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" configure "${CANISTER_DATA}"); then
-            echo_error "Configure failed ${result}" >&2
+            ci_echo_error "Configure failed ${result}" >&2
             exit 1
           fi
 
-          echo_debug "Command output was '${result}'" >&2
+          ci_echo_debug "Command output was '${result}'" >&2
 
           # If '()' not found - than fail
           if ! echo "${result}" | grep -q '()'; then
-            echo_error "${result}" >&2
+            ci_echo_error "${result}" >&2
             exit 1
           else
-            echo_success "${result}" >&2
+            ci_echo_success "${result}" >&2
           fi
 
           # Sync command
@@ -321,25 +329,25 @@ jobs:
 
       - name: TEST => Get Account from the canister.
         run: |
-          source .github/workflows/CI_LIBS.sh
+          source ./ci_libs/CI_LIBS.sh
           export HOME=/root
 
           dfx identity use gh_mp_admin
 
-          echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_account" >&2
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_account" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_account) || [ -z "${result}" ]; then
-            echo_error "Test failed - call to canister unsuccessful" >&2
+            ci_echo_error "Test failed - call to canister unsuccessful" >&2
             exit 1
           fi
 
-          echo_debug "Command output was '${result}'" >&2
+          ci_echo_debug "Command output was '${result}'" >&2
 
           # If 'anchor' not found - than fail
           if ! echo "${result}" | grep -q 'anchor'; then
-            echo_error "Test failed - 'anchor' - was not found" >&2
+            ci_echo_error "Test failed - 'anchor' - was not found" >&2
             exit 1
           else
-            echo_success "${result}"
+            ci_echo_success "${result}" >&2
           fi
 
       - name: Save artifact
@@ -357,11 +365,15 @@ jobs:
           ref: main
           path: frontend
 
-      - name: Frontend => Update did files.
+      - name: Frontend => Update did files. 
         if: ${{ github.event.inputs.canister_name == 'identity_manager' }}
         run: |
-          cp -f "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.d.ts" "./frontend/src/services/identity-manager/${CANISTER_NAME}.did.d.ts"
-          cp -f "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.js" "./frontend/src/services/identity-manager/${CANISTER_NAME}_idl.js"
+          ci_echo_info "Updating DID file" >&2
+          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.d.ts" "./frontend/src/services/identity-manager/${CANISTER_NAME}.did.d.ts"
+          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.js" "./frontend/src/services/identity-manager/${CANISTER_NAME}_idl.js"
+        env:
+          START_PLACEHOLDER: '\/\/---BEGIN-CUT---'
+          STOP_PLACEHOLDER: '\/\/---END-CUT---'
 
       - name: Frontend => Format did files.
         if: ${{ github.event.inputs.canister_name == 'identity_manager' }}
