@@ -3,7 +3,7 @@
 ######### Change this to your Versions
 RUST_VERSION="${RUST_VERSION:-1.59.0}"
 DFX_VERSION="${DFX_VERSION:-0.10.1}"
-NODE_VERSION="${NODE_VERSION:-16}"
+NODE_VERSION="${NODE_VERSION:-18}"
 RUN_INTERNET_IDENTITY="${RUN_INTERNET_IDENTITY:-false}"
 #########
 
@@ -72,7 +72,7 @@ Current setup will be installed : \n \
 
 DEBIAN_FRONTEND=noninteractive
 DEBUG=true
-TZ=UTC  
+TZ=UTC
 
 ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -108,6 +108,7 @@ export PATH="$PATH:/cargo/bin"
 
 # Install DFINITY SDK.
 echo_info "Installing DFX ${DFX_VERSION}" >&2
+
 DFX_VERSION=${DFX_VERSION} sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
 
 rustup target add wasm32-unknown-unknown
@@ -124,4 +125,3 @@ $(node --version && rustup --version && dfx --version)\n \
 \n
 You need add /opt/cargo/bin into your PATH var
 ######################################################" >&2
-#########

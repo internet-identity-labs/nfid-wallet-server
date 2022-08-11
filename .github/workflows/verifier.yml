@@ -1,4 +1,4 @@
-name: Pub Sub
+name: Verifier
 on: 
   workflow_dispatch:
     inputs:
@@ -14,7 +14,7 @@ on:
         required: true
         type: choice
         options:
-          - pub_sub_channel
+          - verifier
       debug_messages:
         description: 'Show debug messages'
         type: choice
@@ -136,7 +136,7 @@ jobs:
 
           dfx identity use gh_mp_admin
 
-          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'pub_sub_channel' ]; then
+          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'verifier' ]; then
             ci_echo_warn "Performing PROD canister Upgrade" >&2
             CI_DEBUG="true"
           fi
@@ -157,6 +157,52 @@ jobs:
             ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
           fi
 
+      - name: DEPLOY => Send configuration to the canister.
+        run: |
+          source ./ci_libs/CI_LIBS.sh
+          export HOME=/root
+
+          dfx identity use gh_mp_admin
+
+          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'verifier' ]; then
+            ci_echo_warn "Performing PROD config Update" >&2
+            CI_DEBUG="true"
+            CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_PROD_DATA"
+          else
+            CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_DATA"
+          fi
+
+          CANISTER_DATA="${!CANISTER_DATA_NAME_VAR}"
+
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' configure '${CANISTER_DATA}'" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" configure "${CANISTER_DATA}"); then
+            ci_echo_error "Configure failed ${result}" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Command output was '${result}'" >&2
+
+          # If '()' not found - than fail
+          if ! echo "${result}" | grep -q '()'; then
+            ci_echo_error "${result}" >&2
+            exit 1
+          else
+            ci_echo_success "${result}" >&2
+          fi
+        env:
+          CANISTER_CONFIG_DATA: >-
+            (
+              record {
+                identity_manager = "74gpt-tiaaa-aaaak-aacaa-cai";
+              }
+            )
+          CANISTER_CONFIG_PROD_DATA: >-
+            (
+              record {
+                identity_manager = "bryxc-zqaaa-aaaal-aajga-cai";
+              }
+            )
+
       - name: Save artifact
         uses: actions/upload-artifact@v3
         with:
@@ -165,7 +211,7 @@ jobs:
 
       - name: Frontend => Checkout repo.
         uses: actions/checkout@v3
-        if: ${{ github.event.inputs.canister_name == 'pub_sub_channel' }}
+        if: ${{ github.event.inputs.canister_name == 'verifier' }}
         with:
           token: ${{ secrets.PAT }}
           repository: internet-identity-labs/nfid-frontend
@@ -173,7 +219,7 @@ jobs:
           path: frontend
 
       - name: Frontend => Update did files.
-        if: ${{ github.event.inputs.canister_name == 'pub_sub_channel' }}
+        if: ${{ github.event.inputs.canister_name == 'verifier' }}
         run: |
           source ./ci_libs/CI_LIBS.sh
 
@@ -185,7 +231,7 @@ jobs:
           STOP_PLACEHOLDER: '\/\/---END-CUT---'
 
       - name: Frontend => Format did files.
-        if: ${{ github.event.inputs.canister_name == 'pub_sub_channel' }}
+        if: ${{ github.event.inputs.canister_name == 'verifier' }}
         run: |
           npm install --global yarn
           cd ./frontend
@@ -195,7 +241,7 @@ jobs:
           git diff
 
       - name: Frontend => Create a pull request.
-        if: ${{ github.event.inputs.canister_name == 'pub-sub-channel' }}
+        if: ${{ github.event.inputs.canister_name == 'verifier' }}
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.PAT }}
