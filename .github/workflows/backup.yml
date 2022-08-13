@@ -15,6 +15,7 @@ on:
         type: choice
         options:
           - identity_manager
+          - test_im
       debug_messages:
         description: 'Show debug messages'
         type: choice
