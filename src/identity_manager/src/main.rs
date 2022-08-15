@@ -249,6 +249,14 @@ async fn remove_account() -> HttpResponse<bool> {
 
 #[update]
 #[log_error]
+#[admin]
+async fn remove_account_by_principal(princ: String) -> HttpResponse<bool> {
+    let mut account_service = get_account_service();
+    account_service.remove_account_by_principal(princ)
+}
+
+#[update]
+#[log_error]
 #[replicate_account]
 async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
     let persona_service = get_persona_service();

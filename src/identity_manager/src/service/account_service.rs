@@ -22,6 +22,7 @@ pub trait AccountServiceTrait {
     async fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse>;
     fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
     fn remove_account(&mut self) -> HttpResponse<bool>;
+    fn remove_account_by_principal(&mut self, principal: String) -> HttpResponse<bool>;
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
     fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String>;
     fn get_account_by_anchor(&mut self, anchor: u64) -> HttpResponse<AccountResponse>;
@@ -95,6 +96,27 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
 
     fn remove_account(&mut self) -> HttpResponse<bool> {
         let result = self.account_repo.remove_account();
+        if result.is_none() {
+            return to_error_response("Unable to remove Account");
+        }
+
+        let account = result.unwrap();
+        if account.phone_number.is_none() {
+            return to_success_response(true);
+        }
+
+        let phone_number = account.phone_number_sha2.unwrap();
+        let success = self.phone_number_repo.remove(&phone_number);
+
+        if !success {
+            return to_error_response("Unable to remove Phone Number");
+        }
+
+        to_success_response(true)
+    }
+
+    fn remove_account_by_principal(&mut self, principal: String) -> HttpResponse<bool> {
+        let result = self.account_repo.remove_account_by_principal(principal);
         if result.is_none() {
             return to_error_response("Unable to remove Account");
         }

@@ -332,6 +332,7 @@ service : () -> {
   get_account_by_principal: (text) -> (HTTPAccountResponse) query;
   create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
   remove_account: () -> (BoolHttpResponse);
+  remove_account_by_principal: (text) -> (BoolHttpResponse);
   update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
 
   create_persona: (PersonaRequest) -> (HTTPAccountResponse);

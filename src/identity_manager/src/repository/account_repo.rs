@@ -35,6 +35,7 @@ pub trait AccountRepoTrait {
     fn create_account(&self, account: Account) -> Option<Account>;
     fn store_account(&self, account: Account) -> Option<Account>;
     fn remove_account(&self) -> Option<Account>;
+    fn remove_account_by_principal(&self, princ: String) -> Option<Account>;
     fn exists(&self, principal: &Principal) -> bool;
     fn update_account_index_with_pub_key(&self, additional_key: String, princ: String);
     fn update_account_index(&self, additional_principal_id: String);
@@ -110,6 +111,20 @@ impl AccountRepoTrait for AccountRepo {
         let princ = ic_service::get_caller().to_text();
         let accounts = storage::get_mut::<Accounts>();
         let index = storage::get_mut::<PrincipalIndex>();
+        match accounts.remove(&princ) {
+            None => { None }
+            Some(acc) => {
+                (&acc.access_points).into_iter()
+                    .for_each(|ap| { index.remove(&ap.principal_id); });
+                index.remove(&acc.principal_id.clone());
+                Option::from(acc.to_owned())
+            }
+        }
+    }
+
+    fn remove_account_by_principal(&self, princ: String) -> Option<Account> {
+        let accounts = storage::get_mut::<Accounts>();
+        let mut index = storage::get_mut::<PrincipalIndex>();
         match accounts.remove(&princ) {
             None => { None }
             Some(acc) => {
