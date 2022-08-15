@@ -46,7 +46,6 @@ async fn init() -> () {
 }
 
 #[update]
-#[admin]
 async fn sync_controllers() -> Vec<String> {
     let controllers = ic_service::get_controllers().await;
     ControllersRepo::save(controllers);
