@@ -1,24 +1,22 @@
-name: CRON Internet Identity Test
+name: CRON Backup Internet Identity
 on:
   schedule:
-      # Runs "01:05 every day" (see https://crontab.guru)
-      - cron: '05 1 * * *'
+      # Runs "every hour at 0 minutes" (see https://crontab.guru)
+      - cron: '0 * * * *'
 
 env:
-  NETWORK_NAME: 'dev'
-  CANISTER_NAME: 'internet_identity_test'
+  NETWORK_NAME: 'ic'
+  CANISTER_NAME: 'internet_identity'
   CI_DEBUG: 'true'
 
 jobs:
-  Deploy:
-    runs-on: ubuntu-latest
-    container:
-      image: identitylabs/dfxctl:0.10.1-compiled
+  Backup:
+    runs-on: [self-hosted, Linux, X64]
+    # container:
+    #   image: identitylabs/dfxctl:0.10.1-compiled
     defaults:
       run:
         shell: bash
-
-    if: ${{ (github.ref == 'refs/heads/master') }}
 
     steps:
       - name: DFX => Write identity.
@@ -28,15 +26,7 @@ jobs:
           sed -i 's/\\r\\n/\r\n/g' $ID_PATH/identity.pem
         env:
           GH_MP_ADMIN_PEM: ${{secrets.GH_MP_ADMIN_PEM}}
-          ID_PATH: /root/.config/dfx/identity/gh_mp_admin
-
-      - name: DFX => Start.
-        run: |
-          dfx_run &
-          sleep 60
-        working-directory: /default_project
-        env:
-          HOME: /root
+          ID_PATH: /home/ubuntu/.config/dfx/identity/gh_mp_admin
 
       - name: Checkout repo.
         uses: actions/checkout@v3
@@ -60,15 +50,13 @@ jobs:
             /cargo
             /cargo_target
             target/
-          key: ${{ runner.os }}-cargo-dev-identity_manager_test-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: PRE-BUILD => Populate env vars.
+      - name: PRE-BACKUP => Populate env vars.
         run: |
+          dfx start --background --clean --host 0.0.0.0:8000 &
           source ./ci_libs/CI_LIBS.sh
-          export HOME=/root
-
-          ci_echo_debug "Installing jq" >&2
-          apt-get update && apt-get install -y --no-install-recommends jq
+          # export HOME=/root
 
           ci_echo_debug "Getting values from dfx.json" >&2
           if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
@@ -92,36 +80,13 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
 
-      - name: BUILD => Build the canister.
+      - name: BACKUP => Backup.
         run: |
           source ./ci_libs/CI_LIBS.sh
-          export HOME=/root
 
           dfx identity use gh_mp_admin
 
-          rm -rf .dfx;
-          ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
-          dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
-
-      - name: DEPLOY => Upgrade the canister.
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-          export HOME=/root
-
-          dfx identity use gh_mp_admin
-
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "${CANISTER_NAME}"); then
-            ci_echo_error "Upgrade failed ${result}" >&2
-            exit 1
-          fi
-
-          ci_echo_debug "Command output was '${result}'" >&2
-
-          # If hash the same - than fail deploy
-          if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
-            ci_echo_error "${result}" >&2
-            exit 1
-          else
-            ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
-          fi
+          ./ci_libs/backup.sh "${CANISTER_NAME}" "${NETWORK_NAME}" "${BACKUP_FOLDER}" "${BACKUP_CHUNK_SIZE}"
+        env:
+          BACKUP_FOLDER: /home/ubuntu/backup/
+          BACKUP_CHUNK_SIZE: 3000

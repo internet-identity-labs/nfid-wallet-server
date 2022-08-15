@@ -358,7 +358,7 @@ jobs:
 
       - name: Frontend => Checkout repo.
         uses: actions/checkout@v3
-        if: ${{ github.event.inputs.canister_name == 'identity_manager' }}
+        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
         with:
           token: ${{ secrets.PAT }}
           repository: internet-identity-labs/nfid-frontend
@@ -366,7 +366,7 @@ jobs:
           path: frontend
 
       - name: Frontend => Update did files. 
-        if: ${{ github.event.inputs.canister_name == 'identity_manager' }}
+        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
         run: |
           source ./ci_libs/CI_LIBS.sh
 
@@ -382,7 +382,7 @@ jobs:
           STOP_PLACEHOLDER: '\/\/---END-CUT---'
 
       - name: Frontend => Format did files.
-        if: ${{ github.event.inputs.canister_name == 'identity_manager' }}
+        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
         run: |
           npm install --global yarn
           cd ./frontend
@@ -392,7 +392,7 @@ jobs:
           git diff
 
       - name: Frontend => Create a pull request.
-        if: ${{ github.event.inputs.canister_name == 'identity_manager' }}
+        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.PAT }}
