@@ -224,6 +224,10 @@ jobs:
           source ./ci_libs/CI_LIBS.sh
 
           ci_echo_info "Updating DID file." >&2
+          ci_echo_debug "Cleaning destination files" >&2
+          rm -fv "./frontend/src/integration/_ic_api/${CANISTER_NAME}.did.d.ts" "./frontend/src/integration/_ic_api/${CANISTER_NAME}_idl.js"
+
+          ci_echo_debug "Cutting text..." >&2
           ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.d.ts" "./frontend/src/integration/_ic_api/${CANISTER_NAME}.did.d.ts"
           ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.js" "./frontend/src/integration/_ic_api/${CANISTER_NAME}_idl.js"
         env:
