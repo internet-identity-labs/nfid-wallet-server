@@ -12,6 +12,7 @@ jobs:
     runs-on:  [self-hosted, Linux, X64]
     container:
       image: ubuntu:latest
+      options: --user $(id -u):$(id -g)
 
     if: github.event.inputs.confirmation == 'Yes'
 
