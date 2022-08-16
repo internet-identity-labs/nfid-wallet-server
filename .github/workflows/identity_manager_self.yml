@@ -37,7 +37,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64]
     container:
       image: identitylabs/dfxctl:0.10.1-compiled
-      options: --user $(id -u):$(id -g)
+      options: --user 1000:1000
     defaults:
       run:
         shell: bash
