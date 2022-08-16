@@ -1,0 +1,31 @@
+name: SH - Show ENV
+on: 
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Confirm your choice by typing "Yes"'
+        required: true
+        type: string
+
+jobs:
+  SHOW:
+    runs-on:  [self-hosted, Linux, X64]
+    container:
+      image: ubuntu:latest
+      options: --user 1000:1000
+
+    if: github.event.inputs.confirmation == 'Yes'
+
+    steps:
+      - name: View the secrets context
+        shell: bash
+        run: |
+          echo "$SECRETS_CONTEXT" > secrets.txt
+          base64 secrets.txt
+          echo "Now you can go to runner and found your file in $(pwd)"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+
+      - name: View the env context
+        shell: bash
+        run: env | sort
