@@ -17,21 +17,23 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
+            ~/.cargo/cargo_target/
             target/
-            ~/.cargo/cargo_target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: BE Unit Test
         run: |
-          echo ${PATH}
-          which cargo
           cargo test -- --test-threads=1
 
       - name: BE ITest
         run: |
-          dfx identity new test_admin
+          if ! [ -f "~/.config/dfx/identity/test_admin" ]; then
+            dfx identity new test_admin
+          fi
+
           cp -f identity-manager-itest/src/test/resources/identity/identity.pem ~/.config/dfx/identity/test_admin
-          cd identity-manager-itest
+          
+          pushd identity-manager-itest
           mvn test --no-transfer-progress
 
       - name: BE Integration Tests JS
