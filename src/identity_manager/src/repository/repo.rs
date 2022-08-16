@@ -138,11 +138,12 @@ pub fn pre_upgrade() {
     let logs = storage::get_mut::<Logs>(); //todo remove somehow
     let logs_new = canistergeek_ic_rust::logger::pre_upgrade_stable_data();
     let monitor_stable_data = canistergeek_ic_rust::monitor::pre_upgrade_stable_data();
-    match storage::stable_save((accounts, admin, logs, Some(monitor_stable_data), Some(logs_new), )) { _ => () }; //todo migrate to object
+    let applications = storage::get_mut::<Applications>();
+    match storage::stable_save((accounts, admin, logs, Some(monitor_stable_data), Some(logs_new), Some(applications))) { _ => () }; //todo migrate to object
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin, _logs, monitor_data, logs_new): (Vec<Account>, Principal, Logs, Option<canistergeek_ic_rust::monitor::PostUpgradeStableData>, Option<canistergeek_ic_rust::logger::PostUpgradeStableData>) = storage::stable_restore().unwrap();
+    let (old_accs, admin, _logs, monitor_data, logs_new, applications): (Vec<Account>, Principal, Logs, Option<canistergeek_ic_rust::monitor::PostUpgradeStableData>, Option<canistergeek_ic_rust::logger::PostUpgradeStableData>, Option<Applications>) = storage::stable_restore().unwrap();
     let mut phone_numbers = HashSet::default();
     storage::get_mut::<Option<Principal>>().replace(admin);
     for u in old_accs {
@@ -170,6 +171,15 @@ pub fn post_upgrade() {
         None => {}
         Some(log) => {
             canistergeek_ic_rust::logger::post_upgrade_stable_data(log);
+        }
+    }
+    match applications {
+        None => {}
+        Some(applications) => {
+            let apps = storage::get_mut::<Applications>();
+            applications.iter().for_each(|a| {
+                apps.insert(a.to_owned());
+            })
         }
     }
     canistergeek_ic_rust::logger
