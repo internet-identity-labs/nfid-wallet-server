@@ -1,0 +1,55 @@
+name: SH - BEItest
+on: workflow_dispatch
+jobs:
+  test:
+    runs-on: [self-hosted, Linux, X64]
+    container:
+      image: ubuntu:latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache Cargo dependencies.
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '13'
+
+      - name: Install Rust
+        run: |
+          rustup update 1.59.0 --no-self-update
+          rustup default 1.59.0
+          rustup target add wasm32-unknown-unknown
+
+      - name: Install DFX
+        uses: aviate-labs/setup-dfx@v0.2.3
+        with:
+          dfx-version: 0.9.3
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+
+      - name: BE Unit Test
+        run: cargo test -- --test-threads=1
+
+      - name: BE ITest
+        run: |
+          dfx identity new test_admin
+          cp -f identity-manager-itest/src/test/resources/identity/identity.pem ~/.config/dfx/identity/test_admin
+          cd identity-manager-itest
+          mvn test --no-transfer-progress
+
+      - name: BE Integration Tests JS
+        run: npm i && npm run test

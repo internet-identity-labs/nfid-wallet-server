@@ -1,4 +1,4 @@
-name: SH - Identity Manager
+name: SH - Verifier
 on: 
   workflow_dispatch:
     inputs:
@@ -14,8 +14,7 @@ on:
         required: true
         type: choice
         options:
-          - identity_manager_test_replica
-          - identity_manager
+          - verifier
       debug_messages:
         description: 'Show debug messages'
         type: choice
@@ -94,7 +93,7 @@ jobs:
           source ./ci_libs/CI_LIBS.sh
           export HOME=/root
 
-          ci_echo_debug "Installing jq" >&2
+          ci_echo_debug "Installing jq." >&2
           apt-get update && apt-get install -y --no-install-recommends jq
 
           ci_echo_debug "Getting values from dfx.json" >&2
@@ -119,16 +118,6 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
 
-      - name: BUILD => Show current configuration.
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-          export HOME=/root
-
-          dfx identity use gh_mp_admin
-
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_config" >&2
-          dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_config
-
       - name: BUILD => Build the canister.
         run: |
           source ./ci_libs/CI_LIBS.sh
@@ -140,98 +129,6 @@ jobs:
           ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
-      - name: DEPLOY PROD => Upgrade the identity_manager_replica canister.
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-          export HOME=/root
-
-          dfx identity use gh_mp_admin
-
-          CI_DEBUG="true"
-
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade 'identity_manager_replica'" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "identity_manager_replica"); then
-            ci_echo_error "Upgrade failed ${result}" >&2
-            exit 1
-          fi
-
-          ci_echo_debug "Command output was '${result}'" >&2
-
-          # If hash the same - than fail deploy
-          if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
-            ci_echo_error "${result}" >&2
-            exit 1
-          else
-            ci_echo_success "Canister 'identity_manager_replica' was upgraded" >&2
-          fi
-
-      - name: DEPLOY PROD => Send configuration to the identity_manager_replica canister.
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-          export HOME=/root
-
-          dfx identity use gh_mp_admin
-
-          CI_DEBUG="true"
-
-          CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_TEST_DATA"
-
-          CANISTER_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${!CANISTER_DATA_NAME_VAR}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
-
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call 'identity_manager_replica' configure '${CANISTER_DATA}'" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "identity_manager_replica" configure "${CANISTER_DATA}"); then
-            ci_echo_error "Configure failed ${result}" >&2
-            exit 1
-          fi
-
-          ci_echo_debug "Command output was '${result}'" >&2
-
-          # If '()' not found - than fail
-          if ! echo "${result}" | grep -q '()'; then
-            ci_echo_error "${result}" >&2
-            exit 1
-          else
-            ci_echo_success "${result}" >&2
-          fi
-        env:
-          CANISTER_CONFIG_TEST_DATA: >-
-            (
-                record {
-                    lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
-                    whitelisted_canisters = opt vec {principal "bryxc-zqaaa-aaaal-aajga-cai"};
-                    git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
-                    commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
-                }
-            )
-
-      - name: TEST PROD => Get Account from the identity_manager_replica canister.
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-          export HOME=/root
-
-          dfx identity use gh_mp_admin
-
-          CI_DEBUG="true"
-
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call 'identity_manager_replica' get_account" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "identity_manager_replica" get_account) || [ -z "${result}" ]; then
-            ci_echo_error "Test failed - call to canister unsuccessful" >&2
-            exit 1
-          fi
-
-          ci_echo_debug "Command output was '${result}'" >&2
-
-          # If 'anchor' not found - than fail
-          if ! echo "${result}" | grep -q 'anchor'; then
-            ci_echo_error "Test failed - 'anchor' - was not found" >&2
-            exit 1
-          else
-            ci_echo_success "${result}" >&2
-          fi
-
       - name: DEPLOY => Upgrade the canister.
         run: |
           source ./ci_libs/CI_LIBS.sh
@@ -239,7 +136,7 @@ jobs:
 
           dfx identity use gh_mp_admin
 
-          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
+          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'verifier' ]; then
             ci_echo_warn "Performing PROD canister Upgrade" >&2
             CI_DEBUG="true"
           fi
@@ -267,26 +164,16 @@ jobs:
 
           dfx identity use gh_mp_admin
 
-          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
+          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'verifier' ]; then
             ci_echo_warn "Performing PROD config Update" >&2
             CI_DEBUG="true"
             CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_PROD_DATA"
           else
             CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_DATA"
           fi
-          
-          # Sync command
-          ci_echo_info "Synching controllers for the canister." >&2
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' sync_controllers" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" sync_controllers); then
-            ci_echo_warn "Synching controllers failed ${result}" >&2
-          else
-            ci_echo_success "${result}" >&2
-          fi
 
-          CANISTER_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${!CANISTER_DATA_NAME_VAR}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
+          CANISTER_DATA="${!CANISTER_DATA_NAME_VAR}"
 
-          # Configure command
           ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' configure '${CANISTER_DATA}'" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" configure "${CANISTER_DATA}"); then
             ci_echo_error "Configure failed ${result}" >&2
@@ -302,53 +189,19 @@ jobs:
           else
             ci_echo_success "${result}" >&2
           fi
-          
         env:
           CANISTER_CONFIG_DATA: >-
             (
               record {
-                ii_canister_id = opt principal "nprnb-waaaa-aaaaj-qax4a-cai";
-                lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
-                git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
-                commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
-                whitelisted_canisters = opt vec { principal "gzqxf-kqaaa-aaaak-qakba-cai" };
+                identity_manager = "74gpt-tiaaa-aaaak-aacaa-cai";
               }
             )
           CANISTER_CONFIG_PROD_DATA: >-
             (
               record {
-                ii_canister_id = opt principal "rdmx6-jaaaa-aaaaa-aaadq-cai";
-                lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
-                heartbeat = opt 900;
-                backup_canister_id = opt "bv5d4-nyaaa-aaaap-qaaba-cai";
-                git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
-                commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
-                whitelisted_canisters = opt vec { principal "sgk26-7yaaa-aaaan-qaovq-cai" };
+                identity_manager = "bryxc-zqaaa-aaaal-aajga-cai";
               }
             )
-
-      - name: TEST => Get Account from the canister.
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-          export HOME=/root
-
-          dfx identity use gh_mp_admin
-
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_account" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_account) || [ -z "${result}" ]; then
-            ci_echo_error "Test failed - call to canister unsuccessful" >&2
-            exit 1
-          fi
-
-          ci_echo_debug "Command output was '${result}'" >&2
-
-          # If 'anchor' not found - than fail
-          if ! echo "${result}" | grep -q 'anchor'; then
-            ci_echo_error "Test failed - 'anchor' - was not found" >&2
-            exit 1
-          else
-            ci_echo_success "${result}" >&2
-          fi
 
       - name: Save artifact
         uses: actions/upload-artifact@v3
@@ -358,19 +211,19 @@ jobs:
 
       - name: Frontend => Checkout repo.
         uses: actions/checkout@v3
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
+        if: ${{ github.event.inputs.canister_name == 'verifier' }} && (github.event.inputs.network_name != 'ic') }}
         with:
           token: ${{ secrets.PAT }}
           repository: internet-identity-labs/nfid-frontend
           ref: main
           path: frontend
 
-      - name: Frontend => Update did files. 
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
+      - name: Frontend => Update did files.
+        if: ${{ github.event.inputs.canister_name == 'verifier' }} && (github.event.inputs.network_name != 'ic') }}
         run: |
           source ./ci_libs/CI_LIBS.sh
 
-          ci_echo_info "Updating DID file" >&2
+          ci_echo_info "Updating DID file." >&2
           ci_echo_debug "Cleaning destination files" >&2
           rm -fv "./frontend/src/integration/_ic_api/${CANISTER_NAME}.did.d.ts" "./frontend/src/integration/_ic_api/${CANISTER_NAME}_idl.js"
 
@@ -382,7 +235,7 @@ jobs:
           STOP_PLACEHOLDER: '\/\/---END-CUT---'
 
       - name: Frontend => Format did files.
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
+        if: ${{ github.event.inputs.canister_name == 'verifier' }} && (github.event.inputs.network_name != 'ic') }}
         run: |
           npm install --global yarn
           cd ./frontend
@@ -392,7 +245,7 @@ jobs:
           git diff
 
       - name: Frontend => Create a pull request.
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
+        if: ${{ github.event.inputs.canister_name == 'verifier' }} && (github.event.inputs.network_name != 'ic') }}
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.PAT }}
