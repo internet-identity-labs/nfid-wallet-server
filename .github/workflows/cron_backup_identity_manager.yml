@@ -1,4 +1,4 @@
-name: CRON Backup Internet Identity
+name: CRON Backup Identity Manager
 on:
   schedule:
       # Runs "every hour at 0 minutes" (see https://crontab.guru)
@@ -6,7 +6,7 @@ on:
 
 env:
   NETWORK_NAME: 'ic'
-  CANISTER_NAME: 'internet_identity'
+  CANISTER_NAME: 'identity_manager'
   CI_DEBUG: 'true'
 
 jobs:
