@@ -27,7 +27,7 @@ jobs:
 
       - name: BE ITest
         run: |
-          if ! [ -f "~/.config/dfx/identity/test_admin" ]; then
+          if ! [ -f "~/.config/dfx/identity/test_admin/identity.pem" ]; then
             dfx identity new test_admin
           fi
 

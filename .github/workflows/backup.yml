@@ -103,6 +103,11 @@ jobs:
           ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
           ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
 
+      - name: PRE-BUILD => DFX status.
+        run: |
+          dfx --version
+
+
       - name: BACKUP => Backup.
         run: |
           source ./ci_libs/CI_LIBS.sh
