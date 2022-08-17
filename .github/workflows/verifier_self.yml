@@ -1,0 +1,236 @@
+name: SH - Verifier
+on: 
+  workflow_dispatch:
+    inputs:
+      network_name:
+        description: 'Choose applicable network'
+        required: true
+        type: choice
+        options: 
+          - dev
+          - ic
+      canister_name:
+        description: 'Choose applicable canister'
+        required: true
+        type: choice
+        options:
+          - verifier
+      debug_messages:
+        description: 'Show debug messages'
+        type: choice
+        options: 
+          - 'false'
+          - 'true'
+      confirmation:
+        description: 'For the ic deployment - confirm your choice by typing "Yes"'
+        type: string
+
+env:
+  NETWORK_NAME: ${{ github.event.inputs.network_name }}
+  CANISTER_NAME: ${{ github.event.inputs.canister_name }}
+  CI_DEBUG: ${{ github.event.inputs.debug_messages }}
+
+
+jobs:
+  Deploy:
+    runs-on: [self-hosted, Linux, X64]
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: INPUT => Checks.
+        if: ${{ (github.event.inputs.network_name == 'ic') && (github.event.inputs.confirmation != 'Yes') }}
+        run: |
+          echo "[ERROR] You have try release to network 'ic' without or with wrong confirmation phrase" >&2
+          exit 1
+
+      - name: DFX => Write identity.
+        run: |
+          mkdir -p $ID_PATH
+          echo $GH_MP_ADMIN_PEM >> $ID_PATH/identity.pem
+          sed -i 's/\\r\\n/\r\n/g' $ID_PATH/identity.pem
+        env:
+          GH_MP_ADMIN_PEM: ${{secrets.GH_MP_ADMIN_PEM}}
+          ID_PATH: /home/ubuntu/.config/dfx/identity/gh_mp_admin
+
+      - name: Checkout repo.
+        uses: actions/checkout@v3
+
+      - name: Checkout CI repo.
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT }}
+          repository: internet-identity-labs/ci_libs
+          ref: main
+          path: ci_libs
+
+      - name: Cache Cargo dependencies.
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ~/.cargo/cargo_target
+            target/
+          key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: PRE-BUILD => Populate env vars.
+        run: |
+          source ./ci_libs/CI_LIBS.sh
+
+          ci_echo_debug "Getting values from dfx.json" >&2
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
+            ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
+            exit 1
+          fi
+
+          CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
+          CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
+          CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
+            
+          echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
+          echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
+          echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
+          
+          ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
+          ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
+          ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
+          ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
+          ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
+
+      - name: BUILD => Build the canister.
+        run: |
+          source ./ci_libs/CI_LIBS.sh
+
+          dfx identity use gh_mp_admin
+
+          rm -rf .dfx;
+          ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
+          dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+      - name: DEPLOY => Upgrade the canister.
+        run: |
+          source ./ci_libs/CI_LIBS.sh
+
+          dfx identity use gh_mp_admin
+
+          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'verifier' ]; then
+            ci_echo_warn "Performing PROD canister Upgrade" >&2
+            CI_DEBUG="true"
+          fi
+
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "${CANISTER_NAME}"); then
+            ci_echo_error "Upgrade failed ${result}" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Command output was '${result}'" >&2
+
+          # If hash the same - than fail deploy
+          if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
+            ci_echo_error "${result}" >&2
+            exit 1
+          else
+            ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
+          fi
+
+      - name: DEPLOY => Send configuration to the canister.
+        run: |
+          source ./ci_libs/CI_LIBS.sh
+
+          dfx identity use gh_mp_admin
+
+          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'verifier' ]; then
+            ci_echo_warn "Performing PROD config Update" >&2
+            CI_DEBUG="true"
+            CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_PROD_DATA"
+          else
+            CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_DATA"
+          fi
+
+          CANISTER_DATA="${!CANISTER_DATA_NAME_VAR}"
+
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' configure '${CANISTER_DATA}'" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" configure "${CANISTER_DATA}"); then
+            ci_echo_error "Configure failed ${result}" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Command output was '${result}'" >&2
+
+          # If '()' not found - than fail
+          if ! echo "${result}" | grep -q '()'; then
+            ci_echo_error "${result}" >&2
+            exit 1
+          else
+            ci_echo_success "${result}" >&2
+          fi
+        env:
+          CANISTER_CONFIG_DATA: >-
+            (
+              record {
+                identity_manager = "74gpt-tiaaa-aaaak-aacaa-cai";
+              }
+            )
+          CANISTER_CONFIG_PROD_DATA: >-
+            (
+              record {
+                identity_manager = "bryxc-zqaaa-aaaal-aajga-cai";
+              }
+            )
+
+      - name: Save artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.CANISTER_WASM }}
+          path: ${{ github.workspace }}/${{ env.CANISTER_WASM }}
+
+      - name: Frontend => Checkout repo.
+        uses: actions/checkout@v3
+        if: ${{ github.event.inputs.canister_name == 'verifier' }} && (github.event.inputs.network_name != 'ic') }}
+        with:
+          token: ${{ secrets.PAT }}
+          repository: internet-identity-labs/nfid-frontend
+          ref: main
+          path: frontend
+
+      - name: Frontend => Update did files.
+        if: ${{ github.event.inputs.canister_name == 'verifier' }} && (github.event.inputs.network_name != 'ic') }}
+        run: |
+          source ./ci_libs/CI_LIBS.sh
+
+          ci_echo_info "Updating DID file." >&2
+          ci_echo_debug "Cleaning destination files" >&2
+          rm -fv "./frontend/src/integration/_ic_api/${CANISTER_NAME}.did.d.ts" "./frontend/src/integration/_ic_api/${CANISTER_NAME}_idl.js"
+
+          ci_echo_debug "Cutting text..." >&2
+          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.d.ts" "./frontend/src/integration/_ic_api/${CANISTER_NAME}.did.d.ts"
+          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.js" "./frontend/src/integration/_ic_api/${CANISTER_NAME}_idl.js"
+        env:
+          START_PLACEHOLDER: '\/\/---BEGIN-CUT---'
+          STOP_PLACEHOLDER: '\/\/---END-CUT---'
+
+      - name: Frontend => Format did files.
+        if: ${{ github.event.inputs.canister_name == 'verifier' }} && (github.event.inputs.network_name != 'ic') }}
+        run: |
+          sudo npm install --global yarn
+          cd ./frontend
+          yarn
+          yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}.did.d.ts
+          yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}_idl.js
+          git diff
+
+      - name: Frontend => Create a pull request.
+        if: ${{ github.event.inputs.canister_name == 'verifier' }} && (github.event.inputs.network_name != 'ic') }}
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.PAT }}
+          commit-message: "ci: update ${{ env.NETWORK_NAME }} - ${{ env.CANISTER_NAME }} did files"
+          title: "ci: update ${{ env.NETWORK_NAME }} - ${{ env.CANISTER_NAME }} did files"
+          branch: update-did-files
+          path: frontend
+          reviewers: plitzenberger

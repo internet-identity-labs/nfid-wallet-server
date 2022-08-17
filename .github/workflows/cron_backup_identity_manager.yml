@@ -12,8 +12,6 @@ env:
 jobs:
   Backup:
     runs-on: [self-hosted, Linux, X64]
-    # container:
-    #   image: identitylabs/dfxctl:0.10.1-compiled
     defaults:
       run:
         shell: bash
@@ -47,8 +45,7 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            /cargo
-            /cargo_target
+            ~/.cargo/cargo_target
             target/
           key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
 
@@ -56,7 +53,6 @@ jobs:
         run: |
           dfx start --background --clean --host 0.0.0.0:8000 &
           source ./ci_libs/CI_LIBS.sh
-          # export HOME=/root
 
           ci_echo_debug "Getting values from dfx.json" >&2
           if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
@@ -77,8 +73,6 @@ jobs:
           ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
           ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
           ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
-        env:
-          DEBIAN_FRONTEND: noninteractive
 
       - name: BACKUP => Backup.
         run: |

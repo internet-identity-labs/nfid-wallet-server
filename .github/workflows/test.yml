@@ -17,14 +17,12 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
+            ~/.cargo/cargo_target/
             target/
-            ~/.cargo/cargo_target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: BE Unit Test
         run: |
-          echo ${PATH}
-          which cargo
           cargo test -- --test-threads=1
 
       - name: BE ITest

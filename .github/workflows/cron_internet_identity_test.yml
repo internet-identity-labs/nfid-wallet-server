@@ -11,9 +11,7 @@ env:
 
 jobs:
   Deploy:
-    runs-on: ubuntu-latest
-    container:
-      image: identitylabs/dfxctl:0.10.1-compiled
+    runs-on: [self-hosted, Linux, X64]
     defaults:
       run:
         shell: bash
@@ -28,15 +26,7 @@ jobs:
           sed -i 's/\\r\\n/\r\n/g' $ID_PATH/identity.pem
         env:
           GH_MP_ADMIN_PEM: ${{secrets.GH_MP_ADMIN_PEM}}
-          ID_PATH: /root/.config/dfx/identity/gh_mp_admin
-
-      - name: DFX => Start.
-        run: |
-          dfx_run &
-          sleep 60
-        working-directory: /default_project
-        env:
-          HOME: /root
+          ID_PATH: /home/ubuntu/.config/dfx/identity/gh_mp_admin
 
       - name: Checkout repo.
         uses: actions/checkout@v3
@@ -57,18 +47,13 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            /cargo
-            /cargo_target
+            ~/.cargo/cargo_target
             target/
           key: ${{ runner.os }}-cargo-dev-identity_manager_test-${{ hashFiles('**/Cargo.lock') }}
 
       - name: PRE-BUILD => Populate env vars.
         run: |
           source ./ci_libs/CI_LIBS.sh
-          export HOME=/root
-
-          ci_echo_debug "Installing jq" >&2
-          apt-get update && apt-get install -y --no-install-recommends jq
 
           ci_echo_debug "Getting values from dfx.json" >&2
           if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
@@ -89,13 +74,10 @@ jobs:
           ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
           ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
           ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
-        env:
-          DEBIAN_FRONTEND: noninteractive
 
       - name: BUILD => Build the canister.
         run: |
           source ./ci_libs/CI_LIBS.sh
-          export HOME=/root
 
           dfx identity use gh_mp_admin
 
@@ -106,7 +88,6 @@ jobs:
       - name: DEPLOY => Upgrade the canister.
         run: |
           source ./ci_libs/CI_LIBS.sh
-          export HOME=/root
 
           dfx identity use gh_mp_admin
 
