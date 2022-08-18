@@ -17,12 +17,4 @@ public class MainITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("main/exp_fail", actual);
     }
 
-    @Test(priority = 3)
-    public void getConfigExceptConfigResponse() {
-        call("common/use_default_persona");
-        var user = call("common/get_principal").trim();
-        String actual = call("common/get_config_dfx_project", "identity_manager");
-        validateWithFormatIdentity("common/exp_config", actual);
-    }
-
 }
