@@ -15,7 +15,10 @@ public class BaseIdentityManagerITest extends BaseDFXITest {
             call("common/use_default_persona");
             ROOT_IDENTITY = call("common/get_principal").trim();
             call("common/init_dfx_project");
-            call("common/deploy_dfx_project"); //TODO split
+            var command = String.format(getScript("common/deploy_project").trim(), "identity_manager");
+            callDfxCommand(command);
+            var command2 = String.format(getScript("common/deploy_project").trim(), "identity_manager_replica");
+            callDfxCommand(command2);//TODO split
             BACKUP_CANISTER_ID = call("common/get_canister_id", "identity_manager_replica").trim();
             String im = call("common/get_canister_id", "identity_manager").trim();
             identity_manager = call("common/configure_dfx_project", "identity_manager", ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, getHeartBeatPeriod(), BACKUP_CANISTER_ID, im);
