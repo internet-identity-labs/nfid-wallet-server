@@ -106,8 +106,8 @@ impl ConfigurationRepo {
         let lambda = Principal::self_authenticating("mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe");
         Configuration {
             lambda: lambda,
-            token_ttl: Duration::from_secs(60),
-            token_refresh_ttl: Duration::from_secs(60),
+            token_ttl: Duration::from_secs(360),
+            token_refresh_ttl: Duration::from_secs(360),
             whitelisted_phone_numbers: Vec::default(),
             heartbeat: Option::None,
             backup_canister_id: None,
