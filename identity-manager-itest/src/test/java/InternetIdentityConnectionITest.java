@@ -11,6 +11,7 @@ import org.ic4j.candid.types.Type;
 import org.ic4j.internetidentity.*;
 import org.ic4j.types.Principal;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 import org.testng.internal.collections.Pair;
 import records.HTTPAccessPointRequest;
@@ -28,6 +29,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 @Slf4j
+@Ignore
 public class InternetIdentityConnectionITest extends BaseDFXITest {
     private BasicIdentity identity;
     private Agent agent;
