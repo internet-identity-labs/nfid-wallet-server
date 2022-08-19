@@ -44,7 +44,7 @@ async fn configure(request: ConfigurationRequest) -> () {
     let configuration = Configuration {
         identity_manager_canister_id: request.identity_manager,
         whitelisted_canisters: None,
-        token_ttl:  Duration::from_secs( request.token_ttl.unwrap_or(60))
+        token_ttl:  Duration::from_secs( request.token_ttl.unwrap_or(300))
     };
     ConfigurationRepo::save(configuration);
 }
