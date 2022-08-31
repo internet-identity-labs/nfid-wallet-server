@@ -1,0 +1,146 @@
+name: Restore Canister
+on: 
+  workflow_dispatch:
+    inputs:
+      source_network_name:
+        description: 'Choose applicable network for the source canister'
+        required: true
+        type: choice
+        options: 
+          - dev
+          - ic
+      source_canister_name:
+        description: 'Choose canister which will be used as a source'
+        required: true
+        type: choice
+        options:
+          - identity_manager
+          - identity_manager_replica
+          - test_im
+      destination_network_name:
+        description: 'Choose applicable network for the destination canister'
+        required: true
+        type: choice
+        options: 
+          - dev
+          - ic
+      destination_canister_name:
+        description: 'Choose canister which will be used as a destination'
+        required: true
+        type: choice
+        options:
+          - identity_manager
+          - identity_manager_replica
+          - test_im
+      restore_name:
+        description: 'Subfolder name which contain specific backup files'
+        type: string
+      debug_messages:
+        description: 'Show debug messages'
+        type: choice
+        options: 
+          - 'false'
+          - 'true'
+      confirmation:
+        description: 'For the ic network - confirm your choice by typing "Yes"'
+        type: string
+
+env:
+  RESTORE_NAME: ${{ github.event.inputs.restore_name }}
+  SOURCE_NETWORK_NAME: ${{ github.event.inputs.source_network_name }}
+  SOURCE_CANISTER_NAME: ${{ github.event.inputs.source_canister_name }}
+  DESTINATION_NETWORK_NAME: ${{ github.event.inputs.destination_network_name }}
+  DESTINATION_CANISTER_NAME: ${{ github.event.inputs.destination_canister_name }}
+  CI_DEBUG: ${{ github.event.inputs.debug_messages }}
+
+
+jobs:
+  Restore:
+    runs-on: [self-hosted, Linux, X64]
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: INPUT => Checks.
+        if: ${{ ( (github.event.inputs.source_network_name == 'ic') || (github.event.inputs.destination_network_name == 'ic') ) && (github.event.inputs.confirmation != 'Yes') }}
+        run: |
+          echo "[ERROR] You have try use network 'ic' without or with wrong confirmation phrase" >&2
+          exit 1
+
+      - name: INPUT => Checks.
+        if: ${{ github.event.inputs.restore_name == '' }}
+        run: |
+          echo "[ERROR] You need specify restore_name for restore action" >&2
+          exit 1
+
+      - name: DFX => Write identity.
+        run: |
+          mkdir -p $ID_PATH
+          echo $GH_MP_ADMIN_PEM >> $ID_PATH/identity.pem
+          sed -i 's/\\r\\n/\r\n/g' $ID_PATH/identity.pem
+        env:
+          GH_MP_ADMIN_PEM: ${{secrets.GH_MP_ADMIN_PEM}}
+          ID_PATH: /home/ubuntu/.config/dfx/identity/gh_mp_admin
+
+      - name: Checkout repo.
+        uses: actions/checkout@v3
+
+      - name: Checkout CI repo.
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT }}
+          repository: internet-identity-labs/ci_libs
+          ref: main
+          path: ci_libs
+
+      - name: Cache Cargo dependencies.
+        uses: actions/cache@v3
+        with:
+          path: |
+            /home/ubuntu/.cargo/bin/
+            /home/ubuntu/.cargo/registry/index/
+            /home/ubuntu/.cargo/registry/cache/
+            /home/ubuntu/.cargo/git/db/
+            /home/ubuntu/.cargo/cargo_target
+            target/
+          key: ${{ runner.os }}-cargo-${{ github.event.inputs.source_network_name }}-${{ github.event.inputs.source_canister_name }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: PRE-ACTION => Populate env vars.
+        run: |
+          source ./ci_libs/CI_LIBS.sh
+
+          ci_echo_debug "Getting values from dfx.json" >&2
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.${SOURCE_CANISTER_NAME}"); then
+            ci_echo_error "Can't found source canister '${SOURCE_CANISTER_NAME}' data from dfx.json" >&2
+            exit 1
+          fi
+
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.${DESTINATION_CANISTER_NAME}"); then
+            ci_echo_error "Can't found destination canister '${DESTINATION_CANISTER_NAME}' data from dfx.json" >&2
+            exit 1
+          fi
+          
+          ci_echo_info "RESTORE_NAME=${RESTORE_NAME}" >&2
+          ci_echo_info "SOURCE_NETWORK_NAME=${SOURCE_NETWORK_NAME}" >&2
+          ci_echo_info "SOURCE_CANISTER_NAME=${SOURCE_CANISTER_NAME}" >&2
+          ci_echo_info "DESTINATION_NETWORK_NAME=${DESTINATION_NETWORK_NAME}" >&2
+          ci_echo_info "DESTINATION_CANISTER_NAME=${DESTINATION_CANISTER_NAME}" >&2
+
+      - name: PRE-BUILD => DFX status.
+        run: |
+          dfx --version
+
+      - name: RESTORE => Restore.
+        run: |
+          source ./ci_libs/CI_LIBS.sh
+          source ./ci_libs/canister_backup_restore.sh
+
+          dfx identity use gh_mp_admin
+
+          BACKUP_FILES_PATH="${SOURCE_CANISTER_NAME}/${SOURCE_NETWORK_NAME}/${RESTORE_NAME#/}"
+          ci_canister_restore "${DESTINATION_CANISTER_NAME}" "${DESTINATION_NETWORK_NAME}" "${BACKUP_FOLDER}" "${BACKUP_FILES_PATH}"
+        env:
+          BACKUP_FOLDER: /home/ubuntu/backup/
+
+
