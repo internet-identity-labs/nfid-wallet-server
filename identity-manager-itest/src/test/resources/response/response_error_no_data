@@ -1,0 +1,6 @@
+(
+  record {
+    error = opt "%s";
+    status_code = %s : nat16;
+  },
+)

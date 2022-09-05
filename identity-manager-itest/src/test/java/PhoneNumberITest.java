@@ -90,7 +90,7 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
     @Test(priority = 41)
     public void verifyTokenWhenTokenNotMatch() {
         var actual = command("request/verify_token", "123");
-        var expected = get("response/response", "opt \"Token does not match.\"", "400");
+        var expected = get("response/response_error_no_data", "Incorrect verification code", "400");
         assertEquals(actual, expected);
     }
 
