@@ -89,7 +89,7 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumbe
 
         let (token_persisted, phone_number_persisted, phone_number_sha2) = value_opt.unwrap();
         if !token.eq(token_persisted) {
-            return error_response(400, "Incorrect verification code");
+            return error_response(400, "Incorrect verification code, please try again.");
         }
         account.phone_number = Some(phone_number_persisted.clone());
         account.phone_number_sha2 = Some(phone_number_sha2.clone());
