@@ -46,7 +46,8 @@ jobs:
           echo "[ERROR] You have try release to network 'ic' without or with wrong confirmation phrase" >&2
           exit 1
 
-      - name: DFX => Write identity.
+      - name: DFX => Write Prod identity.
+        if: ${{ (github.event.inputs.network_name == 'ic')
         run: |
           mkdir -p $ID_PATH
           echo $GH_MP_ADMIN_PEM >> $ID_PATH/identity.pem
@@ -54,6 +55,16 @@ jobs:
         env:
           GH_MP_ADMIN_PEM: ${{secrets.GH_MP_ADMIN_PEM}}
           ID_PATH: /home/ubuntu/.config/dfx/identity/gh_mp_admin
+
+      - name: DFX => Write dev identity.
+        if: ${{ (github.event.inputs.network_name != 'ic')
+        run: |
+          mkdir -p $ID_PATH
+          echo $GH_MP_TEST_PEM >> $ID_PATH/identity.pem
+          sed -i 's/\\r\\n/\r\n/g' $ID_PATH/identity.pem
+        env:
+          GH_MP_TEST_PEM: ${{secrets.GH_MP_TEST_PEM}}
+          ID_PATH: /home/ubuntu/.config/dfx/identity/testii
 
       - name: Checkout repo.
         uses: actions/checkout@v3
