@@ -48,7 +48,7 @@ jobs:
           exit 1
 
       - name: DFX => Write Prod identity.
-        if: ${{ (github.event.inputs.network_name == 'ic')
+        if: ${{ (github.event.inputs.network_name == 'ic') }}
         run: |
           mkdir -p $ID_PATH
           echo $GH_MP_ADMIN_PEM >> $ID_PATH/identity.pem
@@ -58,7 +58,7 @@ jobs:
           ID_PATH: /home/ubuntu/.config/dfx/identity/gh_mp_admin
 
       - name: DFX => Write dev identity.
-        if: ${{ (github.event.inputs.network_name != 'ic')
+        if: ${{ (github.event.inputs.network_name != 'ic') }}
         run: |
           mkdir -p $ID_PATH
           echo $GH_MP_TEST_PEM >> $ID_PATH/identity.pem
