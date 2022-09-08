@@ -123,10 +123,18 @@ type Application = record {
     name: text;
     domain: text;
     user_limit: nat16;
+    alias: opt vec text;
+    img: opt text;
 };
 
 type HTTPApplicationResponse = record {
     data: opt vec Application;
+    error: opt Error;
+    status_code: nat16;
+};
+
+type HTTPAppResponse = record {
+    data: opt Application;
     error: opt Error;
     status_code: nat16;
 };
@@ -348,6 +356,9 @@ service : () -> {
   delete_application: (text) -> (BoolHttpResponse);
   read_applications: () -> (HTTPApplicationResponse) query;
   is_over_the_application_limit: (text) -> (BoolHttpResponse) query;
+  update_application_alias: (text, text) -> (BoolHttpResponse);
+  get_application: (text) -> (HTTPAppResponse);
+  update_application: (Application) -> (HTTPApplicationResponse);
 
   create_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
   update_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);

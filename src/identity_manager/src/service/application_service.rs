@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use crate::{HttpResponse};
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::application_repo::{Application, ApplicationRepoTrait};
@@ -5,7 +6,10 @@ use crate::response_mapper::{to_error_response, to_success_response};
 
 pub trait ApplicationServiceTrait {
     fn read_applications(&self) -> HttpResponse<Vec<Application>>;
+    fn get_application_by_domain(&self, domain: String) -> HttpResponse<Application>;
     fn delete_application(&self, name: String) -> HttpResponse<bool>;
+    fn update_application(&self, app: Application) -> HttpResponse<Vec<Application>>;
+    fn update_application_alias(&self, alias: String, domain: String) -> HttpResponse<bool>;
     fn create_application(&self, app: Application) -> HttpResponse<Vec<Application>>;
     fn is_over_the_application_limit(&self, domain: &String) -> HttpResponse<bool>;
     fn is_over_the_limit(&self, domain: &String) -> bool;
@@ -23,12 +27,75 @@ impl<T: ApplicationRepoTrait, N: AccountRepoTrait> ApplicationServiceTrait for A
         to_success_response(apps)
     }
 
-    fn delete_application(&self, name: String) -> HttpResponse<bool> {
-        let apps = self.application_repo.delete_application(name);
+    fn get_application_by_domain(&self, domain: String) -> HttpResponse<Application> {
+        return match self.application_repo.get_application(&domain) {
+            None => {
+                to_error_response("Unable to fina application.")
+            }
+            Some(app) => {
+                to_success_response(app.to_owned())
+            }
+        };
+    }
+
+    fn delete_application(&self, domain: String) -> HttpResponse<bool> {
+        let apps = self.application_repo.delete_application(domain);
         if apps {
             return to_success_response(apps);
         }
         to_error_response("Unable to remove app with such name.")
+    }
+
+    fn update_application_alias(&self, domain: String, alias: String) -> HttpResponse<bool> {
+        let apps = self.application_repo.get_application(&domain);
+        return match apps {
+            None => {
+                let mut aliases = HashSet::new();
+                aliases.insert(alias.clone());
+                let app = Application {
+                    domain,
+                    user_limit: 5,
+                    alias: Some(aliases),
+                    img: None,
+                    name: alias,
+                };
+                self.application_repo.create_application(app);
+                to_success_response(true)
+            }
+            Some(app) => {
+                return match app.alias {
+                    None => {
+                        let mut aliases = HashSet::new();
+                        aliases.insert(alias.clone());
+                        let mut updated_app = app.clone();
+                        updated_app.alias = Some(aliases);
+                        let resp = self.application_repo.update_application(updated_app);
+                        to_success_response(resp)
+                    }
+                    Some(_) => {
+                        let mut updated_app = app.clone();
+                        let mut aliases = app.alias.clone().unwrap();
+                        aliases.insert(alias);
+                        updated_app.alias = Some(aliases);
+                        let resp = self.application_repo.update_application(updated_app);
+                        to_success_response(resp)
+                    }
+                };
+            }
+        };
+    }
+
+    fn update_application(&self, new_app: Application) -> HttpResponse<Vec<Application>> {
+        let apps = self.application_repo.get_application(&new_app.domain);
+        return match apps {
+            None => {
+                to_error_response("Unable to update Application. Application not exists")
+            }
+            Some(_) => {
+                self.application_repo.update_application(new_app);
+                to_success_response(self.application_repo.read_applications())
+            }
+        };
     }
 
     fn create_application(&self, app: Application) -> HttpResponse<Vec<Application>> {

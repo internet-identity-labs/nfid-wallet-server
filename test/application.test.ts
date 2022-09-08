@@ -1,10 +1,18 @@
 import "mocha";
-import { expect } from "chai";
-import { Application, BoolHttpResponse, ConfigurationRequest, ConfigurationResponse, HTTPAccountRequest, HTTPAccountResponse, HTTPApplicationResponse, PersonaRequest } from "./idl/identity_manager";
-import { deploy } from "./util/deployment.util";
-import { Dfx } from "./type/dfx";
-import { App } from "./constanst/app.enum";
-import { DFX } from "./constanst/dfx.const";
+import {expect} from "chai";
+import {
+    Application,
+    BoolHttpResponse,
+    HTTPAccountRequest,
+    HTTPAccountResponse,
+    HTTPApplicationResponse,
+    HTTPAppResponse,
+    PersonaRequest
+} from "./idl/identity_manager";
+import {deploy} from "./util/deployment.util";
+import {Dfx} from "./type/dfx";
+import {App} from "./constanst/app.enum";
+import {DFX} from "./constanst/dfx.const";
 
 const userLimit = 1;
 const appName = 'TEST_APP';
@@ -29,9 +37,11 @@ describe("Application", () => {
 
     it("should create an application.", async function () {
         const application: Application = {
+            alias: [],
             user_limit: userLimit,
             domain,
-            name: appName
+            name: appName,
+            img: []
         };
         const response: HTTPApplicationResponse = (await dfx.im.actor.create_application(application)) as HTTPApplicationResponse;
         expect(response.status_code).eq(200);
@@ -45,11 +55,13 @@ describe("Application", () => {
         expect(app.name).eq(appName);
     });
 
-    it("should return an error due the same name on creating application.", async function () {
+    it("should return an error due the same domain on creating application.", async function () {
         const application: Application = {
+            alias: [],
             user_limit: userLimit,
-            domain: domain2,
-            name: appName
+            domain: domain,
+            name: appName,
+            img: []
         };
         const response: HTTPApplicationResponse = (await dfx.im.actor.create_application(application)) as HTTPApplicationResponse;
         expect(response.status_code).eq(404);
@@ -61,9 +73,11 @@ describe("Application", () => {
 
     it("should create the second application with different name and domain.", async function () {
         const application: Application = {
+            alias: [],
             user_limit: userLimit,
             domain: domain2,
-            name: appName2
+            name: appName2,
+            img: []
         };
         const response: HTTPApplicationResponse = (await dfx.im.actor.create_application(application)) as HTTPApplicationResponse;
         expect(response.status_code).eq(200);
@@ -115,9 +129,11 @@ describe("Application", () => {
             persona_id: 'TEST_ID_DD',
         };
         const application: Application = {
+            alias: [],
             user_limit: userLimit,
             domain: domain3,
-            name: appName3
+            name: appName3,
+            img: []
         };
 
         await dfx.im.actor.create_account(accountRequest);
@@ -140,7 +156,7 @@ describe("Application", () => {
     });
 
     it("should delete an application with correct deletion and over the limit response.", async function () {
-        const deleteResponse: BoolHttpResponse = (await dfx.im.actor.delete_application(appName3)) as BoolHttpResponse;
+        const deleteResponse: BoolHttpResponse = (await dfx.im.actor.delete_application(domain3)) as BoolHttpResponse;
         expect(deleteResponse.status_code).eq(200);
         expect(deleteResponse.error).an("array").empty;
         expect(deleteResponse.data).an("array").not.empty;
@@ -160,9 +176,11 @@ describe("Application", () => {
             persona_id: personaId,
         };
         const application: Application = {
+            alias: [],
             user_limit: userLimit,
             domain: domain3,
-            name: appName3
+            name: appName3,
+            img: []
         };
 
         await dfx.im.actor.create_persona(persona);
@@ -185,5 +203,27 @@ describe("Application", () => {
         expect(limitResponse.error).an("array").empty;
         expect(limitResponse.data).an("array").not.empty;
         expect(limitResponse.data[0]).eq(true);
+    });
+
+    it("should update alias", async function () {
+        let resp = await dfx.im.actor.update_application_alias(domain3, "alias1") as BoolHttpResponse;
+        expect(resp.data[0]).eq(true);
+
+        let app = await dfx.im.actor.get_application(domain3) as HTTPAppResponse;
+        expect(app.data[0].alias[0][0]).eq("alias1");
+        await dfx.im.actor.update_application_alias(domain3, "alias2") as BoolHttpResponse;
+        app = await dfx.im.actor.get_application(domain3) as HTTPAppResponse;
+        expect(app.data[0].alias[0][0]).eq("alias2");
+        expect(app.data[0].alias[0][1]).eq("alias1");
+    });
+
+    it("should update icon", async function () {
+        let app = (await dfx.im.actor.get_application(domain3) as HTTPAppResponse).data[0];
+        app.img = ["TEST_PATH_FOR_ARTEM"]
+        app.name = "TEST_NAME_FOR_ARTEM"
+        await dfx.im.actor.update_application(app) as BoolHttpResponse;
+        app = (await dfx.im.actor.get_application(domain3) as HTTPAppResponse).data[0];
+        expect(app.name).eq("TEST_NAME_FOR_ARTEM");
+        expect(app.img[0]).eq("TEST_PATH_FOR_ARTEM");
     });
 });
