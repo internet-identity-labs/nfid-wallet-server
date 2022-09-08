@@ -10,6 +10,7 @@ import org.ic4j.candid.pojo.PojoDeserializer;
 import org.ic4j.candid.pojo.PojoSerializer;
 import org.ic4j.types.Principal;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 import records.Application;
 import records.HttpResponse;
@@ -25,6 +26,7 @@ import static constants.Constants.STATUS_SUCCESS;
 import static org.testng.AssertJUnit.*;
 
 @Slf4j
+@Ignore
 public class ApplicationITest extends BaseDFXITest {
 
     private Agent agent;

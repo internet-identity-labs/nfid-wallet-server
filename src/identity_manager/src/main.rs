@@ -302,6 +302,15 @@ async fn create_application(app: Application) -> HttpResponse<Vec<Application>> 
 #[log_error]
 #[admin]
 #[collect_metrics]
+async fn update_application(app: Application) -> HttpResponse<Vec<Application>> {
+    let application_service = get_application_service();
+    application_service.update_application(app)
+}
+
+#[update]
+#[log_error]
+#[admin]
+#[collect_metrics]
 async fn delete_application(app: String) -> HttpResponse<bool> {
     let application_service = get_application_service();
     application_service.delete_application(app)
@@ -311,6 +320,18 @@ async fn delete_application(app: String) -> HttpResponse<bool> {
 async fn read_applications() -> HttpResponse<Vec<Application>> {
     let application_service = get_application_service();
     application_service.read_applications()
+}
+
+#[query]
+async fn get_application(domain:String) -> HttpResponse<Application> {
+    let application_service = get_application_service();
+    application_service.get_application_by_domain(domain)
+}
+
+#[update]
+async fn update_application_alias(domain: String, new_alias: String) -> HttpResponse<bool> {
+    let application_service = get_application_service();
+    application_service.update_application_alias(domain, new_alias)
 }
 
 #[query]
