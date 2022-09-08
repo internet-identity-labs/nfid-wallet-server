@@ -46,7 +46,8 @@ jobs:
           echo "[ERROR] You have try release to network 'ic' without or with wrong confirmation phrase" >&2
           exit 1
 
-      - name: DFX => Write identity.
+      - name: DFX => Write Prod identity.
+        if: ${{ (github.event.inputs.network_name == 'ic') }}
         run: |
           mkdir -p $ID_PATH
           echo $GH_MP_ADMIN_PEM >> $ID_PATH/identity.pem
@@ -54,6 +55,16 @@ jobs:
         env:
           GH_MP_ADMIN_PEM: ${{secrets.GH_MP_ADMIN_PEM}}
           ID_PATH: /home/ubuntu/.config/dfx/identity/gh_mp_admin
+
+      - name: DFX => Write dev identity.
+        if: ${{ (github.event.inputs.network_name != 'ic') }}
+        run: |
+          mkdir -p $ID_PATH
+          echo $GH_MP_TEST_PEM >> $ID_PATH/identity.pem
+          sed -i 's/\\r\\n/\r\n/g' $ID_PATH/identity.pem
+        env:
+          GH_MP_TEST_PEM: ${{secrets.GH_MP_TEST_PEM}}
+          ID_PATH: /home/ubuntu/.config/dfx/identity/testii
 
       - name: Checkout repo.
         uses: actions/checkout@v3
@@ -91,16 +102,24 @@ jobs:
           CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
           CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
           CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
+
+          if [[ "${NETWORK_NAME}" == 'ic' ]]; then
+            CANISTER_IDENTITY='gh_mp_admin'
+          else
+            CANISTER_IDENTITY='testii'
+          fi
             
           echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
           echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
           echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
+          echo "CANISTER_IDENTITY=${CANISTER_IDENTITY}" >> $GITHUB_ENV
           
           ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
           ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
           ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
           ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
           ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
+          ci_echo_info "CANISTER_IDENTITY=${CANISTER_IDENTITY}" >&2
 
       - name: PRE-BUILD => DFX status.
         run: |
@@ -110,7 +129,7 @@ jobs:
         run: |
           source ./ci_libs/CI_LIBS.sh
 
-          dfx identity use gh_mp_admin
+          dfx identity use ${CANISTER_IDENTITY}
 
           ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_config" >&2
           dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_config
@@ -119,7 +138,7 @@ jobs:
         run: |
           source ./ci_libs/CI_LIBS.sh
 
-          dfx identity use gh_mp_admin
+          dfx identity use ${CANISTER_IDENTITY}
 
           rm -rf .dfx;
           ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
@@ -130,7 +149,7 @@ jobs:
         run: |
           source ./ci_libs/CI_LIBS.sh
 
-          dfx identity use gh_mp_admin
+          dfx identity use ${CANISTER_IDENTITY}
 
           CI_DEBUG="true"
 
@@ -155,7 +174,7 @@ jobs:
         run: |
           source ./ci_libs/CI_LIBS.sh
 
-          dfx identity use gh_mp_admin
+          dfx identity use ${CANISTER_IDENTITY}
 
           CI_DEBUG="true"
 
@@ -194,7 +213,7 @@ jobs:
         run: |
           source ./ci_libs/CI_LIBS.sh
 
-          dfx identity use gh_mp_admin
+          dfx identity use ${CANISTER_IDENTITY}
 
           CI_DEBUG="true"
 
@@ -218,7 +237,7 @@ jobs:
         run: |
           source ./ci_libs/CI_LIBS.sh
 
-          dfx identity use gh_mp_admin
+          dfx identity use ${CANISTER_IDENTITY}
 
           if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
             ci_echo_warn "Performing PROD canister Upgrade" >&2
@@ -245,7 +264,7 @@ jobs:
         run: |
           source ./ci_libs/CI_LIBS.sh
 
-          dfx identity use gh_mp_admin
+          dfx identity use ${CANISTER_IDENTITY}
 
           if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
             ci_echo_warn "Performing PROD config Update" >&2
@@ -311,7 +330,7 @@ jobs:
         run: |
           source ./ci_libs/CI_LIBS.sh
 
-          dfx identity use gh_mp_admin
+          dfx identity use ${CANISTER_IDENTITY}
 
           ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_account" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_account) || [ -z "${result}" ]; then
