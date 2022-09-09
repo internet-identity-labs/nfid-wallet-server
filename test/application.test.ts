@@ -206,12 +206,12 @@ describe("Application", () => {
     });
 
     it("should update alias", async function () {
-        let resp = await dfx.im.actor.update_application_alias(domain3, "alias1") as BoolHttpResponse;
+        let resp = await dfx.im.actor.update_application_alias(domain3, "alias1", []) as BoolHttpResponse;
         expect(resp.data[0]).eq(true);
 
         let app = await dfx.im.actor.get_application(domain3) as HTTPAppResponse;
         expect(app.data[0].alias[0][0]).eq("alias1");
-        await dfx.im.actor.update_application_alias(domain3, "alias2") as BoolHttpResponse;
+        await dfx.im.actor.update_application_alias(domain3, "alias2", ["notNeededName"]) as BoolHttpResponse;
         app = await dfx.im.actor.get_application(domain3) as HTTPAppResponse;
         expect(app.data[0].alias[0][0]).eq("alias2");
         expect(app.data[0].alias[0][1]).eq("alias1");
@@ -225,5 +225,14 @@ describe("Application", () => {
         app = (await dfx.im.actor.get_application(domain3) as HTTPAppResponse).data[0];
         expect(app.name).eq("TEST_NAME_FOR_ARTEM");
         expect(app.img[0]).eq("TEST_PATH_FOR_ARTEM");
+    });
+
+    it("should create new application", async function () {
+        let resp = await dfx.im.actor.update_application_alias("newDomain", "alias1", ["name1"]) as BoolHttpResponse;
+        expect(resp.data[0]).eq(true);
+
+        let app = await dfx.im.actor.get_application("newDomain") as HTTPAppResponse;
+        expect(app.data[0].alias[0][0]).eq("alias1");
+        expect(app.data[0].name).eq("name1");
     });
 });

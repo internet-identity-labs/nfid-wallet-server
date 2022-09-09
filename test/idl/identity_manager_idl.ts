@@ -323,7 +323,7 @@ export const idlFactory = ({ IDL }) => {
             [],
         ),
         'update_application_alias' : IDL.Func(
-            [IDL.Text, IDL.Text],
+            [IDL.Text, IDL.Text, IDL.Opt(IDL.Text)],
             [BoolHttpResponse],
             [],
         ),

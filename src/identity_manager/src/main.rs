@@ -329,9 +329,9 @@ async fn get_application(domain:String) -> HttpResponse<Application> {
 }
 
 #[update]
-async fn update_application_alias(domain: String, new_alias: String) -> HttpResponse<bool> {
+async fn update_application_alias(domain: String, new_alias: String, new_name: Option<String>) -> HttpResponse<bool> {
     let application_service = get_application_service();
-    application_service.update_application_alias(domain, new_alias)
+    application_service.update_application_alias(domain, new_alias, new_name)
 }
 
 #[query]
