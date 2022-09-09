@@ -9,7 +9,7 @@ pub trait ApplicationServiceTrait {
     fn get_application_by_domain(&self, domain: String) -> HttpResponse<Application>;
     fn delete_application(&self, name: String) -> HttpResponse<bool>;
     fn update_application(&self, app: Application) -> HttpResponse<Vec<Application>>;
-    fn update_application_alias(&self, alias: String, domain: String) -> HttpResponse<bool>;
+    fn update_application_alias(&self, alias: String, domain: String, new_name: Option<String>) -> HttpResponse<bool>;
     fn create_application(&self, app: Application) -> HttpResponse<Vec<Application>>;
     fn is_over_the_application_limit(&self, domain: &String) -> HttpResponse<bool>;
     fn is_over_the_limit(&self, domain: &String) -> bool;
@@ -46,7 +46,7 @@ impl<T: ApplicationRepoTrait, N: AccountRepoTrait> ApplicationServiceTrait for A
         to_error_response("Unable to remove app with such name.")
     }
 
-    fn update_application_alias(&self, domain: String, alias: String) -> HttpResponse<bool> {
+    fn update_application_alias(&self, domain: String, alias: String, new_name: Option<String>) -> HttpResponse<bool> {
         let apps = self.application_repo.get_application(&domain);
         return match apps {
             None => {
@@ -57,7 +57,10 @@ impl<T: ApplicationRepoTrait, N: AccountRepoTrait> ApplicationServiceTrait for A
                     user_limit: 5,
                     alias: Some(aliases),
                     img: None,
-                    name: alias,
+                    name: match new_name {
+                        None => {alias}
+                        Some(name) => {name}
+                    },
                 };
                 self.application_repo.create_application(app);
                 to_success_response(true)
