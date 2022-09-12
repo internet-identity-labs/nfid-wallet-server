@@ -63,7 +63,7 @@ impl AccessPointRepoTrait for AccessPointRepo {
             None => { None }
             Some(mut ap) => {
                 ap.last_used = Some(time);
-                points.insert(ap.clone());
+                points.replace(ap.clone());
                 self.store_access_points(points);
                 Some(ap)
             }

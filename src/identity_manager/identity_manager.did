@@ -195,6 +195,12 @@ type HTTPAccessPointResponse = record {
     status_code: nat16;
 };
 
+type HTTPOneAccessPointResponse = record {
+    data: opt AccessPointResponse;
+    error: opt Error;
+    status_code: nat16;
+};
+
 //---BEGIN-CUT---
 
  //  ---------------------------------------------------------
@@ -364,7 +370,7 @@ service : () -> {
   update_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
   remove_access_point: (AccessPointRemoveRequest) -> (HTTPAccessPointResponse);
   read_access_points: () -> (HTTPAccessPointResponse) query;
-  use_access_point: () -> (HTTPAccessPointResponse);
+  use_access_point: () -> (HTTPOneAccessPointResponse);
 
   store_accounts: (vec Account) -> (BoolHttpResponse);
   restore_accounts: (text) -> (BoolHttpResponse);
