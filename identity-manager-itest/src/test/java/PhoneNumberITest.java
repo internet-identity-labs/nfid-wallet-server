@@ -121,6 +121,28 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
     }
 
     @Test(priority = 72)
+    public void detachTestPhoneNumberWhenOk() throws InterruptedException {
+        var phoneNumberSha2 = "8fba797bcc5427ca466bf5ef0d8fcc69636fa6b67ea93e240198ecaac3df3716";
+        command("request/post_token", PHONE, phoneNumberSha2, TOKEN, ROOT_IDENTITY);
+
+        Thread.sleep(1000);
+        
+        var actual = command("request/verify_token", TOKEN);
+        var expected = get("response/response", "null", "200");
+        assertEquals(actual, expected);
+
+        actual = command("request/validate_phone", ROOT_IDENTITY, phoneNumberSha2);
+        expected = get("response/response", "null", "204");
+        assertEquals(actual, expected);
+
+        command("request/detach_test_phone_number");
+
+        actual = command("request/validate_phone", ROOT_IDENTITY, phoneNumberSha2);
+        expected = get("response/response", "null", "200");
+        assertEquals(actual, expected);
+    }
+
+    @Test(priority = 73)
     public void validatePhoneNumberNotExists() throws InterruptedException {
         var phoneNumber = "+380991111111";
         var phoneNumberSha2 = "+380991111111_SHA2";

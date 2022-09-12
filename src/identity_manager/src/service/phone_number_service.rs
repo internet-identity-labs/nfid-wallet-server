@@ -10,6 +10,7 @@ pub trait PhoneNumberServiceTrait {
     fn validate_phone(&self, request: ValidatePhoneRequest) -> Response;
     fn post_token(&self, request: TokenRequest) -> Response;
     fn verify_token(&self, token: String) -> Response;
+    fn detach_test_phone_number(&self) -> ();
 }
 
 #[derive(Default)]
@@ -97,6 +98,10 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumbe
         self.phone_number_repo.add(phone_number_sha2.clone());
 
         response(200)
+    }
+
+    fn detach_test_phone_number(&self) -> () {
+        self.phone_number_repo.remove(&String::from("8fba797bcc5427ca466bf5ef0d8fcc69636fa6b67ea93e240198ecaac3df3716"));
     }
 }
 

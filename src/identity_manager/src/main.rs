@@ -53,6 +53,13 @@ async fn sync_controllers() -> Vec<String> {
 }
 
 #[update]
+#[admin_or_lambda]
+async fn detach_test_phone_number() -> () {
+    let phone_number_service = get_phone_number_service();
+    phone_number_service.detach_test_phone_number();
+}
+
+#[update]
 #[admin]
 #[collect_metrics]
 async fn configure(request: ConfigurationRequest) -> () {
