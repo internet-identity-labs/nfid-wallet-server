@@ -339,7 +339,7 @@ service : () -> {
   get_config: () -> (ConfigurationResponse);
   anchors: () -> (HTTPAnchorsResponse) query;
   sync_controllers: () -> (vec text);
-  remove_account_by_phone_number: () -> ();
+  remove_account_by_phone_number: () -> (BoolHttpResponse);
 //---END-CUT---
   get_account: () -> (HTTPAccountResponse) query;
   recover_account: (nat64) -> (HTTPAccountResponse);
