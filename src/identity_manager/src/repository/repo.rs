@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashSet};
+use std::collections::{BTreeSet, HashMap};
 use std::hash::{Hash};
 use std::time::Duration;
 use ic_cdk::export::candid::{CandidType, Deserialize};
@@ -144,7 +144,7 @@ pub fn pre_upgrade() {
 
 pub fn post_upgrade() {
     let (old_accs, admin, _logs, monitor_data, logs_new, applications): (Vec<Account>, Principal, Logs, Option<canistergeek_ic_rust::monitor::PostUpgradeStableData>, Option<canistergeek_ic_rust::logger::PostUpgradeStableData>, Option<Applications>) = storage::stable_restore().unwrap();
-    let mut phone_numbers = HashSet::default();
+    let mut phone_numbers = HashMap::default();
     storage::get_mut::<Option<Principal>>().replace(admin);
     for u in old_accs {
         let princ = u.clone().principal_id;
@@ -156,7 +156,7 @@ pub fn post_upgrade() {
             storage::get_mut::<PrincipalIndex>().insert(x.principal_id, princ.clone());
         }
 
-        u.phone_number_sha2.map(|x| phone_numbers.insert(x.clone()));
+        u.phone_number_sha2.map(|x| phone_numbers.insert(x.clone(), princ.clone()));
     }
     storage::get_mut::<Option<Principal>>().replace(admin);
     let pn_repo = PhoneNumberRepo {};

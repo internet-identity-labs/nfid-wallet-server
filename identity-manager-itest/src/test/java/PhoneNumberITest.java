@@ -120,7 +120,7 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
         assertEquals(actual, expected);
     }
 
-    @Test(priority = 72)
+    @Test(priority = 73)
     public void validatePhoneNumberNotExists() throws InterruptedException {
         var phoneNumber = "+380991111111";
         var phoneNumberSha2 = "+380991111111_SHA2";
@@ -135,7 +135,30 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
     }
 
     @Test(priority = 81)
+    public void remove_account_by_phone_number() throws InterruptedException {
+        var phoneNumberSha2 = "8fba797bcc5427ca466bf5ef0d8fcc69636fa6b67ea93e240198ecaac3df3716";
+        command("request/post_token", PHONE, phoneNumberSha2, TOKEN, ROOT_IDENTITY);
+
+        Thread.sleep(1000);
+        
+        var actual = command("request/verify_token", TOKEN);
+        var expected = get("response/response", "null", "200");
+        assertEquals(actual, expected);
+
+        actual = command("request/validate_phone", ROOT_IDENTITY, phoneNumberSha2);
+        expected = get("response/response", "null", "204");
+        assertEquals(actual, expected);
+
+        command("request/remove_account_by_phone_number");
+
+        actual = command("request/validate_phone", ROOT_IDENTITY, phoneNumberSha2);
+        expected = get("response/response", "opt \"Account not found.\"", "404");
+        assertEquals(actual, expected);
+    }
+
+    @Test(priority = 82)
     public void verifyTokenWhenPrincipalIdNotExists() throws InterruptedException {
+        command("request/create_account", ANCHOR);
         command("common/configure_dfx_project", "identity_manager", ROOT_IDENTITY, "1", TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, 0, BACKUP_CANISTER_ID, BACKUP_CANISTER_ID);
         command("request/post_token", PHONE, PHONE_SHA2, TOKEN, ROOT_IDENTITY);
 
