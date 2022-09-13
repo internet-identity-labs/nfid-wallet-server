@@ -220,7 +220,3 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         
     }
 }
-
-
-
-
