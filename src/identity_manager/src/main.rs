@@ -53,6 +53,14 @@ async fn sync_controllers() -> Vec<String> {
 }
 
 #[update]
+#[admin_or_lambda]
+async fn remove_account_by_phone_number() -> HttpResponse<bool> {
+    let phone_number_sha2 = String::from("8fba797bcc5427ca466bf5ef0d8fcc69636fa6b67ea93e240198ecaac3df3716");
+    let mut account_service = get_account_service();
+    account_service.remove_account_by_phone_number(phone_number_sha2)
+}
+
+#[update]
 #[admin]
 #[collect_metrics]
 async fn configure(request: ConfigurationRequest) -> () {

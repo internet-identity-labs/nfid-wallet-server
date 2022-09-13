@@ -29,6 +29,7 @@ pub trait AccountServiceTrait {
     fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse>;
     async fn recover_account(&mut self, anchor: u64) -> HttpResponse<AccountResponse>;
     fn get_all_accounts(&mut self) -> Vec<Account>;
+    fn remove_account_by_phone_number(&mut self, phone_number_sha2: String) -> HttpResponse<bool>;
 }
 
 #[derive(Default)]
@@ -207,6 +208,16 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
 
     fn get_all_accounts(&mut self) -> Vec<Account> {
         self.account_repo.get_all_accounts()
+    }
+
+    fn remove_account_by_phone_number(&mut self, phone_number_sha2: String) -> HttpResponse<bool> {
+        match self.phone_number_repo.get(&phone_number_sha2) {
+            None => to_error_response("Unable to find the Phone Number."),
+            Some(principal_id) => {
+                return self.remove_account_by_principal(principal_id.clone());
+            }
+        }
+        
     }
 }
 

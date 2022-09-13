@@ -82,6 +82,7 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumbe
 
         let ttl = ConfigurationRepo::get().token_ttl;
         let mut account = account_opt.unwrap();
+        let principal_id = account.principal_id.clone();
         let value_opt = self.token_repo.get(&account.principal_id, ttl);
         if value_opt.is_none() {
             return error_response(404, "Principal id not found.");
@@ -94,7 +95,7 @@ impl<T: PhoneNumberRepoTrait, N: TokenRepoTrait, A: AccountRepoTrait> PhoneNumbe
         account.phone_number = Some(phone_number_persisted.clone());
         account.phone_number_sha2 = Some(phone_number_sha2.clone());
         self.account_repo.store_account(account);
-        self.phone_number_repo.add(phone_number_sha2.clone());
+        self.phone_number_repo.add(phone_number_sha2.clone(), principal_id);
 
         response(200)
     }
