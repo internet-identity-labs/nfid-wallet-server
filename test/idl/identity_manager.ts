@@ -36,6 +36,7 @@ export interface Application {
     'user_limit' : number,
     'domain' : string,
     'name' : string,
+    'is_nft_storage' : [] | [boolean],
 }
 export interface BasicEntity {
     'modified_date' : bigint,
@@ -156,6 +157,11 @@ export interface HTTPApplicationResponse {
     'error' : [] | [Error],
     'status_code' : number,
 }
+export interface HTTPOneAccessPointResponse {
+    'data' : [] | [AccessPointResponse],
+    'error' : [] | [Error],
+    'status_code' : number,
+}
 export interface HTTPPersonasResponse {
     'data' : [] | [Array<PersonaResponse>],
     'error' : [] | [Error],
@@ -272,7 +278,7 @@ export interface _SERVICE {
         arg_2: [] | [string],
     ) => Promise<BoolHttpResponse>,
     'update_persona' : (arg_0: PersonaRequest) => Promise<HTTPAccountResponse>,
-    'use_access_point' : () => Promise<HTTPAccessPointResponse>,
+    'use_access_point' : () => Promise<HTTPOneAccessPointResponse>,
     'validate_phone' : (arg_0: ValidatePhoneRequest) => Promise<Response>,
     'validate_signature' : (arg_0: [] | [string]) => Promise<
         [bigint, [] | [string]]
