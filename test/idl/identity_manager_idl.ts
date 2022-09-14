@@ -66,6 +66,7 @@ export const idlFactory = ({ IDL }) => {
         'user_limit' : IDL.Nat16,
         'domain' : IDL.Text,
         'name' : IDL.Text,
+        'is_nft_storage' : IDL.Opt(IDL.Bool),
     });
     const HTTPApplicationResponse = IDL.Record({
         'data' : IDL.Opt(IDL.Vec(Application)),
@@ -221,6 +222,11 @@ export const idlFactory = ({ IDL }) => {
         'phone_number' : IDL.Opt(IDL.Text),
     });
     const HTTPAccountUpdateRequest = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
+    const HTTPOneAccessPointResponse = IDL.Record({
+        'data' : IDL.Opt(AccessPointResponse),
+        'error' : IDL.Opt(Error),
+        'status_code' : IDL.Nat16,
+    });
     const ValidatePhoneRequest = IDL.Record({
         'phone_number_hash' : IDL.Text,
         'principal_id' : IDL.Text,
@@ -328,7 +334,7 @@ export const idlFactory = ({ IDL }) => {
             [],
         ),
         'update_persona' : IDL.Func([PersonaRequest], [HTTPAccountResponse], []),
-        'use_access_point' : IDL.Func([], [HTTPAccessPointResponse], []),
+        'use_access_point' : IDL.Func([], [HTTPOneAccessPointResponse], []),
         'validate_phone' : IDL.Func([ValidatePhoneRequest], [Response], []),
         'validate_signature' : IDL.Func(
             [IDL.Opt(IDL.Text)],

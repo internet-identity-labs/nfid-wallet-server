@@ -12,6 +12,7 @@ pub struct Application {
     pub alias: Option<HashSet<String>>,
     pub img: Option<String>,
     pub name: String,
+    pub is_nft_storage: Option<bool>
 }
 
 impl PartialEq for Application{

@@ -37,6 +37,7 @@ describe("Application", () => {
 
     it("should create an application.", async function () {
         const application: Application = {
+            is_nft_storage: [],
             alias: [],
             user_limit: userLimit,
             domain,
@@ -61,7 +62,8 @@ describe("Application", () => {
             user_limit: userLimit,
             domain: domain,
             name: appName,
-            img: []
+            img: [],
+            is_nft_storage: []
         };
         const response: HTTPApplicationResponse = (await dfx.im.actor.create_application(application)) as HTTPApplicationResponse;
         expect(response.status_code).eq(404);
@@ -77,7 +79,8 @@ describe("Application", () => {
             user_limit: userLimit,
             domain: domain2,
             name: appName2,
-            img: []
+            img: [],
+            is_nft_storage: []
         };
         const response: HTTPApplicationResponse = (await dfx.im.actor.create_application(application)) as HTTPApplicationResponse;
         expect(response.status_code).eq(200);
@@ -133,7 +136,8 @@ describe("Application", () => {
             user_limit: userLimit,
             domain: domain3,
             name: appName3,
-            img: []
+            img: [],
+            is_nft_storage: []
         };
 
         await dfx.im.actor.create_account(accountRequest);
@@ -180,7 +184,8 @@ describe("Application", () => {
             user_limit: userLimit,
             domain: domain3,
             name: appName3,
-            img: []
+            img: [],
+            is_nft_storage: []
         };
 
         await dfx.im.actor.create_persona(persona);
@@ -221,10 +226,12 @@ describe("Application", () => {
         let app = (await dfx.im.actor.get_application(domain3) as HTTPAppResponse).data[0];
         app.img = ["TEST_PATH_FOR_ARTEM"]
         app.name = "TEST_NAME_FOR_ARTEM"
+        app.is_nft_storage = [true]
         await dfx.im.actor.update_application(app) as BoolHttpResponse;
         app = (await dfx.im.actor.get_application(domain3) as HTTPAppResponse).data[0];
         expect(app.name).eq("TEST_NAME_FOR_ARTEM");
         expect(app.img[0]).eq("TEST_PATH_FOR_ARTEM");
+        expect(app.is_nft_storage[0]).eq(true);
     });
 
     it("should create new application", async function () {
@@ -234,5 +241,6 @@ describe("Application", () => {
         let app = await dfx.im.actor.get_application("newDomain") as HTTPAppResponse;
         expect(app.data[0].alias[0][0]).eq("alias1");
         expect(app.data[0].name).eq("name1");
+        expect(app.data[0].is_nft_storage.length).eq(0);
     });
 });

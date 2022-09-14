@@ -125,6 +125,7 @@ type Application = record {
     user_limit: nat16;
     alias: opt vec text;
     img: opt text;
+    is_nft_storage: opt bool;
 };
 
 type HTTPApplicationResponse = record {
