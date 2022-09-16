@@ -12,12 +12,12 @@ pub struct Application {
     pub alias: Option<HashSet<String>>,
     pub img: Option<String>,
     pub name: String,
-    pub is_nft_storage: Option<bool>
+    pub is_nft_storage: Option<bool>,
 }
 
-impl PartialEq for Application{
+impl PartialEq for Application {
     fn eq(&self, other: &Self) -> bool {
-        self.domain == other.domain
+        self.domain.eq(&other.domain)
     }
 }
 
@@ -79,12 +79,12 @@ impl ApplicationRepoTrait for ApplicationRepo {
     fn is_application_exists(&self, application: &Application) -> bool {
         let applications = storage::get_mut::<Applications>();
         applications.iter()
-            .any(|a|a.domain.eq(&application.domain))
+            .any(|a| a.domain.eq(&application.domain))
     }
 
     fn get_application(&self, domain: &String) -> Option<&Application> {
         let applications = storage::get_mut::<Applications>();
         applications.iter()
-            .find(|a|  a.domain.eq(domain))
+            .find(|a| a.domain.eq(domain))
     }
 }
