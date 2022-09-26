@@ -48,4 +48,12 @@ public class PersonaITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("persona/exp_incorrect_update_persona", call("persona/req_update_incorrect_persona"));
     }
 
+    @Test(priority = 52)
+    public void removeNFIDPersona() {
+        validateWithFormatIdentity("persona/exp_create_persona_nfid", call("persona/req_create_persona_nfid"));
+        callDfxCommand("dfx canister call identity_manager remove_nfid_personas");
+        String actual = call("account/req_get_account", "identity_manager");
+        validateWithFormatIdentity("persona/exp_update_persona", actual);
+    }
+
 }

@@ -124,7 +124,7 @@ impl AccountRepoTrait for AccountRepo {
 
     fn remove_account_by_principal(&self, princ: String) -> Option<Account> {
         let accounts = storage::get_mut::<Accounts>();
-        let mut index = storage::get_mut::<PrincipalIndex>();
+        let index = storage::get_mut::<PrincipalIndex>();
         match accounts.remove(&princ) {
             None => { None }
             Some(acc) => {

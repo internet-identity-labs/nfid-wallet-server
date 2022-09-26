@@ -1,33 +1,35 @@
 use std::time::Duration;
-use ic_cdk::{caller, storage, trap};
 
+use ic_cdk::{caller, storage, trap};
 use ic_cdk_macros::*;
+use itertools::Itertools;
+
+use canister_api_macros::{admin, admin_or_lambda, collect_metrics, log_error, replicate_account};
 use service::{account_service, persona_service, phone_number_service};
+
 use crate::account_service::{AccountService, AccountServiceTrait};
-use crate::persona_service::{PersonaService, PersonaServiceTrait};
-use crate::repository::persona_repo::PersonaRepo;
 use crate::application_service::ApplicationService;
 use crate::container::container_wrapper;
-use crate::container_wrapper::{get_access_point_service, get_account_service, get_application_service, get_persona_service, get_phone_number_service, get_credential_service, get_account_repo};
-use crate::repository::application_repo::{Application, ApplicationRepo};
-use crate::service::application_service::ApplicationServiceTrait;
-use crate::service::phone_number_service::PhoneNumberServiceTrait;
-
+use crate::container_wrapper::{get_access_point_service, get_account_repo, get_account_service, get_application_service, get_credential_service, get_persona_service, get_phone_number_service};
 use crate::http::requests;
-use crate::http::requests::{AccountResponse};
+use crate::http::requests::AccountResponse;
 use crate::http::response_mapper;
+use crate::ic_service::get_caller;
+use crate::persona_service::{PersonaService, PersonaServiceTrait};
 use crate::phone_number_service::PhoneNumberService;
-use crate::repository::account_repo::{Account, AccountRepo, AccountRepoTrait};
+use crate::replica_service::HearthCount;
+use crate::repository::account_repo::{Account, AccountRepo, AccountRepoTrait, Accounts};
+use crate::repository::application_repo::{Application, ApplicationRepo};
+use crate::repository::persona_repo::PersonaRepo;
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo};
-use crate::requests::{ConfigurationRequest, AccountRequest, TokenRequest, ValidatePhoneRequest, AccessPointResponse, AccessPointRequest, CredentialVariant, PersonaRequest, PersonaResponse, ConfigurationResponse, AccessPointRemoveRequest};
+use crate::requests::{AccessPointRemoveRequest, AccessPointRequest, AccessPointResponse, AccountRequest, ConfigurationRequest, ConfigurationResponse, CredentialVariant, PersonaRequest, PersonaResponse, TokenRequest, ValidatePhoneRequest};
 use crate::requests::AccountUpdateRequest;
 use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
-use canister_api_macros::{log_error, replicate_account, admin, collect_metrics, admin_or_lambda};
-use crate::ic_service::get_caller;
-use crate::replica_service::HearthCount;
-use crate::service::credential_service::CredentialServiceTrait;
 use crate::service::access_point_service::AccessPointServiceTrait;
+use crate::service::application_service::ApplicationServiceTrait;
+use crate::service::credential_service::CredentialServiceTrait;
+use crate::service::phone_number_service::PhoneNumberServiceTrait;
 use crate::service::replica_service::AccountsToReplicate;
 
 mod service;
@@ -268,6 +270,26 @@ async fn remove_account_by_principal(princ: String) -> HttpResponse<bool> {
 async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
     let persona_service = get_persona_service();
     persona_service.create_persona(persona)
+}
+
+#[update]
+#[admin]
+async fn remove_nfid_personas() {
+    let domain = "NFID"; //todo correct
+    let accounts = storage::get_mut::<Accounts>()
+        .values()
+        .into_iter()
+        .filter(|acc| acc.personas.iter()
+            .map(|persona| &persona.domain)
+            .contains(&domain.to_string()));
+    for account in accounts {
+        let mut acc = account.to_owned();
+        let index = acc.personas.into_iter()
+            .filter(|l| !l.domain.eq(&domain))
+            .collect();
+        acc.personas = index;
+        storage::get_mut::<Accounts>().insert(acc.principal_id.clone(), acc);
+    }
 }
 
 #[update]
