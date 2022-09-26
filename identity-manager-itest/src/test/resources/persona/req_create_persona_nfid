@@ -1,5 +1,5 @@
 dfx canister call identity_manager create_persona '( record {
-            domain = "nfid.one";
+            domain = "NFID";
             persona_id = "PERSONA";
             persona_name = "PERSONA_NAME";
         })'

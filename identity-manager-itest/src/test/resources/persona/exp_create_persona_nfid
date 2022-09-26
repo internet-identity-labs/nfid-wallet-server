@@ -16,12 +16,12 @@
           persona_id = "PERSONA";
         };
         record {
-          domain = "nfid.one";
+          domain = "NFID";
           persona_name = "PERSONA_NAME";
           persona_id = "PERSONA";
         };
       };
-      principal_id = "%s";
+      principal_id = "sculj-2sjuf-dxqlm-dcv5y-hin5x-zfyvr-tzngf-bt5b5-dwhcc-zbsqf-rae";
       phone_number = null;
     };
     error = null;
