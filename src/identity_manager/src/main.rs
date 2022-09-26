@@ -275,7 +275,7 @@ async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse
 #[update]
 #[admin]
 async fn remove_nfid_personas() {
-    let domain = "nfid.one"; //todo correct domain
+    let domain = "nfid.one"; //todo correct
     let accounts = storage::get_mut::<Accounts>()
         .values()
         .into_iter()
