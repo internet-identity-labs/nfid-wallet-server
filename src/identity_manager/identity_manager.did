@@ -387,5 +387,4 @@ service : () -> {
   collectCanisterMetrics: () -> ();
 //---END-CUT---
   validate_signature: (opt text) -> (nat64, opt text) query;
-  remove_nfid_personas: () -> ();
 }

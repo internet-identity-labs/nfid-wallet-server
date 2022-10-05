@@ -273,26 +273,6 @@ async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse
 }
 
 #[update]
-#[admin]
-async fn remove_nfid_personas() {
-    let domain = "NFID"; //todo correct
-    let accounts = storage::get_mut::<Accounts>()
-        .values()
-        .into_iter()
-        .filter(|acc| acc.personas.iter()
-            .map(|persona| &persona.domain)
-            .contains(&domain.to_string()));
-    for account in accounts {
-        let mut acc = account.to_owned();
-        let index = acc.personas.into_iter()
-            .filter(|l| !l.domain.eq(&domain))
-            .collect();
-        acc.personas = index;
-        storage::get_mut::<Accounts>().insert(acc.principal_id.clone(), acc);
-    }
-}
-
-#[update]
 #[log_error]
 #[replicate_account]
 async fn update_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
