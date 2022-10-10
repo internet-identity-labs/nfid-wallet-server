@@ -63,7 +63,7 @@ impl AccessPointRepoTrait for AccessPointRepo {
             None => { None }
             Some(mut ap) => {
                 ap.last_used = Some(time);
-                ap.browser = browser;
+                ap.browser = browser.or(ap.browser);
                 points.replace(ap.clone());
                 self.store_access_points(points);
                 Some(ap)
