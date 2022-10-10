@@ -13,7 +13,7 @@ use crate::response_mapper::{HttpResponse, to_error_response, to_success_respons
 #[async_trait(? Send)]
 pub trait AccessPointServiceTrait {
     fn read_access_points(&self) -> HttpResponse<Vec<AccessPointResponse>>;
-    fn use_access_point(&self, browser: String) -> HttpResponse<AccessPointResponse>;
+    fn use_access_point(&self, browser: Option<String>) -> HttpResponse<AccessPointResponse>;
     async fn create_access_point(&self, access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>>;
     fn update_access_point(&self, access_point_request: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>>;
     fn remove_access_point(&self, access_point: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>>;
@@ -39,7 +39,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
         }
     }
 
-    fn use_access_point(&self, browser: String) -> HttpResponse<AccessPointResponse> {
+    fn use_access_point(&self, browser: Option<String>) -> HttpResponse<AccessPointResponse> {
         let principal = ic_service::get_caller().to_text();
         match self.access_point_repo.use_access_point(principal, ic_service::get_time(), browser) {
             Some(access_point) => {

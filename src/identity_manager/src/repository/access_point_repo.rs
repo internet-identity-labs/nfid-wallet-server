@@ -32,7 +32,7 @@ impl Hash for AccessPoint {
 pub trait AccessPointRepoTrait {
     fn get_access_points(&self) -> Option<HashSet<AccessPoint>>;
     fn get_access_points_by_principal(&self, princ: String) -> Option<HashSet<AccessPoint>>;
-    fn use_access_point(&self, ap_principal: String, time: u64, browser: String) -> Option<AccessPoint>;
+    fn use_access_point(&self, ap_principal: String, time: u64, browser: Option<String>) -> Option<AccessPoint>;
     fn store_access_points(&self, access_points: HashSet<AccessPoint>) -> Option<Account>;
     fn store_access_points_by_principal(&self, access_points: HashSet<AccessPoint>, root_princ: String) -> Option<Account>;
     fn update_account_index(&self, additional_principal_id: String, root_princ: String);
@@ -54,7 +54,7 @@ impl AccessPointRepoTrait for AccessPointRepo {
             .map(|x| x.access_points.clone()) //todo &
     }
 
-    fn use_access_point(&self, ap_principal: String, time: u64, browser: String) -> Option<AccessPoint> {
+    fn use_access_point(&self, ap_principal: String, time: u64, browser: Option<String>) -> Option<AccessPoint> {
         let mut points = self.get_access_points().unwrap();
         let updated = points.clone()
             .into_iter()
@@ -63,7 +63,7 @@ impl AccessPointRepoTrait for AccessPointRepo {
             None => { None }
             Some(mut ap) => {
                 ap.last_used = Some(time);
-                ap.browser = Some(browser);
+                ap.browser = browser;
                 points.replace(ap.clone());
                 self.store_access_points(points);
                 Some(ap)
