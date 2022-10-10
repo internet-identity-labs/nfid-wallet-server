@@ -134,9 +134,9 @@ async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
 #[update]
 #[replicate_account]
 #[collect_metrics]
-async fn use_access_point() -> HttpResponse<AccessPointResponse> {
+async fn use_access_point(browser: Option<String>) -> HttpResponse<AccessPointResponse> {
     let access_point_service = get_access_point_service();
-    access_point_service.use_access_point()
+    access_point_service.use_access_point(browser)
 }
 
 #[update]

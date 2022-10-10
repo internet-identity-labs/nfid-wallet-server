@@ -372,7 +372,7 @@ service : () -> {
   update_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
   remove_access_point: (AccessPointRemoveRequest) -> (HTTPAccessPointResponse);
   read_access_points: () -> (HTTPAccessPointResponse) query;
-  use_access_point: () -> (HTTPOneAccessPointResponse);
+  use_access_point: (opt text) -> (HTTPOneAccessPointResponse);
 
   store_accounts: (vec Account) -> (BoolHttpResponse);
   restore_accounts: (text) -> (BoolHttpResponse);
