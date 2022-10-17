@@ -17,7 +17,7 @@ pub fn access_point_to_access_point_response(access_point: AccessPoint) -> Acces
 pub fn access_point_request_to_access_point(request: AccessPointRequest) -> AccessPoint {
     let basic = BasicEntity::new();
     AccessPoint {
-        principal_id: Principal::self_authenticating(request.pub_key).to_text(),
+        principal_id: request.pub_key,
         icon: Some(request.icon),
         device: Some(request.device),
         browser: Some(request.browser),

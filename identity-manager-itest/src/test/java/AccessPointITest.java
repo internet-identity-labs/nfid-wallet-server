@@ -15,7 +15,7 @@ public class AccessPointITest extends BaseIdentityManagerITest {
 
     @Test(priority = 10)
     public void createAccessPointExpectCorrectResponse() {
-        String accessPoint = call("device/req_create_access_point");
+        String accessPoint = call( "device/req_create_access_point", ROOT_IDENTITY);
         Pair<String, String> tuple = TestUtils.cutField(accessPoint, "last_used");
         validateWithFormatIdentity("device/exp_create_access_point", tuple.first());
         Pair<String, String> account = TestUtils.cutField(call("account/req_get_account", "identity_manager"), "last_used");
@@ -39,7 +39,7 @@ public class AccessPointITest extends BaseIdentityManagerITest {
 
     @Test(priority = 30)
     public void tryToCreateSameHashExpectError() {
-        validateWithFormatIdentity("device/exp_access_point_exists", call("device/req_create_access_point"));
+        validateWithFormatIdentity("device/exp_access_point_exists", call("device/req_create_access_point", ROOT_IDENTITY));
         validateWithFormatIdentity("device/exp_read_access_points", callAndCutLastUsed("device/req_read_access_points"));
     }
 
@@ -50,7 +50,7 @@ public class AccessPointITest extends BaseIdentityManagerITest {
 
     @Test(priority = 50)
     public void createExistentAccessPointExpectErrorResponse() {
-        validateWithFormatIdentity("device/exp_create_access_point_exists", call("device/req_create_access_point"));
+        validateWithFormatIdentity("device/exp_create_access_point_exists", call("device/req_create_access_point", ROOT_IDENTITY));
     }
 
     @Test(priority = 60)
@@ -60,17 +60,17 @@ public class AccessPointITest extends BaseIdentityManagerITest {
 
     @Test(priority = 61)
     public void updateExistentAccessPointExpectVec() {
-        Pair<String, String> tuple = TestUtils.cutField(call("device/req_update_existent_point"), "last_used");
+        Pair<String, String> tuple = TestUtils.cutField(call("device/req_update_existent_point", ROOT_IDENTITY), "last_used");
         validateWithFormatIdentity("device/exp_update_access_point", tuple.first());
     }
 
     @Test(priority = 70)
     public void removeExistentAccessPointExpectVector() {
-        validateWithFormatIdentity("device/exp_remove_access_point", callAndCutLastUsed("device/req_remove_access_point"));
+        validateWithFormatIdentity("device/exp_remove_access_point", callAndCutLastUsed("device/req_remove_access_point", ROOT_IDENTITY));
     }
 
-    private String callAndCutLastUsed(String doc) {
-        Pair<String, String> result = TestUtils.cutField(call(doc), "last_used");
+    private String callAndCutLastUsed(String doc, Object... params) {
+        Pair<String, String> result = TestUtils.cutField(call(doc, params), "last_used");
         return result.first();
     }
 

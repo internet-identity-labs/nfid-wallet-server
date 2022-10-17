@@ -104,7 +104,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
     fn remove_access_point(&self, access_point_request: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>> {
         match self.access_point_repo.get_access_points() {
             Some(content) => {
-                let principal = Principal::self_authenticating(access_point_request.pub_key).to_text();
+                let principal = access_point_request.pub_key;
                 let aps: HashSet<AccessPoint> = content.iter()
                     .filter(|x| x.principal_id != principal)
                     .cloned()
