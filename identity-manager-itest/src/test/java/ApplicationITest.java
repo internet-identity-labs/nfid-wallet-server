@@ -26,7 +26,6 @@ import static constants.Constants.STATUS_SUCCESS;
 import static org.testng.AssertJUnit.*;
 
 @Slf4j
-@Ignore
 public class ApplicationITest extends BaseDFXITest {
 
     private Agent agent;
@@ -80,8 +79,8 @@ public class ApplicationITest extends BaseDFXITest {
     }
 
     @Test(priority = 20)
-    public void createApplicationWithSameNameExpectErrorResponse() {
-        Application application = application("dom2", "TEST_APP", 1);
+    public void createApplicationWithSameDomainExpectErrorResponse() {
+        Application application = application("dom", "TEST_APP2", 1);
         HttpResponse httpResponse = callUpdateHttp(application, "create_application");
         assertEquals(STATUS_NOT_FOUND, httpResponse.statusCode);
         assertEquals(Optional.empty(), httpResponse.data);
@@ -90,7 +89,7 @@ public class ApplicationITest extends BaseDFXITest {
 
     @Test(priority = 30)
     public void createApplicationWithSameDomExpectCorrectResponse() {
-        Application application = application("dom2", "TEST_APP2", 1);
+        Application application = application("dom2", "TEST_APP", 1);
         HttpResponse httpResponse = callUpdateHttp(application, "create_application");
         List<Application> applications = httpResponse.getVectorFromData(Application.class);
         assertEquals(STATUS_SUCCESS, httpResponse.statusCode);
@@ -101,7 +100,7 @@ public class ApplicationITest extends BaseDFXITest {
         assertEquals("TEST_APP", applications.get(0).name);
         assertEquals(1, applications.get(1).userLimit.intValue());
         assertEquals("dom2", applications.get(1).domain);
-        assertEquals("TEST_APP2", applications.get(1).name);
+        assertEquals("TEST_APP", applications.get(1).name);
     }
 
     @Test(priority = 40)
@@ -116,7 +115,7 @@ public class ApplicationITest extends BaseDFXITest {
         assertEquals("TEST_APP", applications.get(0).name);
         assertEquals(1, applications.get(1).userLimit.intValue());
         assertEquals("dom2", applications.get(1).domain);
-        assertEquals("TEST_APP2", applications.get(1).name);
+        assertEquals("TEST_APP", applications.get(1).name);
     }
 
     @Test(priority = 50)
@@ -131,7 +130,7 @@ public class ApplicationITest extends BaseDFXITest {
 
     @Test(priority = 60)
     public void deleteApplicationIsOverLimitExpectCorrectResponse() {
-        HttpResponse httpResponse = callUpdateHttp("TEST_PERSONA", "delete_application");
+        HttpResponse httpResponse = callUpdateHttp("TEST_DOMAIN", "delete_application");
         assertTrue((Boolean) httpResponse.data.get());
         assertEquals(STATUS_SUCCESS, httpResponse.statusCode);
         assertEquals(Optional.empty(), httpResponse.error);
