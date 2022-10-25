@@ -22,7 +22,8 @@ export const register = async (actor: Record<string, ActorMethod>, identity: Ed2
         },
         credential_id: []
     };
-    var registerResponse = (await actor.register(deviceData, challenageResult)) as { 'registered' : { 'user_number' : UserNumber } };;
+    console.log(identity.getPrincipal().toText())
+    var registerResponse = (await actor.register(deviceData, challenageResult)) as { 'registered' : { 'user_number' : UserNumber } };
     
     return registerResponse.registered.user_number;
 };

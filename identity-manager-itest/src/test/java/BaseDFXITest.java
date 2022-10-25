@@ -40,7 +40,7 @@ public class BaseDFXITest {
                 Objects.requireNonNull(this.getClass().getResourceAsStream(pathToExpected)),
                 StandardCharsets.UTF_8
         );
-        assertEquals(String.format(expected, ROOT_IDENTITY).trim(), actual.trim());
+        assertEquals(String.format(expected, ROOT_IDENTITY, ROOT_IDENTITY).trim(), actual.trim());
     }
 
     @SneakyThrows

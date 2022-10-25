@@ -1,4 +1,3 @@
-use log::{info, log};
 use crate::application_service::ApplicationServiceTrait;
 use crate::http::requests::AccountResponse;
 use crate::mapper::account_mapper::account_to_account_response;

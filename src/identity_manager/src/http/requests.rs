@@ -104,7 +104,7 @@ pub struct AccessPointResponse {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccessPointRequest {
-    pub pub_key: ByteBuf,
+    pub pub_key: String,
     pub icon: String,
     pub device: String,
     pub browser: String,
@@ -112,5 +112,5 @@ pub struct AccessPointRequest {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccessPointRemoveRequest {
-    pub pub_key: ByteBuf,
+    pub pub_key: String,
 }

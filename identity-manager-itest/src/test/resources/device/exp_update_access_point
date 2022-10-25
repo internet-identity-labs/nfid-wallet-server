@@ -2,16 +2,16 @@
   record {
     data = opt vec {
       record {
+        icon = "icon3";
+        device = "device3";
+        browser = "browser3";
+        principal_id = "%s";
+      };
+      record {
         icon = "icon2";
         device = "device2";
         browser = "browser2";
         principal_id = "2kqda-6wdqw-2be7y-4c5yg-ijw7q-muznw-qh3tm-55v2s-cnnyp-o2ud4-cqe";
-      };
-      record {
-        icon = "icon3";
-        device = "device3";
-        browser = "browser3";
-        principal_id = "wuomy-jshie-5vmse-huyz2-wmuqj-kdsry-nekfo-wvnou-dxqxz-pdpbv-4qe";
       };
     };
     error = null;

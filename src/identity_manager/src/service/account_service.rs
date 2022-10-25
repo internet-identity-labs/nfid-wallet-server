@@ -1,12 +1,10 @@
-use std::collections::HashSet;
 use async_trait::async_trait;
 use itertools::Itertools;
 
 use crate::{AccessPointServiceTrait, Account, get_caller, HttpResponse};
 use crate::http::requests::AccountResponse;
-use crate::ic_service::{DeviceData, DeviceKey, KeyType};
+use crate::ic_service::{DeviceKey, KeyType};
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
-use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::account_repo::AccountRepoTrait;
 use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
 use crate::requests::{AccountRequest, AccountUpdateRequest};
@@ -217,6 +215,5 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
                 return self.remove_account_by_principal(principal_id.clone());
             }
         }
-        
     }
 }

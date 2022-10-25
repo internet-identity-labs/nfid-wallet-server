@@ -172,14 +172,14 @@ type CredentialResponse = record {
 //  ----------------------ACCESS POINT SECTION----------------------------
 
 type AccessPointRequest = record {
-    pub_key: blob;
+    pub_key: text;
     icon: text;
     device: text;
     browser: text;
 };
 
 type AccessPointRemoveRequest = record {
-    pub_key: blob;
+    pub_key: text;
 };
 
 type AccessPointResponse = record {

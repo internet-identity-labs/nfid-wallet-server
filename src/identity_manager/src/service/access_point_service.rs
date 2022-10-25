@@ -53,8 +53,8 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
         match get_account_service().get_account() {
             Some(acc) => {
                 let mut access_points = acc.access_points;
-                ic_service::trap_if_not_authenticated(acc.anchor,
-                                                      Principal::self_authenticating(access_point_request.pub_key.clone())).await;
+                let princ = Principal::from_text(access_point_request.pub_key.clone()).unwrap();
+                ic_service::trap_if_not_authenticated(acc.anchor, princ).await;
                 let access_point = access_point_request_to_access_point(access_point_request.clone());
                 if access_points.clone().iter()
                     .any(|x| x.eq(&access_point)) {
@@ -104,7 +104,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
     fn remove_access_point(&self, access_point_request: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>> {
         match self.access_point_repo.get_access_points() {
             Some(content) => {
-                let principal = Principal::self_authenticating(access_point_request.pub_key).to_text();
+                let principal = access_point_request.pub_key;
                 let aps: HashSet<AccessPoint> = content.iter()
                     .filter(|x| x.principal_id != principal)
                     .cloned()

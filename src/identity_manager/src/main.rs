@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use ic_cdk::{caller, storage, trap};
 use ic_cdk_macros::*;
-use itertools::Itertools;
 
 use canister_api_macros::{admin, admin_or_lambda, collect_metrics, log_error, replicate_account};
 use service::{account_service, persona_service, phone_number_service};
@@ -18,7 +17,7 @@ use crate::ic_service::get_caller;
 use crate::persona_service::{PersonaService, PersonaServiceTrait};
 use crate::phone_number_service::PhoneNumberService;
 use crate::replica_service::HearthCount;
-use crate::repository::account_repo::{Account, AccountRepo, AccountRepoTrait, Accounts};
+use crate::repository::account_repo::{Account, AccountRepo, AccountRepoTrait};
 use crate::repository::application_repo::{Application, ApplicationRepo};
 use crate::repository::persona_repo::PersonaRepo;
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo};

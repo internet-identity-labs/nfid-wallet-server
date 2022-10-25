@@ -72,7 +72,7 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
 
     @Test(priority = 22)
     public void validatePhoneWhenPhoneNumberNotExistByAccessPoint() {
-        String accessPoint = call("device/req_create_access_point");
+        String accessPoint = call("device/req_create_access_point", ROOT_IDENTITY);
         String principle = TestUtils.cutField(accessPoint, "principal_id").second().split("\"")[1];
         var actual = command("request/validate_phone", principle, PHONE_SHA2);
         System.out.println(actual);
