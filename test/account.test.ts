@@ -16,6 +16,7 @@ import {DeviceData} from "./idl/internet_identity_test";
 import {DFX} from "./constanst/dfx.const";
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {Expected} from "./constanst/expected.const";
+import {Ed25519KeyIdentity} from "@dfinity/identity";
 
 const PHONE = "123456";
 const PHONE_SHA2 = "123456_SHA2";
@@ -120,12 +121,10 @@ describe("Account", () => {
         });
 
         it("should throw error due to not authentificated principal on creating access point.", async function () {
-            var pbk = Array.from(new Uint8Array(dfx.user.identity.getPublicKey().toDer()));
-            pbk[0] = 0;
             var request: AccessPointRequest = {
                 icon: "icon",
                 device: "device",
-                pub_key: pbk,
+                pub_key: Ed25519KeyIdentity.generate().getPrincipal().toText(),
                 browser: "browser",
             };
 
@@ -140,7 +139,7 @@ describe("Account", () => {
             var request: AccessPointRequest = {
                 icon: "icon",
                 device: "device",
-                pub_key: Array.from(new Uint8Array(dfx.user.identity.getPublicKey().toDer())),
+                pub_key: dfx.user.identity.getPrincipal().toText(),
                 browser: "browser",
             };
 

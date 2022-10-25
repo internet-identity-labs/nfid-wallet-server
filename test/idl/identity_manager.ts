@@ -3,7 +3,7 @@ export interface AccessPointRemoveRequest { 'pub_key' : Array<number> }
 export interface AccessPointRequest {
     'icon' : string,
     'device' : string,
-    'pub_key' : Array<number>,
+    'pub_key' : string,
     'browser' : string,
 }
 export interface AccessPointResponse {
