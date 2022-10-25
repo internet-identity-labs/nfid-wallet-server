@@ -23,7 +23,7 @@ impl PartialEq for Application {
 
 impl Ord for Application {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        return *&self.name.cmp(&other.name);
+        return *&self.domain.cmp(&other.domain);
     }
 }
 
