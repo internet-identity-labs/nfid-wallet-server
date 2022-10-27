@@ -37,6 +37,7 @@ export interface Application {
     'domain' : string,
     'name' : string,
     'is_nft_storage' : [] | [boolean],
+    'is_trusted' : [] | [boolean],
 }
 export interface BasicEntity {
     'modified_date' : bigint,

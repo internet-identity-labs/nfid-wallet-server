@@ -13,6 +13,7 @@ pub struct Application {
     pub img: Option<String>,
     pub name: String,
     pub is_nft_storage: Option<bool>,
+    pub is_trusted: Option<bool>,
 }
 
 impl PartialEq for Application {
