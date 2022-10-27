@@ -26,6 +26,8 @@ import static constants.Constants.STATUS_SUCCESS;
 import static org.testng.AssertJUnit.*;
 
 @Slf4j
+@Ignore
+@Deprecated
 public class ApplicationITest extends BaseDFXITest {
 
     private Agent agent;

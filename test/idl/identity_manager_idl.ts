@@ -67,6 +67,7 @@ export const idlFactory = ({ IDL }) => {
         'domain' : IDL.Text,
         'name' : IDL.Text,
         'is_nft_storage' : IDL.Opt(IDL.Bool),
+        'is_trusted' : IDL.Opt(IDL.Bool),
     });
     const HTTPApplicationResponse = IDL.Record({
         'data' : IDL.Opt(IDL.Vec(Application)),
@@ -205,9 +206,7 @@ export const idlFactory = ({ IDL }) => {
         'error' : IDL.Opt(Error),
         'status_code' : IDL.Nat16,
     });
-    const AccessPointRemoveRequest = IDL.Record({
-        'pub_key' : IDL.Text,
-    });
+    const AccessPointRemoveRequest = IDL.Record({ 'pub_key' : IDL.Text });
     const BasicEntity = IDL.Record({
         'modified_date' : IDL.Nat64,
         'created_date' : IDL.Nat64,
@@ -305,6 +304,7 @@ export const idlFactory = ({ IDL }) => {
             [],
         ),
         'remove_account' : IDL.Func([], [BoolHttpResponse], []),
+        'remove_account_by_phone_number' : IDL.Func([], [BoolHttpResponse], []),
         'remove_account_by_principal' : IDL.Func(
             [IDL.Text],
             [BoolHttpResponse],
@@ -334,7 +334,11 @@ export const idlFactory = ({ IDL }) => {
             [],
         ),
         'update_persona' : IDL.Func([PersonaRequest], [HTTPAccountResponse], []),
-        'use_access_point' : IDL.Func([], [HTTPOneAccessPointResponse], []),
+        'use_access_point' : IDL.Func(
+            [IDL.Opt(IDL.Text)],
+            [HTTPOneAccessPointResponse],
+            [],
+        ),
         'validate_phone' : IDL.Func([ValidatePhoneRequest], [Response], []),
         'validate_signature' : IDL.Func(
             [IDL.Opt(IDL.Text)],

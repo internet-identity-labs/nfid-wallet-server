@@ -37,7 +37,8 @@ describe("Application", () => {
 
     it("should create an application.", async function () {
         const application: Application = {
-            is_nft_storage: [],
+            is_trusted: [true],
+            is_nft_storage: [true],
             alias: [],
             user_limit: userLimit,
             domain,
@@ -54,10 +55,12 @@ describe("Application", () => {
         expect(app.user_limit).eq(userLimit);
         expect(app.domain).eq(domain);
         expect(app.name).eq(appName);
+        expect(app.is_trusted[0]).eq(true);
     });
 
     it("should return an error due the same domain on creating application.", async function () {
         const application: Application = {
+            is_trusted: [],
             alias: [],
             user_limit: userLimit,
             domain: domain,
@@ -75,6 +78,7 @@ describe("Application", () => {
 
     it("should create the second application with different name and domain.", async function () {
         const application: Application = {
+            is_trusted: [],
             alias: [],
             user_limit: userLimit,
             domain: domain2,
@@ -132,6 +136,7 @@ describe("Application", () => {
             persona_id: 'TEST_ID_DD',
         };
         const application: Application = {
+            is_trusted: [],
             alias: [],
             user_limit: userLimit,
             domain: domain3,
@@ -180,6 +185,7 @@ describe("Application", () => {
             persona_id: personaId,
         };
         const application: Application = {
+            is_trusted: [],
             alias: [],
             user_limit: userLimit,
             domain: domain3,
@@ -222,16 +228,18 @@ describe("Application", () => {
         expect(app.data[0].alias[0][1]).eq("alias1");
     });
 
-    it("should update icon", async function () {
+    it("should update icon&truested", async function () {
         let app = (await dfx.im.actor.get_application(domain3) as HTTPAppResponse).data[0];
         app.img = ["TEST_PATH_FOR_ARTEM"]
         app.name = "TEST_NAME_FOR_ARTEM"
         app.is_nft_storage = [true]
+        app.is_trusted = [false]
         await dfx.im.actor.update_application(app) as BoolHttpResponse;
         app = (await dfx.im.actor.get_application(domain3) as HTTPAppResponse).data[0];
         expect(app.name).eq("TEST_NAME_FOR_ARTEM");
         expect(app.img[0]).eq("TEST_PATH_FOR_ARTEM");
         expect(app.is_nft_storage[0]).eq(true);
+        expect(app.is_trusted[0]).eq(false);
     });
 
     it("should create new application", async function () {

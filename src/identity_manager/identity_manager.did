@@ -126,6 +126,7 @@ type Application = record {
     alias: opt vec text;
     img: opt text;
     is_nft_storage: opt bool;
+    is_trusted: opt bool;
 };
 
 type HTTPApplicationResponse = record {

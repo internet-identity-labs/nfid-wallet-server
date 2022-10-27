@@ -61,7 +61,8 @@ impl<T: ApplicationRepoTrait, N: AccountRepoTrait> ApplicationServiceTrait for A
                         None => {alias}
                         Some(name) => {name}
                     },
-                    is_nft_storage: None
+                    is_nft_storage: None,
+                    is_trusted: None
                 };
                 self.application_repo.create_application(app);
                 to_success_response(true)
