@@ -1,4 +1,4 @@
-name: List Canister Backups
+name: BRL - List Canister Backups
 on: 
   workflow_dispatch:
     inputs:
