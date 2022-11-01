@@ -1,4 +1,4 @@
-name: Restore Canister
+name: BRL - Restore Canister
 on: 
   workflow_dispatch:
     inputs:

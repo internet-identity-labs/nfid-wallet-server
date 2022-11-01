@@ -81,10 +81,11 @@ jobs:
       - name: BACKUP => Backup.
         run: |
           source ./ci_libs/CI_LIBS.sh
+          source ./ci_libs/canister_backup_restore.sh
 
           dfx identity use gh_mp_admin
 
-          ./ci_libs/backup.sh "${CANISTER_NAME}" "${NETWORK_NAME}" "${BACKUP_FOLDER}" "${BACKUP_CHUNK_SIZE}"
+          ci_canister_backup "${CANISTER_NAME}" "${NETWORK_NAME}" "${BACKUP_FOLDER}" "${BACKUP_CHUNK_SIZE}"
         env:
           BACKUP_FOLDER: /home/ubuntu/backup/
           BACKUP_CHUNK_SIZE: 3000
