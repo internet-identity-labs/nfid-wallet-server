@@ -1,4 +1,4 @@
-name: BRL- Backup Canister
+name: BRL - Backup Canister
 on: 
   workflow_dispatch:
     inputs:
