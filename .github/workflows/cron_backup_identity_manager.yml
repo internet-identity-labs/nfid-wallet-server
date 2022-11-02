@@ -9,6 +9,7 @@ env:
   CANISTER_NAME: 'identity_manager'
   CI_DEBUG: 'true'
 
+
 jobs:
   Backup:
     runs-on: [self-hosted, Linux, X64]
@@ -17,15 +18,6 @@ jobs:
         shell: bash
 
     steps:
-      - name: DFX => Write identity.
-        run: |
-          mkdir -p $ID_PATH
-          echo $GH_MP_ADMIN_PEM >> $ID_PATH/identity.pem
-          sed -i 's/\\r\\n/\r\n/g' $ID_PATH/identity.pem
-        env:
-          GH_MP_ADMIN_PEM: ${{secrets.GH_MP_ADMIN_PEM}}
-          ID_PATH: /home/ubuntu/.config/dfx/identity/gh_mp_admin
-
       - name: Checkout repo.
         uses: actions/checkout@v3
 
@@ -60,6 +52,16 @@ jobs:
             exit 1
           fi
 
+          ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
+          if [ "${NETWORK_NAME}" == 'ic' ];then
+            ID_NAME="prod_admin"
+            IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
+          elif [ "${NETWORK_NAME}" == 'dev' ]; then
+            ID_NAME="dev_admin"
+            IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
+          fi
+          ID_PATH="/home/ubuntu/.config/dfx/identity/${ID_NAME}"
+
           CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
           CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
           CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
@@ -67,12 +69,27 @@ jobs:
           echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
           echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
           echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
+          echo "ID_NAME=${ID_NAME}" >> $GITHUB_ENV
+          echo "ID_PATH=${ID_PATH}" >> $GITHUB_ENV
+          echo "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >> $GITHUB_ENV
           
           ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
           ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
           ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
           ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
           ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
+          ci_echo_info "ID_NAME=${ID_NAME}" >&2
+          ci_echo_info "ID_PATH=${ID_PATH}" >&2
+          ci_echo_info "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >&2
+
+      - name: PRE-BUILD => Write identity.
+        run: |
+          mkdir -p "${ID_PATH}"
+          echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
+          sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
+        env:
+          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
+          DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
 
       - name: PRE-BUILD => DFX status.
         run: |
@@ -83,7 +100,7 @@ jobs:
           source ./ci_libs/CI_LIBS.sh
           source ./ci_libs/canister_backup_restore.sh
 
-          dfx identity use gh_mp_admin
+          dfx identity use "${ID_NAME}"
 
           ci_canister_backup "${CANISTER_NAME}" "${NETWORK_NAME}" "${BACKUP_FOLDER}" "${BACKUP_CHUNK_SIZE}"
         env:
