@@ -363,9 +363,18 @@ service : () -> {
 
   create_application: (Application) -> (HTTPApplicationResponse);
   delete_application: (text) -> (BoolHttpResponse);
+/**
+* Retrieve list of registered applications
+* @return standart http response with list of apps
+*/
   read_applications: () -> (HTTPApplicationResponse) query;
   is_over_the_application_limit: (text) -> (BoolHttpResponse) query;
   update_application_alias: (text, text, opt text) -> (BoolHttpResponse);
+/**
+* Retrieve registered application
+* @param domain
+* @return HTTPApplicationResponse
+*/
   get_application: (text) -> (HTTPAppResponse);
   update_application: (Application) -> (HTTPApplicationResponse);
 
