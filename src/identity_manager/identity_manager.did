@@ -365,7 +365,7 @@ service : () -> {
   delete_application: (text) -> (BoolHttpResponse);
 /**
 * Retrieve list of registered applications
-* @return standart http response with list of apps
+* @return HTTPApplicationResponse
 */
   read_applications: () -> (HTTPApplicationResponse) query;
   is_over_the_application_limit: (text) -> (BoolHttpResponse) query;
@@ -373,7 +373,7 @@ service : () -> {
 /**
 * Retrieve registered application
 * @param domain
-* @return HTTPApplicationResponse
+* @return HTTPAppResponse
 */
   get_application: (text) -> (HTTPAppResponse);
   update_application: (Application) -> (HTTPApplicationResponse);
