@@ -1,11 +1,14 @@
 name: BEItest
 on: [push, workflow_dispatch]
+
+
 jobs:
   test:
     runs-on: [self-hosted, Linux, X64]
     defaults:
       run:
         shell: bash
+
     steps:
       - uses: actions/checkout@v2
 

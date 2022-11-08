@@ -45,26 +45,6 @@ jobs:
           echo "[ERROR] You have try release to network 'ic' without or with wrong confirmation phrase" >&2
           exit 1
 
-      - name: DFX => Write Prod identity.
-        if: ${{ (github.event.inputs.network_name == 'ic') }}
-        run: |
-          mkdir -p $ID_PATH
-          echo $GH_MP_ADMIN_PEM >> $ID_PATH/identity.pem
-          sed -i 's/\\r\\n/\r\n/g' $ID_PATH/identity.pem
-        env:
-          GH_MP_ADMIN_PEM: ${{secrets.GH_MP_ADMIN_PEM}}
-          ID_PATH: /home/ubuntu/.config/dfx/identity/gh_mp_admin
-
-      - name: DFX => Write dev identity.
-        if: ${{ (github.event.inputs.network_name != 'ic') }}
-        run: |
-          mkdir -p $ID_PATH
-          echo $GH_MP_TEST_PEM >> $ID_PATH/identity.pem
-          sed -i 's/\\r\\n/\r\n/g' $ID_PATH/identity.pem
-        env:
-          GH_MP_TEST_PEM: ${{secrets.GH_MP_TEST_PEM}}
-          ID_PATH: /home/ubuntu/.config/dfx/identity/testii
-
       - name: Checkout repo.
         uses: actions/checkout@v3
 
@@ -98,27 +78,44 @@ jobs:
             exit 1
           fi
 
+          ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
+          if [ "${NETWORK_NAME}" == 'ic' ];then
+            ID_NAME="prod_admin"
+            IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
+          elif [ "${NETWORK_NAME}" == 'dev' ]; then
+            ID_NAME="dev_admin"
+            IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
+          fi
+          ID_PATH="/home/ubuntu/.config/dfx/identity/${ID_NAME}"
+
           CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
           CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
           CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
             
-          if [[ "${NETWORK_NAME}" == 'ic' ]]; then
-            CANISTER_IDENTITY='gh_mp_admin'
-          else
-            CANISTER_IDENTITY='testii'
-          fi
-            
           echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
           echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
           echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
-          echo "CANISTER_IDENTITY=${CANISTER_IDENTITY}" >> $GITHUB_ENV
+          echo "ID_NAME=${ID_NAME}" >> $GITHUB_ENV
+          echo "ID_PATH=${ID_PATH}" >> $GITHUB_ENV
+          echo "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >> $GITHUB_ENV
           
           ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
           ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
           ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
           ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
           ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
-          ci_echo_info "CANISTER_IDENTITY=${CANISTER_IDENTITY}" >&2
+          ci_echo_info "ID_NAME=${ID_NAME}" >&2
+          ci_echo_info "ID_PATH=${ID_PATH}" >&2
+          ci_echo_info "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >&2
+
+      - name: PRE-BUILD => Write identity.
+        run: |
+          mkdir -p "${ID_PATH}"
+          echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
+          sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
+        env:
+          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
+          DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
 
       - name: PRE-BUILD => DFX status.
         run: |
@@ -128,7 +125,7 @@ jobs:
         run: |
           source ./ci_libs/CI_LIBS.sh
 
-          dfx identity use ${CANISTER_IDENTITY}
+          dfx identity use "${ID_NAME}"
 
           rm -rf .dfx;
           ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
@@ -138,7 +135,7 @@ jobs:
         run: |
           source ./ci_libs/CI_LIBS.sh
 
-          dfx identity use ${CANISTER_IDENTITY}
+          dfx identity use "${ID_NAME}"
 
           if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'pub_sub_channel' ]; then
             ci_echo_warn "Performing PROD canister Upgrade" >&2
