@@ -192,12 +192,22 @@ jobs:
       - name: Frontend => Format did files.
         if: ${{ github.event.inputs.canister_name == 'pub_sub_channel' }} && (github.event.inputs.network_name != 'ic') }}
         run: |
+          source ./ci_libs/CI_LIBS.sh
+          ci_echo_debug "Add PSYCHEDELIC_GH_NPM_REGISTRY" >&2
+          cat > ~/.npmrc << EOF
+          @psychedelic:registry=https://npm.pkg.github.com
+          //npm.pkg.github.com/:_authToken=${PSYCHEDELIC_GH_NPM_REGISTRY}
+          EOF
+
           sudo npm install --global yarn
           cd ./frontend
+
           yarn
           yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}.did.d.ts
           yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}_idl.js
           git diff
+        env:
+          PSYCHEDELIC_GH_NPM_REGISTRY: ${{secrets.PSYCHEDELIC_GH_NPM_REGISTRY}}
 
       - name: Frontend => Create a pull request.
         if: ${{ github.event.inputs.canister_name == 'pub_sub_channel' }} && (github.event.inputs.network_name != 'ic') }}
