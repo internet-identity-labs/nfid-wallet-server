@@ -361,6 +361,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3b5ca7a04898ad4bcd41c90c5285445ff5b791899bb1b0abdd2a2aa791211d7"
 
 [[package]]
+name = "bytemuck"
+version = "1.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aaa3a8d9a1ca92e282c96a32d6511b695d7d994d1d102ba85d279f9b2756947f"
+
+[[package]]
 name = "byteorder"
 version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -415,7 +421,7 @@ dependencies = [
 name = "canister_api_macros"
 version = "0.1.0"
 dependencies = [
- "ic-cdk",
+ "ic-cdk 0.3.3",
  "ic-cdk-macros",
  "ic-types 0.1.5",
  "proc-macro2 1.0.39",
@@ -431,7 +437,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d6058b5b18d2c54eef2191b990d37c42b05fa284e2793af6b821f7fef180543"
 dependencies = [
  "chrono",
- "ic-cdk",
+ "ic-cdk 0.3.3",
  "ic-cdk-macros",
  "regex",
  "serde",
@@ -842,18 +848,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-cdk"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e471fa2e2464d4f9d676b81d33ae0d1cd190981166c53bbe4d536f13da281fc6"
+dependencies = [
+ "candid",
+ "cfg-if",
+ "serde",
+]
+
+[[package]]
 name = "ic-cdk-macros"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08bac2578a4779c3ae6d24c766ec7127872d73f29a9e7d70b6607a2fdedd0dde"
 dependencies = [
  "candid",
- "ic-cdk",
+ "ic-cdk 0.3.3",
  "proc-macro2 1.0.39",
  "quote 1.0.10",
  "serde",
  "serde_tokenstream",
  "syn 1.0.96",
+]
+
+[[package]]
+name = "ic-ledger-types"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e5538e50e22dcdc395c0e3161b62fae088c4ff74342aaee4770ac0caddbce69"
+dependencies = [
+ "candid",
+ "crc32fast",
+ "hex",
+ "ic-cdk 0.5.2",
+ "serde",
+ "serde_bytes",
+ "sha2 0.9.8",
 ]
 
 [[package]]
@@ -901,7 +933,7 @@ dependencies = [
  "base64",
  "canister_api_macros",
  "canistergeek_ic_rust",
- "ic-cdk",
+ "ic-cdk 0.3.3",
  "ic-cdk-macros",
  "ic-types 0.1.5",
  "inject",
@@ -925,7 +957,7 @@ version = "0.1.0"
 dependencies = [
  "canister_api_macros",
  "canistergeek_ic_rust",
- "ic-cdk",
+ "ic-cdk 0.3.3",
  "ic-cdk-macros",
  "ic-types 0.1.5",
  "serde",
@@ -1462,7 +1494,7 @@ dependencies = [
  "blake3",
  "canister_api_macros",
  "canistergeek_ic_rust",
- "ic-cdk",
+ "ic-cdk 0.3.3",
  "ic-cdk-macros",
  "ic-types 0.1.5",
  "serde",
@@ -1522,6 +1554,15 @@ name = "regex-syntax"
 version = "0.6.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
+
+[[package]]
+name = "remove_dir_all"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3acd125665422973a33ac9d3dd2df85edad0f4ae9b00dafb1a05e43a9f5ef8e7"
+dependencies = [
+ "winapi",
+]
 
 [[package]]
 name = "rustversion"
@@ -1741,6 +1782,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "tempfile"
+version = "3.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5cdb1ef4eaeeaddc8fbd371e5017057064af0911902ef36b39801f67cc6d79e4"
+dependencies = [
+ "cfg-if",
+ "fastrand",
+ "libc",
+ "redox_syscall",
+ "remove_dir_all",
+ "winapi",
+]
+
+[[package]]
 name = "term"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1878,12 +1933,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "vault"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "candid",
+ "ic-cdk 0.3.3",
+ "ic-cdk-macros",
+ "ic-ledger-types",
+ "serde",
+ "serde_derive",
+ "tempfile",
+]
+
+[[package]]
 name = "verifier"
 version = "0.1.0"
 dependencies = [
  "canister_api_macros",
  "canistergeek_ic_rust",
- "ic-cdk",
+ "ic-cdk 0.3.3",
  "ic-cdk-macros",
  "ic-types 0.1.5",
  "imp",

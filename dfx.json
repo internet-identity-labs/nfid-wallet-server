@@ -58,15 +58,35 @@
       "type": "custom",
       "wasm": "ledger.wasm",
       "candid": "ledger.public.did"
+    },
+    "vault": {
+      "build": "src/vault/build.sh",
+      "candid": "src/vault/vault.did",
+      "wasm": "vault.wasm",
+      "type": "custom"
+    },
+    "ledger": {
+      "type": "custom",
+      "candid": "ledger.public.did",
+      "wasm": "ledger.wasm"
+    }
+  },
+  "defaults": {
+    "replica": {
+      "subnet_type": "system"
     }
   },
   "networks": {
     "dev": {
-      "providers": ["https://ic0.app/"],
+      "providers": [
+        "https://ic0.app/"
+      ],
       "type": "persistent"
     },
     "prod": {
-      "providers": ["https://ic0.app/"],
+      "providers": [
+        "https://ic0.app/"
+      ],
       "type": "persistent"
     },
     "local": {

@@ -18,6 +18,10 @@ export interface Dfx {
         id: string;
         actor: Record<string, ActorMethod>;
         anchor: bigint;
+    },
+    vault?: {
+        id: string;
+        actor: Record<string, ActorMethod>;
     };
     ess?: {
         id: string;

@@ -61,7 +61,7 @@ export const deploy = async ({clean = true, apps}: {clean?: boolean, apps: App[]
             } else {
                 DFX.UPGRADE_FORCE("eth_secret_storage");
             }
-            
+
             var response = DFX.INIT_ESS();
             console.debug(">> ", response);
 
