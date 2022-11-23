@@ -17,6 +17,12 @@ on:
           - identity_manager
           - identity_manager_replica
           - test_im
+      compress_backup:
+        description: 'Compress backup'
+        type: choice
+        options: 
+          - 'true'
+          - 'false'
       debug_messages:
         description: 'Show debug messages'
         type: choice
@@ -30,6 +36,7 @@ on:
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   CANISTER_NAME: ${{ github.event.inputs.canister_name }}
+  COMPRESS_BACKUP: ${{ github.event.inputs.compress_backup }}
   CI_DEBUG: ${{ github.event.inputs.debug_messages }}
 
 
@@ -110,6 +117,7 @@ jobs:
           ci_echo_info "ID_NAME=${ID_NAME}" >&2
           ci_echo_info "ID_PATH=${ID_PATH}" >&2
           ci_echo_info "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >&2
+          ci_echo_info "COMPRESS_BACKUP=${COMPRESS_BACKUP}" >&2
 
       - name: PRE-BUILD => Write identity.
         run: |
@@ -131,7 +139,7 @@ jobs:
 
           dfx identity use "${ID_NAME}"
 
-          ci_canister_backup "${CANISTER_NAME}" "${NETWORK_NAME}" "${BACKUP_FOLDER}" "${BACKUP_CHUNK_SIZE}"
+          ci_canister_backup "${CANISTER_NAME}" "${NETWORK_NAME}" "${BACKUP_FOLDER}" "${BACKUP_CHUNK_SIZE}" "${COMPRESS_BACKUP}"
         env:
           BACKUP_FOLDER: /home/ubuntu/backup/
           BACKUP_CHUNK_SIZE: 3000
