@@ -380,9 +380,9 @@ checksum = "c1db59621ec70f09c5e9b597b220c7a2b43611f4710dc03ceb8748637775692c"
 
 [[package]]
 name = "candid"
-version = "0.7.8"
+version = "0.7.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d7577605c33073dcafc17a5ed6373aa0cb7005e7d4e4b7cd40ca01cb2385533"
+checksum = "d510cc32b8b991acc955dd3d5e0cb6f404069d1dccd9203ee90f5865557c9165"
 dependencies = [
  "anyhow",
  "binread",
@@ -390,7 +390,7 @@ dependencies = [
  "candid_derive",
  "codespan-reporting",
  "hex",
- "ic-types 0.2.2",
+ "ic-types 0.5.0",
  "lalrpop",
  "lalrpop-util",
  "leb128",
@@ -422,7 +422,7 @@ name = "canister_api_macros"
 version = "0.1.0"
 dependencies = [
  "ic-cdk 0.3.3",
- "ic-cdk-macros",
+ "ic-cdk-macros 0.3.3",
  "ic-types 0.1.5",
  "proc-macro2 1.0.39",
  "quote 1.0.10",
@@ -438,7 +438,7 @@ checksum = "0d6058b5b18d2c54eef2191b990d37c42b05fa284e2793af6b821f7fef180543"
 dependencies = [
  "chrono",
  "ic-cdk 0.3.3",
- "ic-cdk-macros",
+ "ic-cdk-macros 0.3.3",
  "regex",
  "serde",
 ]
@@ -522,9 +522,9 @@ dependencies = [
 
 [[package]]
 name = "crc32fast"
-version = "1.2.1"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81156fece84ab6a9f2afdb109ce3ae577e42b1228441eded99bd77f627953b1a"
+checksum = "b540bd8bc810d3885c6ea91e2018302f68baba2129ab3e88f32389ee9370880d"
 dependencies = [
  "cfg-if",
 ]
@@ -598,6 +598,12 @@ dependencies = [
  "quote 1.0.10",
  "syn 1.0.96",
 ]
+
+[[package]]
+name = "data-encoding"
+version = "2.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ee2393c4a91429dffb4bedf19f4d6abf27d8a732c8ce4980305d782e5426d57"
 
 [[package]]
 name = "debug-helper"
@@ -849,9 +855,9 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk"
-version = "0.5.2"
+version = "0.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e471fa2e2464d4f9d676b81d33ae0d1cd190981166c53bbe4d536f13da281fc6"
+checksum = "0554d77b453140eefcb8c8192a342927f8c48cfda911dfa3cd4561a919dbd32f"
 dependencies = [
  "candid",
  "cfg-if",
@@ -874,6 +880,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-cdk-macros"
+version = "0.5.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "954a421ace8b8c8e52d2847c4aa68c80101396134c800ecb12f63457937c4ab4"
+dependencies = [
+ "candid",
+ "ic-cdk 0.5.7",
+ "proc-macro2 1.0.39",
+ "quote 1.0.10",
+ "serde",
+ "serde_tokenstream",
+ "syn 1.0.96",
+]
+
+[[package]]
 name = "ic-ledger-types"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -882,7 +903,7 @@ dependencies = [
  "candid",
  "crc32fast",
  "hex",
- "ic-cdk 0.5.2",
+ "ic-cdk 0.5.7",
  "serde",
  "serde_bytes",
  "sha2 0.9.8",
@@ -905,16 +926,16 @@ dependencies = [
 
 [[package]]
 name = "ic-types"
-version = "0.2.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2c021c11ae1d716f45d783f5764f418a11f12aea1fdc4fc8a2b2242e0dae708"
+checksum = "79a17269dff0ec6ca4c3d04e18fca97d018ff53d809e6d92348fc22f9588e1a5"
 dependencies = [
- "base32",
  "crc32fast",
+ "data-encoding",
  "hex",
  "serde",
  "serde_bytes",
- "sha2 0.9.8",
+ "sha2 0.10.1",
  "thiserror",
 ]
 
@@ -934,7 +955,7 @@ dependencies = [
  "canister_api_macros",
  "canistergeek_ic_rust",
  "ic-cdk 0.3.3",
- "ic-cdk-macros",
+ "ic-cdk-macros 0.3.3",
  "ic-types 0.1.5",
  "inject",
  "itertools 0.10.3",
@@ -958,7 +979,7 @@ dependencies = [
  "canister_api_macros",
  "canistergeek_ic_rust",
  "ic-cdk 0.3.3",
- "ic-cdk-macros",
+ "ic-cdk-macros 0.3.3",
  "ic-types 0.1.5",
  "serde",
 ]
@@ -1255,6 +1276,7 @@ dependencies = [
  "autocfg",
  "num-integer",
  "num-traits",
+ "serde",
 ]
 
 [[package]]
@@ -1495,7 +1517,7 @@ dependencies = [
  "canister_api_macros",
  "canistergeek_ic_rust",
  "ic-cdk 0.3.3",
- "ic-cdk-macros",
+ "ic-cdk-macros 0.3.3",
  "ic-types 0.1.5",
  "serde",
  "sha2 0.10.1",
@@ -1595,18 +1617,18 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.130"
+version = "1.0.147"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f12d06de37cf59146fbdecab66aa99f9fe4f78722e3607577a5375d66bd0c913"
+checksum = "d193d69bae983fc11a79df82342761dfbf28a99fc8d203dca4c3c1b590948965"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_bytes"
-version = "0.11.5"
+version = "0.11.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16ae07dd2f88a366f15bd0632ba725227018c69a1c8550a927324f8eb8368bb9"
+checksum = "cfc50e8183eeeb6178dcb167ae34a8051d63535023ae38b5d8d12beae193d37b"
 dependencies = [
  "serde",
 ]
@@ -1623,9 +1645,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.130"
+version = "1.0.147"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7bc1a1ab1961464eae040d96713baa5a724a8152c1222492465b54322ec508b"
+checksum = "4f1d362ca8fc9c3e3a7484440752472d68a6caa98f1ab81d99b5dfe517cec852"
 dependencies = [
  "proc-macro2 1.0.39",
  "quote 1.0.10",
@@ -1937,12 +1959,12 @@ name = "vault"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "byteorder",
  "candid",
- "ic-cdk 0.3.3",
- "ic-cdk-macros",
+ "ic-cdk 0.5.7",
+ "ic-cdk-macros 0.5.7",
  "ic-ledger-types",
  "serde",
- "serde_derive",
  "tempfile",
 ]
 
@@ -1953,7 +1975,7 @@ dependencies = [
  "canister_api_macros",
  "canistergeek_ic_rust",
  "ic-cdk 0.3.3",
- "ic-cdk-macros",
+ "ic-cdk-macros 0.3.3",
  "ic-types 0.1.5",
  "imp",
  "serde",
