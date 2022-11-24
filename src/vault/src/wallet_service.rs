@@ -1,10 +1,10 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::HashMap;
 
-use candid::{candid_method, CandidType, Principal};
-use ic_cdk::{caller, storage, trap};
+use candid::{CandidType, Principal};
+use ic_cdk::trap;
 use ic_ledger_types::{AccountIdentifier, Subaccount};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::WALLETS;
 
@@ -15,8 +15,9 @@ pub type AccountIdConstraint = u64; //todo
 pub struct Wallet {
     pub id: u64,
     pub name: Option<String>,
-    pub vaults: Vec<u64>, //todo move to index?
-    // pub base_fields: Ba
+    pub vault_ids: Vec<u64>,
+    //todo move to index?
+    pub transaction_ids: Vec<u64>, //todo move to index?
 }
 
 pub fn new_and_store(name: Option<String>, vault_id: u64) -> Wallet {
@@ -26,12 +27,18 @@ pub fn new_and_store(name: Option<String>, vault_id: u64) -> Wallet {
         let wlt = Wallet {
             id: id.clone(),
             name,
-            vaults: vec![vault_id],
-            // policy: vec![1],
+            vault_ids: vec![vault_id],
+            transaction_ids: vec![]
         };
         w.insert(id, wlt.clone());
         wlt
     })
+}
+
+pub fn restore(wallet: Wallet) -> Option<Wallet> {
+    return WALLETS.with(|wallets| {
+        wallets.borrow_mut().insert(wallet.id, wallet.clone())
+    });
 }
 
 pub fn get_wallet(id: u64) -> Wallet {

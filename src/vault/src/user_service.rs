@@ -1,9 +1,6 @@
-use std::borrow::{Borrow, BorrowMut};
-use std::collections::HashMap;
-
-use candid::{candid_method, CandidType, Principal};
-use ic_cdk::{caller, storage, trap};
-use serde::{Deserialize, Serialize};
+use candid::CandidType;
+use ic_cdk::{caller, trap};
+use serde::Deserialize;
 
 use crate::USERS;
 
@@ -38,6 +35,22 @@ pub fn get_or_new_by_address(address: String, group_id: u64) -> User {
 pub fn get_by_address(address: String) -> User {
     USERS.with(|users| {
         match users.borrow_mut().get_mut(&address) {
+            None => {
+                trap("Not registered")
+            }
+
+            Some(p) => {
+                p.clone()
+            }
+        }
+    })
+}
+
+
+pub fn get_by_caller() -> User {
+    let address = caller();
+    USERS.with(|users| {
+        match users.borrow_mut().get_mut(&address.to_text()) {
             None => {
                 trap("Not registered")
             }

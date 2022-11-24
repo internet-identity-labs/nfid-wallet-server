@@ -6,7 +6,7 @@ use ic_cdk::{caller, storage, trap};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Subaccount, Tokens};
 use serde::{Deserialize, Serialize};
 
-use crate::{TRANSACTIONS, transfer, User, user_service, wallet_service, Wallets};
+use crate::{Policy, TRANSACTIONS, transfer, User, user_service, wallet_service, Wallets};
 use crate::policy_service::is_passed;
 
 pub type Transactions = HashMap<u64, Transaction>;
@@ -19,7 +19,7 @@ pub struct Transaction {
     pub approves: HashSet<Approve>,
     pub amount: Tokens,
     pub active: bool,
-    pub policies: Vec<u64>,
+    pub policy_id: u64,
     pub block_index: Option<BlockIndex>,
 }
 
@@ -37,7 +37,7 @@ impl PartialEq for Approve {
     }
 }
 
-pub fn register_transaction(amount: Tokens, to: AccountIdentifier, wallet_id: u64, tr_owner: User, policies: Vec<u64>) -> Transaction {
+pub fn register_transaction(amount: Tokens, to: AccountIdentifier, wallet_id: u64, tr_owner: User, policy: Policy) -> Transaction {
     TRANSACTIONS.with(|transactions| {
         let mut ts = transactions.borrow_mut();
         let mut approves: HashSet<Approve> = Default::default();
@@ -53,7 +53,7 @@ pub fn register_transaction(amount: Tokens, to: AccountIdentifier, wallet_id: u6
             approves,
             amount,
             active: true,
-            policies, //todo retrieve fields
+            policy_id: policy.id, 
             block_index: None,
         };
         ts.insert(t.id, t.clone());

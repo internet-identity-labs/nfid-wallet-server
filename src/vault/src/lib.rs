@@ -1,11 +1,10 @@
 extern crate core;
 
-use std::borrow::{Borrow, BorrowMut};
+use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::ops::{Deref, Sub};
 
 use candid::{candid_method, export_service, Principal};
 use ic_cdk::{caller, trap};
@@ -20,13 +19,12 @@ use crate::user_service::User;
 use crate::vault_service::{Vault, VaultMember, VaultRole};
 use crate::wallet_service::{id_to_subaccount, Wallet, Wallets};
 
-// pub type Vaults = HashMap<u64, Vault>;
-
-pub mod user_service;
-pub mod vault_service;
-pub mod wallet_service;
-pub mod policy_service;
-pub mod transaction_service;
+mod user_service;
+mod vault_service;
+mod wallet_service;
+mod policy_service;
+mod transaction_service;
+mod notification_service;
 
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Hash)]
@@ -107,8 +105,7 @@ async fn register_participant(group_id: u64, address: String, role: VaultRole) -
 #[update]
 #[candid_method(update)]
 async fn register_wallet(vault_id: u64, wallet_name: Option<String>) -> Wallet {
-    let user = user_service::get_by_address(caller().to_text());
-
+    let user = user_service::get_or_new_by_address(caller().to_text(), vault_id);
     //todo check
     let mut vault = match vault_service::get_by_ids(vec![vault_id]).first() {
         None => { trap("   ") }
@@ -116,9 +113,16 @@ async fn register_wallet(vault_id: u64, wallet_name: Option<String>) -> Wallet {
             match vault.participants
                 .iter()
                 .find(|p| user.id.eq(&p.user_id)) {
-                None => {}
-                Some(participant) => {
-                    //todo ROLE
+                None => {
+                    trap("Unauthorised")
+                }
+                Some(vaultMember) => {
+                    match vaultMember.role {
+                        VaultRole::VaultOwner => {}
+                        VaultRole::VaultApprove => {
+                            trap("Not enough permissions")
+                        }
+                    }
                 }
             }
             vault.clone()
@@ -126,8 +130,8 @@ async fn register_wallet(vault_id: u64, wallet_name: Option<String>) -> Wallet {
     };
 
     let new_wallet = wallet_service::new_and_store(wallet_name, vault_id);
-
     vault.wallets.push(new_wallet.id);
+    vault_service::restore(vault);
     new_wallet
 }
 
@@ -136,10 +140,46 @@ async fn register_wallet(vault_id: u64, wallet_name: Option<String>) -> Wallet {
 async fn register_transaction(amount: Tokens, to: AccountIdentifier, wallet_id: u64) -> Transaction {
     let caller = caller().to_text();
     let tr_owner = user_service::get_by_address(caller);
-    let wallet = wallet_service::get_wallet(wallet_id); //todo move to index
-    let vault = vault_service::get_by_ids(wallet.vaults);
-    transaction_service::register_transaction(amount, to, wallet_id, tr_owner, vault[0].policy.clone())
+    let mut wallet = wallet_service::get_wallet(wallet_id);
+
+    let vault = vault_service::get_by_ids(wallet.vault_ids.clone());
+
+    let user_id = tr_owner.id.clone();
+
+    let policy = policy_service::get_by_ids(vault[0].policies.clone());
+
+
+    let transaction = transaction_service::register_transaction(amount, to, wallet_id, tr_owner, policy.first().unwrap().clone());
+
+    wallet.transaction_ids.push(transaction.id);//todo think about index
+    wallet_service::restore(wallet);
+
+    let users_to_notify = vault.into_iter()
+        .map(|l| l.participants)
+        .flat_map(|k| k)
+        .map(|k| k.user_id)
+        .filter(|l| !l.eq(&user_id))
+        .collect();
+
+    notification_service::register_notification(transaction.id, users_to_notify);
+    transaction
 }
+
+//
+// #[update]
+// async fn get_transactions() -> Transaction {
+//     let caller = caller().to_text();
+//     let tr_owner = user_service::get_by_address(caller);
+//
+// }
+//
+//
+// #[update]
+// async fn get_notifications() -> Transaction {
+//     let caller = caller().to_text();
+//     let tr_owner = user_service::get_by_address(caller);
+//
+// }
 
 
 #[update]
@@ -189,7 +229,7 @@ fn sub_account_test() {
 
 export_service!();
 
-#[ic_cdk_macros::query(name = "__get_candid_interface_tmp_hack")]
+#[ic_cdk_macros::query(name = "__get_candid_interface")]
 fn export_candid() -> String {
     __export_service()
 }

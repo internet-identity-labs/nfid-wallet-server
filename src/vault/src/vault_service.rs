@@ -1,20 +1,16 @@
-use std::borrow::{Borrow, BorrowMut};
-use std::ops::Deref;
+use candid::CandidType;
+use ic_cdk::{caller, trap};
+use serde::Deserialize;
 
-use candid::{candid_method, CandidType, Principal};
-use ic_cdk::{caller, storage, trap};
-use serde::{Deserialize};
-use serde::__private::size_hint::from_bounds;
-
-use crate::{User, user_service, VAULTS, wallet_service};
-use crate::VaultRole::GroupOwner;
+use crate::{user_service, VAULTS};
+use crate::VaultRole::VaultOwner;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Vault {
     pub id: u64,
     pub name: String,
     pub wallets: Vec<u64>,
-    pub policy: Vec<u64>,
+    pub policies: Vec<u64>,
     pub participants: Vec<VaultMember>,
 }
 
@@ -25,9 +21,9 @@ pub struct VaultMember {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, Copy)]
-pub enum VaultRole {
-    GroupOwner,
-    GroupSigner,
+pub enum  VaultRole {
+    VaultOwner,
+    VaultApprove,
 }
 
 
@@ -45,13 +41,13 @@ pub fn register(name: String) -> Vault {
 
         let user = user_service::get_or_new_by_address(address, vault_id);
 
-        let participants: Vec<VaultMember> = vec![VaultMember { user_id: user.id, role: GroupOwner }];
+        let participants: Vec<VaultMember> = vec![VaultMember { user_id: user.id, role: VaultOwner }];
 
         let g: Vault = Vault {
             id: vault_id,
             name,
             wallets: vec![],
-            policy: vec![],
+            policies: vec![],
             participants,
         };
         vaults.borrow_mut().insert(vault_id, g.clone());
@@ -63,19 +59,19 @@ pub fn get_by_ids(ids: Vec<u64>) -> Vec<Vault> {
     VAULTS.with(|vaults| {
         let mut result: Vec<Vault> = Default::default();
         for key in ids {
-           match vaults.borrow_mut().get(&key)  {
-               None => {
-                   trap("Nonexistent key error")
-               }
-               Some(v) => {result.push(v.clone())}
-           }
+            match vaults.borrow_mut().get(&key) {
+                None => {
+                    trap("Nonexistent key error")
+                }
+                Some(v) => { result.push(v.clone()) }
+            }
         }
         result
     })
 }
 
-pub fn update(vault: Vault) -> bool {
+pub fn restore(vault: Vault) -> bool {
     VAULTS.with(|vaults| {
-       vaults.borrow_mut().insert(vault.id, vault).is_some()
+        vaults.borrow_mut().insert(vault.id, vault).is_some()
     })
 }
