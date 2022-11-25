@@ -21,7 +21,7 @@ pub enum PolicyClass {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct ThresholdPolicy {
-    pub amount_threshold: u32,
+    pub amount_threshold: u64,
     pub currency: Currency,
     pub member_threshold: u8,
     pub sub_class: ThresholdPolicySubClass,
@@ -47,7 +47,7 @@ pub enum Currency {
     ICP,
 }
 
-pub fn register_policy(amount_threshold: u32, member_threshold: u8, wallet_ids: Vec<u64>) -> Policy {
+pub fn register_policy(amount_threshold: u64, member_threshold: u8, wallet_ids: Vec<u64>) -> Policy {
     let policy_sub_class = if wallet_ids.is_empty()
     { ThresholdPolicySubClass::WalletCommon } else { ThresholdPolicySubClass::WalletSpecific(WalletSpecific { wallet_ids }) };
 
@@ -90,32 +90,26 @@ pub fn get_by_ids(ids: Vec<u64>) -> Vec<Policy> {
     })
 }
 
-pub fn define_correct_policy(policies: Vec<Policy>, amount: u32, wallet_id: u64) {
+pub fn define_correct_policy(policies: Vec<Policy>, amount: u64, wallet_id: u64) -> Policy {
     policies.into_iter()
-        .map(|l| match l.policy_class {
+        .map(|l| match l.policy_class.clone() {
             PolicyClass::ThresholdPolicy(threshold_policy) => {
                 match threshold_policy.sub_class {
                     ThresholdPolicySubClass::WalletSpecific(x) => {
                         if x.wallet_ids.contains(&wallet_id)
-                        { Some((l.id, threshold_policy.amount_threshold)) } else { None } //TODO шото мне оно не нравится
+                        { Some((l, threshold_policy.amount_threshold)) } else { None } //TODO шото мне оно не нравится
                     }
                     ThresholdPolicySubClass::WalletCommon => {
-                        Some((l.id, threshold_policy.amount_threshold))
+                        Some((l, threshold_policy.amount_threshold))
                     }
                 }
             }
         }
         )
-        .filter(|l|l.is_some())
-        .map(|l|l.unwrap())
-        .filter(|l|l.1 <= amount)
-        .reduce(|a,b| if a.1 > b.1 {a} else {b} )
-
-    ;
-}
-
-pub fn is_passed(transaction: Transaction) -> bool { //TODO
-    // let ps = storage::get_mut::<Policies>().get(&policy_id).unwrap();
-    // return ps.sum_threshold <= sum_threshold && ps.member_threshold <= member_threshold
-    true
+        .filter(|l| l.is_some())
+        .map(|l| l.unwrap())
+        .filter(|l| l.1 <= amount)
+        .reduce(|a, b| if a.1 > b.1 { a } else { b })
+        .map(|l|l.0)
+        .unwrap()
 }

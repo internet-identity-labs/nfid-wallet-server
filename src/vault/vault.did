@@ -2,14 +2,33 @@ type Conf = record {
     ledger_canister_id : principal
 };
 
-type Group = record {
-    participants : vec nat64;
+type Vault = record {
+    id : nat64;
+    participants : vec VaultMember;
     name : text;
-    accounts : vec nat64;
-    group_id : nat64;
+    wallets : vec nat64;
+    policies : vec nat64;
 };
 
-service : (Conf) -> {
-    register_group : (text) -> (Group);
-    sub : (text, nat64, nat8) -> (text) query;
+type VaultMember = record {
+    role : VaultRole;
+    user_id : nat64
+};
+
+type VaultRole = variant {
+    VaultOwner;
+    VaultApprove
+};
+
+type Wallet = record {
+    id : nat64;
+    vault_ids : vec nat64;
+    transaction_ids : vec nat64;
+    name : opt text;
+};service : (Conf) -> {
+    get_vaults : () -> (vec Vault) query;
+    register_participant : (nat64, text, VaultRole) -> (Vault);
+    register_vault : (text) -> (Vault);
+    register_wallet : (nat64, opt text) -> (Wallet);
+    sub : (nat64) -> (text) query;
 }

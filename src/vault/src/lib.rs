@@ -17,7 +17,7 @@ use crate::policy_service::{is_passed, Policy};
 use crate::transaction_service::Transaction;
 use crate::user_service::User;
 use crate::vault_service::{Vault, VaultMember, VaultRole};
-use crate::wallet_service::{id_to_subaccount, Wallet, Wallets};
+use crate::wallet_service::{id_to_address, id_to_subaccount, Wallet, Wallets};
 
 mod user_service;
 mod vault_service;
@@ -50,7 +50,7 @@ impl Default for Conf {
 
 thread_local! {
     static CONF: RefCell<Conf> = RefCell::new(Conf::default());
-    static USERS: RefCell<HashMap<String, User>> = RefCell::new(Default::default());
+    static USERS: RefCell<HashMap<String, User >> = RefCell::new(Default::default());
     static VAULTS: RefCell< HashMap<u64, Vault>> = RefCell::new(Default::default());
     static WALLETS: RefCell< HashMap<u64, Wallet>> = RefCell::new(Default::default());
     static POLICIES: RefCell< HashMap<u64, Policy>> = RefCell::new(Default::default());
@@ -64,12 +64,10 @@ fn init(conf: Conf) {
 
 #[query]
 #[candid_method(query, rename = "sub")]
-async fn sub(princ: String, group: u64, acc: u8) -> String {
-    let sixty_fours: [u64; 4] = [group; 4];
-    let mut eights: [u8; 32] = bytemuck::cast(sixty_fours);
-    eights[31] = eights[31] + acc;
-    let to_subaccount = Subaccount(eights);
-    AccountIdentifier::new(Principal::from_text(princ).unwrap().borrow(), &to_subaccount).to_string()
+async fn sub(wallet_id: u64) -> String {
+    CONF.with(|conf| {
+        id_to_address(wallet_id).to_string()
+    })
 }
 
 #[update]
@@ -88,15 +86,29 @@ async fn get_vaults() -> Vec<Vault> {
 
 #[update]
 #[candid_method(update)]
-async fn register_participant(group_id: u64, address: String, role: VaultRole) -> Vault {
+async fn add_vault_member(group_id: u64, address: String, name: Option<String>, role: VaultRole) -> Vault {
     VAULTS.with(|vaults| {
         return match vaults.borrow_mut().get_mut(&group_id) {
             None => { trap("Group not exists") }
             Some(vault) => {
                 let user = user_service::get_or_new_by_address(address, group_id);
-                let vm = VaultMember { user_id: user.id, role };
-                vault.participants.push(vm);
+                let vm = VaultMember { user_uuid: user.address, role, name };
+                vault.members.push(vm);
                 vault.clone()
+            }
+        };
+    })
+}
+
+
+#[query]
+#[candid_method(query)]
+async fn get_vault_members(vault_id: u64) -> Vec<VaultMember> {
+    VAULTS.with(|vaults| {
+        return match vaults.borrow_mut().get_mut(&vault_id) {
+            None => { trap("Vault not exists") }
+            Some(vault) => {
+                vault.members.clone()
             }
         };
     })
@@ -110,9 +122,9 @@ async fn register_wallet(vault_id: u64, wallet_name: Option<String>) -> Wallet {
     let mut vault = match vault_service::get_by_ids(vec![vault_id]).first() {
         None => { trap("   ") }
         Some(vault) => {
-            match vault.participants
+            match vault.members
                 .iter()
-                .find(|p| user.id.eq(&p.user_id)) {
+                .find(|p| user.address.eq(&p.user_uuid)) {
                 None => {
                     trap("Unauthorised")
                 }
@@ -141,12 +153,12 @@ async fn register_transaction(amount: Tokens, to: AccountIdentifier, wallet_id: 
     let caller = caller().to_text();
     let tr_owner = user_service::get_by_address(caller);
     let mut wallet = wallet_service::get_wallet(wallet_id);
+    let vaults = vault_service::get_by_ids(wallet.vault_ids.clone());
+    let vault = vaults.first().unwrap(); //one to one??
 
-    let vault = vault_service::get_by_ids(wallet.vault_ids.clone());
+    let user_id = tr_owner.address.clone();
 
-    let user_id = tr_owner.id.clone();
-
-    let policy = policy_service::get_by_ids(vault[0].policies.clone());
+    let policy = policy_service::get_by_ids(vault.policies.clone());
 
 
     let transaction = transaction_service::register_transaction(amount, to, wallet_id, tr_owner, policy.first().unwrap().clone());
@@ -154,10 +166,8 @@ async fn register_transaction(amount: Tokens, to: AccountIdentifier, wallet_id: 
     wallet.transaction_ids.push(transaction.id);//todo think about index
     wallet_service::restore(wallet);
 
-    let users_to_notify = vault.into_iter()
-        .map(|l| l.participants)
-        .flat_map(|k| k)
-        .map(|k| k.user_id)
+    let users_to_notify = vault.members.clone().into_iter()
+        .map(|k| k.user_uuid)
         .filter(|l| !l.eq(&user_id))
         .collect();
 
@@ -165,29 +175,13 @@ async fn register_transaction(amount: Tokens, to: AccountIdentifier, wallet_id: 
     transaction
 }
 
-//
-// #[update]
-// async fn get_transactions() -> Transaction {
-//     let caller = caller().to_text();
-//     let tr_owner = user_service::get_by_address(caller);
-//
-// }
-//
-//
-// #[update]
-// async fn get_notifications() -> Transaction {
-//     let caller = caller().to_text();
-//     let tr_owner = user_service::get_by_address(caller);
-//
-// }
-
 
 #[update]
 async fn approve_transaction(transaction_id: u64) -> Transaction {
     let caller = caller().to_text();
     let tr_owner = user_service::get_by_address(caller);
     let mut transaction = transaction_service::approve_transaction(transaction_id, tr_owner);
-    if is_passed(transaction.clone()) {
+    if transaction.approves.len() as u8 >= transaction.member_threshold {
         let subaccount = wallet_service::id_to_subaccount(transaction.wallet_id);
         let result = transfer(transaction.amount, transaction.to, subaccount).await;
         match result {

@@ -11,13 +11,14 @@ pub struct Vault {
     pub name: String,
     pub wallets: Vec<u64>,
     pub policies: Vec<u64>,
-    pub participants: Vec<VaultMember>,
+    pub members: Vec<VaultMember>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize, Copy)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct VaultMember {
-    pub user_id: u64,
+    pub user_uuid: String,
     pub role: VaultRole,
+    pub name: Option<String>
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, Copy)]
@@ -41,14 +42,14 @@ pub fn register(name: String) -> Vault {
 
         let user = user_service::get_or_new_by_address(address, vault_id);
 
-        let participants: Vec<VaultMember> = vec![VaultMember { user_id: user.id, role: VaultOwner }];
+        let participants: Vec<VaultMember> = vec![VaultMember { user_uuid: user.address, role: VaultOwner, name: None }];
 
         let g: Vault = Vault {
             id: vault_id,
             name,
             wallets: vec![],
             policies: vec![],
-            participants,
+            members: participants,
         };
         vaults.borrow_mut().insert(vault_id, g.clone());
         return g;

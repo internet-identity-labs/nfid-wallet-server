@@ -1,30 +1,27 @@
 use candid::CandidType;
-use ic_cdk::{caller, trap};
+use ic_cdk::{call, caller, trap};
 use serde::Deserialize;
 
 use crate::USERS;
 
-// pub type Users = HashMap<String, User>;
 
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct User {
-    pub id: u64,
     pub address: String,
     pub vaults: Vec<u64>,
 }
 
-pub fn get_or_new_by_address(address: String, group_id: u64) -> User {
+pub fn get_or_new_by_address(address: String, vault_id: u64) -> User {
     USERS.with(|users| {
         match users.borrow_mut().get_mut(&address) {
             None => {
-                let id = users.borrow().keys().len() + 1;
-                let p = User { id: id as u64, address: address.clone(), vaults: vec![group_id] };
+                let p = User { address: address.clone(), vaults: vec![vault_id] };
                 users.borrow_mut().insert(address, p.clone());
                 p
             }
             Some(u) => {
-                u.vaults.push(group_id);
+                u.vaults.push(vault_id);
                 u.clone()
             }
         }

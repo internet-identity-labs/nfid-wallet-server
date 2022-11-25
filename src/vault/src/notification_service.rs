@@ -7,16 +7,15 @@ use serde::Deserialize;
 
 use crate::notification_service::NotificationClass::Transaction;
 
-// pub type Users = HashMap<String, User>;
 thread_local! {
-    static NOTIFICATIONS: RefCell<HashMap<u64, Vec<Notification>>> = RefCell::new(Default::default());
+    static NOTIFICATIONS: RefCell<HashMap<String, Vec<Notification>>> = RefCell::new(Default::default());
 }
 
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Notification {
     pub id: u16,
-    pub user_id: u64,
+    pub user_address: String,
     pub class: NotificationClass,
 }
 
@@ -32,28 +31,28 @@ pub struct TransactionNotification {
 }
 
 
-pub fn register_notification(transaction_id: u64, user_ids: Vec<u64>) {
+pub fn register_notification(transaction_id: u64, user_ids: Vec<String>) {
     let tn = TransactionNotification {
         transaction_id
     };
 
     NOTIFICATIONS.with(|notifications_rc| {
-        for user_id in user_ids {
-            match notifications_rc.borrow_mut().get_mut(&user_id)
+        for user_address in user_ids {
+            match notifications_rc.borrow_mut().get_mut(&user_address)
             {
                 None => {
                     let nt = Notification {
                         id: 1,
-                        user_id,
+                        user_address:user_address.clone(),
                         class: (Transaction(tn.clone())),
                     };
-                    notifications_rc.borrow_mut().insert(user_id, vec![nt]);
+                    notifications_rc.borrow_mut().insert(user_address, vec![nt]);
                 }
                 Some(user_norifications) => {
                     let id = user_norifications.len() + 1;
                     let nt = Notification {
                         id: id as u16,
-                        user_id,
+                        user_address,
                         class: (Transaction(tn.clone())),
                     };
                     user_norifications.push(nt);
