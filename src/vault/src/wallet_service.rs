@@ -17,7 +17,7 @@ pub struct Wallet {
     pub name: Option<String>,
     pub vault_ids: Vec<u64>,
     //todo move to index?
-    pub transaction_ids: Vec<u64>, //todo move to index?
+    // pub transaction_ids: Vec<u64>, //todo move to index?
 }
 
 pub fn new_and_store(name: Option<String>, vault_id: u64) -> Wallet {
@@ -28,7 +28,7 @@ pub fn new_and_store(name: Option<String>, vault_id: u64) -> Wallet {
             id: id.clone(),
             name,
             vault_ids: vec![vault_id],
-            transaction_ids: vec![]
+            // transaction_ids: vec![]
         };
         w.insert(id, wlt.clone());
         wlt

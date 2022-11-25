@@ -13,7 +13,7 @@ use ic_cdk_macros::*;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_FEE, MAINNET_LEDGER_CANISTER_ID, Memo, Subaccount, Tokens};
 use serde::{Deserialize, Serialize};
 
-use crate::policy_service::{is_passed, Policy};
+use crate::policy_service::{ Policy};
 use crate::transaction_service::Transaction;
 use crate::user_service::User;
 use crate::vault_service::{Vault, VaultMember, VaultRole};
@@ -163,8 +163,8 @@ async fn register_transaction(amount: Tokens, to: AccountIdentifier, wallet_id: 
 
     let transaction = transaction_service::register_transaction(amount, to, wallet_id, tr_owner, policy.first().unwrap().clone());
 
-    wallet.transaction_ids.push(transaction.id);//todo think about index
-    wallet_service::restore(wallet);
+    // wallet.transaction_ids.push(transaction.id);//todo think about index
+    // wallet_service::restore(wallet);
 
     let users_to_notify = vault.members.clone().into_iter()
         .map(|k| k.user_uuid)

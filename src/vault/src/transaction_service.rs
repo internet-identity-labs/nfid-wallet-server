@@ -7,7 +7,7 @@ use ic_ledger_types::{AccountIdentifier, BlockIndex, Subaccount, Tokens};
 use serde::{Deserialize, Serialize};
 
 use crate::{Policy, TRANSACTIONS, transfer, User, user_service, wallet_service, Wallets};
-use crate::policy_service::{Currency, is_passed};
+use crate::policy_service::{Currency};
 
 pub type Transactions = HashMap<u64, Transaction>;
 
