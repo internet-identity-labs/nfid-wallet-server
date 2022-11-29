@@ -1,21 +1,24 @@
 extern crate core;
 
-use std::borrow::Borrow;
+use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
 use candid::{candid_method, export_service, Principal};
-use ic_cdk::{caller, trap};
-use ic_cdk::export::candid::CandidType;
+use candid::utils::ArgumentEncoder;
+use ic_cdk::{caller, storage, trap};
+use ic_cdk::export::{candid::{CandidType, Deserialize}};
+use ic_cdk::export::candid;
+use ic_cdk_macros::*;
 use ic_cdk_macros::*;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_FEE, MAINNET_LEDGER_CANISTER_ID, Memo, Subaccount, Tokens};
-use serde::{Deserialize, Serialize};
 
-use crate::policy_service::{ Policy};
+use crate::policy_service::Policy;
 use crate::transaction_service::Transaction;
 use crate::user_service::User;
+use crate::util::caller_to_address;
 use crate::vault_service::{Vault, VaultMember, VaultRole};
 use crate::wallet_service::{id_to_address, id_to_subaccount, Wallet, Wallets};
 
@@ -25,16 +28,9 @@ mod wallet_service;
 mod policy_service;
 mod transaction_service;
 mod notification_service;
+mod util;
 
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Hash)]
-pub struct TransferArgs {
-    amount: Tokens,
-    to_principal: Principal,
-    to_subaccount: Option<Subaccount>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Hash, PartialEq)]
+#[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq)]
 pub struct Conf {
     ledger_canister_id: Principal,
 }
@@ -58,28 +54,36 @@ thread_local! {
 }
 #[init]
 #[candid_method(init)]
-fn init(conf: Conf) {
-    CONF.with(|c| c.replace(conf));
+fn init(conf: Option<Conf>) {
+    match conf {
+        None => {}
+        Some(conf) => {
+            CONF.with(|c| c.replace(conf));
+        }
+    };
 }
 
 #[query]
 #[candid_method(query, rename = "sub")]
 async fn sub(wallet_id: u64) -> String {
-    CONF.with(|conf| {
-        id_to_address(wallet_id).to_string()
-    })
+    id_to_address(wallet_id).to_string()
 }
 
 #[update]
 #[candid_method(update)]
 async fn register_vault(name: String) -> Vault {
-    vault_service::register(name)
+    let address = caller_to_address();
+    let mut user = user_service::get_or_new_by_address(address);
+    let vault = vault_service::register(user.address.clone(), name);
+    user.vaults.push(vault.id.clone());
+    user_service::restore(user);
+    vault
 }
 
 #[query]
 #[candid_method(query)]
 async fn get_vaults() -> Vec<Vault> {
-    let vault_ids = user_service::get_by_address(caller().to_text()).vaults;
+    let vault_ids = user_service::get_by_caller().vaults;
     vault_service::get_by_ids(vault_ids)
 }
 
@@ -91,9 +95,11 @@ async fn add_vault_member(group_id: u64, address: String, name: Option<String>, 
         return match vaults.borrow_mut().get_mut(&group_id) {
             None => { trap("Group not exists") }
             Some(vault) => {
-                let user = user_service::get_or_new_by_address(address, group_id);
-                let vm = VaultMember { user_uuid: user.address, role, name };
+                let mut user = user_service::get_or_new_by_address(address);
+                let vm = VaultMember { user_uuid: user.address.clone(), role, name };
                 vault.members.push(vm);
+                user.vaults.push(vault.id.clone());
+                user_service::restore(user);
                 vault.clone()
             }
         };
@@ -117,7 +123,7 @@ async fn get_vault_members(vault_id: u64) -> Vec<VaultMember> {
 #[update]
 #[candid_method(update)]
 async fn register_wallet(vault_id: u64, wallet_name: Option<String>) -> Wallet {
-    let user = user_service::get_or_new_by_address(caller().to_text(), vault_id);
+    let user = user_service::get_or_new_by_address(caller_to_address());
     //todo check
     let mut vault = match vault_service::get_by_ids(vec![vault_id]).first() {
         None => { trap("   ") }
@@ -226,4 +232,35 @@ export_service!();
 #[ic_cdk_macros::query(name = "__get_candid_interface")]
 fn export_candid() -> String {
     __export_service()
+}
+
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct VaultMemoryObject {
+    pub vaults: Option<Vec<Vault>>,
+}
+
+#[pre_upgrade]
+fn pre_upgrade() {
+    let vv: Vec<Vault> = VAULTS.with(|vaults| {
+        vaults.borrow()
+            .iter()
+            .map(|l| l.1.clone())
+            .collect()
+    });
+    let memory = VaultMemoryObject {
+        vaults: Some(vv)
+    };
+    storage::stable_save((memory, )).unwrap();
+}
+
+
+#[post_upgrade]
+pub fn post_upgrade() {
+    let (mo,): (VaultMemoryObject,) = storage::stable_restore().unwrap();
+    let mut  vaults: HashMap<u64, Vault> = Default::default();
+    for vault in mo.vaults.unwrap() {
+        vaults.insert(vault.id, vault);
+    }
+    VAULTS.with(|storage| *storage.borrow_mut() = vaults )
 }

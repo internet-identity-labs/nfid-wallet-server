@@ -1,8 +1,7 @@
-use candid::CandidType;
-use ic_cdk::{caller, trap};
-use serde::Deserialize;
+use ic_cdk::trap;
+use ic_cdk::export::{candid::{CandidType, Deserialize}};
 
-use crate::{user_service, VAULTS};
+use crate::VAULTS;
 use crate::VaultRole::VaultOwner;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -18,11 +17,11 @@ pub struct Vault {
 pub struct VaultMember {
     pub user_uuid: String,
     pub role: VaultRole,
-    pub name: Option<String>
+    pub name: Option<String>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, Copy)]
-pub enum  VaultRole {
+pub enum VaultRole {
     VaultOwner,
     VaultApprove,
 }
@@ -35,14 +34,10 @@ impl PartialEq for Vault {
 }
 
 
-pub fn register(name: String) -> Vault {
+pub fn register(user_uuid: String, name: String) -> Vault {
     VAULTS.with(|vaults| {
         let vault_id = (vaults.borrow().len() + 1) as u64;
-        let address = caller().to_text();
-
-        let user = user_service::get_or_new_by_address(address, vault_id);
-
-        let participants: Vec<VaultMember> = vec![VaultMember { user_uuid: user.address, role: VaultOwner, name: None }];
+        let participants: Vec<VaultMember> = vec![VaultMember { user_uuid: user_uuid, role: VaultOwner, name: None }];
 
         let g: Vault = Vault {
             id: vault_id,

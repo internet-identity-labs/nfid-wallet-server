@@ -1,29 +1,31 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export interface Account {
-    'account_id' : number,
-    'name' : string,
-    'sub_account' : Array<number>,
-}
 export interface Conf { 'ledger_canister_id' : Principal }
-export interface Group {
-    'participants' : Array<Participant>,
+export interface Vault {
+    'id' : bigint,
+    'members' : Array<VaultMember>,
     'name' : string,
-    'accounts' : Array<Account>,
-    'group_id' : bigint,
+    'wallets' : Array<bigint>,
+    'policies' : Array<bigint>,
 }
-export type Memo = bigint;
-export type Participant = {};
-export interface Tokens { 'e8s' : bigint }
-export interface TransferArgs {
-    'to_principal' : Principal,
-    'to_subaccount' : [] | [Array<number>],
-    'amount' : Tokens,
+export interface VaultMember {
+    'user_uuid' : string,
+    'name' : [] | [string],
+    'role' : VaultRole,
 }
-export type TransferResult = { 'Ok' : Memo } |
-    { 'Err' : string };
+export type VaultRole = { 'VaultOwner' : null } |
+    { 'VaultApprove' : null };
+export interface Wallet {
+    'id' : bigint,
+    'vault_ids' : Array<bigint>,
+    'name' : [] | [string],
+}
 export interface _SERVICE {
-    'register_group' : ActorMethod<[string], Group>,
-    'sub' : ActorMethod<[string, bigint, number], string>,
+    'add_vault_member' : ActorMethod<[bigint, string, [] | [string], VaultRole], Vault>,
+    'get_vault_members' : ActorMethod<[bigint], Array<VaultMember>>,
+    'get_vaults' : ActorMethod<[], Array<Vault>>,
+    'register_vault' : ActorMethod<[string], Vault>,
+    'register_wallet' : ActorMethod<[bigint, [] | [string]], Wallet>,
+    'sub' : ActorMethod<[bigint], string>,
 }

@@ -1,17 +1,19 @@
-import { Actor, ActorMethod, HttpAgent, Identity } from "@dfinity/agent";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
-import { Dfx } from "../type/dfx";
-import { idlFactory as imIdl } from "../idl/identity_manager_idl";
-import { idlFactory as iitIdl } from "../idl/internet_identity_test_idl";
-import { idlFactory as essIdl } from "../idl/eth_secret_storage_idl";
-import { TextEncoder } from "util";
-import { App } from "../constanst/app.enum";
-import { IDL } from "@dfinity/candid";
-import { DFX } from "../constanst/dfx.const";
+import {Actor, ActorMethod, HttpAgent, Identity} from "@dfinity/agent";
+import {Ed25519KeyIdentity} from "@dfinity/identity";
+import {Dfx} from "../type/dfx";
+import {idlFactory as imIdl} from "../idl/identity_manager_idl";
+import {idlFactory as vaultIdl} from "../idl/vault_idl";
+import {idlFactory as iitIdl} from "../idl/internet_identity_test_idl";
+import {idlFactory as essIdl} from "../idl/eth_secret_storage_idl";
+import {TextEncoder} from "util";
+import {App} from "../constanst/app.enum";
+import {IDL} from "@dfinity/candid";
+import {DFX} from "../constanst/dfx.const";
+import {call, execute} from "./call.util";
 
 const localhost: string = "http://127.0.0.1:8000";
 
-export const deploy = async ({clean = true, apps}: {clean?: boolean, apps: App[]}): Promise<Dfx> => {
+export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[] }): Promise<Dfx> => {
     var i = 0;
     var imConfigurationArguments = [];
     var dfx: Dfx = {
@@ -35,6 +37,10 @@ export const deploy = async ({clean = true, apps}: {clean?: boolean, apps: App[]
         ess: {
             id: null,
             actor: null,
+        },
+        vault: {
+            id: null,
+            actor: null,
         }
     };
 
@@ -56,7 +62,7 @@ export const deploy = async ({clean = true, apps}: {clean?: boolean, apps: App[]
         }
 
         if (apps.includes(App.EthSecretStorage)) {
-            if(clean) {
+            if (clean) {
                 DFX.DEPLOY("eth_secret_storage");
             } else {
                 DFX.UPGRADE_FORCE("eth_secret_storage");
@@ -132,6 +138,20 @@ export const deploy = async ({clean = true, apps}: {clean?: boolean, apps: App[]
         if (apps.includes(App.IdentityManager)) {
             DFX.CONFIGURE_IM(imConfigurationArguments.join("; "));
         }
+        if (apps.includes(App.Vault)) {
+            await console.log(execute(`./test/resource/ledger.sh`))
+            await console.log(execute(`./test/resource/vault.sh`))
+
+            console.log(execute("dfx canister id vault"))
+            console.log(dfx)
+            dfx.vault.id = DFX.GET_CANISTER_ID("vault");
+            console.log(">> ", dfx.vault.id);
+
+            dfx.vault.actor = await getActor(dfx.vault.id, dfx.user.identity, vaultIdl);
+            return dfx;
+        }
+
+        DFX.CONFIGURE_IM(imConfigurationArguments.join("; "));
 
         return dfx;
     }
@@ -150,7 +170,7 @@ export const getActor = async (
     identity: Identity,
     idl: IDL.InterfaceFactory
 ): Promise<Record<string, ActorMethod>> => {
-    const agent: HttpAgent = new HttpAgent({ host: localhost, identity: identity });
+    const agent: HttpAgent = new HttpAgent({host: localhost, identity: identity});
     await agent.fetchRootKey();
-    return await Actor.createActor(idl, { agent, canisterId: imCanisterId });
+    return await Actor.createActor(idl, {agent, canisterId: imCanisterId});
 };

@@ -1,30 +1,52 @@
 import "mocha";
-import {call} from "./util/call.util";
-import {idlFactory as idl} from "./idl/vault_idl";
-import {getActor, getIdentity} from "./util/deployment.util";
+import {deploy} from "./util/deployment.util";
+import {Dfx} from "./type/dfx";
+import {App} from "./constanst/app.enum";
 import {DFX} from "./constanst/dfx.const";
+import {Vault} from "./idl/vault";
+import {expect} from "chai";
+import { principalToAddress } from "ictool"
 
-describe("Asd", () => {
-    describe("Asd tests", async function () {
-        console.log(321)
 
-        console.log(call(`./demo.sh`))
-        console.log(1234)
-        console.log(call(`./demo2.sh`))
+describe("Vault", () => {
+    var dfx: Dfx;
 
-        let identity = getIdentity("87654321876543218765432187654321");
-        let vault = DFX.GET_CANISTER_ID("vault");
-        console.log(vault)
-        let actor = await getActor(vault, identity, idl);
-        console.log(555)
-        let aaa = await actor.sub(vault, 1, 1);
-        console.log(aaa)
-        let group = await actor.register_group("groupName1")
-        console.log("group")
-        console.log("group")
-        console.log("group")
-        console.log("group")
-        console.log(group)
-
+    before(async () => {
+        dfx = await deploy(App.Vault);
     });
+
+    after(() => {
+        // DFX.STOP();
+    });
+
+    it("vault  register", async function () {
+        let vault = await dfx.vault.actor.register_vault("vault1") as Vault
+        let address = principalToAddress(dfx.user.identity.getPrincipal() as any,  Array(32).fill(1));
+        expect(vault.name).eq("vault1")
+        expect(vault.members.length).eq(1)
+        expect(vault.members[0].user_uuid).eq(address)
+        expect(vault.members[0].role.hasOwnProperty('VaultOwner')).eq( true)
+        vault = await dfx.vault.actor.register_vault("vault2") as Vault
+        expect(vault.name).eq("vault2")
+        expect(vault.members.length).eq(1)
+        expect(vault.members[0].user_uuid).eq(address)
+        expect(vault.members[0].role.hasOwnProperty('VaultOwner')).eq( true)
+    });
+
+    it("vault  get by ids", async function () {
+        let vaults = await dfx.vault.actor.get_vaults() as [Vault]
+        expect(vaults.length).eq(2)
+        expect(vaults[0].id).eq(1n)
+        // @ts-ignore
+        expect(vaults[1].id).eq(2n)
+    });
+
+    it("create wallet", async function () {
+        let vaults = await dfx.vault.actor.get_vaults() as [Vault]
+        expect(vaults.length).eq(2)
+        expect(vaults[0].id).eq(1n)
+        // @ts-ignore
+        expect(vaults[1].id).eq(2n)
+    });
+
 });

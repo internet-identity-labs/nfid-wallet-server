@@ -1,23 +1,44 @@
 export const idlFactory = ({ IDL }) => {
     const Conf = IDL.Record({ 'ledger_canister_id' : IDL.Principal });
-    const Participant = IDL.Record({});
-    const Account = IDL.Record({
-        'account_id' : IDL.Nat8,
-        'name' : IDL.Text,
-        'sub_account' : IDL.Vec(IDL.Nat8),
+    const VaultRole = IDL.Variant({
+        'VaultOwner' : IDL.Null,
+        'VaultApprove' : IDL.Null,
     });
-    const Group = IDL.Record({
-        'participants' : IDL.Vec(Participant),
+    const VaultMember = IDL.Record({
+        'user_uuid' : IDL.Text,
+        'name' : IDL.Opt(IDL.Text),
+        'role' : VaultRole,
+    });
+    const Vault = IDL.Record({
+        'id' : IDL.Nat64,
+        'members' : IDL.Vec(VaultMember),
         'name' : IDL.Text,
-        'accounts' : IDL.Vec(Account),
-        'group_id' : IDL.Nat64,
+        'wallets' : IDL.Vec(IDL.Nat64),
+        'policies' : IDL.Vec(IDL.Nat64),
+    });
+    const Wallet = IDL.Record({
+        'id' : IDL.Nat64,
+        'vault_ids' : IDL.Vec(IDL.Nat64),
+        'name' : IDL.Opt(IDL.Text),
     });
     return IDL.Service({
-        'register_group' : IDL.Func([IDL.Text], [Group], []),
-        'sub' : IDL.Func([IDL.Text, IDL.Nat64, IDL.Nat8], [IDL.Text], ['query']),
+        'add_vault_member' : IDL.Func(
+            [IDL.Nat64, IDL.Text, IDL.Opt(IDL.Text), VaultRole],
+            [Vault],
+            [],
+        ),
+        'get_vault_members' : IDL.Func(
+            [IDL.Nat64],
+            [IDL.Vec(VaultMember)],
+            ['query'],
+        ),
+        'get_vaults' : IDL.Func([], [IDL.Vec(Vault)], ['query']),
+        'register_vault' : IDL.Func([IDL.Text], [Vault], []),
+        'register_wallet' : IDL.Func([IDL.Nat64, IDL.Opt(IDL.Text)], [Wallet], []),
+        'sub' : IDL.Func([IDL.Nat64], [IDL.Text], ['query']),
     });
 };
 export const init = ({ IDL }) => {
     const Conf = IDL.Record({ 'ledger_canister_id' : IDL.Principal });
-    return [Conf];
+    return [IDL.Opt(Conf)];
 };

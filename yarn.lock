@@ -40,6 +40,11 @@
   "resolved" "https://registry.npmjs.org/@dfinity/principal/-/principal-0.10.2.tgz"
   "version" "0.10.2"
 
+"@dfinity/principal@^0.11.0":
+  "integrity" "sha512-+AJGDJ+RsveybSdxuTQFr2DPNZFpPfXnyixAOFWWdElVniSwnO/SwqQChR0AWvJdy/fKqoAXK+ZzyLG0uqSetA=="
+  "resolved" "https://registry.npmjs.org/@dfinity/principal/-/principal-0.11.3.tgz"
+  "version" "0.11.3"
+
 "@jridgewell/resolve-uri@^3.0.3":
   "integrity" "sha512-F2msla3tad+Mfht5cJq7LSXcdudKTWCVYUgw6pLFOOHSTtZlj6SWNYAp+AhuqLmWdBO2X5hPrLcu8cVP8fy28w=="
   "resolved" "https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.0.tgz"
@@ -57,6 +62,27 @@
   dependencies:
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
+
+"@swc/core-darwin-arm64@1.3.20":
+  "integrity" "sha512-ZLk5oVP4v/BAdC3FuBuyB0xpnkZStblIajiyo/kpp/7mq3YbABhOxTCUJGDozISbkaZlIZFXjqvHHnIS42tssw=="
+  "resolved" "https://registry.npmjs.org/@swc/core-darwin-arm64/-/core-darwin-arm64-1.3.20.tgz"
+  "version" "1.3.20"
+
+"@swc/core@^1.2.165", "@swc/core@>=1.2.50":
+  "integrity" "sha512-wSuy5mFTbAPYGlo1DGWkTbXwUubpyYxY2Sf10Y861c4EPtwK7D1nbj35Zg0bsIQvcFG5Y2Q4sXNV5QpsnT0+1A=="
+  "resolved" "https://registry.npmjs.org/@swc/core/-/core-1.3.20.tgz"
+  "version" "1.3.20"
+  optionalDependencies:
+    "@swc/core-darwin-arm64" "1.3.20"
+    "@swc/core-darwin-x64" "1.3.20"
+    "@swc/core-linux-arm-gnueabihf" "1.3.20"
+    "@swc/core-linux-arm64-gnu" "1.3.20"
+    "@swc/core-linux-arm64-musl" "1.3.20"
+    "@swc/core-linux-x64-gnu" "1.3.20"
+    "@swc/core-linux-x64-musl" "1.3.20"
+    "@swc/core-win32-arm64-msvc" "1.3.20"
+    "@swc/core-win32-ia32-msvc" "1.3.20"
+    "@swc/core-win32-x64-msvc" "1.3.20"
 
 "@tsconfig/node10@^1.0.7":
   "integrity" "sha512-jNsYVVxU8v5g43Erja32laIDHXeoNvFEpX33OK4d6hljo3jDhCBDhx5dhCCTMWUojscpAagGiRkBKxpdl9fxqA=="
@@ -296,15 +322,30 @@
   "resolved" "https://registry.npmjs.org/commander/-/commander-2.20.3.tgz"
   "version" "2.20.3"
 
+"commander@^9.2.0":
+  "integrity" "sha512-5EEkTNyHNGFPD2H+c/dXXfQZYa/scCKasxWcXJaWnNJ99pnQN9Vnmqow+p+PlFPE63Q6mThaZws1T+HxfpgtPw=="
+  "resolved" "https://registry.npmjs.org/commander/-/commander-9.4.1.tgz"
+  "version" "9.4.1"
+
 "concat-map@0.0.1":
   "integrity" "sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg=="
   "resolved" "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz"
   "version" "0.0.1"
 
+"crc-32@^1.2.2":
+  "integrity" "sha512-ROmzCKrTnOwybPcJApAA6WBWij23HVfGVNKqqrZpuyZOHqK2CwHSvpGuyt/UNNvaIjEd8X5IFGp4Mh+Ie1IHJQ=="
+  "resolved" "https://registry.npmjs.org/crc-32/-/crc-32-1.2.2.tgz"
+  "version" "1.2.2"
+
 "create-require@^1.1.0":
   "integrity" "sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ=="
   "resolved" "https://registry.npmjs.org/create-require/-/create-require-1.1.1.tgz"
   "version" "1.1.1"
+
+"crypto-js@^4.1.1":
+  "integrity" "sha512-o2JlM7ydqd3Qk9CA0L4NL6mTzU2sdx96a+oOfPu8Mkl/PK51vSyoi8/rQ8NknZtk44vq15lmhAj9CIAGwgeWKw=="
+  "resolved" "https://registry.npmjs.org/crypto-js/-/crypto-js-4.1.1.tgz"
+  "version" "4.1.1"
 
 "debug@4.3.3":
   "integrity" "sha512-/zxw5+vh1Tfv+4Qn7a5nsbcJKPaSvCDhojn6FEl9vupwK2VCSDtEiEtqr8DFtzYFOdz63LBkxec7DYuc2jon6Q=="
@@ -484,6 +525,19 @@
     "hash.js" "^1.0.3"
     "minimalistic-assert" "^1.0.0"
     "minimalistic-crypto-utils" "^1.0.1"
+
+"ictool@^0.0.7":
+  "integrity" "sha512-pJDaVZCop0rMQlDIRzZf73IoMxuaGbhVhr9ukX5ZH8YaIVtAhkdGA+yBtAbOYJB+R4Qh8jcFleER/vbLDCg2eA=="
+  "resolved" "https://registry.npmjs.org/ictool/-/ictool-0.0.7.tgz"
+  "version" "0.0.7"
+  dependencies:
+    "@dfinity/principal" "^0.11.0"
+    "@swc/core" "^1.2.165"
+    "commander" "^9.2.0"
+    "crc-32" "^1.2.2"
+    "crypto-js" "^4.1.1"
+    "js-sha256" "^0.9.0"
+    "ts-node" "^10.7.0"
 
 "ieee754@^1.1.13":
   "integrity" "sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA=="
@@ -853,7 +907,7 @@
   dependencies:
     "lodash" "^4.17.5"
 
-"ts-node@^10.4.0":
+"ts-node@^10.4.0", "ts-node@^10.7.0":
   "integrity" "sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw=="
   "resolved" "https://registry.npmjs.org/ts-node/-/ts-node-10.9.1.tgz"
   "version" "10.9.1"

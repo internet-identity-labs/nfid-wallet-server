@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
-#dfx stop
-#set -e
-#trap 'dfx stop' EXIT
-
 echo "===========DEPLOY VAULT========="
 LEDGER_ID="$(dfx canister id ledger)"
 
-dfx deploy vault --argument "(record { ledger_canister_id=principal \"${LEDGER_ID}\" }, )"
+dfx deploy vault
 
 VAULT_CANISTER_ID="$(dfx canister id vault)"
 echo $VAULT_CANISTER_ID
-VAULT_ACCOUNT_SUB_ID="$(dfx canister call vault sub '("'${VAULT_CANISTER_ID}'", 1, 1)')"
+VAULT_ACCOUNT_SUB_ID="$(dfx canister call vault sub '(1)')"
 echo $VAULT_ACCOUNT_SUB_ID
 VAULT_ACCOUNT_ID_BYTES="$(python3 -c 'print("vec{" + ";".join([str(b) for b in bytes.fromhex'$VAULT_ACCOUNT_SUB_ID']) + "}")')"
 

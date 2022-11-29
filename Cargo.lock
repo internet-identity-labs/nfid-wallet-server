@@ -387,7 +387,7 @@ dependencies = [
  "anyhow",
  "binread",
  "byteorder",
- "candid_derive",
+ "candid_derive 0.4.5",
  "codespan-reporting",
  "hex",
  "ic-types 0.5.0",
@@ -406,10 +406,51 @@ dependencies = [
 ]
 
 [[package]]
+name = "candid"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "244005a1917bb7614cd775ca8a5d59efeb5ac74397bb14ba29a19347ebd78591"
+dependencies = [
+ "anyhow",
+ "binread",
+ "byteorder",
+ "candid_derive 0.5.0",
+ "codespan-reporting",
+ "crc32fast",
+ "data-encoding",
+ "hex",
+ "lalrpop",
+ "lalrpop-util",
+ "leb128",
+ "logos",
+ "num-bigint",
+ "num-traits",
+ "num_enum",
+ "paste",
+ "pretty",
+ "serde",
+ "serde_bytes",
+ "sha2 0.10.1",
+ "thiserror",
+]
+
+[[package]]
 name = "candid_derive"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e02c03c4d547674a3f3f3109538fb49871fbe636216daa019f06a62faca9061"
+dependencies = [
+ "lazy_static 1.4.0",
+ "proc-macro2 1.0.39",
+ "quote 1.0.10",
+ "syn 1.0.96",
+]
+
+[[package]]
+name = "candid_derive"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58f1f4db7c7d04b87b70b3a35c5dc5c2c9dd73cef8bdf6760e2f18a0d45350dd"
 dependencies = [
  "lazy_static 1.4.0",
  "proc-macro2 1.0.39",
@@ -848,20 +889,22 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "606276ed1ce363eb9ccaf492e36fb40425417dcd4598f261d47e0ed6a1309faa"
 dependencies = [
- "candid",
+ "candid 0.7.18",
  "cfg-if",
  "serde",
 ]
 
 [[package]]
 name = "ic-cdk"
-version = "0.5.7"
+version = "0.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0554d77b453140eefcb8c8192a342927f8c48cfda911dfa3cd4561a919dbd32f"
+checksum = "e9a5581267f756cab81f618c4ab27e3ca89a5a72b1869f9fbd5a8ec97a50c4e9"
 dependencies = [
- "candid",
+ "candid 0.8.4",
  "cfg-if",
+ "ic0",
  "serde",
+ "serde_bytes",
 ]
 
 [[package]]
@@ -870,7 +913,7 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08bac2578a4779c3ae6d24c766ec7127872d73f29a9e7d70b6607a2fdedd0dde"
 dependencies = [
- "candid",
+ "candid 0.7.18",
  "ic-cdk 0.3.3",
  "proc-macro2 1.0.39",
  "quote 1.0.10",
@@ -881,12 +924,12 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk-macros"
-version = "0.5.7"
+version = "0.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "954a421ace8b8c8e52d2847c4aa68c80101396134c800ecb12f63457937c4ab4"
+checksum = "2f2c0d698c4efb47284fe469642f5c37db856889c3e8a3931d6a7561b9625247"
 dependencies = [
- "candid",
- "ic-cdk 0.5.7",
+ "candid 0.8.4",
+ "ic-cdk 0.6.7",
  "proc-macro2 1.0.39",
  "quote 1.0.10",
  "serde",
@@ -895,19 +938,36 @@ dependencies = [
 ]
 
 [[package]]
-name = "ic-ledger-types"
-version = "0.1.2"
+name = "ic-certified-map"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e5538e50e22dcdc395c0e3161b62fae088c4ff74342aaee4770ac0caddbce69"
+checksum = "c301b1d4fc0b8ec0ee9bc558f702a2480c821e1fe647bf0d75fda46b3efa5602"
 dependencies = [
- "candid",
+ "serde",
+ "serde_bytes",
+ "sha2 0.10.1",
+]
+
+[[package]]
+name = "ic-ledger-types"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c031826d3f45cfe7d8db1816edee6a997f9f7768b49803efdac2c40740b5512a"
+dependencies = [
+ "candid 0.8.4",
  "crc32fast",
  "hex",
- "ic-cdk 0.5.7",
+ "ic-cdk 0.6.7",
  "serde",
  "serde_bytes",
  "sha2 0.9.8",
 ]
+
+[[package]]
+name = "ic-stable-structures"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c8ded18fe296ff693ba8d8fd9890189ea28df4fc75d8b009523e15918452d8b"
 
 [[package]]
 name = "ic-types"
@@ -938,6 +998,12 @@ dependencies = [
  "sha2 0.10.1",
  "thiserror",
 ]
+
+[[package]]
+name = "ic0"
+version = "0.18.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c221dd0bbe04c556238774b8564bcdc071d4022a085d625964a95615240dae02"
 
 [[package]]
 name = "ident_case"
@@ -1960,10 +2026,13 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "byteorder",
- "candid",
- "ic-cdk 0.5.7",
- "ic-cdk-macros 0.5.7",
+ "candid 0.7.18",
+ "candid 0.8.4",
+ "ic-cdk 0.6.7",
+ "ic-cdk-macros 0.6.7",
+ "ic-certified-map",
  "ic-ledger-types",
+ "ic-stable-structures",
  "serde",
  "tempfile",
 ]

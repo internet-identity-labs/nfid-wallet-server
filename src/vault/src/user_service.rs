@@ -1,10 +1,9 @@
 use candid::CandidType;
-use ic_cdk::{call, caller, trap};
+use ic_cdk::trap;
 use serde::Deserialize;
 
 use crate::USERS;
-
-
+use crate::util::caller_to_address;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct User {
@@ -12,16 +11,16 @@ pub struct User {
     pub vaults: Vec<u64>,
 }
 
-pub fn get_or_new_by_address(address: String, vault_id: u64) -> User {
+pub fn get_or_new_by_address(address: String) -> User {
     USERS.with(|users| {
-        match users.borrow_mut().get_mut(&address) {
+        let mut borrowed = users.borrow_mut();
+        match borrowed.get_mut(&address) {
             None => {
-                let p = User { address: address.clone(), vaults: vec![vault_id] };
-                users.borrow_mut().insert(address, p.clone());
+                let p = User { address: address.clone(), vaults: vec![] };
+                borrowed.insert(address, p.clone());
                 p
             }
             Some(u) => {
-                u.vaults.push(vault_id);
                 u.clone()
             }
         }
@@ -43,18 +42,14 @@ pub fn get_by_address(address: String) -> User {
     })
 }
 
+pub fn restore(user: User) -> Option<User> {
+    USERS.with(|users| {
+        users.borrow_mut().insert(user.address.clone(), user)
+    })
+}
+
 
 pub fn get_by_caller() -> User {
-    let address = caller();
-    USERS.with(|users| {
-        match users.borrow_mut().get_mut(&address.to_text()) {
-            None => {
-                trap("Not registered")
-            }
-
-            Some(p) => {
-                p.clone()
-            }
-        }
-    })
+    let address = caller_to_address();
+    get_by_address(address)
 }
