@@ -8,7 +8,7 @@ use std::hash::Hash;
 
 use candid::{candid_method, export_service, Principal};
 use candid::utils::ArgumentEncoder;
-use ic_cdk::{caller, storage, trap};
+use ic_cdk::{caller, print, storage, trap};
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 use ic_cdk::export::candid;
 use ic_cdk_macros::*;
@@ -83,6 +83,7 @@ async fn register_vault(name: String) -> Vault {
 #[query]
 #[candid_method(query)]
 async fn get_vaults() -> Vec<Vault> {
+    print("Atatat".to_string());
     let vault_ids = user_service::get_by_caller().vaults;
     vault_service::get_by_ids(vault_ids)
 }
@@ -237,7 +238,8 @@ fn export_candid() -> String {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct VaultMemoryObject {
-    pub vaults: Option<Vec<Vault>>,
+    pub vaults: Vec<Vault>,
+    pub users: Vec<User>,
 }
 
 #[pre_upgrade]
@@ -248,8 +250,15 @@ fn pre_upgrade() {
             .map(|l| l.1.clone())
             .collect()
     });
+    let uu: Vec<User> = USERS.with(|users| {
+        users.borrow()
+            .iter()
+            .map(|l| l.1.clone())
+            .collect()
+    });
     let memory = VaultMemoryObject {
-        vaults: Some(vv)
+        vaults: vv,
+        users: uu
     };
     storage::stable_save((memory, )).unwrap();
 }
@@ -259,8 +268,13 @@ fn pre_upgrade() {
 pub fn post_upgrade() {
     let (mo,): (VaultMemoryObject,) = storage::stable_restore().unwrap();
     let mut  vaults: HashMap<u64, Vault> = Default::default();
-    for vault in mo.vaults.unwrap() {
+    for vault in mo.vaults {
         vaults.insert(vault.id, vault);
     }
-    VAULTS.with(|storage| *storage.borrow_mut() = vaults )
+    let mut  users: HashMap<String, User> = Default::default();
+    for u in mo.users {
+        users.insert(u.address.clone(), u);
+    }
+    VAULTS.with(|storage| *storage.borrow_mut() = vaults );
+    USERS.with(|storage| *storage.borrow_mut() = users );
 }
