@@ -83,7 +83,6 @@ async fn register_vault(name: String) -> Vault {
 #[query]
 #[candid_method(query)]
 async fn get_vaults() -> Vec<Vault> {
-    print("Atatat".to_string());
     let vault_ids = user_service::get_by_caller().vaults;
     vault_service::get_by_ids(vault_ids)
 }
