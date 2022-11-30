@@ -1,8 +1,10 @@
+use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::hash::{Hash, Hasher};
 use ic_cdk::trap;
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 
 use crate::VAULTS;
-use crate::VaultRole::VaultOwner;
+use crate::VaultRole::Admin;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Vault {
@@ -10,20 +12,26 @@ pub struct Vault {
     pub name: String,
     pub wallets: Vec<u64>,
     pub policies: Vec<u64>,
-    pub members: Vec<VaultMember>,
+    pub members: HashSet<VaultMember>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Eq, PartialEq)]
 pub struct VaultMember {
     pub user_uuid: String,
     pub role: VaultRole,
     pub name: Option<String>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize, Copy)]
+impl Hash for VaultMember {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.user_uuid.hash(state)
+    }
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, Copy, Eq, PartialEq)]
 pub enum VaultRole {
-    VaultOwner,
-    VaultApprove,
+    Admin,
+    Member,
 }
 
 
@@ -37,8 +45,9 @@ impl PartialEq for Vault {
 pub fn register(user_uuid: String, name: String) -> Vault {
     VAULTS.with(|vaults| {
         let vault_id = (vaults.borrow().len() + 1) as u64;
-        let participants: Vec<VaultMember> = vec![VaultMember { user_uuid: user_uuid, role: VaultOwner, name: None }];
-
+        let mut participants: HashSet<VaultMember> = Default::default();
+        let owner = VaultMember { user_uuid: user_uuid, role: Admin, name: None };
+        participants.insert(owner);
         let g: Vault = Vault {
             id: vault_id,
             name,

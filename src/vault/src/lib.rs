@@ -2,7 +2,7 @@ extern crate core;
 
 use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -17,7 +17,7 @@ use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_FEE, MAINNET_LEDGER
 
 use crate::policy_service::Policy;
 use crate::transaction_service::Transaction;
-use crate::user_service::User;
+use crate::user_service::{get_or_new_by_address, get_or_new_by_caller, User};
 use crate::util::caller_to_address;
 use crate::vault_service::{Vault, VaultMember, VaultRole};
 use crate::wallet_service::{id_to_address, id_to_subaccount, Wallet, Wallets};
@@ -69,12 +69,18 @@ async fn sub(wallet_id: u64) -> String {
     id_to_address(wallet_id).to_string()
 }
 
+
+#[derive(CandidType, Deserialize, Clone)]
+pub struct VaultRegisterRequest {
+    name: String,
+}
+
 #[update]
 #[candid_method(update)]
-async fn register_vault(name: String) -> Vault {
+async fn register_vault(request: VaultRegisterRequest) -> Vault {
     let address = caller_to_address();
     let mut user = user_service::get_or_new_by_address(address);
-    let vault = vault_service::register(user.address.clone(), name);
+    let vault = vault_service::register(user.address.clone(), request.name);
     user.vaults.push(vault.id.clone());
     user_service::restore(user);
     vault
@@ -83,24 +89,54 @@ async fn register_vault(name: String) -> Vault {
 #[query]
 #[candid_method(query)]
 async fn get_vaults() -> Vec<Vault> {
-    let vault_ids = user_service::get_by_caller().vaults;
+    let vault_ids = user_service::get_or_new_by_caller().vaults;
     vault_service::get_by_ids(vault_ids)
 }
 
 
+#[derive(CandidType, Deserialize, Clone)]
+pub struct VaultMemberRequest {
+    vault_id: u64,
+    address: String,
+    name: Option<String>,
+    role: VaultRole,
+}
+
 #[update]
 #[candid_method(update)]
-async fn add_vault_member(group_id: u64, address: String, name: Option<String>, role: VaultRole) -> Vault {
+async fn add_vault_member(request: VaultMemberRequest) -> Vault {
     VAULTS.with(|vaults| {
-        return match vaults.borrow_mut().get_mut(&group_id) {
+        return match vaults.borrow_mut().get_mut(&request.vault_id) {
             None => { trap("Group not exists") }
             Some(vault) => {
-                let mut user = user_service::get_or_new_by_address(address);
-                let vm = VaultMember { user_uuid: user.address.clone(), role, name };
-                vault.members.push(vm);
-                user.vaults.push(vault.id.clone());
-                user_service::restore(user);
-                vault.clone()
+                let caller = user_service::get_or_new_by_caller();
+                let caller_member = vault.members
+                    .iter()
+                    .find(|l| l.user_uuid.eq(&caller.address));
+                match caller_member {
+                    None => {
+                        trap("Unauthorised")
+                    }
+                    Some(member) => {
+                        match member.role {
+                            VaultRole::Admin => {
+                                let mut user = user_service::get_or_new_by_address(request.address);
+                                let vm = VaultMember {
+                                    user_uuid: user.address.clone(),
+                                    role: request.role,
+                                    name: request.name,
+                                };
+                                vault.members.insert(vm);
+                                user.vaults.push(vault.id.clone());
+                                user_service::restore(user);
+                                vault.clone()
+                            }
+                            VaultRole::Member => {
+                                trap("Not enough permissions")
+                            }
+                        }
+                    }
+                }
             }
         };
     })
@@ -109,12 +145,22 @@ async fn add_vault_member(group_id: u64, address: String, name: Option<String>, 
 
 #[query]
 #[candid_method(query)]
-async fn get_vault_members(vault_id: u64) -> Vec<VaultMember> {
+async fn get_vault_members(vault_id: u64) -> HashSet<VaultMember> {
+    let user = get_or_new_by_caller();
     VAULTS.with(|vaults| {
         return match vaults.borrow_mut().get_mut(&vault_id) {
             None => { trap("Vault not exists") }
             Some(vault) => {
-                vault.members.clone()
+                let members = vault.members.clone();
+                let is_partitcipant = members
+                    .iter()
+                    .map(|l| l.user_uuid.clone())
+                    .find(|l| l.eq(&user.address))
+                    .is_some();
+                if !is_partitcipant {
+                    trap("Not participant")
+                }
+                members
             }
         };
     })
@@ -136,8 +182,8 @@ async fn register_wallet(vault_id: u64, wallet_name: Option<String>) -> Wallet {
                 }
                 Some(vaultMember) => {
                     match vaultMember.role {
-                        VaultRole::VaultOwner => {}
-                        VaultRole::VaultApprove => {
+                        VaultRole::Admin => {}
+                        VaultRole::Member => {
                             trap("Not enough permissions")
                         }
                     }
@@ -257,7 +303,7 @@ fn pre_upgrade() {
     });
     let memory = VaultMemoryObject {
         vaults: vv,
-        users: uu
+        users: uu,
     };
     storage::stable_save((memory, )).unwrap();
 }
@@ -265,15 +311,15 @@ fn pre_upgrade() {
 
 #[post_upgrade]
 pub fn post_upgrade() {
-    let (mo,): (VaultMemoryObject,) = storage::stable_restore().unwrap();
-    let mut  vaults: HashMap<u64, Vault> = Default::default();
+    let (mo, ): (VaultMemoryObject, ) = storage::stable_restore().unwrap();
+    let mut vaults: HashMap<u64, Vault> = Default::default();
     for vault in mo.vaults {
         vaults.insert(vault.id, vault);
     }
-    let mut  users: HashMap<String, User> = Default::default();
+    let mut users: HashMap<String, User> = Default::default();
     for u in mo.users {
         users.insert(u.address.clone(), u);
     }
-    VAULTS.with(|storage| *storage.borrow_mut() = vaults );
-    USERS.with(|storage| *storage.borrow_mut() = users );
+    VAULTS.with(|storage| *storage.borrow_mut() = vaults);
+    USERS.with(|storage| *storage.borrow_mut() = users);
 }

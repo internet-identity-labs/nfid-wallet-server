@@ -41,6 +41,8 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         vault: {
             id: null,
             actor: null,
+            actor_member: null,
+            member: null
         }
     };
 
@@ -142,12 +144,13 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             await console.log(execute(`./test/resource/ledger.sh`))
             await console.log(execute(`./test/resource/vault.sh`))
 
-            console.log(execute("dfx canister id vault"))
-            console.log(dfx)
             dfx.vault.id = DFX.GET_CANISTER_ID("vault");
             console.log(">> ", dfx.vault.id);
 
             dfx.vault.actor = await getActor(dfx.vault.id, dfx.user.identity, vaultIdl);
+            dfx.vault.member = Ed25519KeyIdentity.generate();
+            dfx.vault.actor_member = await getActor(dfx.vault.id, dfx.vault.member, vaultIdl);
+            console.log(dfx.vault.actor)
             return dfx;
         }
 
@@ -170,7 +173,7 @@ export const getActor = async (
     identity: Identity,
     idl: IDL.InterfaceFactory
 ): Promise<Record<string, ActorMethod>> => {
-    const agent: HttpAgent = new HttpAgent({host: localhost, identity: identity});
+    const agent: HttpAgent = new HttpAgent({ host: localhost, identity: identity });
     await agent.fetchRootKey();
-    return await Actor.createActor(idl, {agent, canisterId: imCanisterId});
+    return await Actor.createActor(idl, { agent, canisterId: imCanisterId });
 };

@@ -35,7 +35,8 @@
     "ic": "sgk26-7yaaa-aaaan-qaovq-cai"
   },
   "vault": {
-    "dev": "ymvb6-7qaaa-aaaan-qbgga-cai"
+    "dev": "ymvb6-7qaaa-aaaan-qbgga-cai",
+    "ic": "lsdm3-pyaaa-aaaap-qavoa-cai"
   },
   "eth_secret_storage": {
     "dev": "25nnx-kyaaa-aaaao-ab43a-cai",

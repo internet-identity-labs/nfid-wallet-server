@@ -49,7 +49,7 @@ pub fn restore(user: User) -> Option<User> {
 }
 
 
-pub fn get_by_caller() -> User {
+pub fn get_or_new_by_caller() -> User {
     let address = caller_to_address();
-    get_by_address(address)
+    get_or_new_by_address(address)
 }

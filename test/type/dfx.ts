@@ -1,4 +1,4 @@
-import { ActorMethod } from "@dfinity/agent";
+import {ActorMethod, Identity} from "@dfinity/agent";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 
 export interface Dfx {
@@ -22,6 +22,8 @@ export interface Dfx {
     vault?: {
         id: string;
         actor: Record<string, ActorMethod>;
+        actor_member: Record<string, ActorMethod>;
+        member: Identity;
     };
     ess?: {
         id: string;

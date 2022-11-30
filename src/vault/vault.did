@@ -1,4 +1,3 @@
-type VaultName = text;
 type Conf = record {
     ledger_canister_id : principal
 };
@@ -17,9 +16,20 @@ type VaultMember = record {
     role : VaultRole;
 };
 
+type VaultMemberRequest = record {
+    name : opt text;
+    role : VaultRole;
+    vault_id : nat64;
+    address : text;
+};
+
+type VaultRegisterRequest = record {
+    name : text
+};
+
 type VaultRole = variant {
-    VaultOwner;
-    VaultApprove
+    Member;
+    Admin
 };
 
 type Wallet = record {
@@ -29,10 +39,10 @@ type Wallet = record {
 };
 
 service : (opt Conf) -> {
-    add_vault_member : (nat64, text, opt text, VaultRole) -> (Vault);
+    add_vault_member : (VaultMemberRequest) -> (Vault);
     get_vault_members : (nat64) -> (vec VaultMember) query;
     get_vaults : () -> (vec Vault) query;
-    register_vault : (VaultName) -> (Vault);
+    register_vault : (VaultRegisterRequest) -> (Vault);
     register_wallet : (nat64, opt text) -> (Wallet);
     sub : (nat64) -> (text) query;
 }

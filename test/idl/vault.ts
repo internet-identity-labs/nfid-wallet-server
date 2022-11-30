@@ -14,18 +14,25 @@ export interface VaultMember {
     'name' : [] | [string],
     'role' : VaultRole,
 }
-export type VaultRole = { 'VaultOwner' : null } |
-    { 'VaultApprove' : null };
+export interface VaultMemberRequest {
+    'name' : [] | [string],
+    'role' : VaultRole,
+    'vault_id' : bigint,
+    'address' : string,
+}
+export interface VaultRegisterRequest { 'name' : string }
+export type VaultRole = { 'Member' : null } |
+    { 'Admin' : null };
 export interface Wallet {
     'id' : bigint,
     'vault_ids' : Array<bigint>,
     'name' : [] | [string],
 }
 export interface _SERVICE {
-    'add_vault_member' : ActorMethod<[bigint, string, [] | [string], VaultRole], Vault>,
+    'add_vault_member' : ActorMethod<[VaultMemberRequest], Vault>,
     'get_vault_members' : ActorMethod<[bigint], Array<VaultMember>>,
     'get_vaults' : ActorMethod<[], Array<Vault>>,
-    'register_vault' : ActorMethod<[string], Vault>,
+    'register_vault' : ActorMethod<[VaultRegisterRequest], Vault>,
     'register_wallet' : ActorMethod<[bigint, [] | [string]], Wallet>,
     'sub' : ActorMethod<[bigint], string>,
 }
