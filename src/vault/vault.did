@@ -34,15 +34,21 @@ type VaultRole = variant {
 
 type Wallet = record {
     id : nat64;
-    vault_ids : vec nat64;
+    vaults : vec nat64;
     name : opt text
+};
+
+type WalletRegisterRequest = record {
+    name : opt text;
+    vault_id : nat64
 };
 
 service : (opt Conf) -> {
     add_vault_member : (VaultMemberRequest) -> (Vault);
     get_vault_members : (nat64) -> (vec VaultMember) query;
     get_vaults : () -> (vec Vault) query;
+    get_wallets : (nat64) -> (vec Wallet) query;
     register_vault : (VaultRegisterRequest) -> (Vault);
-    register_wallet : (nat64, opt text) -> (Wallet);
+    register_wallet : (WalletRegisterRequest) -> (Wallet);
     sub : (nat64) -> (text) query;
 }

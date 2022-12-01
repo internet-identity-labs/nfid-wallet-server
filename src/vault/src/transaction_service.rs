@@ -6,7 +6,7 @@ use ic_cdk::{caller, storage, trap};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Subaccount, Tokens};
 use serde::{Deserialize, Serialize};
 
-use crate::{Policy, TRANSACTIONS, transfer, User, user_service, wallet_service, Wallets};
+use crate::{Policy, TRANSACTIONS, transfer, User, user_service, wallet_service};
 use crate::policy_service::{Currency};
 
 pub type Transactions = HashMap<u64, Transaction>;

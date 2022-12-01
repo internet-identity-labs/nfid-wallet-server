@@ -8,27 +8,21 @@ use serde::Deserialize;
 
 use crate::WALLETS;
 
-pub type Wallets = HashMap<u64, Wallet>;
-pub type AccountIdConstraint = u64; //todo
-
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Wallet {
     pub id: u64,
     pub name: Option<String>,
-    pub vault_ids: Vec<u64>,
-    //todo move to index?
-    // pub transaction_ids: Vec<u64>, //todo move to index?
+    pub vaults: Vec<u64>,
 }
 
 pub fn new_and_store(name: Option<String>, vault_id: u64) -> Wallet {
     WALLETS.with(|wallets| {
         let mut w = wallets.borrow_mut();
-        let id = w.len() as u64;
+        let id = w.len() as u64 + 1;
         let wlt = Wallet {
             id: id.clone(),
             name,
-            vault_ids: vec![vault_id],
-            // transaction_ids: vec![]
+            vaults: vec![vault_id],
         };
         w.insert(id, wlt.clone());
         wlt
@@ -51,6 +45,23 @@ pub fn get_wallet(id: u64) -> Wallet {
                 wallet.clone()
             }
         }
+    })
+}
+
+pub fn get_wallets(ids: Vec<u64>) -> Vec<Wallet> {
+    WALLETS.with(|wallets| {
+        let mut result: Vec<Wallet> = Default::default();
+        for key in ids {
+            match wallets.borrow().get(&key) {
+                None => {
+                    trap("Not registered")
+                }
+                Some(wallet) => {
+                    result.push(wallet.clone())
+                }
+            }
+        }
+        result
     })
 }
 

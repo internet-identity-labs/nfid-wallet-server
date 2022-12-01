@@ -8,7 +8,7 @@ use std::hash::Hash;
 
 use candid::{candid_method, export_service, Principal};
 use candid::utils::ArgumentEncoder;
-use ic_cdk::{caller, print, storage, trap};
+use ic_cdk::{caller, storage, trap};
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 use ic_cdk::export::candid;
 use ic_cdk_macros::*;
@@ -17,10 +17,10 @@ use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_FEE, MAINNET_LEDGER
 
 use crate::policy_service::Policy;
 use crate::transaction_service::Transaction;
-use crate::user_service::{get_or_new_by_address, get_or_new_by_caller, User};
+use crate::user_service::{get_or_new_by_caller, User};
 use crate::util::caller_to_address;
 use crate::vault_service::{Vault, VaultMember, VaultRole};
-use crate::wallet_service::{id_to_address, id_to_subaccount, Wallet, Wallets};
+use crate::wallet_service::{id_to_address, id_to_subaccount, Wallet};
 
 mod user_service;
 mod vault_service;
@@ -105,11 +105,11 @@ pub struct VaultMemberRequest {
 #[update]
 #[candid_method(update)]
 async fn add_vault_member(request: VaultMemberRequest) -> Vault {
+    let caller = get_or_new_by_caller();
     VAULTS.with(|vaults| {
         return match vaults.borrow_mut().get_mut(&request.vault_id) {
-            None => { trap("Group not exists") }
+            None => { trap("Vault not exists") }
             Some(vault) => {
-                let caller = user_service::get_or_new_by_caller();
                 let caller_member = vault.members
                     .iter()
                     .find(|l| l.user_uuid.eq(&caller.address));
@@ -142,61 +142,71 @@ async fn add_vault_member(request: VaultMemberRequest) -> Vault {
     })
 }
 
-
 #[query]
 #[candid_method(query)]
 async fn get_vault_members(vault_id: u64) -> HashSet<VaultMember> {
-    let user = get_or_new_by_caller();
+    let caller = get_or_new_by_caller();
+    if !caller.vaults.contains(&vault_id) {
+        trap("Not participant")
+    }
     VAULTS.with(|vaults| {
         return match vaults.borrow_mut().get_mut(&vault_id) {
             None => { trap("Vault not exists") }
             Some(vault) => {
-                let members = vault.members.clone();
-                let is_partitcipant = members
-                    .iter()
-                    .map(|l| l.user_uuid.clone())
-                    .find(|l| l.eq(&user.address))
-                    .is_some();
-                if !is_partitcipant {
-                    trap("Not participant")
-                }
-                members
+                vault.members.clone()
             }
         };
     })
 }
 
+#[derive(CandidType, Deserialize, Clone)]
+pub struct WalletRegisterRequest {
+    vault_id: u64,
+    name: Option<String>,
+}
+
 #[update]
 #[candid_method(update)]
-async fn register_wallet(vault_id: u64, wallet_name: Option<String>) -> Wallet {
-    let user = user_service::get_or_new_by_address(caller_to_address());
-    //todo check
-    let mut vault = match vault_service::get_by_ids(vec![vault_id]).first() {
-        None => { trap("   ") }
+async fn register_wallet(request: WalletRegisterRequest) -> Wallet {
+    let caller = get_or_new_by_caller();
+    let mut vault = match vault_service::get_by_ids(vec![request.vault_id]).first() {
+        None => { trap("Vault not exists") }
         Some(vault) => {
-            match vault.members
+            let caller_member = vault.members
                 .iter()
-                .find(|p| user.address.eq(&p.user_uuid)) {
+                .find(|p| caller.address.eq(&p.user_uuid));
+            match caller_member {
                 None => {
                     trap("Unauthorised")
                 }
                 Some(vaultMember) => {
                     match vaultMember.role {
-                        VaultRole::Admin => {}
+                        VaultRole::Admin => {
+                            vault.clone()
+                        }
                         VaultRole::Member => {
                             trap("Not enough permissions")
                         }
                     }
                 }
             }
-            vault.clone()
         }
     };
-
-    let new_wallet = wallet_service::new_and_store(wallet_name, vault_id);
+    let new_wallet = wallet_service::new_and_store(request.name, request.vault_id);
     vault.wallets.push(new_wallet.id);
     vault_service::restore(vault);
     new_wallet
+}
+
+#[query]
+#[candid_method(query)]
+async fn get_wallets(vault_id: u64) -> Vec<Wallet> {
+    let caller = get_or_new_by_caller();
+    if !caller.vaults.contains(&vault_id) {
+        trap("Not participant")
+    }
+    let vault = vault_service::get_by_ids(vec![vault_id]);
+    wallet_service::get_wallets(vault[0].wallets.clone())
 }
 
 
@@ -205,7 +215,7 @@ async fn register_transaction(amount: Tokens, to: AccountIdentifier, wallet_id: 
     let caller = caller().to_text();
     let tr_owner = user_service::get_by_address(caller);
     let mut wallet = wallet_service::get_wallet(wallet_id);
-    let vaults = vault_service::get_by_ids(wallet.vault_ids.clone());
+    let vaults = vault_service::get_by_ids(wallet.vaults.clone());
     let vault = vaults.first().unwrap(); //one to one??
 
     let user_id = tr_owner.address.clone();
@@ -285,12 +295,19 @@ fn export_candid() -> String {
 pub struct VaultMemoryObject {
     pub vaults: Vec<Vault>,
     pub users: Vec<User>,
+    pub wallets: Vec<Wallet>,
 }
 
 #[pre_upgrade]
 fn pre_upgrade() {
     let vv: Vec<Vault> = VAULTS.with(|vaults| {
         vaults.borrow()
+            .iter()
+            .map(|l| l.1.clone())
+            .collect()
+    });
+    let ww: Vec<Wallet> = WALLETS.with(|wallets| {
+        wallets.borrow()
             .iter()
             .map(|l| l.1.clone())
             .collect()
@@ -304,6 +321,7 @@ fn pre_upgrade() {
     let memory = VaultMemoryObject {
         vaults: vv,
         users: uu,
+        wallets: ww,
     };
     storage::stable_save((memory, )).unwrap();
 }
@@ -316,10 +334,15 @@ pub fn post_upgrade() {
     for vault in mo.vaults {
         vaults.insert(vault.id, vault);
     }
+    let mut wallets: HashMap<u64, Wallet> = Default::default();
+    for wallet in mo.wallets {
+        wallets.insert(wallet.id, wallet);
+    }
     let mut users: HashMap<String, User> = Default::default();
     for u in mo.users {
         users.insert(u.address.clone(), u);
     }
     VAULTS.with(|storage| *storage.borrow_mut() = vaults);
     USERS.with(|storage| *storage.borrow_mut() = users);
+    WALLETS.with(|storage| *storage.borrow_mut() = wallets);
 }

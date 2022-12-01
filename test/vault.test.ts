@@ -2,7 +2,7 @@ import "mocha";
 import {deploy} from "./util/deployment.util";
 import {Dfx} from "./type/dfx";
 import {App} from "./constanst/app.enum";
-import {Vault, VaultMember, VaultMemberRequest, VaultRegisterRequest} from "./idl/vault";
+import {Vault, VaultMember, VaultMemberRequest, VaultRegisterRequest, Wallet, WalletRegisterRequest} from "./idl/vault";
 import {expect} from "chai";
 import {principalToAddress} from "ictool"
 import {DFX} from "./constanst/dfx.const";
@@ -116,6 +116,56 @@ describe("Vault", () => {
         }
         try {
             await dfx.vault.actor_member.add_vault_member(vaultMember)
+        } catch (e: any) {
+            expect(e.message.includes("Not enough permissions")).eq(true)
+        }
+    });
+    it("register wallet", async function () {
+        let request: WalletRegisterRequest = {name: ["Wallet1"], vault_id: 1n};
+        let result = await dfx.vault.actor.register_wallet(request) as Wallet
+        expect(result.name[0]).eq("Wallet1")
+        expect(result.vaults[0]).eq(1n)
+        expect(result.id).eq(1n)
+        request = {name: ["Wallet2"], vault_id: 1n};
+        result = await dfx.vault.actor.register_wallet(request) as Wallet
+        expect(result.name[0]).eq("Wallet2")
+        expect(result.vaults[0]).eq(1n)
+        expect(result.id).eq(2n)
+        let wallets = await dfx.vault.actor.get_wallets(1n) as [Wallet]
+        expect(wallets.length).eq(2)
+        expect(wallets[0].id).eq(1n)
+        // @ts-ignore
+        expect(wallets[1].id).eq(2n)
+    });
+
+    it("register wallet negative ", async function () {
+        try {
+            await dfx.vault.actor_member.get_wallets(2n)
+        } catch (e: any) {
+            expect(e.message.includes("Not participant")).eq(true)
+        }
+        try {
+            await dfx.vault.actor_member.get_wallets(3n)
+        } catch (e: any) {
+            expect(e.message.includes("Not participant")).eq(true)
+        }
+        let request: WalletRegisterRequest = {name: ["Wallet1"], vault_id: 3n};
+        try {
+            await dfx.vault.actor_member.register_wallet(request) as Wallet
+        } catch (e: any) {
+            expect(e.message.includes("Nonexistent key")).eq(true)
+        }
+
+        request = {name: ["Wallet1"], vault_id: 2n};
+        try {
+            await dfx.vault.actor_member.register_wallet(request) as Wallet
+        } catch (e: any) {
+            expect(e.message.includes("Unauthorised")).eq(true)
+        }
+
+        request = {name: ["Wallet1"], vault_id: 1n};
+        try {
+            await dfx.vault.actor_member.register_wallet(request) as Wallet
         } catch (e: any) {
             expect(e.message.includes("Not enough permissions")).eq(true)
         }
