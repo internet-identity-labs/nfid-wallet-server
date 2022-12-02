@@ -4,5 +4,6 @@ members = [
     "src/pub_sub_channel",
     "src/im_addition",
     "src/verifier",
+    "src/eth_secret_storage",
     "src/libraries/canister_api_macros",
 ]

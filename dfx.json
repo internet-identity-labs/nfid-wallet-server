@@ -42,6 +42,12 @@
       "wasm": "verifier.wasm",
       "type": "custom"
     },
+    "eth_secret_storage": {
+      "build": "src/eth_secret_storage/build.sh",
+      "candid": "src/eth_secret_storage/eth_secret_storage.did",
+      "wasm": "eth_secret_storage.wasm",
+      "type": "custom"
+    },
     "internet_identity_test": {
       "type": "custom",
       "candid": "src/internet_identity_test/internet_identity.did",
