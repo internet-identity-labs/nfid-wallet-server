@@ -196,6 +196,63 @@ describe("Vault", () => {
         expect(result.policy_type.threshold_policy.member_threshold).eq(2)
         expect(result.policy_type.threshold_policy.wallet_ids.length).eq(0)
         expect(hasOwnProperty(result.policy_type.threshold_policy.currency, 'ICP')).eq(true)
+        tp = {
+            amount_threshold: 2n,
+            currency: {'ICP': null},
+            member_threshold: 3,
+            wallet_ids: []
+        }
+        request = {policy_type: {'threshold_policy': tp}, vault_id: 1n};
+
+        result = await dfx.vault.actor.register_policy(request) as Policy
+        expect(result.id).eq(2n)
+        let policies = await dfx.vault.actor.get_policies(1n) as [Policy]
+        expect(policies.length).eq(2)
+        expect(policies[0].id).eq(1n)
+        // @ts-ignore
+        expect(policies[1].id).eq(2n)
+    });
+
+
+    it("register policy negative ", async function () {
+        try {
+            await dfx.vault.actor_member.get_policies(2n)
+        } catch (e: any) {
+            expect(e.message.includes("Not participant")).eq(true)
+        }
+        try {
+            await dfx.vault.actor_member.get_policies(3n)
+        } catch (e: any) {
+            expect(e.message.includes("Not participant")).eq(true)
+        }
+
+        let tp: ThresholdPolicy = {
+            amount_threshold: 10n,
+            currency: {'ICP': null},
+            member_threshold: 2,
+            wallet_ids: []
+        }
+        let request: PolicyRegisterRequest = {policy_type: {'threshold_policy': tp}, vault_id: 3n};
+
+        try {
+            await dfx.vault.actor_member.register_policy(request)
+        } catch (e: any) {
+            expect(e.message.includes("Nonexistent key")).eq(true)
+        }
+
+        request = {policy_type: {'threshold_policy': tp}, vault_id: 2n};
+        try {
+            await dfx.vault.actor_member.register_policy(request)
+        } catch (e: any) {
+            expect(e.message.includes("Unauthorised")).eq(true)
+        }
+
+        request ={policy_type: {'threshold_policy': tp}, vault_id: 1n};
+        try {
+            await dfx.vault.actor_member.register_policy(request)
+        } catch (e: any) {
+            expect(e.message.includes("Not enough permissions")).eq(true)
+        }
     });
 });
 
