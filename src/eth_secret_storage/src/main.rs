@@ -1,6 +1,10 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use canister_api_macros::{admin, collect_metrics};
+use ethers_core::types::Signature;
+use ethers_signers::{Wallet, LocalWallet};
+use ethers_signers::Signer;
 use ic_cdk::export::Principal;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::{trap, call, storage};
@@ -52,8 +56,10 @@ pub(crate) fn verify_signature(message_hash: &[u8], public_key: &PublicKey, sign
 #[update]
 #[collect_metrics]
 async fn secret_by_signature(signature: String) -> String {
-    // get_secret_by_signature(signature, ConfigurationRepo::get().sign_text.clone()).await
-    signature
+    let sig: Signature = Signature::from_str("0x90069f397055f97fda932e22a15eaa80a8c4f827a0a777c1005a6e1d8dd5553f116421c402e4334d9aa649b0879c697ec0fa2b2143012632cb0572c7de86d07a1b").unwrap();
+    let result = sig.recover("You're authentification to NFID.".to_string()).unwrap();
+    let address = format!("{:?}", result);
+    address.clone()
 }
 
 // async fn get_secret_by_signature(signature: String, sign_text: String) -> String {
@@ -98,26 +104,44 @@ async fn generate_token() -> String {
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
+    // use std::str::FromStr;
+    // use super::*;
+
+    // #[test]
+    // fn should_return_secret_by_signature() {
+    //     let message = "You're authentification to NFID.".to_string();
+    //     let signature = "90069f397055f97fda932e22a15eaa80a8c4f827a0a777c1005a6e1d8dd5553f116421c402e4334d9aa649b0879c697".to_string();
+    //     let expected_address = "0xdc75e8c3ae765d8947adbc6698a2403a6141d439".to_string();
+
+    //     let arr: [u8;32] = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
+    //     let mut secp = Secp256k1::new();
+    //     secp.seeded_randomize(&arr);
+
+
+    //     let message_hash = encode_message(message);
+    //     let message = Message::from_slice(&message_hash).expect("32 bytes");
+
+    //     let signature: Signature = Signature::from_str(&signature).unwrap() ;
+    //     let public_key = PublicKey::from_str(&"asdasd").unwrap();
+    //     assert!(secp.verify(&message, &signature, &public_key).is_ok());
+
     use super::*;
 
     #[test]
-    fn should_return_secret_by_signature() {
+     fn should_return_secret_by_signature() {
         let message = "You're authentification to NFID.".to_string();
-        let signature = "90069f397055f97fda932e22a15eaa80a8c4f827a0a777c1005a6e1d8dd5553f116421c402e4334d9aa649b0879c697".to_string();
+        let signature = "0x90069f397055f97fda932e22a15eaa80a8c4f827a0a777c1005a6e1d8dd5553f116421c402e4334d9aa649b0879c697ec0fa2b2143012632cb0572c7de86d07a1b".to_string();
         let expected_address = "0xdc75e8c3ae765d8947adbc6698a2403a6141d439".to_string();
 
-        let arr: [u8;32] = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
-        let mut secp = Secp256k1::new();
-        secp.seeded_randomize(&arr);
+        let sig: Signature = Signature::from_str("0x90069f397055f97fda932e22a15eaa80a8c4f827a0a777c1005a6e1d8dd5553f116421c402e4334d9aa649b0879c697ec0fa2b2143012632cb0572c7de86d07a1b").unwrap();
+        let result = sig.recover("You're authentification to NFID.".to_string()).unwrap();
+        let address = format!("{:?}", result);
+        print!("{:?}", address);
 
 
-        let message_hash = encode_message(message);
-        let message = Message::from_slice(&message_hash).expect("32 bytes");
-
-        let signature: Signature = Signature::from_str(&signature).unwrap() ;
-        let public_key = PublicKey::from_str(&"asdasd").unwrap();
-        assert!(secp.verify(&message, &signature, &public_key).is_ok());
+        // let secret1 = get_secret_by_signature(signature.clone(), message.clone()).await;
+        // let secret2 = get_secret_by_signature(signature.clone(), message.clone()).await;
+        
         // assert_eq!(secret1, secret2)
     }
 }
