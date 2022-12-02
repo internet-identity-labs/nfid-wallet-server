@@ -2,7 +2,16 @@ import "mocha";
 import {deploy} from "./util/deployment.util";
 import {Dfx} from "./type/dfx";
 import {App} from "./constanst/app.enum";
-import {Vault, VaultMember, VaultMemberRequest, VaultRegisterRequest, Wallet, WalletRegisterRequest} from "./idl/vault";
+import {
+    Policy,
+    PolicyRegisterRequest, ThresholdPolicy,
+    Vault,
+    VaultMember,
+    VaultMemberRequest,
+    VaultRegisterRequest,
+    Wallet,
+    WalletRegisterRequest
+} from "./idl/vault";
 import {expect} from "chai";
 import {principalToAddress} from "ictool"
 import {DFX} from "./constanst/dfx.const";
@@ -173,20 +182,27 @@ describe("Vault", () => {
 
 
     it("register policy", async function () {
-        let request: WalletRegisterRequest = {name: ["Wallet1"], vault_id: 1n};
-        let result = await dfx.vault.actor.register_wallet(request) as Wallet
-        expect(result.name[0]).eq("Wallet1")
-        expect(result.vaults[0]).eq(1n)
+        let tp: ThresholdPolicy = {
+            amount_threshold: 10n,
+            currency: {'ICP': null},
+            member_threshold: 2,
+            wallet_ids: []
+        }
+        let request: PolicyRegisterRequest = {policy_type: {'threshold_policy': tp}, vault_id: 1n};
+
+        let result = await dfx.vault.actor.register_policy(request) as Policy
         expect(result.id).eq(1n)
-        request = {name: ["Wallet2"], vault_id: 1n};
-        result = await dfx.vault.actor.register_wallet(request) as Wallet
-        expect(result.name[0]).eq("Wallet2")
-        expect(result.vaults[0]).eq(1n)
-        expect(result.id).eq(2n)
-        let wallets = await dfx.vault.actor.get_wallets(1n) as [Wallet]
-        expect(wallets.length).eq(2)
-        expect(wallets[0].id).eq(1n)
-        // @ts-ignore
-        expect(wallets[1].id).eq(2n)
+        expect(result.policy_type.threshold_policy.amount_threshold).eq(10n)
+        expect(result.policy_type.threshold_policy.member_threshold).eq(2)
+        expect(result.policy_type.threshold_policy.wallet_ids.length).eq(0)
+        expect(hasOwnProperty(result.policy_type.threshold_policy.currency, 'ICP')).eq(true)
     });
 });
+
+
+// A `hasOwnProperty` that produces evidence for the typechecker
+export function hasOwnProperty<X extends Record<string, unknown>,
+    Y extends PropertyKey,
+    >(obj: X, prop: Y): obj is X & Record<Y, unknown> {
+    return Object.prototype.hasOwnProperty.call(obj, prop)
+}
