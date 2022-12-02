@@ -12,9 +12,10 @@ use crate::repository::configuration_repo::{AdminRepo, ConfigurationRepo, Config
 use crate::service::ic_service::get_caller;
 
 use hex; 
-use web3::signing::keccak256;
+// use web3::signing::keccak256;
 // use web3::signing::recover;
-// use ic_web3::signing::keccak256;
+use ic_web3::signing::keccak256;
+use secp256k1::{Message, PublicKey, Secp256k1, Signature};
 // use ic_web3::signing::rec;
 
 mod service;
@@ -38,6 +39,14 @@ async fn configure(sign_text: Option<String>) -> () {
         whitelisted_canisters: None,
     };
     ConfigurationRepo::save(configuration);
+}
+
+
+pub(crate) fn verify_signature(message_hash: &[u8], public_key: &PublicKey, signature: &Signature) {
+    // Verify the signature:
+    let secp = Secp256k1::new();
+    let message = Message::from_slice(message_hash).expect("32 bytes");
+    assert!(secp.verify(&message, signature, public_key).is_ok());
 }
 
 #[update]
@@ -66,18 +75,17 @@ async fn secret_by_signature(signature: String) -> String {
 //     })
 // }
 
-// fn encode_message(message: String) -> [u8; 32] {
-//     keccak256(
-//         format!(
-//             "{}{}{}",
-//             "\x19Ethereum Signed Message:\n",
-//             message.len(),
-//             message
-//         )
-//         .as_bytes(),
-//     )
-// }
-
+fn encode_message(message: String) -> [u8; 32] {
+    keccak256(
+        format!(
+            "{}{}{}",
+            "\x19Ethereum Signed Message:\n",
+            message.len(),
+            message
+        )
+        .as_bytes(),
+    )
+}
 async fn generate_token() -> String {
     let token: Vec<u8> = match call(Principal::management_canister(), "raw_rand", ()).await {
         Ok((res, )) => res,
@@ -88,23 +96,31 @@ async fn generate_token() -> String {
     token
 }
 
-// #[cfg(test)]
-// mod test {
+#[cfg(test)]
+mod test {
+    use std::str::FromStr;
+    use super::*;
 
-//     use super::*;
+    #[test]
+    fn should_return_secret_by_signature() {
+        let message = "You're authentification to NFID.".to_string();
+        let signature = "90069f397055f97fda932e22a15eaa80a8c4f827a0a777c1005a6e1d8dd5553f116421c402e4334d9aa649b0879c697".to_string();
+        let expected_address = "0xdc75e8c3ae765d8947adbc6698a2403a6141d439".to_string();
 
-//     #[test]
-//      async fn should_return_secret_by_signature() {
-//         let message = "You're authentification to NFID.".to_string();
-//         let signature = "0x90069f397055f97fda932e22a15eaa80a8c4f827a0a777c1005a6e1d8dd5553f116421c402e4334d9aa649b0879c697ec0fa2b2143012632cb0572c7de86d07a1b".to_string();
-//         let expected_address = "0xdc75e8c3ae765d8947adbc6698a2403a6141d439".to_string();
+        let arr: [u8;32] = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
+        let mut secp = Secp256k1::new();
+        secp.seeded_randomize(&arr);
 
-//         let secret1 = get_secret_by_signature(signature.clone(), message.clone()).await;
-//         let secret2 = get_secret_by_signature(signature.clone(), message.clone()).await;
-        
-//         assert_eq!(secret1, secret2)
-//     }
-// }
+
+        let message_hash = encode_message(message);
+        let message = Message::from_slice(&message_hash).expect("32 bytes");
+
+        let signature: Signature = Signature::from_str(&signature).unwrap() ;
+        let public_key = PublicKey::from_str(&"asdasd").unwrap();
+        assert!(secp.verify(&message, &signature, &public_key).is_ok());
+        // assert_eq!(secret1, secret2)
+    }
+}
 
 #[pre_upgrade]
 fn pre_upgrade() {
@@ -152,4 +168,6 @@ pub async fn get_canister_log(request: Option<canistergeek_ic_rust::api_type::Ca
     canistergeek_ic_rust::logger::get_canister_log(request)
 }
 
-fn main() {}
+fn main() {
+
+}
