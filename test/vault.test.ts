@@ -170,4 +170,23 @@ describe("Vault", () => {
             expect(e.message.includes("Not enough permissions")).eq(true)
         }
     });
+
+
+    it("register policy", async function () {
+        let request: WalletRegisterRequest = {name: ["Wallet1"], vault_id: 1n};
+        let result = await dfx.vault.actor.register_wallet(request) as Wallet
+        expect(result.name[0]).eq("Wallet1")
+        expect(result.vaults[0]).eq(1n)
+        expect(result.id).eq(1n)
+        request = {name: ["Wallet2"], vault_id: 1n};
+        result = await dfx.vault.actor.register_wallet(request) as Wallet
+        expect(result.name[0]).eq("Wallet2")
+        expect(result.vaults[0]).eq(1n)
+        expect(result.id).eq(2n)
+        let wallets = await dfx.vault.actor.get_wallets(1n) as [Wallet]
+        expect(wallets.length).eq(2)
+        expect(wallets[0].id).eq(1n)
+        // @ts-ignore
+        expect(wallets[1].id).eq(2n)
+    });
 });

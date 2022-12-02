@@ -1,5 +1,4 @@
 use std::borrow::{Borrow, BorrowMut};
-use std::collections::HashMap;
 
 use candid::{CandidType, Principal};
 use ic_cdk::trap;
@@ -64,7 +63,6 @@ pub fn get_wallets(ids: Vec<u64>) -> Vec<Wallet> {
         result
     })
 }
-
 
 pub fn id_to_subaccount(id: u64) -> Subaccount {
     let eights: [u8; 8] = bytemuck::cast([id; 1]);

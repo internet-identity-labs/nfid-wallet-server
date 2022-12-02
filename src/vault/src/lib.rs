@@ -15,7 +15,7 @@ use ic_cdk_macros::*;
 use ic_cdk_macros::*;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_FEE, MAINNET_LEDGER_CANISTER_ID, Memo, Subaccount, Tokens};
 
-use crate::policy_service::Policy;
+use crate::policy_service::{Policy, PolicyType};
 use crate::transaction_service::Transaction;
 use crate::user_service::{get_or_new_by_caller, User};
 use crate::util::caller_to_address;
@@ -198,6 +198,48 @@ async fn register_wallet(request: WalletRegisterRequest) -> Wallet {
     new_wallet
 }
 
+
+#[derive(CandidType, Deserialize, Clone)]
+pub struct PolicyRegisterRequest {
+    vault_id: u64,
+    policy_type: PolicyType,
+}
+
+
+#[update]
+#[candid_method(update)]
+async fn register_policy(request: PolicyRegisterRequest) -> Policy {
+    let caller = get_or_new_by_caller();
+    let mut vault = match vault_service::get_by_ids(vec![request.vault_id]).first() {
+        None => { trap("Vault not exists") }
+        Some(vault) => {
+            let caller_member = vault.members
+                .iter()
+                .find(|p| caller.address.eq(&p.user_uuid));
+            match caller_member {
+                None => {
+                    trap("Unauthorised")
+                }
+                Some(vaultMember) => {
+                    match vaultMember.role {
+                        VaultRole::Admin => {
+                            vault.clone()
+                        }
+                        VaultRole::Member => {
+                            trap("Not enough permissions")
+                        }
+                    }
+                }
+            }
+        }
+    };
+    let policy = policy_service::register_policy(request.policy_type);
+    vault.policies.push(policy.id);
+    vault_service::restore(vault);
+    policy
+
+}
+
 #[query]
 #[candid_method(query)]
 async fn get_wallets(vault_id: u64) -> Vec<Wallet> {
@@ -207,6 +249,18 @@ async fn get_wallets(vault_id: u64) -> Vec<Wallet> {
     }
     let vault = vault_service::get_by_ids(vec![vault_id]);
     wallet_service::get_wallets(vault[0].wallets.clone())
+}
+
+
+#[query]
+#[candid_method(query)]
+async fn get_policies(vault_id: u64) -> Vec<Policy> {
+    let caller = get_or_new_by_caller();
+    if !caller.vaults.contains(&vault_id) {
+        trap("Not participant")
+    }
+    let vault = vault_service::get_by_ids(vec![vault_id]);
+    policy_service::get_by_ids(vault[0].policies.clone())
 }
 
 

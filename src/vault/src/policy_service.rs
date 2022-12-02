@@ -4,17 +4,17 @@ use candid::CandidType;
 use ic_cdk::trap;
 use serde::Deserialize;
 
-use crate::{POLICIES, Transaction};
+use crate::POLICIES;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Policy {
     pub id: u64,
-    pub policy_class: PolicyClass,
+    pub policy_type: PolicyType,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum PolicyClass {
-    #[serde(rename = "threshold")]
+pub enum PolicyType {
+    #[serde(rename = "threshold_policy")]
     ThresholdPolicy(ThresholdPolicy)
 }
 
@@ -24,22 +24,7 @@ pub struct ThresholdPolicy {
     pub amount_threshold: u64,
     pub currency: Currency,
     pub member_threshold: u8,
-    pub sub_class: ThresholdPolicySubClass,
-}
-
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum ThresholdPolicySubClass {
-    #[serde(rename = "wallet_specific")]
-    WalletSpecific(WalletSpecific),
-    #[serde(rename = "wallet_common")]
-    WalletCommon,
-}
-
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct WalletSpecific {
-    pub wallet_ids: Vec<u64>,
+    pub wallet_ids: Option<Vec<u64>>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -47,21 +32,11 @@ pub enum Currency {
     ICP,
 }
 
-pub fn register_policy(amount_threshold: u64, member_threshold: u8, wallet_ids: Vec<u64>) -> Policy {
-    let policy_sub_class = if wallet_ids.is_empty()
-    { ThresholdPolicySubClass::WalletCommon } else { ThresholdPolicySubClass::WalletSpecific(WalletSpecific { wallet_ids }) };
-
-    let threshold_policy = ThresholdPolicy {
-        amount_threshold,
-        currency: Currency::ICP,
-        member_threshold,
-        sub_class: policy_sub_class,
-    };
-
+pub fn register_policy(policy_type: PolicyType) -> Policy {
     POLICIES.with(|policies| {
         let ps = Policy {
             id: (policies.borrow().len() + 1) as u64,
-            policy_class: PolicyClass::ThresholdPolicy(threshold_policy),
+            policy_type,
         };
         policies.borrow_mut().insert(ps.id, ps.clone());
         ps
@@ -92,14 +67,14 @@ pub fn get_by_ids(ids: Vec<u64>) -> Vec<Policy> {
 
 pub fn define_correct_policy(policies: Vec<Policy>, amount: u64, wallet_id: u64) -> Policy {
     policies.into_iter()
-        .map(|l| match l.policy_class.clone() {
-            PolicyClass::ThresholdPolicy(threshold_policy) => {
-                match threshold_policy.sub_class {
-                    ThresholdPolicySubClass::WalletSpecific(x) => {
-                        if x.wallet_ids.contains(&wallet_id)
-                        { Some((l, threshold_policy.amount_threshold)) } else { None } //TODO шото мне оно не нравится
+        .map(|l| match l.policy_type.clone() {
+            PolicyType::ThresholdPolicy(threshold_policy) => {
+                match threshold_policy.wallet_ids {
+                    Some(x) => {
+                        if x.contains(&wallet_id)
+                        { Some((l, threshold_policy.amount_threshold)) } else { None }
                     }
-                    ThresholdPolicySubClass::WalletCommon => {
+                    None => {
                         Some((l, threshold_policy.amount_threshold))
                     }
                 }
@@ -110,6 +85,6 @@ pub fn define_correct_policy(policies: Vec<Policy>, amount: u64, wallet_id: u64)
         .map(|l| l.unwrap())
         .filter(|l| l.1 <= amount)
         .reduce(|a, b| if a.1 > b.1 { a } else { b })
-        .map(|l|l.0)
+        .map(|l| l.0)
         .unwrap()
 }
