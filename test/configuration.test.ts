@@ -10,7 +10,7 @@ describe("Configuration", () => {
     var dfx: Dfx;
 
     before(async () => {
-        dfx = await deploy(App.IdentityManager);
+        dfx = await deploy({apps: [App.IdentityManager]});
     });
 
     after(() => {

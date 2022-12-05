@@ -1,5 +1,6 @@
 export enum App {
     InternetIdentityTest,
     IdentityManager,
-    IdentityManagerReplica
+    IdentityManagerReplica,
+    EthSecretStorage
 }

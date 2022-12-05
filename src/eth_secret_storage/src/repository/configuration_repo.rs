@@ -4,7 +4,6 @@ use ic_cdk::storage;
 
 #[derive(Debug, Deserialize, CandidType, Clone)]
 pub struct Configuration {
-    pub sign_text: String,
     pub whitelisted_canisters: Option<Vec<Principal>>,
 }
 
