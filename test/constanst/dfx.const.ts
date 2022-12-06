@@ -27,6 +27,6 @@ export const DFX = {
     RECOVER_ACCOUNT: () => call(`dfx canister call identity_manager recover_account '(12_345:nat64)'`), 
     REMOVE_ACCOUNT: (x: string) => call(`dfx canister call ${x} remove_account`), 
     RESTORE_ACCOUNT: (x: string, y: string) => call(`dfx canister call ${x} restore_accounts '("${y}")'`),
-    CONFIGURE_ESS: () => call(`dfx canister call eth_secret_storage configure`), 
+    CONFIGURE_ESS: () => call(`dfx canister call eth_secret_storage configure '()'`), 
     SECRET_BY_SIGNATURE: (x: string) => call(`dfx canister call eth_secret_storage secret_by_signature '( \"${x}\" )'`),
 }
