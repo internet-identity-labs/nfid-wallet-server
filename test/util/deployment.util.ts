@@ -53,9 +53,13 @@ export const deploy = async ({clean = true, apps}: {clean?: boolean, apps: App[]
         dfx.root = DFX.GET_PRINCIPAL();
 
         if (apps.includes(App.EthSecretStorage)) {
-            DFX.DEPLOY("eth_secret_storage");
-
-            var response = DFX.CONFIGURE_ESS();
+            if(clean) {
+                DFX.DEPLOY("eth_secret_storage");
+            } else {
+                DFX.UPGRADE_FORCE("eth_secret_storage");
+            }
+            
+            var response = DFX.INIT_ESS();
             console.debug(">> ", response);
 
             if (response !== "()") {

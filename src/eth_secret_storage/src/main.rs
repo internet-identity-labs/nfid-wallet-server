@@ -1,54 +1,98 @@
-use std::collections::HashMap;
+use std::convert::TryInto;
+use std::str::FromStr;
 
-use canister_api_macros::{admin, collect_metrics};
+use canister_api_macros::collect_metrics;
+use ethers_core::k256::sha2::{Sha256, Digest};
 use ic_cdk::export::Principal;
 use ic_cdk::export::candid::CandidType;
-use ic_cdk::{trap, storage};
-use repository::secret_repo;
+use ic_cdk::{trap, storage, call};
 use serde::Deserialize;
-use ic_cdk_macros::{init, update, pre_upgrade, post_upgrade};
-use service::response_service::HttpResponse;
-use service::secret_service::get_secret_by_signature;
-use crate::repository::configuration_repo::{AdminRepo, ConfigurationRepo, Configuration, ControllersRepo};
-use crate::service::ic_service::get_caller;
- 
-mod constant;
-mod service;
-mod repository;
+use ic_cdk_macros::{pre_upgrade, post_upgrade, query, update};
+
+use std::cell::RefCell;
+use std::collections::HashSet;
+use ethers_core::types::Signature;
+
+const MESSAGE: &str = "Hi there from NFID! Sign this message to prove you own this wallet and we’ll log you in. This won’t cost you any Ether.";
+
+thread_local! {
+    static CONTROLLERS: RefCell<HashSet<String>> = RefCell::new(HashSet::new());
+    static KEY: RefCell<Option<String>> = RefCell::new(None);
+}
 
 #[derive(Clone, Debug, Deserialize, CandidType)]
 pub struct PersistedData {
-    pub admin: Option<Principal>,
-    pub secrets: Option<HashMap<String, HashMap<String, String>>>
+    pub key: Option<String>
 }
 
-#[init]
+#[update]
 async fn init() -> () {
-    AdminRepo::save(get_caller());
-}
+    let is_exist = KEY.with(|storage| { 
+        storage.borrow().is_some()
+    });
 
-#[update]
-#[admin]
-#[collect_metrics]
-async fn configure() -> () {
-    let configuration = Configuration {
-        whitelisted_canisters: None,
+    if is_exist {
+        return ();
+    }
+
+    let key: String = match call(Principal::management_canister(), "raw_rand", ()).await {
+        Ok((result, )) => {
+            let bytes: Vec<u8> = result;
+            hex::encode(bytes)
+        },
+        Err((_, err)) => trap(&format!("Failed to get salt: {}", err)),
     };
-    ConfigurationRepo::save(configuration);
+    
+    KEY.with(|storage| { 
+        storage.borrow_mut().replace(key);
+    });
 }
 
-#[update]
+#[query]
 #[collect_metrics]
-async fn secret_by_signature(app: String, signature: String) -> HttpResponse<String> {
-    get_secret_by_signature(app, signature).await
+async fn get_secret(address: String, signature: String) -> String {
+    let address = address[2..].to_string();
+    let signature = signature[2..].to_string();
+
+    let signature: Signature = match Signature::from_str(signature.as_str()) {
+        Ok(signature) => signature,
+        Err(error) => trap(&format!("Incorrect signature: {}", &error.to_string()))
+    };
+
+    let address_bytes: Vec<u8> = match hex::decode(&address) {
+        Ok(bytes) => bytes,
+        Err(error) => trap(&format!("Incorrect address: {}", &error.to_string()))
+    };
+
+    let address_bytes: [u8; 20] = match address_bytes.try_into() {
+        Ok(bytes) => bytes,
+        Err(_) => trap("Incorrect address lengh")
+    };
+
+    match signature.verify(MESSAGE, address_bytes) {
+        Ok(_) => (),
+        Err(message) => trap(&message.to_string())
+    };
+
+    let key = KEY.with(|storage| { 
+        storage.borrow_mut().clone().unwrap()
+    });
+
+    let secret = address + &key;
+
+    let mut hasher = Sha256::new();
+    hasher.update(secret.as_bytes());
+    let result = hasher.finalize();
+
+    hex::encode(result)
 }
 
 #[pre_upgrade]
 fn pre_upgrade() {
-    let pre_upgrade_data = PersistedData {
-        admin: Some(AdminRepo::get()),
-        secrets: Some(secret_repo::get_all())
-    };
+    let key: Option<String> = KEY.with(|storage| { 
+        storage.borrow_mut().clone()
+    });
+    let pre_upgrade_data = PersistedData {key};
     match storage::stable_save((pre_upgrade_data, 0)) {
         Ok(_) => (),
         Err(message) => trap(&format!("Failed to preupgrade: {}", message))
@@ -60,9 +104,10 @@ fn post_upgrade() {
     match storage::stable_restore() {
         Ok(store) => {
             let (post_data, _): (PersistedData, i32) = store;
-            if post_data.admin.is_some() {
-                AdminRepo::save(post_data.admin.unwrap());
-                secret_repo::save_all(post_data.secrets.unwrap())
+            if post_data.key.is_some() {
+                KEY.with(|storage| { 
+                    storage.borrow_mut().replace(post_data.key.unwrap());
+                });
             }
         }
         Err(message) => trap(message.as_str())

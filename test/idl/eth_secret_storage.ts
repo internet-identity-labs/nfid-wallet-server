@@ -1,6 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export type Address = string;
 export type CanisterCyclesAggregatedData = Array<bigint>;
 export type CanisterHeapMemoryAggregatedData = Array<bigint>;
 export type CanisterLogFeature = { 'filterMessageByContains' : null } |
@@ -69,15 +70,11 @@ export interface NumericEntity {
   'first' : bigint,
   'last' : bigint,
 }
-export interface StringHttpResponse {
-  'data' : [] | [string],
-  'error' : [] | [string],
-  'status_code' : number,
-}
+export type Secret = string;
+export type Signature = string;
 export type UpdateCallsAggregatedData = Array<bigint>;
 export interface _SERVICE {
   'collectCanisterMetrics' : ActorMethod<[], undefined>,
-  'configure' : ActorMethod<[[]], undefined>,
   'getCanisterLog' : ActorMethod<
     [[] | [CanisterLogRequest]],
     [] | [CanisterLogResponse]
@@ -86,5 +83,6 @@ export interface _SERVICE {
     [GetMetricsParameters],
     [] | [CanisterMetrics]
   >,
-  'secret_by_signature' : ActorMethod<[string, string], StringHttpResponse>,
+  'get_secret' : ActorMethod<[Address, Signature], Secret>,
+  'init' : ActorMethod<[], undefined>,
 }

@@ -81,14 +81,11 @@ export const idlFactory = ({ IDL }) => {
     'daily' : IDL.Vec(DailyMetricsData),
   });
   const CanisterMetrics = IDL.Record({ 'data' : CanisterMetricsData });
-  const StringHttpResponse = IDL.Record({
-    'data' : IDL.Opt(IDL.Text),
-    'error' : IDL.Opt(IDL.Text),
-    'status_code' : IDL.Nat16,
-  });
+  const Address = IDL.Text;
+  const Signature = IDL.Text;
+  const Secret = IDL.Text;
   return IDL.Service({
     'collectCanisterMetrics' : IDL.Func([], [], []),
-    'configure' : IDL.Func([], [], []),
     'getCanisterLog' : IDL.Func(
         [IDL.Opt(CanisterLogRequest)],
         [IDL.Opt(CanisterLogResponse)],
@@ -99,11 +96,8 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(CanisterMetrics)],
         ['query'],
       ),
-    'secret_by_signature' : IDL.Func(
-        [IDL.Text, IDL.Text],
-        [StringHttpResponse],
-        [],
-      ),
+    'get_secret' : IDL.Func([Address, Signature], [Secret], ['query']),
+    'init' : IDL.Func([], [], [])
   });
 };
 export const init = ({ IDL }) => { return []; };
