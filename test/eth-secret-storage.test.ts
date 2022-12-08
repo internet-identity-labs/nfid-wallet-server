@@ -23,14 +23,6 @@ describe("Eth Secret Storge", () => {
             DFX.STOP();
         });
 
-        it("should return salt already set error", async function () {
-            try {
-                await dfx.ess.actor.init();
-            } catch(error) {
-                expect(new String(error)).contains(`Salt already set`);
-            }
-        });
-
         it("should return signature verification failed error", async function () {
             try {
                 await dfx.ess.actor.get_secret(ADDRESS, SIGNATURE3);
