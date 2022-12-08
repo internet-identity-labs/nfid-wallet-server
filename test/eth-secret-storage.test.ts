@@ -70,9 +70,9 @@ describe("Eth Secret Storge", () => {
                 dfx.ess.actor.get_secret(ADDRESS2, SIGNATURE2)
             ]) as [String, String, String];
 
-            expect(secret1.length).eq(64);
-            expect(secret2.length).eq(64);
-            expect(secret3.length).eq(64);
+            expect(secret1.length).eq(66);
+            expect(secret2.length).eq(66);
+            expect(secret3.length).eq(66);
 
             expect(secret1).eq(secret2);
             expect(secret1).not.eq(secret3);
@@ -85,8 +85,8 @@ describe("Eth Secret Storge", () => {
 
             const secret2 = await dfx.ess.actor.get_secret(ADDRESS, SIGNATURE) as String;
 
-            expect(secret1.length).eq(64);
-            expect(secret2.length).eq(64);
+            expect(secret1.length).eq(66);
+            expect(secret2.length).eq(66);
 
             expect(secret1).eq(secret2);
         });
