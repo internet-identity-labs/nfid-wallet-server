@@ -6,3 +6,4 @@ members = [
     "src/verifier",
     "src/libraries/canister_api_macros",
 ]
+exclude = ["src/eth_secret_storage"]

@@ -33,5 +33,8 @@
   "verifier": {
     "dev": "gzqxf-kqaaa-aaaak-qakba-cai",
     "ic": "sgk26-7yaaa-aaaan-qaovq-cai"
+  },
+  "eth_secret_storage": {
+    "dev": "25nnx-kyaaa-aaaao-ab43a-cai"
   }
 }
