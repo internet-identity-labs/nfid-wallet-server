@@ -54,11 +54,6 @@ async fn get_secret(address: String, signature: String) -> String {
     let address = address[2..].to_string();
     let signature = signature[2..].to_string();
 
-    let signature: Signature = match Signature::from_str(signature.as_str()) {
-        Ok(signature) => signature,
-        Err(error) => trap(&format!("Incorrect signature: {}", &error.to_string()))
-    };
-
     let address_bytes: Vec<u8> = match hex::decode(&address) {
         Ok(bytes) => bytes,
         Err(error) => trap(&format!("Incorrect address: {}", &error.to_string()))
@@ -69,7 +64,12 @@ async fn get_secret(address: String, signature: String) -> String {
         Err(_) => trap("Incorrect address lengh")
     };
 
-    match signature.verify(MESSAGE, address_bytes) {
+    let sig: Signature = match Signature::from_str(signature.as_str()) {
+        Ok(signature) => signature,
+        Err(error) => trap(&format!("Incorrect signature: {}", &error.to_string()))
+    };
+
+    match sig.verify(MESSAGE, address_bytes) {
         Ok(_) => (),
         Err(message) => trap(&message.to_string())
     };
@@ -78,7 +78,7 @@ async fn get_secret(address: String, signature: String) -> String {
         storage.borrow_mut().clone().unwrap()
     });
 
-    let secret = address + &key;
+    let secret = signature + &address + &key;
 
     let mut hasher = Sha256::new();
     hasher.update(secret.as_bytes());
