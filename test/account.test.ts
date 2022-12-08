@@ -27,7 +27,7 @@ describe("Account", () => {
         var dfx: Dfx;
 
         before(async () => {
-            dfx = await deploy(App.IdentityManager, App.IdentityManagerReplica);
+            dfx = await deploy({apps: [App.IdentityManager, App.IdentityManagerReplica]});
         });
 
         after(() => {
@@ -87,7 +87,7 @@ describe("Account", () => {
         var anchor: bigint;
 
         before(async () => {
-            dfx = await deploy(App.IdentityManager, App.InternetIdentityTest);
+            dfx = await deploy({apps: [App.IdentityManager, App.InternetIdentityTest]});
             anchor = await register(dfx.iit.actor, dfx.user.identity);
         });
 

@@ -3,6 +3,7 @@ import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { Dfx } from "../type/dfx";
 import { idlFactory as imIdl } from "../idl/identity_manager_idl";
 import { idlFactory as iitIdl } from "../idl/internet_identity_test_idl";
+import { idlFactory as essIdl } from "../idl/eth_secret_storage_idl";
 import { TextEncoder } from "util";
 import { App } from "../constanst/app.enum";
 import { IDL } from "@dfinity/candid";
@@ -10,7 +11,7 @@ import { DFX } from "../constanst/dfx.const";
 
 const localhost: string = "http://127.0.0.1:8000";
 
-export const deploy = async (...apps: App[]): Promise<Dfx> => {
+export const deploy = async ({clean = true, apps}: {clean?: boolean, apps: App[]}): Promise<Dfx> => {
     var i = 0;
     var imConfigurationArguments = [];
     var dfx: Dfx = {
@@ -31,19 +32,48 @@ export const deploy = async (...apps: App[]): Promise<Dfx> => {
             actor: null,
             anchor: null,
         },
+        ess: {
+            id: null,
+            actor: null,
+        }
     };
 
     while (++i <= 5) {
         dfx.user.identity = getIdentity("87654321876543218765432187654321");
         dfx.user.principal = dfx.user.identity.getPrincipal().toString();
 
-        DFX.STOP();
-        DFX.REMOVE_DFX_FOLDER();
-        DFX.CREATE_TEST_PERSON();
-        DFX.USE_TEST_ADMIN();
+        if (clean) {
+            DFX.STOP();
+            DFX.REMOVE_DFX_FOLDER();
+            DFX.CREATE_TEST_PERSON();
+            DFX.USE_TEST_ADMIN();
+        }
 
         dfx.root = DFX.GET_PRINCIPAL();
-        DFX.INIT();
+
+        if (clean) {
+            DFX.INIT();
+        }
+
+        if (apps.includes(App.EthSecretStorage)) {
+            if(clean) {
+                DFX.DEPLOY("eth_secret_storage");
+            } else {
+                DFX.UPGRADE_FORCE("eth_secret_storage");
+            }
+            
+            var response = DFX.INIT_ESS();
+            console.debug(">> ", response);
+
+            if (response !== "()") {
+                continue;
+            }
+
+            dfx.ess.id = DFX.GET_CANISTER_ID("eth_secret_storage");
+            console.debug(">> ", dfx.ess.id);
+
+            dfx.ess.actor = await getActor(dfx.ess.id, dfx.user.identity, essIdl);
+        }
 
         if (apps.includes(App.IdentityManager)) {
             DFX.DEPLOY("identity_manager");
@@ -99,7 +129,9 @@ export const deploy = async (...apps: App[]): Promise<Dfx> => {
             imConfigurationArguments.push(`backup_canister_id = opt "${dfx.imr.id}"`);
         }
 
-        DFX.CONFIGURE_IM(imConfigurationArguments.join("; "));
+        if (apps.includes(App.IdentityManager)) {
+            DFX.CONFIGURE_IM(imConfigurationArguments.join("; "));
+        }
 
         return dfx;
     }

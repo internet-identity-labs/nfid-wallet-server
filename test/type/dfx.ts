@@ -18,5 +18,14 @@ export interface Dfx {
         id: string;
         actor: Record<string, ActorMethod>;
         anchor: bigint;
+    };
+    ess?: {
+        id: string;
+        actor: Record<string, ActorMethod>;
     }
 };
+
+export interface Configuration {
+    clean?: boolean,
+    apps: string[]
+}
