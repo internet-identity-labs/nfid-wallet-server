@@ -19,7 +19,7 @@ pub struct Transaction {
     pub vault_id: u64,
     pub to: String,
     pub approves: HashSet<Approve>,
-    pub amount: Tokens,
+    pub amount: u64,
     pub state: State,
     pub policy_id: u64,
     pub block_index: Option<BlockIndex>,
@@ -33,9 +33,9 @@ pub struct Transaction {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Hash, Eq)]
 pub struct Approve {
-  pub  signer: String,
-    pub  created_date: u64,
-    pub  status: State,
+    pub signer: String,
+    pub created_date: u64,
+    pub status: State,
 }
 
 impl PartialEq for Approve {
@@ -44,7 +44,7 @@ impl PartialEq for Approve {
     }
 }
 
-pub fn register_transaction(amount: Tokens, to: String, wallet_id: u64, tr_owner: User, policy: Policy, vault_id: u64) -> Transaction {
+pub fn register_transaction(amount: u64, to: String, wallet_id: u64, tr_owner: User, policy: Policy, vault_id: u64) -> Transaction {
     let amount_threshold: u64;
     let member_threshold: u8;
 
@@ -98,7 +98,7 @@ pub fn approve_transaction(transaction_id: u64, signer: User, state: State) -> T
                         created_date: ic_cdk::api::time(),
                         status: state,
                     });
-                tss.modified_date =  ic_cdk::api::time();
+                tss.modified_date = ic_cdk::api::time();
                 return tss.clone();
             }
         }
@@ -114,7 +114,7 @@ pub fn store_transaction(transaction: Transaction) -> Option<Transaction> {
 pub fn get_all(vaults: Vec<u64>) -> Vec<Transaction> {
     TRANSACTIONS.with(|transactions| {
         return transactions.borrow().iter()
-            .map(|a|a.1.clone())
+            .map(|a| a.1.clone())
             .filter(|t| vaults.contains(&t.vault_id))
             .collect();
     })

@@ -279,12 +279,19 @@ async fn get_policies(vault_id: u64) -> Vec<Policy> {
 }
 
 
+#[derive(CandidType, Deserialize, Clone)]
+pub struct TransactionRegisterRequest {
+    amount: u64,
+    address: String,
+    wallet_id: u64,
+}
+
+
 #[update]
 #[candid_method(update)]
-async fn register_transaction(amount: Tokens, address: String, wallet_id: u64) -> Transaction {
-
+async fn register_transaction(request: TransactionRegisterRequest) -> Transaction {
     let tr_owner = user_service::get_or_new_by_caller();
-    let mut wallet = wallet_service::get_wallet(wallet_id);
+    let mut wallet = wallet_service::get_wallet(request.wallet_id);
     let vaults = vault_service::get_by_ids(wallet.vaults.clone());
     let vault = vaults.first().unwrap(); //one to one??
 
@@ -293,7 +300,7 @@ async fn register_transaction(amount: Tokens, address: String, wallet_id: u64) -
     let policy = policy_service::get_by_ids(vault.policies.clone());
 
 
-    let transaction = transaction_service::register_transaction(amount, address, wallet_id, tr_owner, policy.first().unwrap().clone(), vault.id);
+    let transaction = transaction_service::register_transaction(request.amount, request.address, request.wallet_id, tr_owner, policy.first().unwrap().clone(), vault.id);
 
     // let users_to_notify = vault.members.clone().into_iter()
     //     .map(|k| k.user_uuid)
@@ -312,11 +319,19 @@ async fn get_transactions() -> Vec<Transaction> {
 }
 
 
+
+
+#[derive(CandidType, Deserialize, Clone)]
+pub struct TransactionApproveRequest {
+    transaction_id: u64,
+    state: State
+}
+
 #[update]
 #[candid_method(update)]
-async fn approve_transaction(transaction_id: u64, state: State) -> Transaction {
+async fn approve_transaction(request: TransactionApproveRequest) -> Transaction {
     let tr_owner = user_service::get_or_new_by_caller();
-    let mut transaction = transaction_service::approve_transaction(transaction_id, tr_owner, state);
+    let mut transaction = transaction_service::approve_transaction(request.transaction_id, tr_owner, request.state);
 
     if transaction.approves.clone()
         .into_iter()
@@ -346,11 +361,13 @@ fn to_array<T>(v: Vec<T>) -> [T; 32] {
         .unwrap_or_else(|v: Vec<T>| panic!("Expected a Vec of length {} but it was {}", 32, v.len()))
 }
 
-async fn transfer(amount: Tokens, to: AccountIdentifier, from_subaccount: Subaccount) -> Result<BlockIndex, String> {
+async fn transfer(amount: u64, to: AccountIdentifier, from_subaccount: Subaccount) -> Result<BlockIndex, String> {
+    let tokens = Tokens::from_e8s(amount);
+
     let ledger_canister_id = CONF.with(|conf| conf.borrow().ledger_canister_id);
     let transfer_args = ic_ledger_types::TransferArgs {
         memo: Memo(0),
-        amount,
+        amount: tokens,
         fee: DEFAULT_FEE,
         from_subaccount: Some(from_subaccount),
         to,

@@ -39,24 +39,32 @@ type ThresholdPolicy = record {
     currency : Currency;
 };
 
-type Tokens = record {
-    e8s : nat64
-};
-
 type Transaction = record {
     id : nat64;
     to : text;
     member_threshold : nat8;
     block_index : opt nat64;
+    modified_date : nat64;
+    vault_id : nat64;
     amount_threshold : nat64;
     state : State;
     approves : vec Approve;
     currency : Currency;
-    amount : Tokens;
+    amount : nat64;
     created_date : nat64;
-    modified_date : nat64;
     wallet_id : nat64;
     policy_id : nat64;
+};
+
+type TransactionApproveRequest = record {
+    transaction_id : nat64;
+    state : State;
+};
+
+type TransactionRegisterRequest = record {
+    address : text;
+    amount : nat64;
+    wallet_id : nat64;
 };
 
 type Vault = record {
@@ -100,15 +108,17 @@ type WalletRegisterRequest = record {
     vault_id : nat64
 };service : (opt Conf) -> {
     add_vault_member : (VaultMemberRequest) -> (Vault);
-    approve_transaction : (nat64, State) -> (Transaction);
+    approve_transaction : (TransactionApproveRequest) -> (Transaction);
     get_policies : (nat64) -> (vec Policy) query;
     get_transactions : () -> (vec Transaction) query;
     get_vault_members : (nat64) -> (vec VaultMember) query;
     get_vaults : () -> (vec Vault) query;
     get_wallets : (nat64) -> (vec Wallet) query;
     register_policy : (PolicyRegisterRequest) -> (Policy);
-    register_transaction : (Tokens, text, nat64) -> (Transaction);
+    register_transaction : (TransactionRegisterRequest) -> (Transaction);
     register_vault : (VaultRegisterRequest) -> (Vault);
     register_wallet : (WalletRegisterRequest) -> (Wallet);
     sub : (nat64) -> (text) query;
+    sub_bytes : (nat64) -> (vec nat8) query;
+    sub_vec : (nat64) -> (vec nat8) query;
 }

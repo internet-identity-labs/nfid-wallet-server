@@ -7,8 +7,7 @@ import {
     PolicyRegisterRequest,
     State,
     ThresholdPolicy,
-    Tokens,
-    Transaction,
+    Transaction, TransactionApproveRequest, TransactionRegisterRequest,
     Vault,
     VaultMemberRequest,
     VaultRegisterRequest,
@@ -64,13 +63,12 @@ describe("Transaction", () => {
         let request3: PolicyRegisterRequest = {policy_type: {'threshold_policy': tp}, vault_id: 1n};
         let policy = await dfx.vault.actor.register_policy(request3) as Policy
 
-        let tokens: Tokens = {
-            e8s: 100000n
-
-        }
-        let wallet2Address = await dfx.vault.actor.sub(2);
+        let tokens = 100000n
+        let wallet2Address = await dfx.vault.actor.sub(2) as string;
         console.log(await dfx.vault.actor.sub(1));
-        let actualTransaction = await dfx.vault.actor.register_transaction(tokens, wallet2Address, 1) as Transaction
+        let registerRequest: TransactionRegisterRequest = {address: wallet2Address, amount: tokens, wallet_id: 1n}
+
+        let actualTransaction = await dfx.vault.actor.register_transaction(registerRequest) as Transaction
 
         expect(actualTransaction.id).eq(1n)
         expect(actualTransaction.to).eq(wallet2Address);
@@ -82,27 +80,30 @@ describe("Transaction", () => {
         expect(actualTransaction.approves[0].created_date > 0).eq(true);
         expect(actualTransaction.created_date > 0).eq(true);
         expect(actualTransaction.modified_date > 0).eq(true);
-        expect(actualTransaction.amount.e8s).eq(tokens.e8s);
+        expect(actualTransaction.amount).eq(tokens);
         expect(actualTransaction.block_index.length).eq(0);
         expect(actualTransaction.currency.ICP).eq(null);
         expect(actualTransaction.policy_id).eq(policy.id);
         expect(actualTransaction.wallet_id).eq(wallet1.id);
 
         let state = {'APPROVED': null} as State
-        let completed = await dfx.vault.actor_member.approve_transaction(actualTransaction.id, state) as Transaction
+
+        let approve: TransactionApproveRequest = {state: state, transaction_id: actualTransaction.id}
+
+        let completed = await dfx.vault.actor_member.approve_transaction(approve) as Transaction
         expect(completed.id).eq(1n)
         expect(completed.to).eq(wallet2Address);
         expect(completed.amount_threshold).eq(1n);
         expect(completed.state.hasOwnProperty('APPROVED')).eq(true);
         expect(completed.approves.length).eq(2);
-        expect(completed.approves[0].signer).eq(address);
+        expect(completed.approves.find(l=>l.signer === address).signer).eq(address);
         expect(completed.approves[0].status.hasOwnProperty("APPROVED")).eq(true);
-        expect(completed.approves[1].signer).eq(memberAddress);
+        expect(completed.approves.find(l=>l.signer === memberAddress).signer).eq(memberAddress); //TODO
         expect(completed.approves[1].status.hasOwnProperty("APPROVED")).eq(true);
         expect(completed.approves[0].created_date > 0).eq(true);
         expect(completed.approves[1].created_date > 0).eq(true);
         expect(completed.created_date > 0).eq(true);
-        expect(completed.amount.e8s).eq(tokens.e8s);
+        expect(completed.amount).eq(tokens);
         expect(completed.block_index[0]).eq(2n);
         expect(completed.currency.ICP).eq(null);
         expect(completed.policy_id).eq(policy.id);
