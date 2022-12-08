@@ -3,18 +3,20 @@ extern crate core;
 use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
+use std::convert::{TryFrom, TryInto};
 use std::fmt::Debug;
 use std::hash::Hash;
 
 use candid::{candid_method, export_service, Principal};
 use candid::utils::ArgumentEncoder;
-use ic_cdk::{caller, storage, trap};
+use ic_cdk::{storage, trap};
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 use ic_cdk::export::candid;
 use ic_cdk_macros::*;
 use ic_cdk_macros::*;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_FEE, MAINNET_LEDGER_CANISTER_ID, Memo, Subaccount, Tokens};
 
+use crate::enums::State;
 use crate::policy_service::{Policy, PolicyType};
 use crate::transaction_service::Transaction;
 use crate::user_service::{get_or_new_by_caller, User};
@@ -29,6 +31,7 @@ mod policy_service;
 mod transaction_service;
 mod notification_service;
 mod util;
+mod enums;
 
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq)]
 pub struct Conf {
@@ -43,6 +46,7 @@ impl Default for Conf {
         }
     }
 }
+
 
 thread_local! {
     static CONF: RefCell<Conf> = RefCell::new(Conf::default());
@@ -67,6 +71,18 @@ fn init(conf: Option<Conf>) {
 #[candid_method(query, rename = "sub")]
 async fn sub(wallet_id: u64) -> String {
     id_to_address(wallet_id).to_string()
+}
+
+#[query]
+#[candid_method(query, rename = "sub_vec")]
+async fn sub_vec(wallet_id: u64) -> Subaccount {
+    id_to_subaccount(wallet_id)
+}
+
+#[query]
+#[candid_method(query, rename = "sub_bytes")]
+async fn sub_bytes(wallet_id: u64) -> AccountIdentifier {
+    id_to_address(wallet_id)
 }
 
 
@@ -237,7 +253,6 @@ async fn register_policy(request: PolicyRegisterRequest) -> Policy {
     vault.policies.push(policy.id);
     vault_service::restore(vault);
     policy
-
 }
 
 #[query]
@@ -265,9 +280,10 @@ async fn get_policies(vault_id: u64) -> Vec<Policy> {
 
 
 #[update]
-async fn register_transaction(amount: Tokens, to: AccountIdentifier, wallet_id: u64) -> Transaction {
-    let caller = caller().to_text();
-    let tr_owner = user_service::get_by_address(caller);
+#[candid_method(update)]
+async fn register_transaction(amount: Tokens, address: String, wallet_id: u64) -> Transaction {
+
+    let tr_owner = user_service::get_or_new_by_caller();
     let mut wallet = wallet_service::get_wallet(wallet_id);
     let vaults = vault_service::get_by_ids(wallet.vaults.clone());
     let vault = vaults.first().unwrap(); //one to one??
@@ -277,32 +293,43 @@ async fn register_transaction(amount: Tokens, to: AccountIdentifier, wallet_id: 
     let policy = policy_service::get_by_ids(vault.policies.clone());
 
 
-    let transaction = transaction_service::register_transaction(amount, to, wallet_id, tr_owner, policy.first().unwrap().clone());
+    let transaction = transaction_service::register_transaction(amount, address, wallet_id, tr_owner, policy.first().unwrap().clone(), vault.id);
 
-    // wallet.transaction_ids.push(transaction.id);//todo think about index
-    // wallet_service::restore(wallet);
+    // let users_to_notify = vault.members.clone().into_iter()
+    //     .map(|k| k.user_uuid)
+    //     .filter(|l| !l.eq(&user_id))
+    //     .collect();
 
-    let users_to_notify = vault.members.clone().into_iter()
-        .map(|k| k.user_uuid)
-        .filter(|l| !l.eq(&user_id))
-        .collect();
-
-    notification_service::register_notification(transaction.id, users_to_notify);
+    // notification_service::register_notification(transaction.id, users_to_notify);
     transaction
+}
+
+#[query]
+#[candid_method(query)]
+async fn get_transactions() -> Vec<Transaction> {
+    let tr_owner = user_service::get_or_new_by_caller();
+    return transaction_service::get_all(tr_owner.vaults);
 }
 
 
 #[update]
-async fn approve_transaction(transaction_id: u64) -> Transaction {
-    let caller = caller().to_text();
-    let tr_owner = user_service::get_by_address(caller);
-    let mut transaction = transaction_service::approve_transaction(transaction_id, tr_owner);
-    if transaction.approves.len() as u8 >= transaction.member_threshold {
+#[candid_method(update)]
+async fn approve_transaction(transaction_id: u64, state: State) -> Transaction {
+    let tr_owner = user_service::get_or_new_by_caller();
+    let mut transaction = transaction_service::approve_transaction(transaction_id, tr_owner, state);
+
+    if transaction.approves.clone()
+        .into_iter()
+        .filter(|l| l.status.eq(&State::APPROVED))
+        .count() as u8 >= transaction.member_threshold {
         let subaccount = wallet_service::id_to_subaccount(transaction.wallet_id);
-        let result = transfer(transaction.amount, transaction.to, subaccount).await;
+        let decoded = hex::decode(transaction.to.clone()).unwrap();
+        let to: AccountIdentifier = AccountIdentifier::try_from(to_array(decoded)).unwrap();
+        let result = transfer(transaction.amount, to, subaccount).await;
         match result {
             Ok(block) => {
                 transaction.block_index = Some(block);
+                transaction.state = State::APPROVED;
                 transaction_service::store_transaction(transaction.clone());
             }
             Err(e) => {
@@ -310,12 +337,17 @@ async fn approve_transaction(transaction_id: u64) -> Transaction {
             }
         }
     }
+    transaction_service::store_transaction(transaction.clone());
     transaction
 }
 
+fn to_array<T>(v: Vec<T>) -> [T; 32] {
+    v.try_into()
+        .unwrap_or_else(|v: Vec<T>| panic!("Expected a Vec of length {} but it was {}", 32, v.len()))
+}
 
 async fn transfer(amount: Tokens, to: AccountIdentifier, from_subaccount: Subaccount) -> Result<BlockIndex, String> {
-    let ledger_canister_id = MAINNET_LEDGER_CANISTER_ID;
+    let ledger_canister_id = CONF.with(|conf| conf.borrow().ledger_canister_id);
     let transfer_args = ic_ledger_types::TransferArgs {
         memo: Memo(0),
         amount,
@@ -334,7 +366,12 @@ async fn transfer(amount: Tokens, to: AccountIdentifier, from_subaccount: Subacc
 fn sub_account_test() {
     let account_ad = 18_446_744_073_709_551_615u64 as u64;
     let a = id_to_subaccount(account_ad);
-    // print!("{}", a)
+    let tt = AccountIdentifier::new(&Principal::from_text("ymvb6-7qaaa-aaaan-qbgga-cai".to_string()).unwrap(), &a);
+    print!("{} \n", tt.to_string());
+    let yyy = to_array(hex::decode(tt.to_string()).unwrap());
+    let tty: AccountIdentifier = AccountIdentifier::try_from(yyy).unwrap();
+    print!("{} ", tty.to_string());
+    assert_eq!(tty, tt)
 }
 
 export_service!();

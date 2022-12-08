@@ -19,7 +19,33 @@ export const idlFactory = ({ IDL }) => {
         'wallets' : IDL.Vec(IDL.Nat64),
         'policies' : IDL.Vec(IDL.Nat64),
     });
+    const State = IDL.Variant({
+        'REJECTED' : IDL.Null,
+        'PENDING' : IDL.Null,
+        'APPROVED' : IDL.Null,
+    });
+    const Approve = IDL.Record({
+        'status' : State,
+        'signer' : IDL.Text,
+        'created_date' : IDL.Nat64,
+    });
     const Currency = IDL.Variant({ 'ICP' : IDL.Null });
+    const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
+    const Transaction = IDL.Record({
+        'id' : IDL.Nat64,
+        'to' : IDL.Text,
+        'member_threshold' : IDL.Nat8,
+        'block_index' : IDL.Opt(IDL.Nat64),
+        'amount_threshold' : IDL.Nat64,
+        'state' : State,
+        'approves' : IDL.Vec(Approve),
+        'currency' : Currency,
+        'amount' : Tokens,
+        'created_date' : IDL.Nat64,
+        'modified_date' : IDL.Nat64,
+        'wallet_id' : IDL.Nat64,
+        'policy_id' : IDL.Nat64,
+    });
     const ThresholdPolicy = IDL.Record({
         'member_threshold' : IDL.Nat8,
         'amount_threshold' : IDL.Nat64,
@@ -44,7 +70,9 @@ export const idlFactory = ({ IDL }) => {
     });
     return IDL.Service({
         'add_vault_member' : IDL.Func([VaultMemberRequest], [Vault], []),
+        'approve_transaction' : IDL.Func([IDL.Nat64, State], [Transaction], []),
         'get_policies' : IDL.Func([IDL.Nat64], [IDL.Vec(Policy)], ['query']),
+        'get_transactions' : IDL.Func([], [IDL.Vec(Transaction)], ['query']),
         'get_vault_members' : IDL.Func(
             [IDL.Nat64],
             [IDL.Vec(VaultMember)],
@@ -53,6 +81,11 @@ export const idlFactory = ({ IDL }) => {
         'get_vaults' : IDL.Func([], [IDL.Vec(Vault)], ['query']),
         'get_wallets' : IDL.Func([IDL.Nat64], [IDL.Vec(Wallet)], ['query']),
         'register_policy' : IDL.Func([PolicyRegisterRequest], [Policy], []),
+        'register_transaction' : IDL.Func(
+            [Tokens, IDL.Text, IDL.Nat64],
+            [Transaction],
+            [],
+        ),
         'register_vault' : IDL.Func([VaultRegisterRequest], [Vault], []),
         'register_wallet' : IDL.Func([WalletRegisterRequest], [Wallet], []),
         'sub' : IDL.Func([IDL.Nat64], [IDL.Text], ['query']),

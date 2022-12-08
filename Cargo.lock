@@ -2028,12 +2028,16 @@ dependencies = [
  "byteorder",
  "candid 0.7.18",
  "candid 0.8.4",
+ "crc32fast",
+ "hex",
  "ic-cdk 0.6.7",
  "ic-cdk-macros 0.6.7",
  "ic-certified-map",
  "ic-ledger-types",
  "ic-stable-structures",
  "serde",
+ "serde_bytes",
+ "sha2 0.9.8",
  "tempfile",
 ]
 
