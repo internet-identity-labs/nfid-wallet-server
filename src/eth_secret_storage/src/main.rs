@@ -1,10 +1,8 @@
 use std::convert::TryInto;
-use std::fmt::format;
-use std::str::{FromStr, from_utf8_unchecked};
+use std::str::FromStr;
 
 use canister_api_macros::collect_metrics;
-use ethers_core::k256::sha2::{Sha256, Digest};
-use ethers_core::utils::{parse_bytes32_string, hash_message, keccak256};
+use ethers_core::utils::keccak256;
 use ic_cdk::export::Principal;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::{trap, storage, call};
@@ -14,7 +12,6 @@ use ic_cdk_macros::{pre_upgrade, post_upgrade, query, update};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use ethers_core::types::Signature;
-use std::str;
 
 const MESSAGE: &str = "Hi there from NFID! Sign this message to prove you own this wallet and we’ll log you in. This won’t cost you any Ether.";
 
