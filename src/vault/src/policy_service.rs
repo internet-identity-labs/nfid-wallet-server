@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use candid::CandidType;
 use ic_cdk::trap;
 use serde::Deserialize;
@@ -50,7 +48,7 @@ pub fn restore_policy(ps: Policy) -> Policy {
     })
 }
 
-pub fn get_by_ids(ids: Vec<u64>) -> Vec<Policy> {
+pub fn get(ids: Vec<u64>) -> Vec<Policy> {
     POLICIES.with(|policies| {
         let mut result: Vec<Policy> = Default::default();
         for id in ids {

@@ -3,12 +3,12 @@ use std::collections::{HashMap, HashSet};
 
 use candid::CandidType;
 use ic_cdk::trap;
-use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Subaccount, Timestamp, Tokens};
+use ic_ledger_types::BlockIndex;
 use serde::{Deserialize, Serialize};
 
-use crate::{Policy, PolicyType, TRANSACTIONS, User};
+use crate::{caller_to_address, Policy, PolicyType, TRANSACTIONS, User};
 use crate::enums::State;
-use crate::policy_service::{Currency};
+use crate::policy_service::Currency;
 
 pub type Transactions = HashMap<u64, Transaction>;
 
@@ -44,7 +44,7 @@ impl PartialEq for Approve {
     }
 }
 
-pub fn register_transaction(amount: u64, to: String, wallet_id: u64, tr_owner: User, policy: Policy, vault_id: u64) -> Transaction {
+pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Policy, vault_id: u64) -> Transaction {
     let amount_threshold: u64;
     let member_threshold: u8;
 
@@ -58,7 +58,7 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, tr_owner: U
         let mut ts = transactions.borrow_mut();
         let mut approves: HashSet<Approve> = Default::default();
         let approve = Approve {
-            signer: tr_owner.address,
+            signer: caller_to_address(),
             created_date: ic_cdk::api::time(),
             status: State::APPROVED,
         };
@@ -89,17 +89,17 @@ pub fn approve_transaction(transaction_id: u64, signer: User, state: State) -> T
     TRANSACTIONS.with(|transactions| {
         match transactions.borrow_mut().get_mut(&transaction_id) {
             None => {
-                trap("No such ts.")
+                trap("Not registered")
             }
-            Some(tss) => {
-                tss.approves.insert(
+            Some(ts) => {
+                ts.approves.insert(
                     Approve {
                         signer: signer.address,
                         created_date: ic_cdk::api::time(),
                         status: state,
                     });
-                tss.modified_date = ic_cdk::api::time();
-                return tss.clone();
+                ts.modified_date = ic_cdk::api::time();
+                ts.clone()
             }
         }
     })

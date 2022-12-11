@@ -16,30 +16,20 @@ pub fn get_or_new_by_address(address: String) -> User {
         let mut borrowed = users.borrow_mut();
         match borrowed.get_mut(&address) {
             None => {
-                let p = User { address: address.clone(), vaults: vec![] };
-                borrowed.insert(address, p.clone());
-                p
+                let new_user = User { address: address.clone(), vaults: vec![] };
+                borrowed.insert(address, new_user.clone());
+                new_user
             }
-            Some(u) => {
-                u.clone()
+            Some(user) => {
+                user.clone()
             }
         }
     })
 }
 
-
-pub fn get_by_address(address: String) -> User {
-    USERS.with(|users| {
-        match users.borrow_mut().get_mut(&address) {
-            None => {
-                trap("Not registered")
-            }
-
-            Some(p) => {
-                p.clone()
-            }
-        }
-    })
+pub fn get_or_new_by_caller() -> User {
+    let address = caller_to_address();
+    get_or_new_by_address(address)
 }
 
 pub fn restore(user: User) -> Option<User> {
@@ -48,8 +38,3 @@ pub fn restore(user: User) -> Option<User> {
     })
 }
 
-
-pub fn get_or_new_by_caller() -> User {
-    let address = caller_to_address();
-    get_or_new_by_address(address)
-}

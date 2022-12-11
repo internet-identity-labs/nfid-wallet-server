@@ -8,17 +8,17 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use candid::{candid_method, export_service, Principal};
-use candid::utils::ArgumentEncoder;
 use ic_cdk::{storage, trap};
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 use ic_cdk::export::candid;
 use ic_cdk_macros::*;
-use ic_cdk_macros::*;
-use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_FEE, MAINNET_LEDGER_CANISTER_ID, Memo, Subaccount, Tokens};
+use ic_ledger_types::{AccountIdentifier, MAINNET_LEDGER_CANISTER_ID, Subaccount};
 
 use crate::enums::State;
 use crate::policy_service::{Policy, PolicyType};
+use crate::security_service::trap_if_not_permitted;
 use crate::transaction_service::Transaction;
+use crate::transfer_service::transfer;
 use crate::user_service::{get_or_new_by_caller, User};
 use crate::util::caller_to_address;
 use crate::vault_service::{Vault, VaultMember, VaultRole};
@@ -32,6 +32,8 @@ mod transaction_service;
 mod notification_service;
 mod util;
 mod enums;
+mod security_service;
+mod transfer_service;
 
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq)]
 pub struct Conf {
@@ -89,6 +91,7 @@ async fn sub_bytes(wallet_id: u64) -> AccountIdentifier {
 #[derive(CandidType, Deserialize, Clone)]
 pub struct VaultRegisterRequest {
     name: String,
+    description: Option<String>,
 }
 
 #[update]
@@ -96,7 +99,7 @@ pub struct VaultRegisterRequest {
 async fn register_vault(request: VaultRegisterRequest) -> Vault {
     let address = caller_to_address();
     let mut user = user_service::get_or_new_by_address(address);
-    let vault = vault_service::register(user.address.clone(), request.name);
+    let vault = vault_service::register(user.address.clone(), request.name, request.description);
     user.vaults.push(vault.id.clone());
     user_service::restore(user);
     vault
@@ -106,7 +109,7 @@ async fn register_vault(request: VaultRegisterRequest) -> Vault {
 #[candid_method(query)]
 async fn get_vaults() -> Vec<Vault> {
     let vault_ids = user_service::get_or_new_by_caller().vaults;
-    vault_service::get_by_ids(vault_ids)
+    vault_service::get(vault_ids)
 }
 
 
@@ -121,58 +124,26 @@ pub struct VaultMemberRequest {
 #[update]
 #[candid_method(update)]
 async fn add_vault_member(request: VaultMemberRequest) -> Vault {
-    let caller = get_or_new_by_caller();
-    VAULTS.with(|vaults| {
-        return match vaults.borrow_mut().get_mut(&request.vault_id) {
-            None => { trap("Vault not exists") }
-            Some(vault) => {
-                let caller_member = vault.members
-                    .iter()
-                    .find(|l| l.user_uuid.eq(&caller.address));
-                match caller_member {
-                    None => {
-                        trap("Unauthorised")
-                    }
-                    Some(member) => {
-                        match member.role {
-                            VaultRole::Admin => {
-                                let mut user = user_service::get_or_new_by_address(request.address);
-                                let vm = VaultMember {
-                                    user_uuid: user.address.clone(),
-                                    role: request.role,
-                                    name: request.name,
-                                };
-                                vault.members.insert(vm);
-                                user.vaults.push(vault.id.clone());
-                                user_service::restore(user);
-                                vault.clone()
-                            }
-                            VaultRole::Member => {
-                                trap("Not enough permissions")
-                            }
-                        }
-                    }
-                }
-            }
-        };
-    })
+    trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]);
+    let mut vault = vault_service::get_by_id(request.vault_id);
+    let mut user = user_service::get_or_new_by_address(request.address);
+    let vm = VaultMember {
+        user_uuid: user.address.clone(),
+        role: request.role,
+        name: request.name,
+    };
+    vault.members.insert(vm);
+    user.vaults.push(vault.id.clone());
+    user_service::restore(user);
+    vault_service::restore(vault.clone());
+    vault
 }
 
 #[query]
 #[candid_method(query)]
 async fn get_vault_members(vault_id: u64) -> HashSet<VaultMember> {
-    let caller = get_or_new_by_caller();
-    if !caller.vaults.contains(&vault_id) {
-        trap("Not participant")
-    }
-    VAULTS.with(|vaults| {
-        return match vaults.borrow_mut().get_mut(&vault_id) {
-            None => { trap("Vault not exists") }
-            Some(vault) => {
-                vault.members.clone()
-            }
-        };
-    })
+    trap_if_not_permitted(vault_id, vec![VaultRole::Admin, VaultRole::Member]);
+    vault_service::get_by_id(vault_id).members //todo??
 }
 
 #[derive(CandidType, Deserialize, Clone)]
@@ -184,30 +155,8 @@ pub struct WalletRegisterRequest {
 #[update]
 #[candid_method(update)]
 async fn register_wallet(request: WalletRegisterRequest) -> Wallet {
-    let caller = get_or_new_by_caller();
-    let mut vault = match vault_service::get_by_ids(vec![request.vault_id]).first() {
-        None => { trap("Vault not exists") }
-        Some(vault) => {
-            let caller_member = vault.members
-                .iter()
-                .find(|p| caller.address.eq(&p.user_uuid));
-            match caller_member {
-                None => {
-                    trap("Unauthorised")
-                }
-                Some(vaultMember) => {
-                    match vaultMember.role {
-                        VaultRole::Admin => {
-                            vault.clone()
-                        }
-                        VaultRole::Member => {
-                            trap("Not enough permissions")
-                        }
-                    }
-                }
-            }
-        }
-    };
+    trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]);
+    let mut vault = vault_service::get_by_id(request.vault_id);
     let new_wallet = wallet_service::new_and_store(request.name, request.vault_id);
     vault.wallets.push(new_wallet.id);
     vault_service::restore(vault);
@@ -225,30 +174,8 @@ pub struct PolicyRegisterRequest {
 #[update]
 #[candid_method(update)]
 async fn register_policy(request: PolicyRegisterRequest) -> Policy {
-    let caller = get_or_new_by_caller();
-    let mut vault = match vault_service::get_by_ids(vec![request.vault_id]).first() {
-        None => { trap("Vault not exists") }
-        Some(vault) => {
-            let caller_member = vault.members
-                .iter()
-                .find(|p| caller.address.eq(&p.user_uuid));
-            match caller_member {
-                None => {
-                    trap("Unauthorised")
-                }
-                Some(vaultMember) => {
-                    match vaultMember.role {
-                        VaultRole::Admin => {
-                            vault.clone()
-                        }
-                        VaultRole::Member => {
-                            trap("Not enough permissions")
-                        }
-                    }
-                }
-            }
-        }
-    };
+    trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]);
+    let mut vault = vault_service::get_by_id(request.vault_id);
     let policy = policy_service::register_policy(request.policy_type);
     vault.policies.push(policy.id);
     vault_service::restore(vault);
@@ -258,11 +185,8 @@ async fn register_policy(request: PolicyRegisterRequest) -> Policy {
 #[query]
 #[candid_method(query)]
 async fn get_wallets(vault_id: u64) -> Vec<Wallet> {
-    let caller = get_or_new_by_caller();
-    if !caller.vaults.contains(&vault_id) {
-        trap("Not participant")
-    }
-    let vault = vault_service::get_by_ids(vec![vault_id]);
+    trap_if_not_permitted(vault_id, vec![VaultRole::Admin, VaultRole::Member]);
+    let vault = vault_service::get(vec![vault_id]);
     wallet_service::get_wallets(vault[0].wallets.clone())
 }
 
@@ -270,12 +194,9 @@ async fn get_wallets(vault_id: u64) -> Vec<Wallet> {
 #[query]
 #[candid_method(query)]
 async fn get_policies(vault_id: u64) -> Vec<Policy> {
-    let caller = get_or_new_by_caller();
-    if !caller.vaults.contains(&vault_id) {
-        trap("Not participant")
-    }
-    let vault = vault_service::get_by_ids(vec![vault_id]);
-    policy_service::get_by_ids(vault[0].policies.clone())
+    trap_if_not_permitted(vault_id, vec![VaultRole::Admin, VaultRole::Member]);
+    let vault = vault_service::get(vec![vault_id]);
+    policy_service::get(vault[0].policies.clone())
 }
 
 
@@ -290,24 +211,12 @@ pub struct TransactionRegisterRequest {
 #[update]
 #[candid_method(update)]
 async fn register_transaction(request: TransactionRegisterRequest) -> Transaction {
-    let tr_owner = user_service::get_or_new_by_caller();
-    let mut wallet = wallet_service::get_wallet(request.wallet_id);
-    let vaults = vault_service::get_by_ids(wallet.vaults.clone());
+    let wallet = wallet_service::get_wallet(request.wallet_id);
+    let vaults = vault_service::get(wallet.vaults.clone());
     let vault = vaults.first().unwrap(); //one to one??
-
-    let user_id = tr_owner.address.clone();
-
-    let policy = policy_service::get_by_ids(vault.policies.clone());
-
-
-    let transaction = transaction_service::register_transaction(request.amount, request.address, request.wallet_id, tr_owner, policy.first().unwrap().clone(), vault.id);
-
-    // let users_to_notify = vault.members.clone().into_iter()
-    //     .map(|k| k.user_uuid)
-    //     .filter(|l| !l.eq(&user_id))
-    //     .collect();
-
-    // notification_service::register_notification(transaction.id, users_to_notify);
+    trap_if_not_permitted(vault.id, vec![VaultRole::Admin, VaultRole::Member]);
+    let policy = policy_service::get(vault.policies.clone());
+    let transaction = transaction_service::register_transaction(request.amount, request.address, request.wallet_id, policy.first().unwrap().clone(), vault.id);
     transaction
 }
 
@@ -319,20 +228,17 @@ async fn get_transactions() -> Vec<Transaction> {
 }
 
 
-
-
 #[derive(CandidType, Deserialize, Clone)]
 pub struct TransactionApproveRequest {
     transaction_id: u64,
-    state: State
+    state: State,
 }
 
 #[update]
 #[candid_method(update)]
-async fn approve_transaction(request: TransactionApproveRequest) -> Transaction {
+async fn approve_transaction(request: TransactionApproveRequest) -> Transaction {//TODO: synonym to approve ??? claim_transaction/affect_transaction
     let tr_owner = user_service::get_or_new_by_caller();
     let mut transaction = transaction_service::approve_transaction(request.transaction_id, tr_owner, request.state);
-
     if transaction.approves.clone()
         .into_iter()
         .filter(|l| l.status.eq(&State::APPROVED))
@@ -348,34 +254,18 @@ async fn approve_transaction(request: TransactionApproveRequest) -> Transaction 
                 transaction_service::store_transaction(transaction.clone());
             }
             Err(e) => {
-                trap(e.as_str())
+                transaction.state = State::REJECTED;
+                transaction_service::store_transaction(transaction.clone());
+                trap(e.as_str()) //TODO: add reason?
             }
         }
     }
-    transaction_service::store_transaction(transaction.clone());
     transaction
 }
 
 fn to_array<T>(v: Vec<T>) -> [T; 32] {
     v.try_into()
         .unwrap_or_else(|v: Vec<T>| panic!("Expected a Vec of length {} but it was {}", 32, v.len()))
-}
-
-async fn transfer(amount: u64, to: AccountIdentifier, from_subaccount: Subaccount) -> Result<BlockIndex, String> {
-    let tokens = Tokens::from_e8s(amount);
-
-    let ledger_canister_id = CONF.with(|conf| conf.borrow().ledger_canister_id);
-    let transfer_args = ic_ledger_types::TransferArgs {
-        memo: Memo(0),
-        amount: tokens,
-        fee: DEFAULT_FEE,
-        from_subaccount: Some(from_subaccount),
-        to,
-        created_at_time: None,
-    };
-    ic_ledger_types::transfer(ledger_canister_id, transfer_args).await
-        .map_err(|e| format!("failed to call ledger: {:?}", e))?
-        .map_err(|e| format!("ledger transfer error {:?}", e))
 }
 
 
@@ -404,32 +294,48 @@ pub struct VaultMemoryObject {
     pub vaults: Vec<Vault>,
     pub users: Vec<User>,
     pub wallets: Vec<Wallet>,
+    pub transactions: Vec<Transaction>,
+    pub policies: Vec<Policy>,
 }
 
 #[pre_upgrade]
 fn pre_upgrade() {
-    let vv: Vec<Vault> = VAULTS.with(|vaults| {
+    let vaults: Vec<Vault> = VAULTS.with(|vaults| {
         vaults.borrow()
             .iter()
             .map(|l| l.1.clone())
             .collect()
     });
-    let ww: Vec<Wallet> = WALLETS.with(|wallets| {
+    let wallets: Vec<Wallet> = WALLETS.with(|wallets| {
         wallets.borrow()
             .iter()
             .map(|l| l.1.clone())
             .collect()
     });
-    let uu: Vec<User> = USERS.with(|users| {
+    let users: Vec<User> = USERS.with(|users| {
         users.borrow()
             .iter()
             .map(|l| l.1.clone())
             .collect()
     });
+    let transactions: Vec<Transaction> = TRANSACTIONS.with(|transactions| {
+        transactions.borrow()
+            .iter()
+            .map(|l| l.1.clone())
+            .collect()
+    });
+    let policies: Vec<Policy> = POLICIES.with(|policies| {
+        policies.borrow()
+            .iter()
+            .map(|l| l.1.clone())
+            .collect()
+    });
     let memory = VaultMemoryObject {
-        vaults: vv,
-        users: uu,
-        wallets: ww,
+        vaults,
+        users,
+        wallets,
+        policies,
+        transactions,
     };
     storage::stable_save((memory, )).unwrap();
 }
@@ -447,10 +353,20 @@ pub fn post_upgrade() {
         wallets.insert(wallet.id, wallet);
     }
     let mut users: HashMap<String, User> = Default::default();
-    for u in mo.users {
-        users.insert(u.address.clone(), u);
+    for user in mo.users {
+        users.insert(user.address.clone(), user);
+    }
+    let mut policies: HashMap<u64, Policy> = Default::default();
+    for policy in mo.policies {
+        policies.insert(policy.id, policy);
+    }
+    let mut transactions: HashMap<u64, Transaction> = Default::default();
+    for transaction in mo.transactions {
+        transactions.insert(transaction.id, transaction);
     }
     VAULTS.with(|storage| *storage.borrow_mut() = vaults);
     USERS.with(|storage| *storage.borrow_mut() = users);
     WALLETS.with(|storage| *storage.borrow_mut() = wallets);
+    POLICIES.with(|storage| *storage.borrow_mut() = policies);
+    TRANSACTIONS.with(|storage| *storage.borrow_mut() = transactions);
 }

@@ -1,4 +1,4 @@
-use ic_cdk::{caller};
+use ic_cdk::caller;
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 
 pub fn caller_to_address() -> String {

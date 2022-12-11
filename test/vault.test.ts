@@ -103,7 +103,7 @@ describe("Vault", () => {
         try {
             await dfx.vault.actor_member.get_vault_members(2n)
         } catch (e: any) {
-            expect(e.message.includes("Not participant")).eq(true)
+            expect(e.message.includes("Unauthorised")).eq(true)
         }
         let memberAddress = principalToAddress(dfx.vault.member.getPrincipal() as any, Array(32).fill(1));
         let vaultMember: VaultMemberRequest = {
@@ -151,12 +151,13 @@ describe("Vault", () => {
         try {
             await dfx.vault.actor_member.get_wallets(2n)
         } catch (e: any) {
-            expect(e.message.includes("Not participant")).eq(true)
+            expect(e.message.includes("Unauthorised")).eq(true)
         }
         try {
             await dfx.vault.actor_member.get_wallets(3n)
         } catch (e: any) {
-            expect(e.message.includes("Not participant")).eq(true)
+            console.log(e)
+            expect(e.message.includes("Nonexistent key")).eq(true)
         }
         let request: WalletRegisterRequest = {name: ["Wallet1"], vault_id: 3n};
         try {
@@ -218,12 +219,12 @@ describe("Vault", () => {
         try {
             await dfx.vault.actor_member.get_policies(2n)
         } catch (e: any) {
-            expect(e.message.includes("Not participant")).eq(true)
+            expect(e.message.includes("Unauthorised")).eq(true)
         }
         try {
             await dfx.vault.actor_member.get_policies(3n)
         } catch (e: any) {
-            expect(e.message.includes("Not participant")).eq(true)
+            expect(e.message.includes("Nonexistent key error")).eq(true)
         }
 
         let tp: ThresholdPolicy = {

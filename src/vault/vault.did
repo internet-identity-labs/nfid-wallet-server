@@ -89,7 +89,8 @@ type VaultMemberRequest = record {
 };
 
 type VaultRegisterRequest = record {
-    name : text
+    name : text;
+    description : opt text
 };
 
 type VaultRole = variant {
