@@ -5,9 +5,8 @@ import {App} from "./constanst/app.enum";
 import {
     Policy,
     PolicyRegisterRequest,
-    State,
     ThresholdPolicy,
-    Transaction, TransactionApproveRequest, TransactionRegisterRequest,
+    Transaction, TransactionApproveRequest, TransactionRegisterRequest, TransactionState,
     Vault,
     VaultMemberRequest,
     VaultRegisterRequest,
@@ -31,15 +30,17 @@ describe("Transaction", () => {
 
 
     it("Transaction  register", async function () {
-        let request = {
+        let request: VaultRegisterRequest = {
+            description: ["test"],
             name: "vault1"
-        } as VaultRegisterRequest;
+        } ;
 
         let vault = await dfx.vault.actor.register_vault(request) as Vault
         let address = principalToAddress(dfx.user.identity.getPrincipal() as any, Array(32).fill(1));
         request = {
-            name: "vault2"
-        } as VaultRegisterRequest;
+            name: "vault2",
+            description: ["test"],
+        }  ;
         let vault2 = await dfx.vault.actor.register_vault(request) as Vault
 
         let memberAddress = principalToAddress(dfx.vault.member.getPrincipal() as any, Array(32).fill(1));
@@ -73,10 +74,10 @@ describe("Transaction", () => {
         expect(actualTransaction.id).eq(1n)
         expect(actualTransaction.to).eq(wallet2Address);
         expect(actualTransaction.amount_threshold).eq(1n);
-        expect(actualTransaction.state.hasOwnProperty('PENDING')).eq(true);
+        expect(actualTransaction.state.hasOwnProperty('Pending')).eq(true);
         expect(actualTransaction.approves.length).eq(1);
         expect(actualTransaction.approves[0].signer).eq(address);
-        expect(actualTransaction.approves[0].status.hasOwnProperty("APPROVED")).eq(true);
+        expect(actualTransaction.approves[0].status.hasOwnProperty("Approved")).eq(true);
         expect(actualTransaction.approves[0].created_date > 0).eq(true);
         expect(actualTransaction.created_date > 0).eq(true);
         expect(actualTransaction.modified_date > 0).eq(true);
@@ -86,7 +87,7 @@ describe("Transaction", () => {
         expect(actualTransaction.policy_id).eq(policy.id);
         expect(actualTransaction.wallet_id).eq(wallet1.id);
 
-        let state = {'APPROVED': null} as State
+        let state = {'Approved': null} as TransactionState
 
         let approve: TransactionApproveRequest = {state: state, transaction_id: actualTransaction.id}
 
@@ -94,12 +95,12 @@ describe("Transaction", () => {
         expect(completed.id).eq(1n)
         expect(completed.to).eq(wallet2Address);
         expect(completed.amount_threshold).eq(1n);
-        expect(completed.state.hasOwnProperty('APPROVED')).eq(true);
+        expect(completed.state.hasOwnProperty('Approved')).eq(true);
         expect(completed.approves.length).eq(2);
         expect(completed.approves.find(l=>l.signer === address).signer).eq(address);
-        expect(completed.approves[0].status.hasOwnProperty("APPROVED")).eq(true);
+        expect(completed.approves[0].status.hasOwnProperty("Approved")).eq(true);
         expect(completed.approves.find(l=>l.signer === memberAddress).signer).eq(memberAddress); //TODO
-        expect(completed.approves[1].status.hasOwnProperty("APPROVED")).eq(true);
+        expect(completed.approves[1].status.hasOwnProperty("Approved")).eq(true);
         expect(completed.approves[0].created_date > 0).eq(true);
         expect(completed.approves[1].created_date > 0).eq(true);
         expect(completed.created_date > 0).eq(true);

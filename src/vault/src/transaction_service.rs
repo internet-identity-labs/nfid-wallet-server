@@ -9,7 +9,7 @@ use crate::{caller_to_address, Policy, PolicyType};
 use crate::enums::TransactionState;
 use crate::memory::TRANSACTIONS;
 use crate::policy_service::Currency;
-use crate::TransactionState::PENDING;
+use crate::TransactionState::Pending;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Transaction {
@@ -60,7 +60,7 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
         let approve = Approve {
             signer: caller_to_address(),
             created_date: ic_cdk::api::time(),
-            status: TransactionState::APPROVED,
+            status: TransactionState::Approved,
         };
         approves.insert(approve);
         let t: Transaction = Transaction {
@@ -70,7 +70,7 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
             to,
             approves,
             amount,
-            state: TransactionState::PENDING,
+            state: TransactionState::Pending,
             policy_id: policy.id,
             block_index: None,
             amount_threshold,
@@ -86,7 +86,7 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
 }
 
 pub fn approve_transaction(mut transaction: Transaction, state: TransactionState) -> Transaction {
-    if !transaction.state.eq(&PENDING) {
+    if !transaction.state.eq(&Pending) {
         trap("Transaction not pending")
     }
     transaction.approves.insert(
@@ -101,12 +101,12 @@ pub fn approve_transaction(mut transaction: Transaction, state: TransactionState
 }
 
 pub fn is_transaction_approved(transaction: &Transaction) -> bool {
-    if !transaction.state.eq(&PENDING) {
+    if !transaction.state.eq(&Pending) {
         return false;
     }
     return transaction.approves.clone()
         .into_iter()
-        .filter(|l| l.status.eq(&TransactionState::APPROVED))
+        .filter(|l| l.status.eq(&TransactionState::Approved))
         .count() as u8 >= transaction.member_threshold;
 }
 

@@ -36,9 +36,10 @@ describe("Vault", () => {
 
 
     it("vault  register", async function () {
-        let request = {
+        let request: VaultRegisterRequest = {
+            description: ["test"],
             name: "vault1"
-        } as VaultRegisterRequest;
+        } ;
 
         let vault = await dfx.vault.actor.register_vault(request) as Vault
         let address = principalToAddress(dfx.user.identity.getPrincipal() as any, Array(32).fill(1));
@@ -47,8 +48,9 @@ describe("Vault", () => {
         expect(vault.members[0].user_uuid).eq(address)
         expect(vault.members[0].role.hasOwnProperty('Admin')).eq(true)
         request = {
+            description: ["test2"],
             name: "vault2"
-        } as VaultRegisterRequest;
+        } ;
         vault = await dfx.vault.actor.register_vault(request) as Vault
         expect(vault.name).eq("vault2")
         expect(vault.members.length).eq(1)
@@ -59,9 +61,9 @@ describe("Vault", () => {
     it("vault  get by ids", async function () {
         let vaults = await dfx.vault.actor.get_vaults() as [Vault]
         expect(vaults.length).eq(2)
-        expect(vaults[0].id).eq(1n)
+        expect(vaults[0].id).eq(2n)
         // @ts-ignore
-        expect(vaults[1].id).eq(2n)
+        expect(vaults[1].id).eq(1n)
     });
 
     it("add member/ get members", async function () {

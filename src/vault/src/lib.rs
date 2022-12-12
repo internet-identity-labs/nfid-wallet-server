@@ -166,11 +166,11 @@ async fn approve_transaction(request: TransactionApproveRequest) -> Transaction 
         match result {
             Ok(block) => {
                 approved_transaction.block_index = Some(block);
-                approved_transaction.state = TransactionState::APPROVED;
+                approved_transaction.state = TransactionState::Approved;
                 transaction_service::store_transaction(approved_transaction.clone());
             }
             Err(_) => {
-                approved_transaction.state = TransactionState::REJECTED;
+                approved_transaction.state = TransactionState::Rejected;
                 transaction_service::store_transaction(approved_transaction.clone());
                 // trap(e.as_str()) //TODO: add reason?
             }

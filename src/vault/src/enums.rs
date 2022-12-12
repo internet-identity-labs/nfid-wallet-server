@@ -3,10 +3,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub enum TransactionState {
-    APPROVED,
-    REJECTED,
-    PENDING,
-    CANCELED
+    Approved,
+    Rejected,
+    Pending,
+    Canceled
 }
 
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize, Hash, PartialEq, Eq)]

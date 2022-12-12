@@ -71,10 +71,10 @@ type TransactionRegisterRequest = record {
 };
 
 type TransactionState = variant {
-    REJECTED;
-    CANCELED;
-    PENDING;
-    APPROVED
+    Approved;
+    Rejected;
+    Canceled;
+    Pending
 };
 
 type Vault = record {
