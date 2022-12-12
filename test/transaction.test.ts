@@ -25,7 +25,7 @@ describe("Transaction", () => {
     });
 
     after(() => {
-        // DFX.STOP();
+        DFX.STOP();
     });
 
 

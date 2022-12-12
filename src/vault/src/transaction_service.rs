@@ -9,7 +9,7 @@ use crate::{caller_to_address, Policy, PolicyType};
 use crate::enums::TransactionState;
 use crate::memory::TRANSACTIONS;
 use crate::policy_service::Currency;
-use crate::TransactionState::Pending;
+use crate::TransactionState::{Approved, Canceled, Pending, Rejected};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Transaction {
@@ -85,17 +85,38 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
     })
 }
 
-pub fn approve_transaction(mut transaction: Transaction, state: TransactionState) -> Transaction {
+pub fn claim_transaction(mut transaction: Transaction, state: TransactionState) -> Transaction {
     if !transaction.state.eq(&Pending) {
         trap("Transaction not pending")
     }
+
     transaction.approves.insert(
         Approve {
             signer: caller_to_address(),
             created_date: ic_cdk::api::time(),
-            status: state,
+            status: state.clone(),
         });
+    
+    match state {
+        Approved => {
+           if is_transaction_approved(&transaction) {
+               transaction.state = Approved
+           }
+        }
+        Rejected => {
+            transaction.state = Rejected
+        }
+        Pending => {
+            trap("IncorrectState")
+        }
+        Canceled => {
+            transaction.state = Canceled
+        }
+    }
+
     transaction.modified_date = ic_cdk::api::time();
+
+
     store_transaction(transaction.clone());
     transaction
 }

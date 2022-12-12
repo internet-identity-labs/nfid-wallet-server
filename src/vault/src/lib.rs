@@ -15,6 +15,7 @@ use crate::policy_service::{Policy, PolicyType};
 use crate::request::{PolicyRegisterRequest, TransactionApproveRequest, TransactionRegisterRequest, VaultMemberRequest, VaultRegisterRequest, WalletRegisterRequest};
 use crate::security_service::trap_if_not_permitted;
 use crate::transaction_service::{is_transaction_approved, Transaction};
+use crate::TransactionState::Approved;
 use crate::transfer_service::transfer;
 use crate::user_service::{get_or_new_by_caller, User};
 use crate::util::{caller_to_address, to_array};
@@ -148,27 +149,23 @@ async fn approve_transaction(request: TransactionApproveRequest) -> Transaction 
 
     let ts = transaction_service::get_by_id(request.transaction_id);
     trap_if_not_permitted(ts.vault_id, vec![VaultRole::Admin, VaultRole::Member]);
-
-    let mut approved_transaction = transaction_service::approve_transaction(ts, request.state);
-    if is_transaction_approved(&approved_transaction) {
-        let subaccount = wallet_service::id_to_subaccount(approved_transaction.wallet_id);
-        let decoded = hex::decode(approved_transaction.to.clone()).unwrap();
-        let to: AccountIdentifier = AccountIdentifier::try_from(to_array(decoded)).unwrap();
-        let result = transfer(approved_transaction.amount, to, subaccount).await;
+    let mut claimed_transaction = transaction_service::claim_transaction(ts, request.state);
+    if Approved.eq(&claimed_transaction.state) {
+        let subaccount = wallet_service::id_to_subaccount(claimed_transaction.wallet_id);
+        let result = transfer(claimed_transaction.amount, claimed_transaction.to.clone(), subaccount).await;
         match result {
             Ok(block) => {
-                approved_transaction.block_index = Some(block);
-                approved_transaction.state = TransactionState::Approved;
-                transaction_service::store_transaction(approved_transaction.clone());
+                claimed_transaction.block_index = Some(block);
+                transaction_service::store_transaction(claimed_transaction.clone());
             }
             Err(_) => {
-                approved_transaction.state = TransactionState::Rejected;
-                transaction_service::store_transaction(approved_transaction.clone());
+                claimed_transaction.state = TransactionState::Rejected;
+                transaction_service::store_transaction(claimed_transaction.clone());
                 // trap(e.as_str()) //TODO: add reason?
             }
         }
     }
-    approved_transaction
+    claimed_transaction
 }
 
 
