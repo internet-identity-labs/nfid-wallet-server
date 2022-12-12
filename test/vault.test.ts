@@ -39,7 +39,7 @@ describe("Vault", () => {
         let request: VaultRegisterRequest = {
             description: ["test"],
             name: "vault1"
-        } ;
+        };
 
         let vault = await dfx.vault.actor.register_vault(request) as Vault
         let address = principalToAddress(dfx.user.identity.getPrincipal() as any, Array(32).fill(1));
@@ -50,7 +50,7 @@ describe("Vault", () => {
         request = {
             description: ["test2"],
             name: "vault2"
-        } ;
+        };
         vault = await dfx.vault.actor.register_vault(request) as Vault
         expect(vault.name).eq("vault2")
         expect(vault.members.length).eq(1)
@@ -89,9 +89,10 @@ describe("Vault", () => {
         expect(vaultForMember.members[0].user_uuid).eq(vault.members[0].user_uuid)
         expect(vaultForMember.members[1].user_uuid).eq(vault.members[1].user_uuid)
 
-        let membersForAdmin = await dfx.vault.actor.get_vault_members(1n) as [VaultMember]
-        let membersForMember = await dfx.vault.actor_member.get_vault_members(1n) as [VaultMember]
-
+        let membersForAdmin = (await dfx.vault.actor.get_vaults() as [Vault])
+            .filter(l => l.id === 1n)[0].members
+        let membersForMember = (await dfx.vault.actor_member.get_vaults() as [Vault])
+            .filter(l => l.id === 1n)[0].members
         expect(membersForAdmin.length).eq(2)
         expect(membersForMember.length).eq(2)
         expect(membersForMember[0].user_uuid).eq(membersForAdmin[0].user_uuid)
@@ -102,11 +103,6 @@ describe("Vault", () => {
         expect(JSON.stringify(membersForMember[1].role)).eq(JSON.stringify(membersForAdmin[1].role))
     });
     it("negative scenarios for add members", async function () {
-        try {
-            await dfx.vault.actor_member.get_vault_members(2n)
-        } catch (e: any) {
-            expect(e.message.includes("Unauthorised")).eq(true)
-        }
         let memberAddress = principalToAddress(dfx.vault.member.getPrincipal() as any, Array(32).fill(1));
         let vaultMember: VaultMemberRequest = {
             address: memberAddress,
@@ -250,7 +246,7 @@ describe("Vault", () => {
             expect(e.message.includes("Unauthorised")).eq(true)
         }
 
-        request ={policy_type: {'threshold_policy': tp}, vault_id: 1n};
+        request = {policy_type: {'threshold_policy': tp}, vault_id: 1n};
         try {
             await dfx.vault.actor_member.register_policy(request)
         } catch (e: any) {

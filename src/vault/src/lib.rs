@@ -2,7 +2,6 @@ extern crate core;
 #[macro_use]
 extern crate maplit;
 
-use std::collections::HashSet;
 use std::convert::TryFrom;
 
 use candid::{candid_method, export_service, Principal};
@@ -19,7 +18,7 @@ use crate::transaction_service::{is_transaction_approved, Transaction};
 use crate::transfer_service::transfer;
 use crate::user_service::{get_or_new_by_caller, User};
 use crate::util::{caller_to_address, to_array};
-use crate::vault_service::{Vault, VaultMember, VaultRole};
+use crate::vault_service::{Vault, VaultRole};
 use crate::wallet_service::{id_to_address, id_to_subaccount, Wallet};
 
 mod user_service;
@@ -80,13 +79,6 @@ async fn add_vault_member(request: VaultMemberRequest) -> Vault {
     user.vaults.insert(vault.id.clone());
     user_service::restore(user);
     vault_service::restore(vault.clone())
-}
-
-#[query]
-#[candid_method(query)]
-async fn get_vault_members(vault_id: u64) -> HashSet<VaultMember> {
-    trap_if_not_permitted(vault_id, vec![VaultRole::Admin, VaultRole::Member]);
-    vault_service::get_by_id(vault_id).members //todo??
 }
 
 #[update]
