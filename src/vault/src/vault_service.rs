@@ -15,6 +15,8 @@ pub struct Vault {
     pub wallets: Vec<u64>,
     pub policies: Vec<u64>,
     pub members: HashSet<VaultMember>,
+    pub created_date: u64,
+    pub modified_date: u64,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, Eq, PartialEq)]
@@ -57,6 +59,8 @@ pub fn register(user_uuid: String, name: String, description: Option<String>) ->
             wallets: vec![],
             policies: vec![],
             members: participants,
+            created_date: ic_cdk::api::time(),
+            modified_date: ic_cdk::api::time(),
         };
         vaults.borrow_mut().insert(vault_id, vault_new.clone());
         return vault_new;
@@ -91,8 +95,16 @@ pub fn get_by_id(id: u64) -> Vault {
     })
 }
 
-pub fn restore(vault: Vault) -> bool {
+pub fn restore(mut vault: Vault) -> Vault {
     VAULTS.with(|vaults| {
-        vaults.borrow_mut().insert(vault.id, vault).is_some()
+        vault.modified_date = ic_cdk::api::time();
+        match vaults.borrow_mut().insert(vault.id, vault.clone()) {
+            None => {
+                trap("No such vault")
+            }
+            Some(_) => {
+                vault
+            }
+        }
     })
 }

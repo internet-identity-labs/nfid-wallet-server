@@ -1,5 +1,4 @@
 use candid::CandidType;
-use ic_cdk::trap;
 use serde::Deserialize;
 
 use crate::USERS;

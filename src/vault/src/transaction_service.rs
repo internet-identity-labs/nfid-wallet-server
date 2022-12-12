@@ -1,16 +1,14 @@
-use std::borrow::{Borrow, BorrowMut};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashSet};
 
 use candid::CandidType;
 use ic_cdk::trap;
 use ic_ledger_types::BlockIndex;
 use serde::{Deserialize, Serialize};
 
-use crate::{caller_to_address, Policy, PolicyType, TRANSACTIONS, User};
+use crate::{caller_to_address, Policy, PolicyType, TRANSACTIONS};
 use crate::enums::State;
 use crate::policy_service::Currency;
-
-pub type Transactions = HashMap<u64, Transaction>;
+use crate::State::PENDING;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Transaction {
@@ -26,6 +24,7 @@ pub struct Transaction {
     pub amount_threshold: u64,
     pub currency: Currency,
     pub member_threshold: u8,
+    pub owner: String,
     pub created_date: u64,
     pub modified_date: u64,
 }
@@ -76,6 +75,7 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
             amount_threshold,
             currency: Currency::ICP,
             member_threshold,
+            owner: caller_to_address(),
             created_date: ic_cdk::api::time(),
             modified_date: ic_cdk::api::time(),
         };
@@ -84,25 +84,29 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
     })
 }
 
+pub fn approve_transaction(mut transaction: Transaction, state: State) -> Transaction {
+    if !transaction.state.eq(&PENDING) {
+        trap("Transaction not pending")
+    }
+    transaction.approves.insert(
+        Approve {
+            signer: caller_to_address(),
+            created_date: ic_cdk::api::time(),
+            status: state,
+        });
+    transaction.modified_date = ic_cdk::api::time();
+    store_transaction(transaction.clone());
+    transaction
+}
 
-pub fn approve_transaction(transaction_id: u64, signer: User, state: State) -> Transaction {
-    TRANSACTIONS.with(|transactions| {
-        match transactions.borrow_mut().get_mut(&transaction_id) {
-            None => {
-                trap("Not registered")
-            }
-            Some(ts) => {
-                ts.approves.insert(
-                    Approve {
-                        signer: signer.address,
-                        created_date: ic_cdk::api::time(),
-                        status: state,
-                    });
-                ts.modified_date = ic_cdk::api::time();
-                ts.clone()
-            }
-        }
-    })
+pub fn is_transaction_approved(transaction: &Transaction) -> bool {
+    if !transaction.state.eq(&PENDING) {
+        return false;
+    }
+    return transaction.approves.clone()
+        .into_iter()
+        .filter(|l| l.status.eq(&State::APPROVED))
+        .count() as u8 >= transaction.member_threshold;
 }
 
 pub fn store_transaction(transaction: Transaction) -> Option<Transaction> {
@@ -117,5 +121,19 @@ pub fn get_all(vaults: Vec<u64>) -> Vec<Transaction> {
             .map(|a| a.1.clone())
             .filter(|t| vaults.contains(&t.vault_id))
             .collect();
+    })
+}
+
+
+pub fn get_by_id(id: u64) -> Transaction {
+    TRANSACTIONS.with(|transactions| {
+        match transactions.borrow_mut().get(&id) {
+            None => {
+                trap("Nonexistent id")
+            }
+            Some(transaction) => {
+                transaction.clone()
+            }
+        }
     })
 }

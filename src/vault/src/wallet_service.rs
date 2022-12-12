@@ -1,5 +1,3 @@
-use std::borrow::{Borrow, BorrowMut};
-
 use candid::CandidType;
 use ic_cdk::{id, trap};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
@@ -12,6 +10,8 @@ pub struct Wallet {
     pub id: u64,
     pub name: Option<String>,
     pub vaults: Vec<u64>,
+    pub created_date: u64,
+    pub modified_date: u64,
 }
 
 pub fn new_and_store(name: Option<String>, vault_id: u64) -> Wallet {
@@ -22,14 +22,17 @@ pub fn new_and_store(name: Option<String>, vault_id: u64) -> Wallet {
             id: id.clone(),
             name,
             vaults: vec![vault_id],
+            created_date: ic_cdk::api::time(),
+            modified_date: ic_cdk::api::time(),
         };
         wallets.insert(id, wallet_new.clone());
         wallet_new
     })
 }
 
-pub fn restore(wallet: Wallet) -> Option<Wallet> {
+pub fn restore(mut wallet: Wallet) -> Option<Wallet> {
     return WALLETS.with(|wallets| {
+        wallet.modified_date = ic_cdk::api::time();
         wallets.borrow_mut().insert(wallet.id, wallet.clone())
     });
 }
@@ -67,13 +70,13 @@ pub fn get_wallets(ids: Vec<u64>) -> Vec<Wallet> {
 pub fn id_to_subaccount(id: u64) -> Subaccount {
     let eights: [u8; 8] = bytemuck::cast([id; 1]);
     let mut whole: [u8; 32] = [0; 32];
-    let (one, two) = whole.split_at_mut(8);
+    let (one, _) = whole.split_at_mut(8);
     one.copy_from_slice(&eights);
     return Subaccount(whole);
 }
 
 pub fn id_to_address(wallet_id: u64) -> AccountIdentifier {
-    let mut whole: Subaccount = id_to_subaccount(wallet_id);
+    let whole: Subaccount = id_to_subaccount(wallet_id);
     return AccountIdentifier::new(&id(), &(whole));
 }
 
