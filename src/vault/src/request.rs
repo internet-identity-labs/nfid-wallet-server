@@ -1,6 +1,6 @@
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 
-use crate::{PolicyType, State, VaultRole};
+use crate::{PolicyType, TransactionState, VaultRole};
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct TransactionRegisterRequest {
@@ -32,7 +32,7 @@ pub struct WalletRegisterRequest {
 #[derive(CandidType, Deserialize, Clone)]
 pub struct TransactionApproveRequest {
     pub transaction_id: u64,
-    pub state: State,
+    pub state: TransactionState,
 }
 
 #[derive(CandidType, Deserialize, Clone)]

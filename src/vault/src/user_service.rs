@@ -1,13 +1,15 @@
+use std::collections::HashSet;
 use candid::CandidType;
 use serde::Deserialize;
 use crate::memory::USERS;
+
 
 use crate::util::caller_to_address;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct User {
     pub address: String,
-    pub vaults: Vec<u64>,
+    pub vaults: HashSet<u64>,
 }
 
 pub fn get_or_new_by_address(address: String) -> User {
@@ -15,7 +17,7 @@ pub fn get_or_new_by_address(address: String) -> User {
         let mut borrowed = users.borrow_mut();
         match borrowed.get_mut(&address) {
             None => {
-                let new_user = User { address: address.clone(), vaults: vec![] };
+                let new_user = User { address: address.clone(), vaults: hashset!{} };
                 borrowed.insert(address, new_user.clone());
                 new_user
             }

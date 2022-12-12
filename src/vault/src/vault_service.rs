@@ -3,7 +3,9 @@ use std::hash::{Hash, Hasher};
 
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 use ic_cdk::trap;
+use crate::enums::ObjectState;
 use crate::memory::VAULTS;
+use crate::User;
 
 use crate::VaultRole::Admin;
 
@@ -12,9 +14,10 @@ pub struct Vault {
     pub id: u64,
     pub name: String,
     pub description: Option<String>,
-    pub wallets: Vec<u64>,
-    pub policies: Vec<u64>,
+    pub wallets: HashSet<u64>,
+    pub policies: HashSet<u64>,
     pub members: HashSet<VaultMember>,
+    pub state: ObjectState,
     pub created_date: u64,
     pub modified_date: u64,
 }
@@ -24,6 +27,7 @@ pub struct VaultMember {
     pub user_uuid: String,
     pub role: VaultRole,
     pub name: Option<String>,
+    pub state: ObjectState,
 }
 
 impl Hash for VaultMember {
@@ -50,15 +54,16 @@ pub fn register(user_uuid: String, name: String, description: Option<String>) ->
     VAULTS.with(|vaults| {
         let vault_id = (vaults.borrow().len() + 1) as u64;
         let mut participants: HashSet<VaultMember> = Default::default();
-        let owner = VaultMember { user_uuid, role: Admin, name: None };
+        let owner = VaultMember { user_uuid, role: Admin, name: None, state: ObjectState::Active };
         participants.insert(owner);
         let vault_new: Vault = Vault {
             id: vault_id,
             name,
             description,
-            wallets: vec![],
-            policies: vec![],
+            wallets: hashset![],
+            policies: hashset![],
             members: participants,
+            state: ObjectState::Active,
             created_date: ic_cdk::api::time(),
             modified_date: ic_cdk::api::time(),
         };
@@ -67,7 +72,7 @@ pub fn register(user_uuid: String, name: String, description: Option<String>) ->
     })
 }
 
-pub fn get(ids: Vec<u64>) -> Vec<Vault> {
+pub fn get(ids: HashSet<u64>) -> Vec<Vault> {
     VAULTS.with(|vaults| {
         let mut result: Vec<Vault> = Default::default();
         for key in ids {
@@ -93,6 +98,18 @@ pub fn get_by_id(id: u64) -> Vault {
             }
         }
     })
+}
+
+pub fn add_vault_member(vault_id: u64, user: &User, role: VaultRole, name:Option<String>) -> Vault {
+    let mut vault = get_by_id(vault_id);
+    let vm = VaultMember {
+        user_uuid: user.address.clone(),
+        role,
+        name,
+        state: ObjectState::Archived
+    };
+    vault.members.insert(vm);
+    restore(vault)
 }
 
 pub fn restore(mut vault: Vault) -> Vault {

@@ -7,10 +7,6 @@ dfx deploy vault --argument "(opt record { ledger_canister_id=principal \"${LEDG
 VAULT_CANISTER_ID="$(dfx canister id vault)"
 echo $VAULT_CANISTER_ID
 VAULT_ACCOUNT_SUB_ID="$(dfx canister call vault sub '(1)')"
-VAULT_ACCOUNT_SUB_BYTES="$(dfx canister call vault sub_bytes '(1)')"
-VAULT_ACCOUNT_SUB_BYTES="$(dfx ledger account-id --of-canister vault)"
-
-echo $VAULT_ACCOUNT_SUB_BYTES
 
 TOKENS_TRANSFER_ACCOUNT_ID="$(dfx ledger account-id --of-canister vault)"
 VAULT_ACCOUNT_SUB_ID="$(dfx canister call vault sub '(1)')"

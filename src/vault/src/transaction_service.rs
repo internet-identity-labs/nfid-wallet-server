@@ -6,10 +6,10 @@ use ic_ledger_types::BlockIndex;
 use serde::{Deserialize, Serialize};
 
 use crate::{caller_to_address, Policy, PolicyType};
-use crate::enums::State;
+use crate::enums::TransactionState;
 use crate::memory::TRANSACTIONS;
 use crate::policy_service::Currency;
-use crate::State::PENDING;
+use crate::TransactionState::PENDING;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Transaction {
@@ -19,7 +19,7 @@ pub struct Transaction {
     pub to: String,
     pub approves: HashSet<Approve>,
     pub amount: u64,
-    pub state: State,
+    pub state: TransactionState,
     pub policy_id: u64,
     pub block_index: Option<BlockIndex>,
     pub amount_threshold: u64,
@@ -35,7 +35,7 @@ pub struct Transaction {
 pub struct Approve {
     pub signer: String,
     pub created_date: u64,
-    pub status: State,
+    pub status: TransactionState,
 }
 
 impl PartialEq for Approve {
@@ -60,7 +60,7 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
         let approve = Approve {
             signer: caller_to_address(),
             created_date: ic_cdk::api::time(),
-            status: State::APPROVED,
+            status: TransactionState::APPROVED,
         };
         approves.insert(approve);
         let t: Transaction = Transaction {
@@ -70,7 +70,7 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
             to,
             approves,
             amount,
-            state: State::PENDING,
+            state: TransactionState::PENDING,
             policy_id: policy.id,
             block_index: None,
             amount_threshold,
@@ -85,7 +85,7 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
     })
 }
 
-pub fn approve_transaction(mut transaction: Transaction, state: State) -> Transaction {
+pub fn approve_transaction(mut transaction: Transaction, state: TransactionState) -> Transaction {
     if !transaction.state.eq(&PENDING) {
         trap("Transaction not pending")
     }
@@ -106,7 +106,7 @@ pub fn is_transaction_approved(transaction: &Transaction) -> bool {
     }
     return transaction.approves.clone()
         .into_iter()
-        .filter(|l| l.status.eq(&State::APPROVED))
+        .filter(|l| l.status.eq(&TransactionState::APPROVED))
         .count() as u8 >= transaction.member_threshold;
 }
 
@@ -116,7 +116,7 @@ pub fn store_transaction(transaction: Transaction) -> Option<Transaction> {
     })
 }
 
-pub fn get_all(vaults: Vec<u64>) -> Vec<Transaction> {
+pub fn get_all(vaults: HashSet<u64>) -> Vec<Transaction> {
     TRANSACTIONS.with(|transactions| {
         return transactions.borrow().iter()
             .map(|a| a.1.clone())

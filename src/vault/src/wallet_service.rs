@@ -1,7 +1,9 @@
+use std::collections::HashSet;
 use candid::CandidType;
 use ic_cdk::{id, trap};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 use serde::Deserialize;
+use crate::enums::ObjectState;
 use crate::memory::WALLETS;
 
 
@@ -9,7 +11,8 @@ use crate::memory::WALLETS;
 pub struct Wallet {
     pub id: u64,
     pub name: Option<String>,
-    pub vaults: Vec<u64>,
+    pub vaults: HashSet<u64>,
+    pub state: ObjectState,
     pub created_date: u64,
     pub modified_date: u64,
 }
@@ -21,7 +24,8 @@ pub fn new_and_store(name: Option<String>, vault_id: u64) -> Wallet {
         let wallet_new = Wallet {
             id: id.clone(),
             name,
-            vaults: vec![vault_id],
+            vaults: hashset![vault_id],
+            state: ObjectState::Active,
             created_date: ic_cdk::api::time(),
             modified_date: ic_cdk::api::time(),
         };
@@ -50,7 +54,7 @@ pub fn get_wallet(id: u64) -> Wallet {
     })
 }
 
-pub fn get_wallets(ids: Vec<u64>) -> Vec<Wallet> {
+pub fn get_wallets(ids: HashSet<u64>) -> Vec<Wallet> {
     WALLETS.with(|wallets| {
         let mut result: Vec<Wallet> = Default::default();
         for key in ids {

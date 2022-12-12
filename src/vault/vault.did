@@ -1,7 +1,7 @@
 type Approve = record {
-    status : State;
+    status : TransactionState;
     signer : text;
-    created_date : nat64
+    created_date : nat64;
 };
 
 type Conf = record {
@@ -12,9 +12,17 @@ type Currency = variant {
     ICP
 };
 
+type ObjectState = variant {
+    Active;
+    Archived
+};
+
 type Policy = record {
     id : nat64;
-    policy_type : PolicyType
+    modified_date : nat64;
+    state : ObjectState;
+    policy_type : PolicyType;
+    created_date : nat64;
 };
 
 type PolicyRegisterRequest = record {
@@ -24,12 +32,6 @@ type PolicyRegisterRequest = record {
 
 type PolicyType = variant {
     threshold_policy : ThresholdPolicy
-};
-
-type State = variant {
-    REJECTED;
-    PENDING;
-    APPROVED
 };
 
 type ThresholdPolicy = record {
@@ -44,10 +46,11 @@ type Transaction = record {
     to : text;
     member_threshold : nat8;
     block_index : opt nat64;
+    owner : text;
     modified_date : nat64;
     vault_id : nat64;
     amount_threshold : nat64;
-    state : State;
+    state : TransactionState;
     approves : vec Approve;
     currency : Currency;
     amount : nat64;
@@ -58,7 +61,7 @@ type Transaction = record {
 
 type TransactionApproveRequest = record {
     transaction_id : nat64;
-    state : State;
+    state : TransactionState;
 };
 
 type TransactionRegisterRequest = record {
@@ -67,11 +70,22 @@ type TransactionRegisterRequest = record {
     wallet_id : nat64;
 };
 
+type TransactionState = variant {
+    REJECTED;
+    CANCELED;
+    PENDING;
+    APPROVED
+};
+
 type Vault = record {
     id : nat64;
     members : vec VaultMember;
+    modified_date : nat64;
     name : text;
+    description : opt text;
+    state : ObjectState;
     wallets : vec nat64;
+    created_date : nat64;
     policies : vec nat64;
 };
 
@@ -79,6 +93,7 @@ type VaultMember = record {
     user_uuid : text;
     name : opt text;
     role : VaultRole;
+    state : ObjectState;
 };
 
 type VaultMemberRequest = record {
@@ -100,8 +115,11 @@ type VaultRole = variant {
 
 type Wallet = record {
     id : nat64;
+    modified_date : nat64;
     name : opt text;
-    vaults : vec nat64
+    vaults : vec nat64;
+    state : ObjectState;
+    created_date : nat64;
 };
 
 type WalletRegisterRequest = record {
@@ -120,6 +138,4 @@ type WalletRegisterRequest = record {
     register_vault : (VaultRegisterRequest) -> (Vault);
     register_wallet : (WalletRegisterRequest) -> (Wallet);
     sub : (nat64) -> (text) query;
-    sub_bytes : (nat64) -> (vec nat8) query;
-    sub_vec : (nat64) -> (vec nat8) query;
 }

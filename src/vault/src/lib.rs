@@ -1,18 +1,16 @@
 extern crate core;
+#[macro_use]
+extern crate maplit;
 
-use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
-use std::convert::{TryFrom};
-use std::fmt::Debug;
-use std::hash::Hash;
+use std::collections::HashSet;
+use std::convert::TryFrom;
 
 use candid::{candid_method, export_service, Principal};
-use ic_cdk::export::{candid::{CandidType, Deserialize}};
 use ic_cdk::export::candid;
 use ic_cdk_macros::*;
-use ic_ledger_types::{AccountIdentifier, MAINNET_LEDGER_CANISTER_ID, Subaccount};
+use ic_ledger_types::AccountIdentifier;
 
-use crate::enums::State;
+use crate::enums::TransactionState;
 use crate::memory::{Conf, CONF};
 use crate::policy_service::{Policy, PolicyType};
 use crate::request::{PolicyRegisterRequest, TransactionApproveRequest, TransactionRegisterRequest, VaultMemberRequest, VaultRegisterRequest, WalletRegisterRequest};
@@ -60,7 +58,7 @@ async fn register_vault(request: VaultRegisterRequest) -> Vault {
     let address = caller_to_address();
     let mut user = user_service::get_or_new_by_address(address);
     let vault = vault_service::register(user.address.clone(), request.name, request.description);
-    user.vaults.push(vault.id.clone());
+    user.vaults.insert(vault.id.clone());
     user_service::restore(user);
     vault
 }
@@ -77,15 +75,9 @@ async fn get_vaults() -> Vec<Vault> {
 #[candid_method(update)]
 async fn add_vault_member(request: VaultMemberRequest) -> Vault {
     trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]);
-    let mut vault = vault_service::get_by_id(request.vault_id);
     let mut user = user_service::get_or_new_by_address(request.address);
-    let vm = VaultMember {
-        user_uuid: user.address.clone(),
-        role: request.role,
-        name: request.name,
-    };
-    vault.members.insert(vm);
-    user.vaults.push(vault.id.clone());
+    let vault = vault_service::add_vault_member(request.vault_id, &user, request.role, request.name);
+    user.vaults.insert(vault.id.clone());
     user_service::restore(user);
     vault_service::restore(vault.clone())
 }
@@ -103,7 +95,7 @@ async fn register_wallet(request: WalletRegisterRequest) -> Wallet {
     trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]);
     let mut vault = vault_service::get_by_id(request.vault_id);
     let new_wallet = wallet_service::new_and_store(request.name, request.vault_id);
-    vault.wallets.push(new_wallet.id);
+    vault.wallets.insert(new_wallet.id);
     vault_service::restore(vault);
     new_wallet
 }
@@ -115,7 +107,7 @@ async fn register_policy(request: PolicyRegisterRequest) -> Policy {
     trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]); //todo accepted_wallets
     let mut vault = vault_service::get_by_id(request.vault_id);
     let policy = policy_service::register_policy(request.policy_type);
-    vault.policies.push(policy.id);
+    vault.policies.insert(policy.id);
     vault_service::restore(vault);
     policy
 }
@@ -124,7 +116,7 @@ async fn register_policy(request: PolicyRegisterRequest) -> Policy {
 #[candid_method(query)]
 async fn get_wallets(vault_id: u64) -> Vec<Wallet> {
     trap_if_not_permitted(vault_id, vec![VaultRole::Admin, VaultRole::Member]);
-    let vault = vault_service::get(vec![vault_id]);
+    let vault = vault_service::get(hashset![vault_id]);
     wallet_service::get_wallets(vault[0].wallets.clone())
 }
 
@@ -133,7 +125,7 @@ async fn get_wallets(vault_id: u64) -> Vec<Wallet> {
 #[candid_method(query)]
 async fn get_policies(vault_id: u64) -> Vec<Policy> {
     trap_if_not_permitted(vault_id, vec![VaultRole::Admin, VaultRole::Member]);
-    let vault = vault_service::get(vec![vault_id]);
+    let vault = vault_service::get(hashset![vault_id]);
     policy_service::get(vault[0].policies.clone())
 }
 
@@ -174,11 +166,11 @@ async fn approve_transaction(request: TransactionApproveRequest) -> Transaction 
         match result {
             Ok(block) => {
                 approved_transaction.block_index = Some(block);
-                approved_transaction.state = State::APPROVED;
+                approved_transaction.state = TransactionState::APPROVED;
                 transaction_service::store_transaction(approved_transaction.clone());
             }
             Err(_) => {
-                approved_transaction.state = State::REJECTED;
+                approved_transaction.state = TransactionState::REJECTED;
                 transaction_service::store_transaction(approved_transaction.clone());
                 // trap(e.as_str()) //TODO: add reason?
             }

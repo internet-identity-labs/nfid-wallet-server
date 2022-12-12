@@ -1,12 +1,15 @@
+use std::collections::HashSet;
 use candid::CandidType;
 use ic_cdk::trap;
 use serde::Deserialize;
+use crate::enums::ObjectState;
 use crate::memory::POLICIES;
 
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Policy {
     pub id: u64,
+    pub state: ObjectState,
     pub policy_type: PolicyType,
     pub created_date: u64,
     pub modified_date: u64,
@@ -36,6 +39,7 @@ pub fn register_policy(policy_type: PolicyType) -> Policy {
     POLICIES.with(|policies| {
         let ps = Policy {
             id: (policies.borrow().len() + 1) as u64,
+            state: ObjectState::Active,
             policy_type,
             created_date: ic_cdk::api::time(),
             modified_date: ic_cdk::api::time(),
@@ -52,7 +56,7 @@ pub fn restore_policy(ps: Policy) -> Policy {
     })
 }
 
-pub fn get(ids: Vec<u64>) -> Vec<Policy> {
+pub fn get(ids: HashSet<u64>) -> Vec<Policy> {
     POLICIES.with(|policies| {
         let mut result: Vec<Policy> = Default::default();
         for id in ids {
@@ -67,7 +71,7 @@ pub fn get(ids: Vec<u64>) -> Vec<Policy> {
     })
 }
 
-pub fn define_correct_policy(ids: Vec<u64>, amount: u64, wallet_id: u64) -> Policy {
+pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet_id: u64) -> Policy {
     get(ids).into_iter()
         .map(|l| match l.policy_type.clone() {
             PolicyType::ThresholdPolicy(threshold_policy) => {
