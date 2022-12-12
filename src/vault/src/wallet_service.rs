@@ -2,8 +2,8 @@ use candid::CandidType;
 use ic_cdk::{id, trap};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 use serde::Deserialize;
+use crate::memory::WALLETS;
 
-use crate::WALLETS;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Wallet {

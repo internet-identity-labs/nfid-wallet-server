@@ -1,8 +1,8 @@
 use candid::CandidType;
 use ic_cdk::trap;
 use serde::Deserialize;
+use crate::memory::POLICIES;
 
-use crate::POLICIES;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Policy {

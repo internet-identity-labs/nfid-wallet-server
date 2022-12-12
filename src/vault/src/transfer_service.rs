@@ -1,6 +1,6 @@
 use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_FEE, Memo, Subaccount, Tokens};
 
-use crate::CONF;
+use crate::memory::CONF;
 
 pub async fn transfer(amount: u64, to: AccountIdentifier, from_subaccount: Subaccount) -> Result<BlockIndex, String> {
     let tokens = Tokens::from_e8s(amount);

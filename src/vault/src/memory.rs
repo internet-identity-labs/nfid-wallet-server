@@ -1,7 +1,10 @@
-use std::collections::HashMap;
+use candid::Principal;
 use ic_cdk::storage;
-use crate::{POLICIES, Policy, Transaction, TRANSACTIONS, User, USERS, Vault, VAULTS, Wallet, WALLETS};
+use crate::{Policy, Transaction, User, Vault, Wallet};
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
+use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
+use std::cell::RefCell;
+use std::collections::{HashMap};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct VaultMemoryObject {
@@ -10,6 +13,31 @@ pub struct VaultMemoryObject {
     pub wallets: Vec<Wallet>,
     pub transactions: Vec<Transaction>,
     pub policies: Vec<Policy>,
+}
+
+
+#[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq)]
+pub struct Conf {
+   pub ledger_canister_id: Principal,
+}
+
+
+impl Default for Conf {
+    fn default() -> Self {
+        Conf {
+            ledger_canister_id: MAINNET_LEDGER_CANISTER_ID,
+        }
+    }
+}
+
+
+thread_local! {
+    pub static CONF: RefCell<Conf> = RefCell::new(Conf::default());
+    pub static USERS: RefCell<HashMap<String, User>> = RefCell::new(Default::default());
+    pub static VAULTS: RefCell<HashMap<u64, Vault>> = RefCell::new(Default::default());
+    pub static WALLETS: RefCell<HashMap<u64, Wallet>> = RefCell::new(Default::default());
+    pub static POLICIES: RefCell<HashMap<u64, Policy>> = RefCell::new(Default::default());
+    pub static TRANSACTIONS: RefCell<HashMap<u64, Transaction>> = RefCell::new(Default::default());
 }
 
 pub fn pre_upgrade() {

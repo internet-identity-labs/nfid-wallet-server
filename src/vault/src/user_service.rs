@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::Deserialize;
+use crate::memory::USERS;
 
-use crate::USERS;
 use crate::util::caller_to_address;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

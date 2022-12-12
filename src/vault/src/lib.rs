@@ -2,7 +2,7 @@ extern crate core;
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use std::convert::{TryFrom, TryInto};
+use std::convert::{TryFrom};
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -13,6 +13,7 @@ use ic_cdk_macros::*;
 use ic_ledger_types::{AccountIdentifier, MAINNET_LEDGER_CANISTER_ID, Subaccount};
 
 use crate::enums::State;
+use crate::memory::{Conf, CONF};
 use crate::policy_service::{Policy, PolicyType};
 use crate::request::{PolicyRegisterRequest, TransactionApproveRequest, TransactionRegisterRequest, VaultMemberRequest, VaultRegisterRequest, WalletRegisterRequest};
 use crate::security_service::trap_if_not_permitted;
@@ -36,29 +37,6 @@ mod transfer_service;
 mod request;
 mod memory;
 
-#[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq)]
-pub struct Conf {
-    ledger_canister_id: Principal,
-}
-
-
-impl Default for Conf {
-    fn default() -> Self {
-        Conf {
-            ledger_canister_id: MAINNET_LEDGER_CANISTER_ID,
-        }
-    }
-}
-
-
-thread_local! {
-    static CONF: RefCell<Conf> = RefCell::new(Conf::default());
-    static USERS: RefCell<HashMap<String, User >> = RefCell::new(Default::default());
-    static VAULTS: RefCell< HashMap<u64, Vault>> = RefCell::new(Default::default());
-    static WALLETS: RefCell< HashMap<u64, Wallet>> = RefCell::new(Default::default());
-    static POLICIES: RefCell< HashMap<u64, Policy>> = RefCell::new(Default::default());
-    static TRANSACTIONS: RefCell< HashMap<u64, Transaction>> = RefCell::new(Default::default());
-}
 #[init]
 #[candid_method(init)]
 fn init(conf: Option<Conf>) {
@@ -74,18 +52,6 @@ fn init(conf: Option<Conf>) {
 #[candid_method(query, rename = "sub")]
 async fn sub(wallet_id: u64) -> String {
     id_to_address(wallet_id).to_string()
-}
-
-#[query]
-#[candid_method(query, rename = "sub_vec")]
-async fn sub_vec(wallet_id: u64) -> Subaccount {
-    id_to_subaccount(wallet_id)
-}
-
-#[query]
-#[candid_method(query, rename = "sub_bytes")]
-async fn sub_bytes(wallet_id: u64) -> AccountIdentifier {
-    id_to_address(wallet_id)
 }
 
 #[update]

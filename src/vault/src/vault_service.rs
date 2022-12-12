@@ -3,9 +3,9 @@ use std::hash::{Hash, Hasher};
 
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 use ic_cdk::trap;
+use crate::memory::VAULTS;
 
 use crate::VaultRole::Admin;
-use crate::VAULTS;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Vault {

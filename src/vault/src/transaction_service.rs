@@ -5,8 +5,9 @@ use ic_cdk::trap;
 use ic_ledger_types::BlockIndex;
 use serde::{Deserialize, Serialize};
 
-use crate::{caller_to_address, Policy, PolicyType, TRANSACTIONS};
+use crate::{caller_to_address, Policy, PolicyType};
 use crate::enums::State;
+use crate::memory::TRANSACTIONS;
 use crate::policy_service::Currency;
 use crate::State::PENDING;
 

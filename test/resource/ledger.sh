@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-#dfx stop
-#set -e
-#trap 'dfx stop' EXIT
-
 echo "===========SETUP========="
 export IC_VERSION=dd3a710b03bd3ae10368a91b255571d012d1ec2f
 gunzip ledger.wasm.gz
@@ -14,7 +10,7 @@ test -f ledger.public.did ||curl -o ledger.public.did "https://raw.githubusercon
 
 echo "===========START DFX========="
 dfx start --background --clean
-dfx identity new alice --disable-encryption || true
+#dfx identity new alice --disable-encryption || true
 cat <<<"$(jq '.canisters.ledger.candid="ledger.private.did"' dfx.json)" >dfx.json
 export MINT_ACC=$(dfx --identity anonymous ledger account-id)
 export LEDGER_ACC=$(dfx ledger account-id)

@@ -1,4 +1,5 @@
-use ic_cdk::caller;
+use std::convert::TryInto;
+use ic_cdk::{caller, trap};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 
 pub fn caller_to_address() -> String {
