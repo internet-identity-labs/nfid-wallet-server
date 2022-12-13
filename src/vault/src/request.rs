@@ -1,6 +1,7 @@
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 
 use crate::{PolicyType, TransactionState, VaultRole};
+use crate::enums::ObjectState;
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct TransactionRegisterRequest {
@@ -21,6 +22,7 @@ pub struct VaultMemberRequest {
     pub address: String,
     pub name: Option<String>,
     pub role: VaultRole,
+    pub state: ObjectState
 }
 
 #[derive(CandidType, Deserialize, Clone)]

@@ -49,9 +49,10 @@ describe("Transaction", () => {
             address: memberAddress,
             name: ["MoyaLaskovayaSuchechka"],
             role: {'Member': null},
-            vault_id: 1n
+            vault_id: 1n,
+            state: {'Active': null},
         }
-        await dfx.vault.actor.add_vault_member(vaultMember) as Vault;
+        await dfx.vault.actor.store_member(vaultMember) as Vault;
         let wallet1 = await dfx.vault.actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
         console.log()
         let wallet2 = await dfx.vault.actor.register_wallet({name: ["Wallet2"], vault_id: 1n}) as Wallet

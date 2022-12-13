@@ -25,11 +25,12 @@ describe("Wallet", () => {
             description: [],
             name: "vault2"
         })
-        await dfx.vault.actor.add_vault_member({
+        await dfx.vault.actor.store_member({
             address: memberAddress,
             name: ["MoyaLaskovayaSuchechka"],
             role: {'Member': null},
-            vault_id: 1n
+            vault_id: 1n,
+            state: {'Active': null},
         });
     });
 
@@ -38,7 +39,7 @@ describe("Wallet", () => {
     });
 
 
-    it("vault  register", async function () {
+    it("wallet register", async function () {
 
         let result1 = await dfx.vault.actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
         verifyWallet(result1, {
@@ -82,7 +83,23 @@ describe("Wallet", () => {
             vaults: [1n]
         })
     });
+    it("update wallet", async function () {
+        let wallets = await dfx.vault.actor.get_wallets(1n) as [Wallet]
+        let wallet1 = wallets.find(l => l.id === 1n)
+        let updated = await dfx.vault.actor.update_wallet({
+            created_date: 321n,
+            id: 1n,
+            modified_date: 123n,
+            name: ["Wallet1_Udated"],
+            state: {'Archived': null},
+            vaults: [2n]
 
+        }) as Wallet
+        wallet1.name = ["Wallet1_Udated"]
+        wallet1.state = {'Archived': null}
+        verifyWallet(wallet1, updated)
+        expect(wallet1.modified_date !== updated.modified_date).true
+    })
 
     it("register wallet negative ", async function () {
         try {

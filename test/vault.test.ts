@@ -75,17 +75,18 @@ describe("Vault", () => {
 
     it("add_member", async function () {
 
-        let vault = await dfx.vault.actor.add_vault_member({
+        let member = await dfx.vault.actor.store_member({
             address: memberAddress,
             name: ["MoyaLaskovayaSuchechka"],
             role: {'Member': null},
+            state: {'Active': null},
             vault_id: 1n
         }) as Vault;
 
         let expected = getExpectedVault()
         expected.members.push(getDefaultMember())
-        verifyVault(vault, expected)
-        expect(vault.modified_date > vault.created_date).true
+        verifyVault(member, expected)
+        expect(member.modified_date > member.created_date).true
 
         let vaultsForMember = (await dfx.vault.actor_member.get_vaults()) as [Vault];
         expect(vaultsForMember.length).eq(1)
@@ -101,24 +102,45 @@ describe("Vault", () => {
         verifyVault(vaultMember, expected)
     });
 
+    it("update vault/member", async function () {
+        let expected = getExpectedVault()
+        let member = getDefaultMember()
+        member.state = {'Archived': null};
+        expected.members.push(getDefaultMember())
+        let vaultMember = (await dfx.vault.actor_member.get_vaults() as [Vault])
+            .find(l => l.id === 1n)
+        let removedMember = await dfx.vault.actor.store_member({
+            address: memberAddress,
+            name: ["MoyaLaskovayaSuchechka"],
+            role: {'Member': null},
+            state: {'Archived': null},
+            vault_id: 1n
+        }) as Vault;
+        expect(vaultMember.modified_date !== removedMember.modified_date).true
+        verifyVault(removedMember, expected)
+
+
+    })
 
     it("negative scenarios for add members", async function () {
         try {
-            await dfx.vault.actor_member.add_vault_member({
+            await dfx.vault.actor_member.store_member({
                 address: memberAddress,
                 name: ["Moya Laskovaya Suchechka"],
                 role: {'Member': null},
-                vault_id: 2n
+                vault_id: 2n,
+                state: {'Active': null},
             })
         } catch (e: any) {
             expect(e.message.includes("Unauthorised")).eq(true)
         }
         try {
-            await dfx.vault.actor_member.add_vault_member({
+            await dfx.vault.actor_member.store_member({
                 address: memberAddress,
                 name: ["Moya Laskovaya Suchechka"],
                 role: {'Member': null},
-                vault_id: 1n
+                vault_id: 1n,
+                state: {'Active': null},
             })
         } catch (e: any) {
             expect(e.message.includes("Not enough permissions")).eq(true)
@@ -139,7 +161,7 @@ function verifyVault(actualVault: Vault, expectedVault: Vault) {
     for (const actWallet of actualVault.wallets) {
         expect(actualVault.wallets.includes(actWallet))
     }
-    expect(actualVault.wallets).eq(expectedVault.wallets)
+    expect(actualVault.policies.length).eq(expectedVault.policies.length)
     for (const actPolicy of actualVault.policies) {
         expect(actualVault.policies.includes(actPolicy))
     }

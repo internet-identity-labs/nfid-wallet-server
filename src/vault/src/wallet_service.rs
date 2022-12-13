@@ -34,14 +34,22 @@ pub fn new_and_store(name: Option<String>, vault_id: u64) -> Wallet {
     })
 }
 
-pub fn restore(mut wallet: Wallet) -> Option<Wallet> {
+pub fn restore(mut wallet: Wallet) -> Wallet {
     return WALLETS.with(|wallets| {
         wallet.modified_date = ic_cdk::api::time();
-        wallets.borrow_mut().insert(wallet.id, wallet.clone())
+        wallets.borrow_mut().insert(wallet.id, wallet.clone());
+        wallet
     });
 }
 
-pub fn get_wallet(id: u64) -> Wallet {
+pub fn update( wallet: Wallet) -> Wallet {
+    let mut old = get_by_id(wallet.id);
+    old.name = wallet.name;
+    old.state = wallet.state;
+    restore(old.clone())
+}
+
+pub fn get_by_id(id: u64) -> Wallet {
     WALLETS.with(|wallets| {
         match wallets.borrow().get(&id) {
             None => {

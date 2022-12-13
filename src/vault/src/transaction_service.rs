@@ -44,7 +44,7 @@ impl PartialEq for Approve {
     }
 }
 
-pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Policy, vault_id: u64) -> Transaction {
+pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Policy) -> Transaction {
     let amount_threshold: u64;
     let member_threshold: u8;
 
@@ -66,7 +66,7 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
         let t: Transaction = Transaction {
             id: (ts.len() + 1) as u64,
             wallet_id,
-            vault_id,
+            vault_id: policy.vault,
             to,
             approves,
             amount,
@@ -96,7 +96,7 @@ pub fn claim_transaction(mut transaction: Transaction, state: TransactionState) 
             created_date: ic_cdk::api::time(),
             status: state.clone(),
         });
-    
+
     match state {
         Approved => {
            if is_transaction_approved(&transaction) {

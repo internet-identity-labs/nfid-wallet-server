@@ -3,10 +3,10 @@ use std::hash::{Hash, Hasher};
 
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 use ic_cdk::trap;
+
 use crate::enums::ObjectState;
 use crate::memory::VAULTS;
 use crate::User;
-
 use crate::VaultRole::Admin;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -22,7 +22,7 @@ pub struct Vault {
     pub modified_date: u64,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, CandidType, Deserialize, Eq)]
 pub struct VaultMember {
     pub user_uuid: String,
     pub role: VaultRole,
@@ -42,13 +42,17 @@ pub enum VaultRole {
     Member,
 }
 
-
 impl PartialEq for Vault {
     fn eq(&self, other: &Self) -> bool {
         self.id.eq(&other.id)
     }
 }
 
+impl PartialEq for VaultMember {
+    fn eq(&self, other: &Self) -> bool {
+        self.user_uuid.eq(&other.user_uuid)
+    }
+}
 
 pub fn register(user_uuid: String, name: String, description: Option<String>) -> Vault {
     VAULTS.with(|vaults| {
@@ -75,8 +79,8 @@ pub fn register(user_uuid: String, name: String, description: Option<String>) ->
 pub fn get(ids: HashSet<u64>) -> Vec<Vault> {
     VAULTS.with(|vaults| {
         let mut result: Vec<Vault> = Default::default();
-        for key in ids {
-            match vaults.borrow_mut().get(&key) {
+        for id in ids {
+            match vaults.borrow_mut().get(&id) {
                 None => {
                     trap("Nonexistent key error")
                 }
@@ -100,13 +104,13 @@ pub fn get_by_id(id: u64) -> Vault {
     })
 }
 
-pub fn add_vault_member(vault_id: u64, user: &User, role: VaultRole, name:Option<String>) -> Vault {
+pub fn add_vault_member(vault_id: u64, user: &User, role: VaultRole, name: Option<String>, state: ObjectState) -> Vault {
     let mut vault = get_by_id(vault_id);
     let vm = VaultMember {
         user_uuid: user.address.clone(),
         role,
         name,
-        state: ObjectState::Active
+        state,
     };
     vault.members.insert(vm);
     restore(vault)
@@ -124,4 +128,13 @@ pub fn restore(mut vault: Vault) -> Vault {
             }
         }
     })
+}
+
+
+pub fn update(vault: Vault) -> Vault {
+    let mut old = get_by_id(vault.id);
+    old.state = vault.state;
+    old.description = vault.description;
+    old.name = vault.name;
+    restore(old.clone())
 }

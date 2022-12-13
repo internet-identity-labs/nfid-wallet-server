@@ -14,7 +14,7 @@ use crate::memory::{Conf, CONF};
 use crate::policy_service::{Policy, PolicyType};
 use crate::request::{PolicyRegisterRequest, TransactionApproveRequest, TransactionRegisterRequest, VaultMemberRequest, VaultRegisterRequest, WalletRegisterRequest};
 use crate::security_service::trap_if_not_permitted;
-use crate::transaction_service::{is_transaction_approved, Transaction};
+use crate::transaction_service::Transaction;
 use crate::TransactionState::Approved;
 use crate::transfer_service::transfer;
 use crate::user_service::{get_or_new_by_caller, User};
@@ -63,6 +63,13 @@ async fn register_vault(request: VaultRegisterRequest) -> Vault {
     vault
 }
 
+#[update]
+#[candid_method(update)]
+async fn update_vault(vault: Vault) -> Vault {
+    trap_if_not_permitted(vault.id, vec![VaultRole::Admin]);
+    vault_service::update(vault)
+}
+
 #[query]
 #[candid_method(query)]
 async fn get_vaults() -> Vec<Vault> {
@@ -70,13 +77,12 @@ async fn get_vaults() -> Vec<Vault> {
     vault_service::get(vault_ids)
 }
 
-
 #[update]
 #[candid_method(update)]
-async fn add_vault_member(request: VaultMemberRequest) -> Vault {
+async fn store_member(request: VaultMemberRequest) -> Vault {
     trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]);
     let mut user = user_service::get_or_new_by_address(request.address);
-    let vault = vault_service::add_vault_member(request.vault_id, &user, request.role, request.name);
+    let vault = vault_service::add_vault_member(request.vault_id, &user, request.role, request.name, request.state);
     user.vaults.insert(vault.id.clone());
     user_service::restore(user);
     vault_service::restore(vault.clone())
@@ -93,13 +99,22 @@ async fn register_wallet(request: WalletRegisterRequest) -> Wallet {
     new_wallet
 }
 
+#[update]
+#[candid_method(update)]
+async fn update_wallet(wallet: Wallet) -> Wallet {
+    let old = wallet_service::get_by_id(wallet.id);
+    for vault_id in &old.vaults {
+        trap_if_not_permitted(*vault_id, vec![VaultRole::Admin]);
+    }
+    wallet_service::update(wallet)
+}
 
 #[update]
 #[candid_method(update)]
 async fn register_policy(request: PolicyRegisterRequest) -> Policy {
-    trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]); //todo accepted_wallets
+    trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]); //todo accepted_wallets?
     let mut vault = vault_service::get_by_id(request.vault_id);
-    let policy = policy_service::register_policy(request.policy_type);
+    let policy = policy_service::register_policy(request.vault_id, request.policy_type);
     vault.policies.insert(policy.id);
     vault_service::restore(vault);
     policy
@@ -122,16 +137,23 @@ async fn get_policies(vault_id: u64) -> Vec<Policy> {
     policy_service::get(vault[0].policies.clone())
 }
 
+#[update]
+#[candid_method(update)]
+async fn update_policy(policy: Policy) -> Policy {
+    let old = policy_service::get_by_id(policy.id);
+    trap_if_not_permitted(old.vault, vec![VaultRole::Admin]); //todo wallets relation to vault?
+    policy_service::update_policy(policy)
+}
 
 #[update]
 #[candid_method(update)]
 async fn register_transaction(request: TransactionRegisterRequest) -> Transaction {
-    let wallet = wallet_service::get_wallet(request.wallet_id);
+    let wallet = wallet_service::get_by_id(request.wallet_id);
     let vaults = vault_service::get(wallet.vaults.clone());
     let vault = vaults.first().unwrap(); //for now one2one
     trap_if_not_permitted(vault.id, vec![VaultRole::Admin, VaultRole::Member]);
     let policy = policy_service::define_correct_policy(vault.policies.clone(), request.amount, request.wallet_id);
-    let transaction = transaction_service::register_transaction(request.amount, request.address, request.wallet_id, policy, vault.id);
+    let transaction = transaction_service::register_transaction(request.amount, request.address, request.wallet_id, policy);
     transaction
 }
 

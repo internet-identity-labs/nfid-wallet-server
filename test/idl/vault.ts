@@ -12,6 +12,7 @@ export type ObjectState = { 'Active' : null } |
     { 'Archived' : null };
 export interface Policy {
     'id' : bigint,
+    'vault' : bigint,
     'modified_date' : bigint,
     'state' : ObjectState,
     'policy_type' : PolicyType,
@@ -79,6 +80,7 @@ export interface VaultMemberRequest {
     'name' : [] | [string],
     'role' : VaultRole,
     'vault_id' : bigint,
+    'state' : ObjectState,
     'address' : string,
 }
 export interface VaultRegisterRequest {
@@ -100,11 +102,9 @@ export interface WalletRegisterRequest {
     'vault_id' : bigint,
 }
 export interface _SERVICE {
-    'add_vault_member' : ActorMethod<[VaultMemberRequest], Vault>,
     'approve_transaction' : ActorMethod<[TransactionApproveRequest], Transaction>,
     'get_policies' : ActorMethod<[bigint], Array<Policy>>,
     'get_transactions' : ActorMethod<[], Array<Transaction>>,
-    'get_vault_members' : ActorMethod<[bigint], Array<VaultMember>>,
     'get_vaults' : ActorMethod<[], Array<Vault>>,
     'get_wallets' : ActorMethod<[bigint], Array<Wallet>>,
     'register_policy' : ActorMethod<[PolicyRegisterRequest], Policy>,
@@ -114,5 +114,9 @@ export interface _SERVICE {
         >,
     'register_vault' : ActorMethod<[VaultRegisterRequest], Vault>,
     'register_wallet' : ActorMethod<[WalletRegisterRequest], Wallet>,
+    'store_member' : ActorMethod<[VaultMemberRequest], Vault>,
     'sub' : ActorMethod<[bigint], string>,
+    'update_policy' : ActorMethod<[Policy], Policy>,
+    'update_vault' : ActorMethod<[Vault], Vault>,
+    'update_wallet' : ActorMethod<[Wallet], Wallet>,
 }
