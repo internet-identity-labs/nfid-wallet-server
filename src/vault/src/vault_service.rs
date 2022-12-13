@@ -106,7 +106,7 @@ pub fn add_vault_member(vault_id: u64, user: &User, role: VaultRole, name:Option
         user_uuid: user.address.clone(),
         role,
         name,
-        state: ObjectState::Archived
+        state: ObjectState::Active
     };
     vault.members.insert(vm);
     restore(vault)

@@ -2,7 +2,7 @@ import "mocha";
 import {deploy} from "./util/deployment.util";
 import {Dfx} from "./type/dfx";
 import {App} from "./constanst/app.enum";
-import {Vault, VaultMember,} from "./idl/vault";
+import {Vault, VaultMember, Wallet,} from "./idl/vault";
 import {expect} from "chai";
 import {principalToAddress} from "ictool"
 import {DFX} from "./constanst/dfx.const";
@@ -135,10 +135,19 @@ function verifyVault(actualVault: Vault, expectedVault: Vault) {
     if (actualVault.description.length > 0) {
         expect(actualVault.description[0]).eq(expectedVault.description[0])
     }
-    // expect(actualVault.wallets).eq(expectedVault.wallets)
-    // expect(actualVault.policies).eq(expectedVault.policies)
+    expect(actualVault.wallets.length).eq(expectedVault.wallets.length)
+    for (const actWallet of actualVault.wallets) {
+        expect(actualVault.wallets.includes(actWallet))
+    }
+    expect(actualVault.wallets).eq(expectedVault.wallets)
+    for (const actPolicy of actualVault.policies) {
+        expect(actualVault.policies.includes(actPolicy))
+    }
     expect(actualVault.modified_date !== 0n).true
-    verifyMember(actualVault.members[0], expectedVault.members[0])
+    expect(actualVault.members.length).eq(expectedVault.members.length)
+    for (const actMember of actualVault.members) {
+        verifyMember(actMember, expectedVault.members.find(l => l.user_uuid === actMember.user_uuid))
+    }
 
 }
 
@@ -175,7 +184,7 @@ function getExpectedVault(): Vault {
 
 function getDefaultMember(): VaultMember {
     return {
-        state: undefined,
+        state: {'Active': null},
         user_uuid: memberAddress,
         name: ["MoyaLaskovayaSuchechka"],
         role: {'Member': null},
