@@ -30,7 +30,6 @@ impl Default for Conf {
     }
 }
 
-//todo make private ???
 thread_local! {
     pub static CONF: RefCell<Conf> = RefCell::new(Conf::default());
     pub static USERS: RefCell<HashMap<String, User>> = RefCell::new(Default::default());

@@ -167,7 +167,6 @@ async fn get_transactions() -> Vec<Transaction> {
 #[update]
 #[candid_method(update)]
 async fn approve_transaction(request: TransactionApproveRequest) -> Transaction {//TODO: synonym to approve ??? claim_transaction/affect_transaction
-
     let ts = transaction_service::get_by_id(request.transaction_id);
     trap_if_not_permitted(ts.vault_id, vec![VaultRole::Admin, VaultRole::Member]);
     let mut claimed_transaction = transaction_service::claim_transaction(ts, request.state);
