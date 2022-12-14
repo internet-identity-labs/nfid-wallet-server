@@ -15,7 +15,7 @@ describe("Vault", () => {
 
 
     before(async () => {
-        dfx = await deploy(App.Vault);
+        dfx = await deploy({apps: [App.Vault]});
 
         rootAddress = principalToAddress(
             dfx.user.identity.getPrincipal() as any,

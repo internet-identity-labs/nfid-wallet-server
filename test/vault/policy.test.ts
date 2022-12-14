@@ -14,7 +14,7 @@ describe("Policy", () => {
     var dfx: Dfx;
 
     before(async () => {
-        dfx = await deploy(App.Vault);
+        dfx = await deploy({apps: [App.Vault]});
         memberAddress = principalToAddress(
             dfx.vault.member.getPrincipal() as any,
             Array(32).fill(1));

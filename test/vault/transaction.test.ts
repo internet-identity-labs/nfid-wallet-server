@@ -21,7 +21,7 @@ describe("Transaction", () => {
     var dfx: Dfx;
 
     before(async () => {
-        dfx = await deploy(App.Vault);
+        dfx = await deploy({apps: [App.Vault]});
     });
 
     after(() => {
