@@ -112,7 +112,7 @@ pub fn add_vault_member(vault_id: u64, user: &User, role: VaultRole, name: Optio
         name,
         state,
     };
-    vault.members.insert(vm);
+    vault.members.replace(vm);
     restore(vault)
 }
 

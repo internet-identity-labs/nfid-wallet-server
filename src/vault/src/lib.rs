@@ -141,7 +141,7 @@ async fn get_policies(vault_id: u64) -> Vec<Policy> {
 #[candid_method(update)]
 async fn update_policy(policy: Policy) -> Policy {
     let old = policy_service::get_by_id(policy.id);
-    trap_if_not_permitted(old.vault, vec![VaultRole::Admin]); //todo wallets relation to vault?
+    trap_if_not_permitted(old.vault, vec![VaultRole::Admin]); //todo new wallets relation to vault?
     policy_service::update_policy(policy)
 }
 

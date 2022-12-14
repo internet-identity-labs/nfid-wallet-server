@@ -2,7 +2,7 @@ import "mocha";
 import {deploy} from "./util/deployment.util";
 import {Dfx} from "./type/dfx";
 import {App} from "./constanst/app.enum";
-import {Vault, VaultMember, Wallet,} from "./idl/vault";
+import {Vault, VaultMember,} from "./idl/vault";
 import {expect} from "chai";
 import {principalToAddress} from "ictool"
 import {DFX} from "./constanst/dfx.const";
@@ -34,11 +34,11 @@ describe("Vault", () => {
         let vaults = await dfx.vault.actor.get_vaults() as [Vault]
         expect(vaults.length).eq(0)
     });
-
+    let vault: Vault;
 
     it("register_vault", async function () {
 
-        let vault: Vault = await dfx.vault.actor.register_vault({
+        vault = await dfx.vault.actor.register_vault({
             description: [],
             name: "vault1"
         }) as Vault
@@ -93,9 +93,9 @@ describe("Vault", () => {
         let vaultForMember = vaultsForMember[0]
         verifyVault(vaultForMember, expected)
 
-        let vaultAdmin = (await dfx.vault.actor.get_vaults() as [Vault])
+        vault = (await dfx.vault.actor.get_vaults() as [Vault])
             .find(l => l.id === 1n)
-        verifyVault(vaultAdmin, expected)
+        verifyVault(vault, expected)
 
         let vaultMember = (await dfx.vault.actor_member.get_vaults() as [Vault])
             .find(l => l.id === 1n)
@@ -103,10 +103,8 @@ describe("Vault", () => {
     });
 
     it("update vault/member", async function () {
-        let expected = getExpectedVault()
-        let member = getDefaultMember()
-        member.state = {'Archived': null};
-        expected.members.push(getDefaultMember())
+        let expected = vault;
+        expected.members.find(l=>l.user_uuid === memberAddress).state = {'Archived': null}
         let vaultMember = (await dfx.vault.actor_member.get_vaults() as [Vault])
             .find(l => l.id === 1n)
         let removedMember = await dfx.vault.actor.store_member({
@@ -118,8 +116,6 @@ describe("Vault", () => {
         }) as Vault;
         expect(vaultMember.modified_date !== removedMember.modified_date).true
         verifyVault(removedMember, expected)
-
-
     })
 
     it("negative scenarios for add members", async function () {
