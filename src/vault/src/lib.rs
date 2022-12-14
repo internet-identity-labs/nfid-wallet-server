@@ -27,7 +27,6 @@ mod vault_service;
 mod wallet_service;
 mod policy_service;
 mod transaction_service;
-mod notification_service;
 mod util;
 mod enums;
 mod security_service;

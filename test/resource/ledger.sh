@@ -10,7 +10,6 @@ test -f ledger.public.did ||curl -o ledger.public.did "https://raw.githubusercon
 
 echo "===========START DFX========="
 dfx start --background --clean
-#dfx identity new alice --disable-encryption || true
 cat <<<"$(jq '.canisters.ledger.candid="ledger.private.did"' dfx.json)" >dfx.json
 export MINT_ACC=$(dfx --identity anonymous ledger account-id)
 export LEDGER_ACC=$(dfx ledger account-id)
