@@ -1,7 +1,7 @@
 import "mocha";
-import {deploy} from "./util/deployment.util";
-import {Dfx} from "./type/dfx";
-import {App} from "./constanst/app.enum";
+import {deploy} from "../util/deployment.util";
+import {Dfx} from "../type/dfx";
+import {App} from "../constanst/app.enum";
 import {
     Policy,
     PolicyRegisterRequest,
@@ -11,10 +11,10 @@ import {
     VaultMemberRequest,
     VaultRegisterRequest,
     Wallet
-} from "./idl/vault";
+} from "../idl/vault";
 import {expect} from "chai";
 import {principalToAddress} from "ictool"
-import {DFX} from "./constanst/dfx.const";
+import {DFX} from "../constanst/dfx.const";
 
 
 describe("Transaction", () => {
@@ -120,7 +120,5 @@ describe("Transaction", () => {
         expect(transactionsMember.length).eq(1)
         expect(transactionsMember[0].id).eq(transactions[0].id)
     });
-
-
 
 });

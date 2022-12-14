@@ -1,11 +1,11 @@
 import "mocha";
-import {deploy} from "./util/deployment.util";
-import {Dfx} from "./type/dfx";
-import {App} from "./constanst/app.enum";
-import {Policy, PolicyRegisterRequest} from "./idl/vault";
+import {deploy} from "../util/deployment.util";
+import {Dfx} from "../type/dfx";
+import {App} from "../constanst/app.enum";
+import {Policy, PolicyRegisterRequest} from "../idl/vault";
 import {expect} from "chai";
 import {principalToAddress} from "ictool"
-import {DFX} from "./constanst/dfx.const";
+import {DFX} from "../constanst/dfx.const";
 
 
 let memberAddress: string;
