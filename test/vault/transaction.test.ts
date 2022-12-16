@@ -6,7 +6,10 @@ import {
     Policy,
     PolicyRegisterRequest,
     ThresholdPolicy,
-    Transaction, TransactionApproveRequest, TransactionRegisterRequest, TransactionState,
+    Transaction,
+    TransactionApproveRequest,
+    TransactionRegisterRequest,
+    TransactionState,
     Vault,
     VaultMemberRequest,
     VaultRegisterRequest,
@@ -29,18 +32,18 @@ describe("Transaction", () => {
     });
 
 
-    it("Transaction  register", async function () {
+    it("Transaction register", async function () {
         let request: VaultRegisterRequest = {
             description: ["test"],
             name: "vault1"
-        } ;
+        };
 
         let vault = await dfx.vault.actor.register_vault(request) as Vault
         let address = principalToAddress(dfx.user.identity.getPrincipal() as any, Array(32).fill(1));
         request = {
             name: "vault2",
             description: ["test"],
-        }  ;
+        };
         let vault2 = await dfx.vault.actor.register_vault(request) as Vault
 
         let memberAddress = principalToAddress(dfx.vault.member.getPrincipal() as any, Array(32).fill(1));
@@ -98,9 +101,9 @@ describe("Transaction", () => {
         expect(completed.amount_threshold).eq(1n);
         expect(completed.state.hasOwnProperty('Approved')).eq(true);
         expect(completed.approves.length).eq(2);
-        expect(completed.approves.find(l=>l.signer === address).signer).eq(address);
+        expect(completed.approves.find(l => l.signer === address).signer).eq(address);
         expect(completed.approves[0].status.hasOwnProperty("Approved")).eq(true);
-        expect(completed.approves.find(l=>l.signer === memberAddress).signer).eq(memberAddress); //TODO
+        expect(completed.approves.find(l => l.signer === memberAddress).signer).eq(memberAddress); //TODO
         expect(completed.approves[1].status.hasOwnProperty("Approved")).eq(true);
         expect(completed.approves[0].created_date > 0).eq(true);
         expect(completed.approves[1].created_date > 0).eq(true);
