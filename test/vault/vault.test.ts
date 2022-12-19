@@ -194,7 +194,7 @@ function getExpectedVault(): Vault {
         ],
         modified_date: 0n,
         name: 'vault1',
-        policies: [],
+        policies: [1n],
         state: {'Active': null},
         wallets: []
     }

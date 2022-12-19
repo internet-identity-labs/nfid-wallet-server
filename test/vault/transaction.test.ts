@@ -62,8 +62,8 @@ describe("Transaction", () => {
         let tp: ThresholdPolicy = {
             amount_threshold: 1n,
             currency: {'ICP': null},
-            member_threshold: 2,
-            wallet_ids: []
+            member_threshold: [2],
+            wallets: []
         }
         let request3: PolicyRegisterRequest = {policy_type: {'threshold_policy': tp}, vault_id: 1n};
         let policy = await dfx.vault.actor.register_policy(request3) as Policy

@@ -36,9 +36,9 @@ type PolicyType = variant {
 };
 
 type ThresholdPolicy = record {
-    member_threshold : nat8;
+    member_threshold : opt nat8;
     amount_threshold : nat64;
-    wallet_ids : opt vec text;
+    wallets : opt vec text;
     currency : Currency;
 };
 
@@ -128,9 +128,7 @@ type Wallet = record {
 type WalletRegisterRequest = record {
     name : opt text;
     vault_id : nat64
-};
-
-service : (opt Conf) -> {
+};service : (opt Conf) -> {
     approve_transaction : (TransactionApproveRequest) -> (Transaction);
     get_policies : (nat64) -> (vec Policy) query;
     get_transactions : () -> (vec Transaction) query;

@@ -28,7 +28,7 @@ pub struct Transaction {
     pub owner: String,
     pub created_date: u64,
     pub modified_date: u64,
-    pub memo: Option<String>
+    pub memo: Option<String>,
 }
 
 
@@ -45,14 +45,17 @@ impl PartialEq for Approve {
     }
 }
 
-pub fn register_transaction(amount: u64, to: String, wallet: String, policy: Policy) -> Transaction {
+pub fn register_transaction(amount: u64, to: String, wallet: String, policy: Policy, members: usize) -> Transaction {
     let amount_threshold: u64;
     let member_threshold: u8;
 
     match policy.policy_type.clone() {
         PolicyType::ThresholdPolicy(tp) => {
             amount_threshold = tp.amount_threshold;
-            member_threshold = tp.member_threshold;
+            member_threshold = match tp.member_threshold {
+                None => { members as u8 }
+                Some(threshold) => { threshold }
+            };
         }
     }
     TRANSACTIONS.with(|transactions| {
@@ -80,7 +83,7 @@ pub fn register_transaction(amount: u64, to: String, wallet: String, policy: Pol
             owner: caller_to_address(),
             created_date: ic_cdk::api::time(),
             modified_date: ic_cdk::api::time(),
-            memo: None
+            memo: None,
         };
         ts.insert(t.id, t.clone());
         t
@@ -101,9 +104,9 @@ pub fn claim_transaction(mut transaction: Transaction, state: TransactionState) 
 
     match state {
         Approved => {
-           if is_transaction_approved(&transaction) {
-               transaction.state = Approved
-           }
+            if is_transaction_approved(&transaction) {
+                transaction.state = Approved
+            }
         }
         Rejected => {
             transaction.state = Rejected

@@ -2,15 +2,14 @@ extern crate core;
 #[macro_use]
 extern crate maplit;
 
-use std::convert::TryFrom;
-
 use candid::{candid_method, export_service};
 use ic_cdk::export::candid;
 use ic_cdk_macros::*;
 
 use crate::enums::TransactionState;
 use crate::memory::{Conf, CONF};
-use crate::policy_service::{Policy, PolicyType};
+use crate::policy_service::{Policy, PolicyType, ThresholdPolicy};
+use crate::policy_service::Currency::ICP;
 use crate::request::{PolicyRegisterRequest, TransactionApproveRequest, TransactionRegisterRequest, VaultMemberRequest, VaultRegisterRequest, WalletRegisterRequest};
 use crate::security_service::trap_if_not_permitted;
 use crate::transaction_service::Transaction;
@@ -49,10 +48,19 @@ fn init(conf: Option<Conf>) {
 async fn register_vault(request: VaultRegisterRequest) -> Vault {
     let address = caller_to_address();
     let mut user = user_service::get_or_new_by_address(address);
-    let vault = vault_service::register(user.address.clone(), request.name, request.description);
+    let mut vault = vault_service::register(user.address.clone(), request.name, request.description);
+    let threshold_policy = ThresholdPolicy {
+        amount_threshold: 0,
+        currency: ICP,
+        member_threshold: None,
+        wallets: None,
+    };
+    let default_pt = PolicyType::ThresholdPolicy(threshold_policy);
+    let default_policy = policy_service::register_policy(vault.id, default_pt);
+    vault.policies.insert(default_policy.id);
     user.vaults.insert(vault.id.clone());
     user_service::restore(user);
-    vault
+    vault_service::restore(&vault)
 }
 
 #[update]
@@ -77,7 +85,7 @@ async fn store_member(request: VaultMemberRequest) -> Vault {
     let vault = vault_service::add_vault_member(request.vault_id, &user, request.role, request.name, request.state);
     user.vaults.insert(vault.id.clone());
     user_service::restore(user);
-    vault_service::restore(vault.clone())
+    vault_service::restore(&vault)
 }
 
 #[update]
@@ -88,7 +96,7 @@ async fn register_wallet(request: WalletRegisterRequest) -> Wallet {
     let address = generate_address().await;
     let new_wallet = wallet_service::new_and_store(request.name, request.vault_id, address);
     vault.wallets.insert(new_wallet.uid.clone());
-    vault_service::restore(vault);
+    vault_service::restore(&vault);
     new_wallet
 }
 
@@ -109,7 +117,7 @@ async fn register_policy(request: PolicyRegisterRequest) -> Policy {
     let mut vault = vault_service::get_by_id(request.vault_id);
     let policy = policy_service::register_policy(request.vault_id, request.policy_type);
     vault.policies.insert(policy.id);
-    vault_service::restore(vault);
+    vault_service::restore(&vault);
     policy
 }
 
@@ -146,7 +154,7 @@ async fn register_transaction(request: TransactionRegisterRequest) -> Transactio
     let vault = vaults.first().unwrap(); //for now one2one
     trap_if_not_permitted(vault.id, vec![VaultRole::Admin, VaultRole::Member]);
     let policy = policy_service::define_correct_policy(vault.policies.clone(), request.amount, &wallet.uid);
-    let transaction = transaction_service::register_transaction(request.amount, request.address, wallet.uid, policy);
+    let transaction = transaction_service::register_transaction(request.amount, request.address, wallet.uid, policy, vault.members.len());
     transaction
 }
 
@@ -183,6 +191,8 @@ async fn approve_transaction(request: TransactionApproveRequest) -> Transaction 
     claimed_transaction
 }
 
+#[test]
+fn sub_account_test() {}
 export_service!();
 
 #[ic_cdk_macros::query(name = "__get_candid_interface")]
