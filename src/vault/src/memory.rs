@@ -34,7 +34,7 @@ thread_local! {
     pub static CONF: RefCell<Conf> = RefCell::new(Conf::default());
     pub static USERS: RefCell<HashMap<String, User>> = RefCell::new(Default::default());
     pub static VAULTS: RefCell<HashMap<u64, Vault>> = RefCell::new(Default::default());
-    pub static WALLETS: RefCell<HashMap<u64, Wallet>> = RefCell::new(Default::default());
+    pub static WALLETS: RefCell<HashMap<String, Wallet>> = RefCell::new(Default::default());
     pub static POLICIES: RefCell<HashMap<u64, Policy>> = RefCell::new(Default::default());
     pub static TRANSACTIONS: RefCell<HashMap<u64, Transaction>> = RefCell::new(Default::default());
 }
@@ -87,9 +87,9 @@ pub fn post_upgrade() {
     for vault in mo.vaults {
         vaults.insert(vault.id, vault);
     }
-    let mut wallets: HashMap<u64, Wallet> = Default::default();
+    let mut wallets: HashMap<String, Wallet> = Default::default();
     for wallet in mo.wallets {
-        wallets.insert(wallet.id, wallet);
+        wallets.insert(wallet.uid.clone(), wallet);
     }
     let mut users: HashMap<String, User> = Default::default();
     for user in mo.users {

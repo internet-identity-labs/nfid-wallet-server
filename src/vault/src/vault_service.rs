@@ -14,7 +14,7 @@ pub struct Vault {
     pub id: u64,
     pub name: String,
     pub description: Option<String>,
-    pub wallets: HashSet<u64>,
+    pub wallets: HashSet<String>,
     pub policies: HashSet<u64>,
     pub members: HashSet<VaultMember>,
     pub state: ObjectState,
@@ -113,18 +113,19 @@ pub fn add_vault_member(vault_id: u64, user: &User, role: VaultRole, name: Optio
         state,
     };
     vault.members.replace(vm);
-    restore(vault)
+    restore(&vault)
 }
 
-pub fn restore(mut vault: Vault) -> Vault {
+pub fn restore(vault: &Vault) -> Vault {
     VAULTS.with(|vaults| {
-        vault.modified_date = ic_cdk::api::time();
-        match vaults.borrow_mut().insert(vault.id, vault.clone()) {
+        let mut v = vault.clone();
+        v.modified_date = ic_cdk::api::time();
+        match vaults.borrow_mut().insert(v.id, v.clone()) {
             None => {
                 trap("No such vault")
             }
             Some(_) => {
-                vault
+                v
             }
         }
     })
@@ -136,5 +137,5 @@ pub fn update(vault: Vault) -> Vault {
     old.state = vault.state;
     old.description = vault.description;
     old.name = vault.name;
-    restore(old.clone())
+    restore(&old)
 }

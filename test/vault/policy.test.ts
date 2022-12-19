@@ -38,6 +38,26 @@ describe("Policy", () => {
     after(() => {
         DFX.STOP();
     });
+    it("verify default policy", async function () {
+        let policies = await dfx.vault.actor.get_policies(1n) as [Policy]
+
+        verifyPolicy(policies[0], {
+            state: {'Active': null},
+            vault: 1n,
+            created_date: 0n,
+            id: 1n,
+            modified_date: 0n,
+            policy_type: {
+                'threshold_policy': {
+                    amount_threshold: 0n,
+                    currency: {'ICP': null},
+                    member_threshold: [],
+                    wallets: []
+                },
+
+            }
+        })
+    })
 
     it("register policy", async function () {
 
@@ -46,8 +66,8 @@ describe("Policy", () => {
                 'threshold_policy': {
                     amount_threshold: 10n,
                     currency: {'ICP': null},
-                    member_threshold: 2,
-                    wallet_ids: []
+                    member_threshold: [2],
+                    wallets: []
                 }
             },
             state: {'Active': null},
@@ -57,14 +77,14 @@ describe("Policy", () => {
             state: {'Active': null},
             vault: 1n,
             created_date: 0n,
-            id: 1n,
+            id: 3n,
             modified_date: 0n,
             policy_type: {
                 'threshold_policy': {
                     amount_threshold: 10n,
                     currency: {'ICP': null},
-                    member_threshold: 2,
-                    wallet_ids: []
+                    member_threshold: [2],
+                    wallets: []
                 },
 
             }
@@ -75,8 +95,8 @@ describe("Policy", () => {
                 'threshold_policy': {
                     amount_threshold: 2n,
                     currency: {'ICP': null},
-                    member_threshold: 3,
-                    wallet_ids: [[1n]]
+                    member_threshold: [3],
+                    wallets: [["some_uid"]]
                 }
             },
             vault_id: 1n
@@ -85,21 +105,21 @@ describe("Policy", () => {
             state: {'Active': null},
             vault: 1n,
             created_date: 0n,
-            id: 2n,
+            id: 4n,
             modified_date: 0n,
             policy_type: {
                 'threshold_policy': {
                     amount_threshold: 2n,
                     currency: {'ICP': null},
-                    member_threshold: 3,
-                    wallet_ids: [[1n]]
+                    member_threshold: [3],
+                    wallets: [["test_uid"]]
                 },
             }
         });
         let policies = await dfx.vault.actor.get_policies(1n) as [Policy]
-        expect(policies.length).eq(2)
-        let policy1 = policies.find(l => l.id === 1n)
-        let policy2 = policies.find(l => l.id === 2n)
+        expect(policies.length).eq(3)
+        let policy1 = policies.find(l => l.id === 3n)
+        let policy2 = policies.find(l => l.id === 4n)
         verifyPolicy(policy1, result1)
         verifyPolicy(policy2, result2)
     });
@@ -116,8 +136,8 @@ describe("Policy", () => {
                 'threshold_policy': {
                     amount_threshold: 2n,
                     currency: {'ICP': null},
-                    member_threshold: 3,
-                    wallet_ids: [[1n]]
+                    member_threshold: [3],
+                    wallets: [["test_uid"]]
                 },
 
             },
@@ -131,8 +151,8 @@ describe("Policy", () => {
             'threshold_policy': {
                 amount_threshold: 2n,
                 currency: {'ICP': null},
-                member_threshold: 3,
-                wallet_ids: [[1n]]
+                member_threshold: [3],
+                wallets: [["test_uid"]]
             }
         };
         console.log(result)
@@ -157,8 +177,8 @@ describe("Policy", () => {
                     'threshold_policy': {
                         amount_threshold: 10n,
                         currency: {'ICP': null},
-                        member_threshold: 2,
-                        wallet_ids: []
+                        member_threshold: [2],
+                        wallets: []
                     }
                 }, vault_id: 3n
             })
@@ -171,8 +191,8 @@ describe("Policy", () => {
                     'threshold_policy': {
                         amount_threshold: 10n,
                         currency: {'ICP': null},
-                        member_threshold: 2,
-                        wallet_ids: []
+                        member_threshold: [2],
+                        wallets: []
                     }
                 }, vault_id: 2n
             })
@@ -185,8 +205,8 @@ describe("Policy", () => {
                     'threshold_policy': {
                         amount_threshold: 10n,
                         currency: {'ICP': null},
-                        member_threshold: 2,
-                        wallet_ids: []
+                        member_threshold: [2],
+                        wallets: []
                     }
                 }, vault_id: 1n
             })
@@ -201,17 +221,22 @@ function verifyPolicy(actual: Policy, expected: Policy) {
     expect(actual.id).eq(expected.id)
     expect(actual.vault).eq(expected.vault)
     expect(Object.keys(actual.state)[0]).eq(Object.keys(expected.state)[0])
-    expect(actual.policy_type.threshold_policy.member_threshold)
-        .eq(expected.policy_type.threshold_policy.member_threshold)
+    expect(actual.policy_type.threshold_policy.member_threshold.length)
+        .eq(expected.policy_type.threshold_policy.member_threshold.length)
     expect(actual.policy_type.threshold_policy.amount_threshold)
         .eq(expected.policy_type.threshold_policy.amount_threshold)
-    expect(actual.policy_type.threshold_policy.wallet_ids.length)
-        .eq(expected.policy_type.threshold_policy.wallet_ids.length)
+    expect(actual.policy_type.threshold_policy.wallets.length)
+        .eq(expected.policy_type.threshold_policy.wallets.length)
     expect(Object.keys(actual.policy_type.threshold_policy.currency)[0])
         .eq(Object.keys(expected.policy_type.threshold_policy.currency)[0])
-    if (actual.policy_type.threshold_policy.wallet_ids.length > 0) {
-        for (const wallet of expected.policy_type.threshold_policy.wallet_ids as bigint[]) {
-            expect((actual.policy_type.threshold_policy.wallet_ids as bigint[]).includes(wallet))
+    if (actual.policy_type.threshold_policy.wallets.length > 0
+        && actual.policy_type.threshold_policy.wallets[0].length > 0) {
+        for (const wallet of expected.policy_type.threshold_policy.wallets as string[]) {
+            expect((actual.policy_type.threshold_policy.wallets as string[]).includes(wallet))
         }
+    }
+    if (actual.policy_type.threshold_policy.member_threshold.length > 0) {
+        expect(actual.policy_type.threshold_policy.member_threshold[0])
+            .eq(expected.policy_type.threshold_policy.member_threshold[0])
     }
 }

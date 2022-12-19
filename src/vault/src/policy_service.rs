@@ -28,8 +28,8 @@ pub enum PolicyType {
 pub struct ThresholdPolicy {
     pub amount_threshold: u64,
     pub currency: Currency,
-    pub member_threshold: u8,
-    pub wallet_ids: Option<Vec<u64>>,
+    pub member_threshold: Option<u8>,
+    pub wallets: Option<Vec<String>>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -97,13 +97,13 @@ pub fn get(ids: HashSet<u64>) -> Vec<Policy> {
     })
 }
 
-pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet_id: u64) -> Policy {
-    get(ids).into_iter()
+pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet: &String) -> Policy {
+    let policy = get(ids).into_iter()
         .map(|l| match l.policy_type.clone() {
             PolicyType::ThresholdPolicy(threshold_policy) => {
-                match threshold_policy.wallet_ids {
+                match threshold_policy.wallets {
                     Some(x) => {
-                        if x.contains(&wallet_id)
+                        if x.contains(wallet)
                         { Some((l, threshold_policy.amount_threshold)) } else { None }
                     }
                     None => {
@@ -117,6 +117,13 @@ pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet_id: u64) -> 
         .map(|l| l.unwrap())
         .filter(|l| l.1 <= amount)
         .reduce(|a, b| if a.1 > b.1 { a } else { b })
-        .map(|l| l.0)
-        .unwrap()
+        .map(|l| l.0);
+    match policy {
+        None => {
+            trap("Unable to find default policy!")
+        }
+        Some(required) => {
+            required
+        }
+    }
 }

@@ -4,16 +4,18 @@ use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_FEE, Memo, Subaccou
 use crate::memory::CONF;
 use crate::to_array;
 
-pub async fn transfer(amount: u64, address: String, from_subaccount: Subaccount) -> Result<BlockIndex, String> {
-    let decoded = hex::decode(address).unwrap();
-    let to: AccountIdentifier = AccountIdentifier::try_from(to_array(decoded)).unwrap();
+pub async fn transfer(amount: u64, address: String, from_hex: String) -> Result<BlockIndex, String> {
+    let to_decoded = hex::decode(address).unwrap();
+    let to: AccountIdentifier = AccountIdentifier::try_from(to_array(to_decoded)).unwrap();
     let tokens = Tokens::from_e8s(amount);
+    let from_decoded = hex::decode(from_hex).unwrap();
+    let from_sub = Subaccount(to_array(from_decoded));
     let ledger_canister_id = CONF.with(|conf| conf.borrow().ledger_canister_id);
     let transfer_args = ic_ledger_types::TransferArgs {
         memo: Memo(0),
         amount: tokens,
         fee: DEFAULT_FEE,
-        from_subaccount: Some(from_subaccount),
+        from_subaccount: Some(from_sub),
         to,
         created_at_time: None,
     };

@@ -7,7 +7,7 @@ use crate::enums::ObjectState;
 pub struct TransactionRegisterRequest {
     pub amount: u64,
     pub address: String,
-    pub wallet_id: u64,
+    pub wallet_id: String,
 }
 
 #[derive(CandidType, Deserialize, Clone)]

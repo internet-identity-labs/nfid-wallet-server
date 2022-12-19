@@ -16,8 +16,10 @@ import {
     Wallet
 } from "../idl/vault";
 import {expect} from "chai";
-import {principalToAddress} from "ictool"
+import {fromHexString, principalToAddress, principalToAddressBytes} from "ictool"
 import {DFX} from "../constanst/dfx.const";
+import {Principal} from "@dfinity/principal";
+import {call} from "../util/call.util";
 
 
 describe("Transaction", () => {
@@ -38,13 +40,8 @@ describe("Transaction", () => {
             name: "vault1"
         };
 
-        let vault = await dfx.vault.actor.register_vault(request) as Vault
+        await dfx.vault.actor.register_vault(request)
         let address = principalToAddress(dfx.user.identity.getPrincipal() as any, Array(32).fill(1));
-        request = {
-            name: "vault2",
-            description: ["test"],
-        };
-        let vault2 = await dfx.vault.actor.register_vault(request) as Vault
 
         let memberAddress = principalToAddress(dfx.vault.member.getPrincipal() as any, Array(32).fill(1));
 
@@ -57,26 +54,29 @@ describe("Transaction", () => {
         }
         await dfx.vault.actor.store_member(vaultMember) as Vault;
         let wallet1 = await dfx.vault.actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
-        console.log()
+        let walBytes = principalToAddressBytes(Principal.fromText(dfx.vault.id) as any, fromHexString(wallet1.uid))
+        call(`dfx canister call ledger transfer "(record { to=vec { ${walBytes.toString().replaceAll(',', ';')} };
+          amount=record { e8s=200_000_000 }; fee=record { e8s=10_000 }; memo=0:nat64; } )"`);
+
         let wallet2 = await dfx.vault.actor.register_wallet({name: ["Wallet2"], vault_id: 1n}) as Wallet
         let tp: ThresholdPolicy = {
             amount_threshold: 1n,
             currency: {'ICP': null},
-            member_threshold: 2,
-            wallet_ids: []
+            member_threshold: [2],
+            wallets: []
         }
         let request3: PolicyRegisterRequest = {policy_type: {'threshold_policy': tp}, vault_id: 1n};
         let policy = await dfx.vault.actor.register_policy(request3) as Policy
 
         let tokens = 100000n
-        let wallet2Address = await dfx.vault.actor.sub(2) as string;
-        console.log(await dfx.vault.actor.sub(1));
-        let registerRequest: TransactionRegisterRequest = {address: wallet2Address, amount: tokens, wallet_id: 1n}
+        let to = principalToAddress(Principal.fromText(dfx.vault.id) as any, fromHexString(wallet2.uid))
+
+        let registerRequest: TransactionRegisterRequest = {address: to, amount: tokens, wallet_id: wallet1.uid}
 
         let actualTransaction = await dfx.vault.actor.register_transaction(registerRequest) as Transaction
 
         expect(actualTransaction.id).eq(1n)
-        expect(actualTransaction.to).eq(wallet2Address);
+        expect(actualTransaction.to).eq(to);
         expect(actualTransaction.amount_threshold).eq(1n);
         expect(actualTransaction.state.hasOwnProperty('Pending')).eq(true);
         expect(actualTransaction.approves.length).eq(1);
@@ -89,7 +89,7 @@ describe("Transaction", () => {
         expect(actualTransaction.block_index.length).eq(0);
         expect(actualTransaction.currency.ICP).eq(null);
         expect(actualTransaction.policy_id).eq(policy.id);
-        expect(actualTransaction.wallet_id).eq(wallet1.id);
+        expect(actualTransaction.from).eq(wallet1.uid);
 
         let state = {'Approved': null} as TransactionState
 
@@ -97,7 +97,7 @@ describe("Transaction", () => {
 
         let completed = await dfx.vault.actor_member.approve_transaction(approve) as Transaction
         expect(completed.id).eq(1n)
-        expect(completed.to).eq(wallet2Address);
+        expect(completed.to).eq(to);
         expect(completed.amount_threshold).eq(1n);
         expect(completed.state.hasOwnProperty('Approved')).eq(true);
         expect(completed.approves.length).eq(2);
@@ -112,7 +112,8 @@ describe("Transaction", () => {
         expect(completed.block_index[0]).eq(2n);
         expect(completed.currency.ICP).eq(null);
         expect(completed.policy_id).eq(policy.id);
-        expect(completed.wallet_id).eq(wallet1.id);
+        expect(completed.from).eq(wallet1.uid);
+        expect(completed.memo.length).eq(0);
         expect(completed.modified_date > actualTransaction.modified_date).eq(true);
         expect(completed.created_date === actualTransaction.created_date).eq(true);
 
