@@ -29,7 +29,7 @@ pub struct ThresholdPolicy {
     pub amount_threshold: u64,
     pub currency: Currency,
     pub member_threshold: u8,
-    pub wallet_ids: Option<Vec<u64>>,
+    pub wallet_ids: Option<Vec<String>>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -97,13 +97,13 @@ pub fn get(ids: HashSet<u64>) -> Vec<Policy> {
     })
 }
 
-pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet_id: u64) -> Policy {
+pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet: &String) -> Policy {
     get(ids).into_iter()
         .map(|l| match l.policy_type.clone() {
             PolicyType::ThresholdPolicy(threshold_policy) => {
                 match threshold_policy.wallet_ids {
                     Some(x) => {
-                        if x.contains(&wallet_id)
+                        if x.contains(wallet)
                         { Some((l, threshold_policy.amount_threshold)) } else { None }
                     }
                     None => {

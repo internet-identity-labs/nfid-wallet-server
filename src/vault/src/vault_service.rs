@@ -14,7 +14,7 @@ pub struct Vault {
     pub id: u64,
     pub name: String,
     pub description: Option<String>,
-    pub wallets: HashSet<u64>,
+    pub wallets: HashSet<String>,
     pub policies: HashSet<u64>,
     pub members: HashSet<VaultMember>,
     pub state: ObjectState,

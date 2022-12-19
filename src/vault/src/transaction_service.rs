@@ -14,7 +14,7 @@ use crate::TransactionState::{Approved, Canceled, Pending, Rejected};
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Transaction {
     pub id: u64,
-    pub wallet_id: u64,
+    pub from: String,
     pub vault_id: u64,
     pub to: String,
     pub approves: HashSet<Approve>,
@@ -28,6 +28,7 @@ pub struct Transaction {
     pub owner: String,
     pub created_date: u64,
     pub modified_date: u64,
+    pub memo: Option<String>
 }
 
 
@@ -44,7 +45,7 @@ impl PartialEq for Approve {
     }
 }
 
-pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Policy) -> Transaction {
+pub fn register_transaction(amount: u64, to: String, wallet: String, policy: Policy) -> Transaction {
     let amount_threshold: u64;
     let member_threshold: u8;
 
@@ -65,7 +66,7 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
         approves.insert(approve);
         let t: Transaction = Transaction {
             id: (ts.len() + 1) as u64,
-            wallet_id,
+            from: wallet,
             vault_id: policy.vault,
             to,
             approves,
@@ -79,6 +80,7 @@ pub fn register_transaction(amount: u64, to: String, wallet_id: u64, policy: Pol
             owner: caller_to_address(),
             created_date: ic_cdk::api::time(),
             modified_date: ic_cdk::api::time(),
+            memo: None
         };
         ts.insert(t.id, t.clone());
         t

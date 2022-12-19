@@ -38,23 +38,24 @@ describe("Wallet", () => {
         DFX.STOP();
     });
 
-
+    let wallet1: Wallet;
+    let wallet2: Wallet;
     it("wallet register", async function () {
 
-        let result1 = await dfx.vault.actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
-        verifyWallet(result1, {
+        wallet1 = await dfx.vault.actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
+        verifyWallet(wallet1, {
             created_date: 0n,
-            id: 1n,
+            uid: wallet1.uid,
             modified_date: 0n,
             name: ["Wallet1"],
             state: {'Active': null},
             vaults: [1n]
 
         })
-        let result2 = await dfx.vault.actor.register_wallet({name: ["Wallet2"], vault_id: 1n}) as Wallet
-        verifyWallet(result2, {
+        wallet2 = await dfx.vault.actor.register_wallet({name: ["Wallet2"], vault_id: 1n}) as Wallet
+        verifyWallet(wallet2, {
             created_date: 0n,
-            id: 2n,
+            uid: wallet2.uid,
             modified_date: 0n,
             name: ["Wallet2"],
             state: {'Active': null},
@@ -63,20 +64,20 @@ describe("Wallet", () => {
         })
         let wallets = await dfx.vault.actor.get_wallets(1n) as [Wallet]
         expect(wallets.length).eq(2)
-        let wallet1 = wallets.find(l => l.id === 1n)
-        let wallet2 = wallets.find(l => l.id === 2n)
-        verifyWallet(wallet1, {
-            created_date: 0n,
-            id: 1n,
+        let wallet1_1 = wallets.find(l => l.uid === wallet1.uid)
+        let wallet2_1 = wallets.find(l => l.uid === wallet2.uid)
+        verifyWallet(wallet1_1, {
+            created_date: wallet1.created_date,
+            uid: wallet1.uid,
             modified_date: 0n,
             name: ["Wallet1"],
             state: {'Active': null},
             vaults: [1n]
 
         })
-        verifyWallet(wallet2, {
-            created_date: 0n,
-            id: 2n,
+        verifyWallet(wallet2_1, {
+            created_date: wallet2.created_date,
+            uid: wallet2.uid,
             modified_date: 0n,
             name: ["Wallet2"],
             state: {'Active': null},
@@ -84,11 +85,9 @@ describe("Wallet", () => {
         })
     });
     it("update wallet", async function () {
-        let wallets = await dfx.vault.actor.get_wallets(1n) as [Wallet]
-        let wallet1 = wallets.find(l => l.id === 1n)
         let updated = await dfx.vault.actor.update_wallet({
             created_date: 321n,
-            id: 1n,
+            uid: wallet1.uid,
             modified_date: 123n,
             name: ["Wallet1_Udated"],
             state: {'Archived': null},
@@ -140,6 +139,6 @@ function verifyWallet(actual: Wallet, expected: Wallet) {
     if (actual.name.length > 0) {
         expect(actual.name[0]).eq(expected.name[0])
     }
-    expect(actual.id).eq(expected.id)
+    expect(actual.uid).eq(expected.uid)
     expect(Object.keys(actual.state)[0]).eq(Object.keys(expected.state)[0])
 }

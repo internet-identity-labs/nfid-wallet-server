@@ -1,15 +1,15 @@
 use std::collections::HashSet;
-use candid::CandidType;
-use ic_cdk::{id, trap};
-use ic_ledger_types::{AccountIdentifier, Subaccount};
+
+use candid::{CandidType, Principal};
+use ic_cdk::{call, trap};
 use serde::Deserialize;
+
 use crate::enums::ObjectState;
 use crate::memory::WALLETS;
 
-
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Wallet {
-    pub id: u64,
+    pub uid: String,
     pub name: Option<String>,
     pub vaults: HashSet<u64>,
     pub state: ObjectState,
@@ -17,19 +17,21 @@ pub struct Wallet {
     pub modified_date: u64,
 }
 
-pub fn new_and_store(name: Option<String>, vault_id: u64) -> Wallet {
+pub fn new_and_store(name: Option<String>, vault_id: u64, address: String) -> Wallet {
     WALLETS.with(|wts| {
         let mut wallets = wts.borrow_mut();
-        let id = wallets.len() as u64 + 1;
+        if wallets.contains_key(&address) {
+            trap("Bad luck. Please retry")
+        }
         let wallet_new = Wallet {
-            id: id.clone(),
+            uid: address.clone(),
             name,
             vaults: hashset![vault_id],
             state: ObjectState::Active,
             created_date: ic_cdk::api::time(),
             modified_date: ic_cdk::api::time(),
         };
-        wallets.insert(id, wallet_new.clone());
+        wallets.insert(address, wallet_new.clone());
         wallet_new
     })
 }
@@ -37,21 +39,21 @@ pub fn new_and_store(name: Option<String>, vault_id: u64) -> Wallet {
 pub fn restore(mut wallet: Wallet) -> Wallet {
     return WALLETS.with(|wallets| {
         wallet.modified_date = ic_cdk::api::time();
-        wallets.borrow_mut().insert(wallet.id, wallet.clone());
+        wallets.borrow_mut().insert(wallet.uid.clone(), wallet.clone());
         wallet
     });
 }
 
-pub fn update( wallet: Wallet) -> Wallet {
-    let mut old = get_by_id(wallet.id);
+pub fn update(wallet: Wallet) -> Wallet {
+    let mut old = get_by_uid(&wallet.uid);
     old.name = wallet.name;
     old.state = wallet.state;
     restore(old.clone())
 }
 
-pub fn get_by_id(id: u64) -> Wallet {
+pub fn get_by_uid(uid: &String) -> Wallet {
     WALLETS.with(|wallets| {
-        match wallets.borrow().get(&id) {
+        match wallets.borrow().get(uid) {
             None => {
                 trap("Not registered")
             }
@@ -62,10 +64,10 @@ pub fn get_by_id(id: u64) -> Wallet {
     })
 }
 
-pub fn get_wallets(ids: HashSet<u64>) -> Vec<Wallet> {
+pub fn get_wallets(uids: HashSet<String>) -> Vec<Wallet> {
     WALLETS.with(|wallets| {
         let mut result: Vec<Wallet> = Default::default();
-        for key in ids {
+        for key in uids {
             match wallets.borrow().get(&key) {
                 None => {
                     trap("Not registered")
@@ -79,17 +81,13 @@ pub fn get_wallets(ids: HashSet<u64>) -> Vec<Wallet> {
     })
 }
 
-pub fn id_to_subaccount(id: u64) -> Subaccount {
-    let eights: [u8; 8] = bytemuck::cast([id; 1]);
-    let mut whole: [u8; 32] = [0; 32];
-    let (one, _) = whole.split_at_mut(8);
-    one.copy_from_slice(&eights);
-    return Subaccount(whole);
+pub async fn generate_address() -> String {
+    let raw_rand: Vec<u8> = match call(Principal::management_canister(), "raw_rand", ()).await {
+        Ok((res, )) => res,
+        Err((_, err)) => trap(&format!("failed to get sub: {}", err)),
+    };
+    hex::encode(raw_rand)
 }
 
-pub fn id_to_address(wallet_id: u64) -> AccountIdentifier {
-    let whole: Subaccount = id_to_subaccount(wallet_id);
-    return AccountIdentifier::new(&id(), &(whole));
-}
 
 

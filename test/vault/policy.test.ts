@@ -76,7 +76,7 @@ describe("Policy", () => {
                     amount_threshold: 2n,
                     currency: {'ICP': null},
                     member_threshold: 3,
-                    wallet_ids: [[1n]]
+                    wallet_ids: [["some_uid"]]
                 }
             },
             vault_id: 1n
@@ -92,7 +92,7 @@ describe("Policy", () => {
                     amount_threshold: 2n,
                     currency: {'ICP': null},
                     member_threshold: 3,
-                    wallet_ids: [[1n]]
+                    wallet_ids: [["test_uid"]]
                 },
             }
         });
@@ -117,7 +117,7 @@ describe("Policy", () => {
                     amount_threshold: 2n,
                     currency: {'ICP': null},
                     member_threshold: 3,
-                    wallet_ids: [[1n]]
+                    wallet_ids: [["test_uid"]]
                 },
 
             },
@@ -132,7 +132,7 @@ describe("Policy", () => {
                 amount_threshold: 2n,
                 currency: {'ICP': null},
                 member_threshold: 3,
-                wallet_ids: [[1n]]
+                wallet_ids: [["test_uid"]]
             }
         };
         console.log(result)
