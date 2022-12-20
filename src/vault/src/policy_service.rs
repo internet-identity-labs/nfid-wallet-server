@@ -99,15 +99,16 @@ pub fn get(ids: HashSet<u64>) -> Vec<Policy> {
 
 pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet: &String) -> Policy {
     let policy = get(ids).into_iter()
+        //define policies related to requested wallet
         .map(|l| match l.policy_type.clone() {
             PolicyType::ThresholdPolicy(threshold_policy) => {
                 match threshold_policy.wallets {
                     Some(x) => {
                         if x.contains(wallet)
-                        { Some((l, threshold_policy.amount_threshold)) } else { None }
+                        { Some((l, threshold_policy.amount_threshold, threshold_policy.member_threshold)) } else { None }
                     }
                     None => {
-                        Some((l, threshold_policy.amount_threshold))
+                        Some((l, threshold_policy.amount_threshold, threshold_policy.member_threshold))
                     }
                 }
             }
@@ -115,8 +116,28 @@ pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet: &String) ->
         )
         .filter(|l| l.is_some())
         .map(|l| l.unwrap())
-        .filter(|l| l.1 <= amount)
-        .reduce(|a, b| if a.1 > b.1 { a } else { b })
+        //find all policies with thresholdAmount less(!!!) than actual amount
+        .filter(|l| l.1 < amount)
+        .reduce(|a, b|
+            //find closest (biggest) greaterThan
+            if a.1 > b.1 { a } else if b.1 > a.1 { b }
+            //if 2 policies with same greaterThan
+            //take first one with members All (that means Threshold Policies are equal or a more strict)
+            else if a.2.is_none() {
+                a
+            } else if b.2.is_none() {
+                b
+            }
+            //find more strict requirement for amount of members
+            else if a.2.unwrap() > b.2.unwrap() {
+                a
+            } else if b.2.unwrap() > a.2.unwrap() {
+                b
+            } else {
+                //should never trap
+                trap("Unable to find the policy")
+            }
+        )
         .map(|l| l.0);
     match policy {
         None => {
