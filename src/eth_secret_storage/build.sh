@@ -26,7 +26,7 @@ echo Running cargo build "${cargo_build_args[@]}"
 
 cargo build "${cargo_build_args[@]}"
 
-CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_DIR/../../target/}"
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_DIR/target/}"
 
 ic-cdk-optimizer \
   "$CARGO_TARGET_DIR/$TARGET/release/eth_secret_storage.wasm" \
