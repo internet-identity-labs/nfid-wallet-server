@@ -158,6 +158,12 @@ describe("Policy", () => {
         console.log(result)
         verifyPolicy(result, policy);
         expect(policy.modified_date !== result.modified_date).true
+
+        try {
+            await dfx.vault.actor_member.update_policy(updatePolicyRequest)
+        } catch (e: any) {
+            expect(e.message.includes("Not enough permissions")).eq(true)
+        }
     })
 
     it("register policy negative ", async function () {
