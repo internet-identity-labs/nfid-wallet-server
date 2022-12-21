@@ -91,9 +91,9 @@ pub fn get(ids: HashSet<u64>) -> Vec<Vault> {
     })
 }
 
-pub fn get_by_id(id: u64) -> Vault {
+pub fn get_by_id(id: &u64) -> Vault {
     VAULTS.with(|vaults| {
-        match vaults.borrow_mut().get(&id) {
+        match vaults.borrow_mut().get(id) {
             None => {
                 trap("Nonexistent key error")
             }
@@ -105,7 +105,7 @@ pub fn get_by_id(id: u64) -> Vault {
 }
 
 pub fn add_vault_member(vault_id: u64, user: &User, role: VaultRole, name: Option<String>, state: ObjectState) -> Vault {
-    let mut vault = get_by_id(vault_id);
+    let mut vault = get_by_id(&vault_id);
     let vm = VaultMember {
         user_uuid: user.address.clone(),
         role,
@@ -133,7 +133,7 @@ pub fn restore(vault: &Vault) -> Vault {
 
 
 pub fn update(vault: Vault) -> Vault {
-    let mut old = get_by_id(vault.id);
+    let mut old = get_by_id(&vault.id);
     old.state = vault.state;
     old.description = vault.description;
     old.name = vault.name;

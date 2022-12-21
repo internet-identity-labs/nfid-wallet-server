@@ -11,7 +11,7 @@ use crate::memory::{Conf, CONF};
 use crate::policy_service::{Policy, PolicyType, ThresholdPolicy};
 use crate::policy_service::Currency::ICP;
 use crate::request::{PolicyRegisterRequest, TransactionApproveRequest, TransactionRegisterRequest, VaultMemberRequest, VaultRegisterRequest, WalletRegisterRequest};
-use crate::security_service::trap_if_not_permitted;
+use crate::security_service::{trap_if_not_permitted, verify_wallets};
 use crate::transaction_service::Transaction;
 use crate::TransactionState::Approved;
 use crate::transfer_service::transfer;
@@ -92,7 +92,7 @@ async fn store_member(request: VaultMemberRequest) -> Vault {
 #[candid_method(update)]
 async fn register_wallet(request: WalletRegisterRequest) -> Wallet {
     trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]);
-    let mut vault = vault_service::get_by_id(request.vault_id);
+    let mut vault = vault_service::get_by_id(&request.vault_id);
     let address = generate_address().await;
     let new_wallet = wallet_service::new_and_store(request.name, request.vault_id, address);
     vault.wallets.insert(new_wallet.uid.clone());
@@ -113,8 +113,9 @@ async fn update_wallet(wallet: Wallet) -> Wallet {
 #[update]
 #[candid_method(update)]
 async fn register_policy(request: PolicyRegisterRequest) -> Policy {
-    trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]); //todo accepted_wallets?
-    let mut vault = vault_service::get_by_id(request.vault_id);
+    trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]);
+    verify_wallets(request.vault_id, &request.policy_type);
+    let mut vault = vault_service::get_by_id(&request.vault_id);
     let policy = policy_service::register_policy(request.vault_id, request.policy_type);
     vault.policies.insert(policy.id);
     vault_service::restore(&vault);
@@ -142,7 +143,8 @@ async fn get_policies(vault_id: u64) -> Vec<Policy> {
 #[candid_method(update)]
 async fn update_policy(policy: Policy) -> Policy {
     let old = policy_service::get_by_id(policy.id);
-    trap_if_not_permitted(old.vault, vec![VaultRole::Admin]); //todo new wallets relation to vault?
+    trap_if_not_permitted(old.vault, vec![VaultRole::Admin]);
+    verify_wallets(old.vault, &policy.policy_type);
     policy_service::update_policy(policy)
 }
 
@@ -164,7 +166,6 @@ async fn get_transactions() -> Vec<Transaction> {
     let tr_owner = user_service::get_or_new_by_caller();
     return transaction_service::get_all(tr_owner.vaults);
 }
-
 
 #[update]
 #[candid_method(update)]

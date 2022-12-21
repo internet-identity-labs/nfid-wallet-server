@@ -6,6 +6,7 @@ import {Vault, VaultMember,} from "../idl/vault";
 import {expect} from "chai";
 import {principalToAddress} from "ictool"
 import {DFX} from "../constanst/dfx.const";
+import exp from "constants";
 
 let rootAddress: string;
 let memberAddress: string;
@@ -102,23 +103,64 @@ describe("Vault", () => {
         verifyVault(vaultMember, expected)
     });
 
+
     it("update vault/member", async function () {
-        let expected = vault;
-        expected.members.find(l=>l.user_uuid === memberAddress).state = {'Archived': null}
+        let vault = (await dfx.vault.actor_member.get_vaults() as [Vault])
+            .find(l => l.id === 1n)
+
+        let request = structuredClone(vault);
+        request.name = "Updated name";
+        request.description = ["Updated description"];
+        request.state = {'Archived': null};
+        request.members.find(l => l.user_uuid === memberAddress).state = {'Archived': null}
+
+        let updated = await dfx.vault.actor.update_vault(request) as Vault;
+
+        let expected =  structuredClone(vault);
+        expected.name = "Updated name";
+        expected.description = ["Updated description"];
+        expected.state = {'Archived': null};
+
+        //does not update members
+        verifyVault(updated, expected)
+        expect(request.modified_date !== updated.modified_date).true
+
+        expected.members.find(l => l.user_uuid === memberAddress).state = {'Archived': null}
+        expected.members.find(l => l.user_uuid === memberAddress).name = []
+
         let vaultMember = (await dfx.vault.actor_member.get_vaults() as [Vault])
             .find(l => l.id === 1n)
-        let removedMember = await dfx.vault.actor.store_member({
+        let archivedMemberVaylt = await dfx.vault.actor.store_member({
             address: memberAddress,
-            name: ["MoyaLaskovayaSuchechka"],
+            name: [],
             role: {'Member': null},
             state: {'Archived': null},
             vault_id: 1n
         }) as Vault;
-        expect(vaultMember.modified_date !== removedMember.modified_date).true
-        verifyVault(removedMember, expected)
+
+        expect(vaultMember.modified_date !== archivedMemberVaylt.modified_date).true
+        verifyVault(archivedMemberVaylt, expected)
     })
 
-    it("negative scenarios for add members", async function () {
+
+    it("negative scenarios for update vault", async function () {
+        try {
+            let request = vault;
+            request.id = 1n
+            await dfx.vault.actor_member.update_vault(request);
+        } catch (e: any) {
+            expect(e.message.includes("Not enough permissions")).eq(true)
+        }
+        try {
+            let request = vault;
+            request.id = 2n
+            await dfx.vault.actor_member.update_vault(request);
+        } catch (e: any) {
+            expect(e.message.includes("Unauthorised")).eq(true)
+        }
+    });
+
+    it("negative scenarios for store members", async function () {
         try {
             await dfx.vault.actor_member.store_member({
                 address: memberAddress,

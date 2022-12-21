@@ -40,6 +40,7 @@ describe("Wallet", () => {
 
     let wallet1: Wallet;
     let wallet2: Wallet;
+
     it("wallet register", async function () {
 
         wallet1 = await dfx.vault.actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
@@ -98,6 +99,22 @@ describe("Wallet", () => {
         wallet1.state = {'Archived': null}
         verifyWallet(wallet1, updated)
         expect(wallet1.modified_date !== updated.modified_date).true
+    })
+
+    it("update wallet negative", async function () {
+        try {
+            await dfx.vault.actor_member.update_wallet({
+                created_date: 321n,
+                uid: wallet1.uid,
+                modified_date: 123n,
+                name: ["Wallet1_Udated"],
+                state: {'Archived': null},
+                vaults: [2n]
+
+            })
+        } catch (e: any) {
+            expect(e.message.includes("Not enough permissions")).eq(true)
+        }
     })
 
     it("register wallet negative ", async function () {
