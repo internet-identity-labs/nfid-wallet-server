@@ -141,7 +141,7 @@ pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet: &String) ->
         .map(|l| l.0);
     match policy {
         None => {
-            trap("Unable to find default policy!")
+            trap("Unable to find the policy!")
         }
         Some(required) => {
             required

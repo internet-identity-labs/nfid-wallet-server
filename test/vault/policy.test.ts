@@ -2,7 +2,7 @@ import "mocha";
 import {deploy} from "../util/deployment.util";
 import {Dfx} from "../type/dfx";
 import {App} from "../constanst/app.enum";
-import {Policy, PolicyRegisterRequest, Transaction, TransactionRegisterRequest, Wallet} from "../idl/vault";
+import {Policy, PolicyRegisterRequest, Transaction, TransactionRegisterRequest, Vault, Wallet} from "../idl/vault";
 import {expect} from "chai";
 import {fromHexString, principalToAddress} from "ictool"
 import {DFX} from "../constanst/dfx.const";
@@ -11,7 +11,7 @@ import {Principal} from "@dfinity/principal";
 
 let memberAddress: string;
 
-describe("Policy",  () => {
+describe("Policy", () => {
     var dfx: Dfx;
     let wallet1: Wallet;
     let wallet2: Wallet;
@@ -341,6 +341,36 @@ describe("Policy",  () => {
         let registerRequest: TransactionRegisterRequest = {address: to, amount: tokens, wallet_id: wallet1.uid}
         let actualTransaction = await dfx.vault.admin_actor.register_transaction(registerRequest) as Transaction
         expect(actualTransaction.policy_id).eq(policy6.id)
+    });
+
+    it("expect: unable to find policy", async function () {
+        let vault = await dfx.vault.admin_actor.register_vault({
+            description: [],
+            name: "vault3"
+        }) as Vault
+        let wallet3 = await dfx.vault.admin_actor.register_wallet({name: ["Wallet2"], vault_id: vault.id}) as Wallet
+        await dfx.vault.admin_actor.update_policy({
+            created_date: 1n,
+            id: vault.policies[0],
+            modified_date: 2n,
+            policy_type: {
+                'threshold_policy': {
+                    amount_threshold: 20000000n,
+                    currency: {'ICP': null},
+                    member_threshold: [3],
+                    wallets: [[wallet3.uid]]
+                },
+
+            },
+            state: {'Archived': null},
+            vault: 3n
+        })
+        try {
+            let registerRequest: TransactionRegisterRequest = {address: to, amount: 100n, wallet_id: wallet3.uid}
+            await dfx.vault.admin_actor.register_transaction(registerRequest)
+        } catch (e) {
+            expect(e.message).contains("Unable to find the policy!")
+        }
     });
 });
 
