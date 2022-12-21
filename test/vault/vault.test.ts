@@ -23,7 +23,7 @@ describe("Vault", () => {
             Array(32).fill(1));
 
         memberAddress = principalToAddress(
-            dfx.vault.member.getPrincipal() as any,
+            dfx.vault.member_1.getPrincipal() as any,
             Array(32).fill(1));
     });
 
@@ -32,14 +32,14 @@ describe("Vault", () => {
     });
 
     it("get_vaults empty", async function () {
-        let vaults = await dfx.vault.actor.get_vaults() as [Vault]
+        let vaults = await dfx.vault.admin_actor.get_vaults() as [Vault]
         expect(vaults.length).eq(0)
     });
     let vault: Vault;
 
     it("register_vault", async function () {
 
-        vault = await dfx.vault.actor.register_vault({
+        vault = await dfx.vault.admin_actor.register_vault({
             description: [],
             name: "vault1"
         }) as Vault
@@ -52,7 +52,7 @@ describe("Vault", () => {
             description: ["test2"],
             name: "vault2"
         };
-        let vault2 = await dfx.vault.actor.register_vault(vaultRegisterRequest2) as Vault
+        let vault2 = await dfx.vault.admin_actor.register_vault(vaultRegisterRequest2) as Vault
 
         expectedVault.name = "vault2";
         expectedVault.id = 2n;
@@ -62,7 +62,7 @@ describe("Vault", () => {
     });
 
     it("get_vaults", async function () {
-        let vaults = await dfx.vault.actor.get_vaults() as [Vault]
+        let vaults = await dfx.vault.admin_actor.get_vaults() as [Vault]
         let vault: Vault = vaults.find(l => l.id === 1n);
         let vault2: Vault = vaults.find(l => l.id === 2n);
         let expected = getExpectedVault();
@@ -76,7 +76,7 @@ describe("Vault", () => {
 
     it("add_member", async function () {
 
-        let member = await dfx.vault.actor.store_member({
+        let member = await dfx.vault.admin_actor.store_member({
             address: memberAddress,
             name: ["MoyaLaskovayaSuchechka"],
             role: {'Member': null},
@@ -89,23 +89,23 @@ describe("Vault", () => {
         verifyVault(member, expected)
         expect(member.modified_date > member.created_date).true
 
-        let vaultsForMember = (await dfx.vault.actor_member.get_vaults()) as [Vault];
+        let vaultsForMember = (await dfx.vault.actor_member_1.get_vaults()) as [Vault];
         expect(vaultsForMember.length).eq(1)
         let vaultForMember = vaultsForMember[0]
         verifyVault(vaultForMember, expected)
 
-        vault = (await dfx.vault.actor.get_vaults() as [Vault])
+        vault = (await dfx.vault.admin_actor.get_vaults() as [Vault])
             .find(l => l.id === 1n)
         verifyVault(vault, expected)
 
-        let vaultMember = (await dfx.vault.actor_member.get_vaults() as [Vault])
+        let vaultMember = (await dfx.vault.actor_member_1.get_vaults() as [Vault])
             .find(l => l.id === 1n)
         verifyVault(vaultMember, expected)
     });
 
 
     it("update vault/member", async function () {
-        let vault = (await dfx.vault.actor_member.get_vaults() as [Vault])
+        let vault = (await dfx.vault.actor_member_1.get_vaults() as [Vault])
             .find(l => l.id === 1n)
 
         let request = structuredClone(vault);
@@ -114,7 +114,7 @@ describe("Vault", () => {
         request.state = {'Archived': null};
         request.members.find(l => l.user_uuid === memberAddress).state = {'Archived': null}
 
-        let updated = await dfx.vault.actor.update_vault(request) as Vault;
+        let updated = await dfx.vault.admin_actor.update_vault(request) as Vault;
 
         let expected =  structuredClone(vault);
         expected.name = "Updated name";
@@ -128,9 +128,9 @@ describe("Vault", () => {
         expected.members.find(l => l.user_uuid === memberAddress).state = {'Archived': null}
         expected.members.find(l => l.user_uuid === memberAddress).name = []
 
-        let vaultMember = (await dfx.vault.actor_member.get_vaults() as [Vault])
+        let vaultMember = (await dfx.vault.actor_member_1.get_vaults() as [Vault])
             .find(l => l.id === 1n)
-        let archivedMemberVaylt = await dfx.vault.actor.store_member({
+        let archivedMemberVaylt = await dfx.vault.admin_actor.store_member({
             address: memberAddress,
             name: [],
             role: {'Member': null},
@@ -147,14 +147,14 @@ describe("Vault", () => {
         try {
             let request = vault;
             request.id = 1n
-            await dfx.vault.actor_member.update_vault(request);
+            await dfx.vault.actor_member_1.update_vault(request);
         } catch (e: any) {
             expect(e.message.includes("Not enough permissions")).eq(true)
         }
         try {
             let request = vault;
             request.id = 2n
-            await dfx.vault.actor_member.update_vault(request);
+            await dfx.vault.actor_member_1.update_vault(request);
         } catch (e: any) {
             expect(e.message.includes("Unauthorised")).eq(true)
         }
@@ -162,7 +162,7 @@ describe("Vault", () => {
 
     it("negative scenarios for store members", async function () {
         try {
-            await dfx.vault.actor_member.store_member({
+            await dfx.vault.actor_member_1.store_member({
                 address: memberAddress,
                 name: ["Moya Laskovaya Suchechka"],
                 role: {'Member': null},
@@ -173,7 +173,7 @@ describe("Vault", () => {
             expect(e.message.includes("Unauthorised")).eq(true)
         }
         try {
-            await dfx.vault.actor_member.store_member({
+            await dfx.vault.actor_member_1.store_member({
                 address: memberAddress,
                 name: ["Moya Laskovaya Suchechka"],
                 role: {'Member': null},

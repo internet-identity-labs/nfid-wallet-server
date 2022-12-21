@@ -28,5 +28,7 @@ export const DFX = {
     RECOVER_ACCOUNT: () => call(`dfx canister call identity_manager recover_account '(12_345:nat64)'`), 
     REMOVE_ACCOUNT: (x: string) => call(`dfx canister call ${x} remove_account`), 
     RESTORE_ACCOUNT: (x: string, y: string) => call(`dfx canister call ${x} restore_accounts '("${y}")'`),
-    INIT_ESS: () => call(`dfx canister call eth_secret_storage init '()'`)
+    INIT_ESS: () => call(`dfx canister call eth_secret_storage init '()'`),
+    LEDGER_FILL_BALANCE: (x:string) => call(`dfx canister call ledger transfer "(record { to=vec { ${x} };
+          amount=record { e8s=200_000_000 }; fee=record { e8s=10_000 }; memo=0:nat64; } )"`)
 }

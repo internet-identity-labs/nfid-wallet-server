@@ -14,18 +14,18 @@ describe("Wallet", () => {
     before(async () => {
         dfx = await deploy({apps: [App.Vault]});
         memberAddress = principalToAddress(
-            dfx.vault.member.getPrincipal() as any,
+            dfx.vault.member_1.getPrincipal() as any,
             Array(32).fill(1));
 
-        await dfx.vault.actor.register_vault({
+        await dfx.vault.admin_actor.register_vault({
             description: [],
             name: "vault1"
         })
-        await dfx.vault.actor.register_vault({
+        await dfx.vault.admin_actor.register_vault({
             description: [],
             name: "vault2"
         })
-        await dfx.vault.actor.store_member({
+        await dfx.vault.admin_actor.store_member({
             address: memberAddress,
             name: ["MoyaLaskovayaSuchechka"],
             role: {'Member': null},
@@ -43,7 +43,7 @@ describe("Wallet", () => {
 
     it("wallet register", async function () {
 
-        wallet1 = await dfx.vault.actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
+        wallet1 = await dfx.vault.admin_actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
         verifyWallet(wallet1, {
             created_date: 0n,
             uid: wallet1.uid,
@@ -53,7 +53,7 @@ describe("Wallet", () => {
             vaults: [1n]
 
         })
-        wallet2 = await dfx.vault.actor.register_wallet({name: ["Wallet2"], vault_id: 1n}) as Wallet
+        wallet2 = await dfx.vault.admin_actor.register_wallet({name: ["Wallet2"], vault_id: 1n}) as Wallet
         verifyWallet(wallet2, {
             created_date: 0n,
             uid: wallet2.uid,
@@ -63,7 +63,7 @@ describe("Wallet", () => {
             vaults: [1n]
 
         })
-        let wallets = await dfx.vault.actor.get_wallets(1n) as [Wallet]
+        let wallets = await dfx.vault.admin_actor.get_wallets(1n) as [Wallet]
         expect(wallets.length).eq(2)
         let wallet1_1 = wallets.find(l => l.uid === wallet1.uid)
         let wallet2_1 = wallets.find(l => l.uid === wallet2.uid)
@@ -86,7 +86,7 @@ describe("Wallet", () => {
         })
     });
     it("update wallet", async function () {
-        let updated = await dfx.vault.actor.update_wallet({
+        let updated = await dfx.vault.admin_actor.update_wallet({
             created_date: 321n,
             uid: wallet1.uid,
             modified_date: 123n,
@@ -103,7 +103,7 @@ describe("Wallet", () => {
 
     it("update wallet negative", async function () {
         try {
-            await dfx.vault.actor_member.update_wallet({
+            await dfx.vault.actor_member_1.update_wallet({
                 created_date: 321n,
                 uid: wallet1.uid,
                 modified_date: 123n,
@@ -119,27 +119,27 @@ describe("Wallet", () => {
 
     it("register wallet negative ", async function () {
         try {
-            await dfx.vault.actor_member.get_wallets(2n)
+            await dfx.vault.actor_member_1.get_wallets(2n)
         } catch (e: any) {
             expect(e.message.includes("Unauthorised")).eq(true)
         }
         try {
-            await dfx.vault.actor_member.get_wallets(3n)
+            await dfx.vault.actor_member_1.get_wallets(3n)
         } catch (e: any) {
             expect(e.message.includes("Nonexistent key")).eq(true)
         }
         try {
-            await dfx.vault.actor_member.register_wallet({name: ["Wallet1"], vault_id: 3n})
+            await dfx.vault.actor_member_1.register_wallet({name: ["Wallet1"], vault_id: 3n})
         } catch (e: any) {
             expect(e.message.includes("Nonexistent key")).eq(true)
         }
         try {
-            await dfx.vault.actor_member.register_wallet({name: ["Wallet1"], vault_id: 2n})
+            await dfx.vault.actor_member_1.register_wallet({name: ["Wallet1"], vault_id: 2n})
         } catch (e: any) {
             expect(e.message.includes("Unauthorised")).eq(true)
         }
         try {
-            await dfx.vault.actor_member.register_wallet({name: ["Wallet1"], vault_id: 1n})
+            await dfx.vault.actor_member_1.register_wallet({name: ["Wallet1"], vault_id: 1n})
         } catch (e: any) {
             expect(e.message.includes("Not enough permissions")).eq(true)
         }

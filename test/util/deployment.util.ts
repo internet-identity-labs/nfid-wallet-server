@@ -40,9 +40,11 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         },
         vault: {
             id: null,
-            actor: null,
-            actor_member: null,
-            member: null
+            admin_actor: null,
+            actor_member_1: null,
+            actor_member_2: null,
+            member_1: null,
+            member_2: null
         }
     };
 
@@ -147,10 +149,11 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             dfx.vault.id = DFX.GET_CANISTER_ID("vault");
             console.log(">> ", dfx.vault.id);
 
-            dfx.vault.actor = await getActor(dfx.vault.id, dfx.user.identity, vaultIdl);
-            dfx.vault.member = Ed25519KeyIdentity.generate();
-            dfx.vault.actor_member = await getActor(dfx.vault.id, dfx.vault.member, vaultIdl);
-            console.log(dfx.vault.actor)
+            dfx.vault.admin_actor = await getActor(dfx.vault.id, dfx.user.identity, vaultIdl);
+            dfx.vault.member_1 = Ed25519KeyIdentity.generate();
+            dfx.vault.member_2 = Ed25519KeyIdentity.generate();
+            dfx.vault.actor_member_1 = await getActor(dfx.vault.id, dfx.vault.member_1, vaultIdl);
+            dfx.vault.actor_member_2 = await getActor(dfx.vault.id, dfx.vault.member_2, vaultIdl);
             return dfx;
         }
 
