@@ -282,7 +282,6 @@ describe("Transaction", () => {
             wallet_id: wallet2.uid
         }) as Transaction
         let memo: string = actualTransaction.memo[0]
-
         expect(memo)
             .contains("ledger transfer error: InsufficientFunds { balance: Tokens { e8s: 300000 } }")
         expectedTransaction.memo = actualTransaction.memo
