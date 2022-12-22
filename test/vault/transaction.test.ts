@@ -3,13 +3,11 @@ import {deploy} from "../util/deployment.util";
 import {Dfx} from "../type/dfx";
 import {App} from "../constanst/app.enum";
 import {
+    Approve,
     Policy,
     PolicyRegisterRequest,
     ThresholdPolicy,
     Transaction,
-    TransactionApproveRequest,
-    TransactionRegisterRequest,
-    TransactionState,
     Vault,
     VaultMemberRequest,
     VaultRegisterRequest,
@@ -19,110 +17,391 @@ import {expect} from "chai";
 import {fromHexString, principalToAddress, principalToAddressBytes} from "ictool"
 import {DFX} from "../constanst/dfx.const";
 import {Principal} from "@dfinity/principal";
-import {call} from "../util/call.util";
 
 
 describe("Transaction", () => {
     var dfx: Dfx;
+    let adminAddress: string;
+    let memberAddress1: string;
+    let memberAddress2: string;
+    let wallet1: Wallet;
+    let wallet2: Wallet;
+    let wallet3: Wallet;
+    let policy: Policy;
+    let policy2: Policy;
+    let to: string;
+    let tokens = 100000n
 
     before(async () => {
         dfx = await deploy({apps: [App.Vault]});
+
+        adminAddress = principalToAddress(dfx.user.identity.getPrincipal() as any, Array(32).fill(1));
+        memberAddress1 = principalToAddress(dfx.vault.member_1.getPrincipal() as any, Array(32).fill(1));
+        memberAddress2 = principalToAddress(dfx.vault.member_2.getPrincipal() as any, Array(32).fill(1));
+
+        let request: VaultRegisterRequest = {
+            description: ["test"],
+            name: "vault1"
+        };
+        await dfx.vault.admin_actor.register_vault(request)
+        await dfx.vault.admin_actor.register_vault(request)
+
+        let vaultMember: VaultMemberRequest = {
+            address: memberAddress1,
+            name: ["MoyaLaskovayaSuchechka"],
+            role: {'Member': null},
+            vault_id: 1n,
+            state: {'Active': null},
+        }
+
+        await dfx.vault.admin_actor.store_member(vaultMember) as Vault;
+        vaultMember.address = memberAddress2;
+        await dfx.vault.admin_actor.store_member(vaultMember) as Vault;
+        wallet1 = await dfx.vault.admin_actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
+        let walBytes = principalToAddressBytes(Principal.fromText(dfx.vault.id) as any, fromHexString(wallet1.uid))
+        DFX.LEDGER_FILL_BALANCE(walBytes.toString().replaceAll(',', ';'))
+        wallet2 = await dfx.vault.admin_actor.register_wallet({name: ["Wallet2"], vault_id: 1n}) as Wallet
+        let tp: ThresholdPolicy = {
+            amount_threshold: 1n,
+            currency: {'ICP': null},
+            member_threshold: [1],
+            wallets: []
+        }
+        let request1: PolicyRegisterRequest = {policy_type: {'threshold_policy': tp}, vault_id: 1n};
+        policy = await dfx.vault.admin_actor.register_policy(request1) as Policy
+        let tp2: ThresholdPolicy = {
+            amount_threshold: 1n,
+            currency: {'ICP': null},
+            member_threshold: [1],
+            wallets: []
+        }
+        let request2: PolicyRegisterRequest = {policy_type: {'threshold_policy': tp}, vault_id: 2n};
+        policy2 = await dfx.vault.admin_actor.register_policy(request2) as Policy
+        to = principalToAddress(Principal.fromText(dfx.vault.id) as any, fromHexString(wallet2.uid))
+        await dfx.vault.actor_member_2.register_vault(request)
+        wallet3 = await dfx.vault.actor_member_2.register_wallet({name: ["Wallet2"], vault_id: 3n}) as Wallet
     });
 
     after(() => {
         DFX.STOP();
     });
 
+    it("Transaction register required 1 approves", async function () {
+        await setMemberThreshold([1])
 
-    it("Transaction register", async function () {
-        let request: VaultRegisterRequest = {
-            description: ["test"],
-            name: "vault1"
-        };
+        let expectedTransaction: Transaction = getDefaultTransaction()
+        expectedTransaction.block_index = [2n]
+        expectedTransaction.state = {'Approved': null}
 
-        await dfx.vault.actor.register_vault(request)
-        let address = principalToAddress(dfx.user.identity.getPrincipal() as any, Array(32).fill(1));
-
-        let memberAddress = principalToAddress(dfx.vault.member.getPrincipal() as any, Array(32).fill(1));
-
-        let vaultMember: VaultMemberRequest = {
-            address: memberAddress,
-            name: ["MoyaLaskovayaSuchechka"],
-            role: {'Member': null},
-            vault_id: 1n,
-            state: {'Active': null},
-        }
-        await dfx.vault.actor.store_member(vaultMember) as Vault;
-        let wallet1 = await dfx.vault.actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
-        let walBytes = principalToAddressBytes(Principal.fromText(dfx.vault.id) as any, fromHexString(wallet1.uid))
-        call(`dfx canister call ledger transfer "(record { to=vec { ${walBytes.toString().replaceAll(',', ';')} };
-          amount=record { e8s=200_000_000 }; fee=record { e8s=10_000 }; memo=0:nat64; } )"`);
-
-        let wallet2 = await dfx.vault.actor.register_wallet({name: ["Wallet2"], vault_id: 1n}) as Wallet
-        let tp: ThresholdPolicy = {
-            amount_threshold: 1n,
-            currency: {'ICP': null},
-            member_threshold: [2],
-            wallets: []
-        }
-        let request3: PolicyRegisterRequest = {policy_type: {'threshold_policy': tp}, vault_id: 1n};
-        let policy = await dfx.vault.actor.register_policy(request3) as Policy
-
-        let tokens = 100000n
-        let to = principalToAddress(Principal.fromText(dfx.vault.id) as any, fromHexString(wallet2.uid))
-
-        let registerRequest: TransactionRegisterRequest = {address: to, amount: tokens, wallet_id: wallet1.uid}
-
-        let actualTransaction = await dfx.vault.actor.register_transaction(registerRequest) as Transaction
+        let actualTransaction = await dfx.vault.admin_actor.register_transaction({
+            address: to,
+            amount: tokens,
+            wallet_id: wallet1.uid
+        }) as Transaction
 
         expect(actualTransaction.id).eq(1n)
-        expect(actualTransaction.to).eq(to);
-        expect(actualTransaction.amount_threshold).eq(1n);
-        expect(actualTransaction.state.hasOwnProperty('Pending')).eq(true);
-        expect(actualTransaction.approves.length).eq(1);
-        expect(actualTransaction.approves[0].signer).eq(address);
-        expect(actualTransaction.approves[0].status.hasOwnProperty("Approved")).eq(true);
-        expect(actualTransaction.approves[0].created_date > 0).eq(true);
-        expect(actualTransaction.created_date > 0).eq(true);
-        expect(actualTransaction.modified_date > 0).eq(true);
-        expect(actualTransaction.amount).eq(tokens);
-        expect(actualTransaction.block_index.length).eq(0);
-        expect(actualTransaction.currency.ICP).eq(null);
-        expect(actualTransaction.policy_id).eq(policy.id);
-        expect(actualTransaction.from).eq(wallet1.uid);
 
-        let state = {'Approved': null} as TransactionState
+        verifyTransaction(actualTransaction, expectedTransaction);
 
-        let approve: TransactionApproveRequest = {state: state, transaction_id: actualTransaction.id}
-
-        let completed = await dfx.vault.actor_member.approve_transaction(approve) as Transaction
-        expect(completed.id).eq(1n)
-        expect(completed.to).eq(to);
-        expect(completed.amount_threshold).eq(1n);
-        expect(completed.state.hasOwnProperty('Approved')).eq(true);
-        expect(completed.approves.length).eq(2);
-        expect(completed.approves.find(l => l.signer === address).signer).eq(address);
-        expect(completed.approves[0].status.hasOwnProperty("Approved")).eq(true);
-        expect(completed.approves.find(l => l.signer === memberAddress).signer).eq(memberAddress); //TODO
-        expect(completed.approves[1].status.hasOwnProperty("Approved")).eq(true);
-        expect(completed.approves[0].created_date > 0).eq(true);
-        expect(completed.approves[1].created_date > 0).eq(true);
-        expect(completed.created_date > 0).eq(true);
-        expect(completed.amount).eq(tokens);
-        expect(completed.block_index[0]).eq(2n);
-        expect(completed.currency.ICP).eq(null);
-        expect(completed.policy_id).eq(policy.id);
-        expect(completed.from).eq(wallet1.uid);
-        expect(completed.memo.length).eq(0);
-        expect(completed.modified_date > actualTransaction.modified_date).eq(true);
-        expect(completed.created_date === actualTransaction.created_date).eq(true);
-
-        let transactions = await dfx.vault.actor.get_transactions() as Array<Transaction>
+        let transactions = await dfx.vault.admin_actor.get_transactions() as Array<Transaction>
 
         expect(transactions.length).eq(1)
-        let transactionsMember = await dfx.vault.actor_member.get_transactions() as Array<Transaction>
+        let transactionsMember = await dfx.vault.actor_member_1.get_transactions() as Array<Transaction>
         expect(transactionsMember.length).eq(1)
         expect(transactionsMember[0].id).eq(transactions[0].id)
     });
+
+    it("Transaction required 2 approves", async function () {
+        await setMemberThreshold([2])
+        let expectedTransaction: Transaction = getDefaultTransaction()
+
+        let actualTransaction = await dfx.vault.admin_actor.register_transaction({
+            address: to,
+            amount: tokens,
+            wallet_id: wallet1.uid
+        }) as Transaction
+
+        verifyTransaction(actualTransaction, expectedTransaction);
+        expect(actualTransaction.id).eq(2n)
+
+        expectedTransaction.approves.push({
+            created_date: 0n,
+            signer: memberAddress1,
+            status: {'Approved': null}
+        })
+        expectedTransaction.block_index[0] = 3n
+        expectedTransaction.state = {'Approved': null}
+
+        let completed = await dfx.vault.actor_member_1.approve_transaction({
+            state: {'Approved': null},
+            transaction_id: actualTransaction.id
+        }) as Transaction
+
+        verifyTransaction(completed, expectedTransaction)
+
+        expect(completed.modified_date > actualTransaction.modified_date).eq(true)
+        expect(completed.created_date === actualTransaction.created_date).eq(true)
+
+        let transactions = await dfx.vault.admin_actor.get_transactions() as Array<Transaction>
+        expect(transactions.length).eq(2)
+    });
+
+    it("Transaction required 3 approves", async function () {
+        await setMemberThreshold([3])
+
+        let expectedTransaction: Transaction = getDefaultTransaction()
+        expectedTransaction.approves.push({
+            created_date: 0n,
+            signer: memberAddress1,
+            status: {'Approved': null}
+        })
+
+        let tr = await dfx.vault.admin_actor.register_transaction({
+            address: to,
+            amount: tokens,
+            wallet_id: wallet1.uid
+        }) as Transaction
+
+        let actualTransaction = await dfx.vault.actor_member_1.approve_transaction({
+            state: {'Approved': null},
+            transaction_id: tr.id
+        }) as Transaction
+
+        verifyTransaction(actualTransaction, expectedTransaction);
+        expect(actualTransaction.modified_date > tr.modified_date).eq(true);
+        expect(tr.created_date === actualTransaction.created_date).eq(true);
+
+        expectedTransaction.approves.push({
+            created_date: 0n,
+            signer: memberAddress2,
+            status: {'Approved': null}
+        })
+        expectedTransaction.block_index[0] = 4n
+        expectedTransaction.state = {'Approved': null}
+
+        let completed = await dfx.vault.actor_member_2.approve_transaction({
+            state: {'Approved': null},
+            transaction_id: tr.id
+        }) as Transaction
+
+        verifyTransaction(completed, expectedTransaction);
+    });
+
+    it("Transaction rejected on 3 approve", async function () {
+        await setMemberThreshold([3])
+
+        let expectedTransaction: Transaction = getDefaultTransaction()
+        expectedTransaction.approves.push({
+            created_date: 0n,
+            signer: memberAddress1,
+            status: {'Approved': null}
+        })
+
+        let tr = await dfx.vault.admin_actor.register_transaction({
+            address: to,
+            amount: tokens,
+            wallet_id: wallet1.uid
+        }) as Transaction
+
+        let actualTransaction = await dfx.vault.actor_member_1.approve_transaction({
+            state: {'Approved': null},
+            transaction_id: tr.id
+        }) as Transaction
+
+        verifyTransaction(actualTransaction, expectedTransaction);
+        expect(actualTransaction.modified_date > tr.modified_date).eq(true);
+        expect(tr.created_date === actualTransaction.created_date).eq(true);
+
+        expectedTransaction.approves.push({
+            created_date: 0n,
+            signer: memberAddress2,
+            status: {'Rejected': null}
+        })
+        expectedTransaction.block_index = []
+        expectedTransaction.state = {'Rejected': null}
+
+        let completed = await dfx.vault.actor_member_2.approve_transaction({
+            state: {'Rejected': null},
+            transaction_id: tr.id
+        }) as Transaction
+
+        verifyTransaction(completed, expectedTransaction);
+    });
+
+    it("Transaction canceled on 3 approve", async function () {
+        await setMemberThreshold([3])
+
+        let expectedTransaction: Transaction = getDefaultTransaction()
+        expectedTransaction.approves.push({
+            created_date: 0n,
+            signer: memberAddress1,
+            status: {'Approved': null}
+        })
+
+        let tr = await dfx.vault.admin_actor.register_transaction({
+            address: to,
+            amount: tokens,
+            wallet_id: wallet1.uid
+        }) as Transaction
+
+        let actualTransaction = await dfx.vault.actor_member_1.approve_transaction({
+            state: {'Approved': null},
+            transaction_id: tr.id
+        }) as Transaction
+
+        verifyTransaction(actualTransaction, expectedTransaction);
+        expect(actualTransaction.modified_date > tr.modified_date).eq(true);
+        expect(tr.created_date === actualTransaction.created_date).eq(true);
+        expectedTransaction.approves.shift()
+        expectedTransaction.approves.push({
+            created_date: 0n,
+            signer: adminAddress,
+            status: {'Canceled': null}
+        })
+        expectedTransaction.block_index = []
+        expectedTransaction.state = {'Canceled': null}
+
+        let completed = await dfx.vault.admin_actor.approve_transaction({
+            state: {'Canceled': null},
+            transaction_id: tr.id
+        }) as Transaction
+
+        verifyTransaction(completed, expectedTransaction);
+    });
+
+    it("Transaction insufficient funds", async function () {
+        await setMemberThreshold([1])
+        let expectedTransaction: Transaction = getDefaultTransaction()
+        expectedTransaction.block_index = []
+        expectedTransaction.state = {'Rejected': null}
+        expectedTransaction.from = wallet2.uid
+        expectedTransaction.amount = 10000000000n
+        let actualTransaction = await dfx.vault.admin_actor.register_transaction({
+            address: to,
+            amount: 10000000000n,
+            wallet_id: wallet2.uid
+        }) as Transaction
+        let memo: string = actualTransaction.memo[0]
+        expect(memo)
+            .contains("ledger transfer error: InsufficientFunds { balance: Tokens { e8s: 300000 } }")
+        expectedTransaction.memo = actualTransaction.memo
+        verifyTransaction(actualTransaction, expectedTransaction);
+    });
+
+
+    it("Negative scenarios", async function () {
+        try {
+            await dfx.vault.admin_actor.approve_transaction({
+                state: {'Approved': null},
+                transaction_id: 1n
+            })
+        } catch (e) {
+            expect(e.message).contains("Transaction not pending")
+        }
+        try {
+            await dfx.vault.admin_actor.approve_transaction({
+                state: {'Canceled': null},
+                transaction_id: 1n
+            })
+        } catch (e) {
+            expect(e.message).contains("Transaction not pending")
+        }
+        try {
+            await dfx.vault.admin_actor.approve_transaction({
+                state: {'Pending': null},
+                transaction_id: 1n
+            })
+        } catch (e) {
+            expect(e.message).contains("Transaction not pending")
+        }
+        try {
+            await dfx.vault.admin_actor.approve_transaction({
+                state: {'Rejected': null},
+                transaction_id: 1n
+            })
+        } catch (e) {
+            expect(e.message).contains("Transaction not pending")
+        }
+        try {
+            await dfx.vault.admin_actor.approve_transaction({
+                state: {'Approved': null},
+                transaction_id: 100n
+            })
+        } catch (e) {
+            expect(e.message).contains("Nonexistent key error")
+        }
+        try {
+            //wallet registered with another actor (current not member)
+            await dfx.vault.admin_actor.register_transaction({
+                address: to,
+                amount: tokens,
+                wallet_id: wallet3.uid
+            })
+        } catch (e) {
+            expect(e.message).contains("Unauthorised")
+        }
+    });
+
+
+    function verifyTransaction(actual: Transaction, expected: Transaction) {
+        expect(actual.to).eq(expected.to);
+        expect(actual.member_threshold).eq(expected.member_threshold);
+        expect(actual.block_index.length).eq(expected.block_index.length);
+        if (expected.block_index.length > 0) {
+            expect(actual.block_index[0]).eq(expected.block_index[0]);
+        }
+        expect(actual.owner).eq(expected.owner);
+        expect(actual.from).eq(expected.from);
+        expect(actual.modified_date >= actual.created_date).eq(true);
+        expect(actual.memo.length).eq(expected.memo.length);
+        if (expected.memo.length > 0) {
+            expect(actual.memo[0]).eq(expected.memo[0]);
+        }
+        expect(actual.vault_id).eq(expected.vault_id);
+        expect(actual.amount_threshold).eq(expected.amount_threshold);
+        expect(Object.keys(actual.state)[0]).eq(Object.keys(expected.state)[0])
+        expect(actual.approves.length).eq(expected.approves.length);
+        for (const expectedApproves of expected.approves) {
+            let actualApprove = actual.approves.find(l => l.signer === expectedApproves.signer)
+            expect(Object.keys(actualApprove.status)[0]).eq(Object.keys(expectedApproves.status)[0])
+            expect(actualApprove.created_date !== 0n).true
+        }
+        expect(Object.keys(actual.currency)[0])
+            .eq(Object.keys(expected.currency)[0]);
+        expect(actual.amount).eq(expected.amount);
+        expect(actual.created_date > 0).eq(true);
+        expect(actual.policy_id).eq(expected.policy_id);
+    }
+
+    function getDefaultTransaction(): Transaction {
+        let adminApprove: Approve = {
+            created_date: 0n,
+            signer: adminAddress,
+            status: {'Approved': null}
+        }
+        return {
+            amount: 100000n,
+            amount_threshold: policy.policy_type.threshold_policy.amount_threshold,
+            approves: [adminApprove],
+            block_index: [],
+            created_date: 0n,
+            currency: {'ICP': null},
+            from: wallet1.uid,
+            id: 0n,
+            member_threshold: policy.policy_type.threshold_policy.member_threshold[0],
+            memo: [],
+            modified_date: 0n,
+            owner: adminAddress,
+            policy_id: policy.id,
+            state: {'Pending': null},
+            to: to,
+            vault_id: 1n
+        }
+    }
+
+    async function setMemberThreshold(i: [number] | []) {
+        policy.policy_type.threshold_policy.member_threshold = i
+        policy = await dfx.vault.admin_actor.update_policy(policy) as Policy
+    }
 
 });

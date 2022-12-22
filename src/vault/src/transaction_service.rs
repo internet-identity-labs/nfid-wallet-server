@@ -1,4 +1,5 @@
 use std::collections::{HashSet};
+use std::hash::{Hash, Hasher};
 
 use candid::CandidType;
 use ic_cdk::trap;
@@ -31,8 +32,7 @@ pub struct Transaction {
     pub memo: Option<String>,
 }
 
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Hash, Eq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq)]
 pub struct Approve {
     pub signer: String,
     pub created_date: u64,
@@ -42,6 +42,12 @@ pub struct Approve {
 impl PartialEq for Approve {
     fn eq(&self, other: &Self) -> bool {
         self.signer.eq(&other.signer)
+    }
+}
+
+impl Hash for Approve {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.signer.hash(state)
     }
 }
 
@@ -60,19 +66,13 @@ pub fn register_transaction(amount: u64, to: String, wallet: String, policy: Pol
     }
     TRANSACTIONS.with(|transactions| {
         let mut ts = transactions.borrow_mut();
-        let mut approves: HashSet<Approve> = Default::default();
-        let approve = Approve {
-            signer: caller_to_address(),
-            created_date: ic_cdk::api::time(),
-            status: TransactionState::Approved,
-        };
-        approves.insert(approve);
+
         let t: Transaction = Transaction {
             id: (ts.len() + 1) as u64,
             from: wallet,
             vault_id: policy.vault,
             to,
-            approves,
+            approves: hashset! {},
             amount,
             state: TransactionState::Pending,
             policy_id: policy.id,
@@ -95,7 +95,7 @@ pub fn claim_transaction(mut transaction: Transaction, state: TransactionState) 
         trap("Transaction not pending")
     }
 
-    transaction.approves.insert(
+    transaction.approves.replace(
         Approve {
             signer: caller_to_address(),
             created_date: ic_cdk::api::time(),
@@ -112,7 +112,7 @@ pub fn claim_transaction(mut transaction: Transaction, state: TransactionState) 
             transaction.state = Rejected
         }
         Pending => {
-            trap("IncorrectState")
+            trap("Incorrect state")
         }
         Canceled => {
             transaction.state = Canceled
@@ -156,7 +156,7 @@ pub fn get_by_id(id: u64) -> Transaction {
     TRANSACTIONS.with(|transactions| {
         match transactions.borrow_mut().get(&id) {
             None => {
-                trap("Nonexistent id")
+                trap("Nonexistent key error")
             }
             Some(transaction) => {
                 transaction.clone()

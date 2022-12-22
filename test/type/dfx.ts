@@ -21,9 +21,11 @@ export interface Dfx {
     },
     vault?: {
         id: string;
-        actor: Record<string, ActorMethod>;
-        actor_member: Record<string, ActorMethod>;
-        member: Identity;
+        admin_actor: Record<string, ActorMethod>;
+        actor_member_1: Record<string, ActorMethod>;
+        actor_member_2: Record<string, ActorMethod>;
+        member_1: Identity;
+        member_2: Identity;
     };
     ess?: {
         id: string;

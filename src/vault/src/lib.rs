@@ -157,7 +157,11 @@ async fn register_transaction(request: TransactionRegisterRequest) -> Transactio
     trap_if_not_permitted(vault.id, vec![VaultRole::Admin, VaultRole::Member]);
     let policy = policy_service::define_correct_policy(vault.policies.clone(), request.amount, &wallet.uid);
     let transaction = transaction_service::register_transaction(request.amount, request.address, wallet.uid, policy, vault.members.len());
-    transaction
+    let approve = TransactionApproveRequest {
+        transaction_id: transaction.id,
+        state: TransactionState::Approved,
+    };
+    approve_transaction(approve).await
 }
 
 #[query]
