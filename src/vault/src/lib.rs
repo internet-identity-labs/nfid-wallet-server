@@ -46,8 +46,7 @@ fn init(conf: Option<Conf>) {
 #[update]
 #[candid_method(update)]
 async fn register_vault(request: VaultRegisterRequest) -> Vault {
-    let address = caller_to_address();
-    let mut user = user_service::get_or_new_by_address(address);
+    let mut user = user_service::get_or_new_by_caller();
     let mut vault = vault_service::register(user.address.clone(), request.name, request.description);
     let threshold_policy = ThresholdPolicy {
         amount_threshold: 0,
@@ -58,7 +57,7 @@ async fn register_vault(request: VaultRegisterRequest) -> Vault {
     let default_pt = PolicyType::ThresholdPolicy(threshold_policy);
     let default_policy = policy_service::register_policy(vault.id, default_pt);
     vault.policies.insert(default_policy.id);
-    user.vaults.insert(vault.id.clone());
+    user.vaults.insert(vault.id);
     user_service::restore(user);
     vault_service::restore(&vault)
 }
@@ -173,27 +172,27 @@ async fn get_transactions() -> Vec<Transaction> {
 
 #[update]
 #[candid_method(update)]
-async fn approve_transaction(request: TransactionApproveRequest) -> Transaction {//TODO: synonym to approve ??? claim_transaction/affect_transaction
+async fn approve_transaction(request: TransactionApproveRequest) -> Transaction {
     let ts = transaction_service::get_by_id(request.transaction_id);
     trap_if_not_permitted(ts.vault_id, vec![VaultRole::Admin, VaultRole::Member]);
-    let mut claimed_transaction = transaction_service::claim_transaction(ts, request.state);
-    if Approved.eq(&claimed_transaction.state) {
-        let result = transfer(claimed_transaction.amount,
-                              claimed_transaction.to.clone(),
-                              claimed_transaction.from.clone()).await;
+    let mut approved_transaction = transaction_service::approve_transaction(ts, request.state);
+    if Approved.eq(&approved_transaction.state) {
+        let result = transfer(approved_transaction.amount,
+                              approved_transaction.to.clone(),
+                              approved_transaction.from.clone()).await;
         match result {
             Ok(block) => {
-                claimed_transaction.block_index = Some(block);
-                transaction_service::store_transaction(claimed_transaction.clone());
+                approved_transaction.block_index = Some(block);
+                transaction_service::store_transaction(approved_transaction.clone());
             }
             Err(e) => {
-                claimed_transaction.state = TransactionState::Rejected;
-                claimed_transaction.memo = Some(e);
-                transaction_service::store_transaction(claimed_transaction.clone());
+                approved_transaction.state = TransactionState::Rejected;
+                approved_transaction.memo = Some(e);
+                transaction_service::store_transaction(approved_transaction.clone());
             }
         }
     }
-    claimed_transaction
+    approved_transaction
 }
 
 #[test]

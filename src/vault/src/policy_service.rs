@@ -135,7 +135,7 @@ pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet: &String) ->
                 b
             } else {
                 //should never trap
-                trap("Unable to find the policy")
+                trap("Define policy error")
             }
         )
         .map(|l| l.0);
