@@ -59,7 +59,7 @@ pub fn register_transaction(amount: u64, to: String, wallet: String, policy: Pol
         PolicyType::ThresholdPolicy(tp) => {
             amount_threshold = tp.amount_threshold;
             member_threshold = match tp.member_threshold {
-                None => { members as u8 }
+                None => { members as u8 } //means required all
                 Some(threshold) => { threshold }
             };
         }
@@ -90,7 +90,7 @@ pub fn register_transaction(amount: u64, to: String, wallet: String, policy: Pol
     })
 }
 
-pub fn claim_transaction(mut transaction: Transaction, state: TransactionState) -> Transaction {
+pub fn approve_transaction(mut transaction: Transaction, state: TransactionState) -> Transaction {
     if !transaction.state.eq(&Pending) {
         trap("Transaction not pending")
     }

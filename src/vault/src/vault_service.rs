@@ -79,8 +79,9 @@ pub fn register(user_uuid: String, name: String, description: Option<String>) ->
 pub fn get(ids: HashSet<u64>) -> Vec<Vault> {
     VAULTS.with(|vaults| {
         let mut result: Vec<Vault> = Default::default();
+        let borrowed = vaults.borrow();
         for id in ids {
-            match vaults.borrow_mut().get(&id) {
+            match borrowed.get(&id) {
                 None => {
                     trap("Nonexistent key error")
                 }
@@ -93,7 +94,7 @@ pub fn get(ids: HashSet<u64>) -> Vec<Vault> {
 
 pub fn get_by_id(id: &u64) -> Vault {
     VAULTS.with(|vaults| {
-        match vaults.borrow_mut().get(id) {
+        match vaults.borrow().get(id) {
             None => {
                 trap("Nonexistent key error")
             }
