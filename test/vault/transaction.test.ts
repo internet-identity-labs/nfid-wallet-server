@@ -343,6 +343,20 @@ describe("Transaction", () => {
     });
 
 
+
+    it("Check upgrade", async function () {
+       DFX.UPGRADE_FORCE('vault')
+        let policies = await dfx.vault.admin_actor.get_policies(1n) as [Policy]
+        expect(policies.length > 0).eq(true)
+        let vaults = await dfx.vault.admin_actor.get_vaults() as [Vault]
+        expect(vaults.length > 0).eq(true)
+        let wallets = await dfx.vault.admin_actor.get_wallets(1n) as [Wallet]
+        expect(wallets.length > 0).eq(true)
+        let transactions = await dfx.vault.admin_actor.get_transactions() as Array<Transaction>
+        expect(transactions.length > 0).eq(true)
+    });
+
+
     function verifyTransaction(actual: Transaction, expected: Transaction) {
         expect(actual.to).eq(expected.to);
         expect(actual.member_threshold).eq(expected.member_threshold);
