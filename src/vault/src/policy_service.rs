@@ -105,10 +105,10 @@ pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet: &String) ->
                 match threshold_policy.wallets {
                     Some(x) => {
                         if x.contains(wallet)
-                        { Some((l, threshold_policy.amount_threshold, threshold_policy.member_threshold)) } else { None }
+                        { Some((l, threshold_policy.amount_threshold, threshold_policy.member_threshold, x)) } else { None }
                     }
                     None => {
-                        Some((l, threshold_policy.amount_threshold, threshold_policy.member_threshold))
+                        Some((l, threshold_policy.amount_threshold, threshold_policy.member_threshold, vec![]))
                     }
                 }
             }
@@ -116,12 +116,29 @@ pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet: &String) ->
         )
         .filter(|l| l.is_some())
         .map(|l| l.unwrap())
-        //find all policies with thresholdAmount less(!!!) than actual amount
-        .filter(|l| l.1 < amount)
+        //find all policies with thresholdAmount less or equal to actual amount
+        .filter(|l| l.1 <= amount)
         .reduce(|a, b|
             //find closest (biggest) greaterThan
             if a.1 > b.1 { a } else if b.1 > a.1 { b }
             //if 2 policies with same greaterThan
+            //take assigned to wallet
+            else if a.3.contains(wallet) && !b.3.contains(wallet) {
+                a
+            } else if b.3.contains(wallet) && !a.3.contains(wallet) {
+                b
+            }
+            //if both assigned to a wallet
+            else if a.3.contains(wallet) && b.3.contains(wallet) {
+                //find more strict requirement for amount of members
+                if a.2.is_none() { //if one of wallets contains all members - take it
+                    a
+                } else if b.2.is_none() {
+                    b
+                } else if a.2.unwrap() > b.2.unwrap() {
+                    a
+                } else { b }
+            }
             //take first one with members All (that means Threshold Policies are equal or a more strict)
             else if a.2.is_none() {
                 a

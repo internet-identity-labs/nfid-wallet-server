@@ -303,7 +303,7 @@ describe("Policy", () => {
 
     let policy5;
 
-    it("define policy with all member threshold", async function () {
+    it("define policy with all member threshold when amount same and both wallets all", async function () {
         policy5 = await dfx.vault.admin_actor.register_policy({
             policy_type: {
                 'threshold_policy': {
@@ -341,6 +341,95 @@ describe("Policy", () => {
         let registerRequest: TransactionRegisterRequest = {address: to, amount: tokens, wallet_id: wallet1.uid}
         let actualTransaction = await dfx.vault.admin_actor.register_transaction(registerRequest) as Transaction
         expect(actualTransaction.policy_id).eq(policy6.id)
+    });
+
+    let policy7;
+
+    it("define policy with same threshold empty wallets choose one with wallet_id in the list", async function () {
+        policy7 = await dfx.vault.admin_actor.register_policy({
+            policy_type: {
+                'threshold_policy': {
+                    amount_threshold: 15n,
+                    currency: {'ICP': null},
+                    member_threshold: [],
+                    wallets: []
+                }
+            },
+            state: {'Active': null},
+            vault_id: 2n
+        } as PolicyRegisterRequest) as Policy;
+        let tokens = 20n;
+        let registerRequest: TransactionRegisterRequest = {address: to, amount: tokens, wallet_id: wallet1.uid}
+        let actualTransaction = await dfx.vault.admin_actor.register_transaction(registerRequest) as Transaction
+        expect(actualTransaction.policy_id).eq(policy6.id)
+    });
+
+    let policy8;
+    let policy9;
+
+    it("define policy with same threshold empty wallets choose one with All members", async function () {
+        policy8 = await dfx.vault.admin_actor.register_policy({
+            policy_type: {
+                'threshold_policy': {
+                    amount_threshold: 25n,
+                    currency: {'ICP': null},
+                    member_threshold: [],
+                    wallets: []
+                }
+            },
+            state: {'Active': null},
+            vault_id: 2n
+        } as PolicyRegisterRequest) as Policy;
+        policy9 = await dfx.vault.admin_actor.register_policy({
+            policy_type: {
+                'threshold_policy': {
+                    amount_threshold: 25n,
+                    currency: {'ICP': null},
+                    member_threshold: [2],
+                    wallets: []
+                }
+            },
+            state: {'Active': null},
+            vault_id: 2n
+        } as PolicyRegisterRequest) as Policy;
+        let tokens = 26n;
+        let registerRequest: TransactionRegisterRequest = {address: to, amount: tokens, wallet_id: wallet1.uid}
+        let actualTransaction = await dfx.vault.admin_actor.register_transaction(registerRequest) as Transaction
+        expect(actualTransaction.policy_id).eq(policy8.id)
+    });
+
+    let policy10;
+    let policy11;
+
+    it("define policy with same threshold empty wallets choose one with All members", async function () {
+        policy10 = await dfx.vault.admin_actor.register_policy({
+            policy_type: {
+                'threshold_policy': {
+                    amount_threshold: 30n,
+                    currency: {'ICP': null},
+                    member_threshold: [5],
+                    wallets: [[wallet1.uid]]
+                }
+            },
+            state: {'Active': null},
+            vault_id: 2n
+        } as PolicyRegisterRequest) as Policy;
+        policy11 = await dfx.vault.admin_actor.register_policy({
+            policy_type: {
+                'threshold_policy': {
+                    amount_threshold: 30n,
+                    currency: {'ICP': null},
+                    member_threshold: [],
+                    wallets: [[wallet1.uid]]
+                }
+            },
+            state: {'Active': null},
+            vault_id: 2n
+        } as PolicyRegisterRequest) as Policy;
+        let tokens = 30n;
+        let registerRequest: TransactionRegisterRequest = {address: to, amount: tokens, wallet_id: wallet1.uid}
+        let actualTransaction = await dfx.vault.admin_actor.register_transaction(registerRequest) as Transaction
+        expect(actualTransaction.policy_id).eq(policy11.id)
     });
 
     it("expect: unable to find policy", async function () {
