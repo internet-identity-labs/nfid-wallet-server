@@ -342,8 +342,6 @@ describe("Transaction", () => {
         }
     });
 
-
-
     it("Check upgrade", async function () {
        DFX.UPGRADE_FORCE('vault')
         let policies = await dfx.vault.admin_actor.get_policies(1n) as [Policy]
