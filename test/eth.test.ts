@@ -15,13 +15,9 @@ import {arrayify, hexZeroPad, joinSignature, splitSignature} from "@ethersprojec
 import {BN} from "bn.js";
 import {hashMessage, keccak256, resolveProperties} from "ethers/lib/utils";
 import {ActorMethod, ActorSubclass} from "@dfinity/agent/lib/esm/actor";
-import Web3 from "web3";
 import {serialize} from "@ethersproject/transactions";
 
-var Tx = require('ethereumjs-tx').Transaction;
-
 var ethers = require('ethers');
-
 
 var EC = elliptic.ec;
 var ec = new EC('secp256k1');
@@ -35,78 +31,24 @@ describe("1111", () => {
 
     describe("111", async () => {
 
-            var web3Provider = new Web3.providers.HttpProvider("http://127.0.0.1:8545");
-            var web = new Web3(web3Provider);
-            console.log(123)
-            let aa = await web.eth.getBlockNumber()
-            let bb = await web.eth.getAccounts()
-
             var customHttpProvider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545");
-
             let sk: string = idd[1]
             let wallet = new Wallet(sk, customHttpProvider)
 
-            // let nfidWallet = new NfidWallet(Secp256k1KeyIdentity.fromParsedJson(idd))
-            // await nfidWallet.init();
-            //
-            // let address = await nfidWallet.getAddress();
-            //
-            // console.log(address)
-            //
-            // let sian = await nfidWallet.signMessage("test_message")
-            //
-            // console.log(sian)
-            //
-            // let signRaw = await nfidWallet.signMessageRaw("test_message")
-            //
-            // let pk = await nfidWallet.getPK();
-            //
-            // console.log(pk)
-
-            // let m = hashMessage("test_message")
-            // const digestBytes = arrayify(m);
-            // let verify = ec.verify([...digestBytes], signRaw, pk, 'hex')
-            // assert(verify)
 
             const addressFrom = ethers.utils.computeAddress(wallet.publicKey);
-            let balance;
-            try {
-                balance = await wallet.getBalance();
-            } catch (e) {
-                console.log(e)
-            }
+            let gasPrice = await customHttpProvider.getGasPrice()
 
 
             let nfidWallet = new NfidWallet(Secp256k1KeyIdentity.fromParsedJson(idd), customHttpProvider)
             await nfidWallet.init();
             let address = await nfidWallet.getAddress();
-            let nfidBalance;
-            try {
-                nfidBalance = await nfidWallet.getBalance();
-            } catch (e) {
-                console.log(e)
-            }
+
             const addressTo = address;
-            let gasPrice = await customHttpProvider.getGasPrice()
 
-            let value = ethers.utils.parseEther("0.000000000000000001")
+            let value = ethers.utils.parseEther("0.0000001")
             let gasLimit = BigNumber.from(100000)
-            const tx = {
-                from: addressFrom,
-                to: addressTo,
-                value: value,
-                nonce: customHttpProvider.getTransactionCount(addressFrom, "latest"),
-                gasLimit: gasLimit,
-                gasPrice: gasPrice,
-            }
-
-            let transactionToNfid;
-            try {
-                transactionToNfid = await wallet.sendTransaction(tx);
-            } catch (e) {
-                console.log(e)
-            }
-            let tr_count =await customHttpProvider.getTransactionCount(addressTo, "latest")
+            let tr_count = await customHttpProvider.getTransactionCount(address, "latest")
             const tx_from = {
                 from: addressTo,
                 to: addressFrom,
@@ -114,11 +56,6 @@ describe("1111", () => {
                 nonce: tr_count,
                 gasLimit: gasLimit,
                 gasPrice: gasPrice,
-            }
-            try {
-                nfidBalance = await nfidWallet.getBalance();
-            } catch (e) {
-                console.log(e)
             }
             let transactionFromNfid;
             try {
@@ -128,6 +65,8 @@ describe("1111", () => {
             }
 
             console.log(transactionFromNfid)
+
+
         }
     )
 
@@ -184,6 +123,7 @@ export class NfidWallet<T = Record<string, ActorMethod>> extends Signer {
                 console.log(l)
                 let signature = l.Ok.signature
                 let elliptic_signature = this.toEllipticSignature(signature)
+
                 let ethersSignature = splitSignature({
                     recoveryParam: elliptic_signature.recoveryParam,
                     r: hexZeroPad("0x" + elliptic_signature.r.toString(16), 32),
@@ -223,6 +163,15 @@ export class NfidWallet<T = Record<string, ActorMethod>> extends Signer {
                         r: hexZeroPad("0x" + elliptic_signature.r.toString(16), 32),
                         s: hexZeroPad("0x" + elliptic_signature.s.toString(16), 32),
                     })
+                    let address = ethers.utils.recoverAddress([...digestBytes], ethersSignature)
+                    let isEqualAddress = address === this.address
+                    if (!isEqualAddress) {
+                        ethersSignature = splitSignature({
+                            recoveryParam: 1 - (ethersSignature.recoveryParam % 2),
+                            r: hexZeroPad("0x" + elliptic_signature.r.toString(16), 32),
+                            s: hexZeroPad("0x" + elliptic_signature.s.toString(16), 32),
+                        })
+                    }
                     return serialize(<UnsignedTransaction>tx, ethersSignature)
                 })
         });
@@ -254,6 +203,8 @@ export class NfidWallet<T = Record<string, ActorMethod>> extends Signer {
 
 
 }
+
+//
 
 //
 // var web3Provider = new Web3.providers.HttpProvider("http://127.0.0.1:8545");
