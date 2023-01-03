@@ -11,7 +11,7 @@ const ADDRESS2 = "0x05b0901b659a2dcc41dc6bd7a333a25597a3527e";
 const SIGNATURE2 = "0xccfd9eb0bf034622dd40bfde6e2debfab16f36a2b715444f86a26507131cd06d2d92e12bc6d49a181a8f2a179385e555eb18f05731b71f153e3de4c46936edec1b";
 const SIGNATURE3 = "0x90069f397055f97fda932e22a15eaa80a8c4f827a0a777c1005a6e1d8dd5553f116421c402e4334d9aa649b0879c697ec0fa2b2143012632cb0572c7de86d07a1b";
 
-describe("Eth Secret Storge", () => {
+describe("Eth Secret Storage", () => {
     describe("Agent tests", () => {
         var dfx: Dfx;
 

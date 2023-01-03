@@ -65,6 +65,12 @@
       "wasm": "vault.wasm",
       "type": "custom"
     },
+    "ecdsa_signer": {
+      "build": "src/ecdsa_signer/build.sh",
+      "candid": "src/ecdsa_signer/ecdsa_signer.did",
+      "wasm": "ecdsa_signer.wasm",
+      "type": "custom"
+    },
     "ledger": {
       "type": "custom",
       "candid": "ledger.public.did",

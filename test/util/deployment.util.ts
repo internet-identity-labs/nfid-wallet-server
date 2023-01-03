@@ -5,11 +5,12 @@ import {idlFactory as imIdl} from "../idl/identity_manager_idl";
 import {idlFactory as vaultIdl} from "../idl/vault_idl";
 import {idlFactory as iitIdl} from "../idl/internet_identity_test_idl";
 import {idlFactory as essIdl} from "../idl/eth_secret_storage_idl";
+import {idlFactory as esdsaIdl} from "../idl/ecdsa_idl";
 import {TextEncoder} from "util";
 import {App} from "../constanst/app.enum";
 import {IDL} from "@dfinity/candid";
 import {DFX} from "../constanst/dfx.const";
-import {call, execute} from "./call.util";
+import {execute} from "./call.util";
 
 const localhost: string = "http://127.0.0.1:8000";
 
@@ -35,6 +36,10 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             anchor: null,
         },
         ess: {
+            id: null,
+            actor: null,
+        },
+        ecdsa: {
             id: null,
             actor: null,
         },
@@ -154,6 +159,15 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             dfx.vault.member_2 = Ed25519KeyIdentity.generate();
             dfx.vault.actor_member_1 = await getActor(dfx.vault.id, dfx.vault.member_1, vaultIdl);
             dfx.vault.actor_member_2 = await getActor(dfx.vault.id, dfx.vault.member_2, vaultIdl);
+            return dfx;
+        }
+        if (apps.includes(App.ECDSASigner)) {
+           DFX.DEPLOY_ECDSA();
+
+            dfx.ecdsa.id = DFX.GET_CANISTER_ID("ecdsa_signer");
+            console.log(">> ", dfx.ecdsa.id);
+
+            dfx.ecdsa.actor = await getActor(dfx.ecdsa.id, dfx.user.identity, esdsaIdl);
             return dfx;
         }
 

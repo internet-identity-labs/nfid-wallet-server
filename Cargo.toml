@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "src/identity_manager",
+    "src/ecdsa_signer",
     "src/pub_sub_channel",
     "src/im_addition",
     "src/verifier",

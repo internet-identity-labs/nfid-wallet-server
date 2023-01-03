@@ -1,0 +1,25 @@
+type Conf = record {
+    key : text;
+    price : nat64
+};
+
+type PublicKeyReply = record {
+    public_key : vec nat8
+};
+
+type Result = variant {
+    Ok : PublicKeyReply;
+    Err : text
+};
+
+type Result_1 = variant {
+    Ok : SignatureReply;
+    Err : text
+};
+
+type SignatureReply = record {
+    signature : vec nat8
+};service : (opt Conf) ->{
+    public_key : () -> (Result);
+    sign : (vec nat8) -> (Result_1);
+}

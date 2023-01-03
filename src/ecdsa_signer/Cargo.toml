@@ -1,0 +1,16 @@
+[package]
+name = "ecdsa_signer"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+serde = "1"
+candid = "0.8"
+ic-cdk = "0.6"
+ic-cdk-macros = "0.6"
+sha256 = "1.1.1"
+
