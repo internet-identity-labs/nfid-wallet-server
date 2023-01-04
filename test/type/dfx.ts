@@ -30,6 +30,10 @@ export interface Dfx {
     ess?: {
         id: string;
         actor: Record<string, ActorMethod>;
+    };
+    ecdsa?: {
+        id: string;
+        actor: Record<string, ActorMethod>;
     }
 };
 
