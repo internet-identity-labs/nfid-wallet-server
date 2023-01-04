@@ -43,6 +43,7 @@
     "ic": "ckqrk-4yaaa-aaaak-adxsa-cai"
   },
   "ecdsa_signer": {
-    "dev": "txkre-oyaaa-aaaap-qa3za-cai"
+    "dev": "txkre-oyaaa-aaaap-qa3za-cai",
+    "ic": "qsemi-gqaaa-aaaao-agwfa-cai"
   }
 }

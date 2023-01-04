@@ -61,7 +61,7 @@ pub enum EcdsaCurve {
 
 thread_local! {
     static KEY: RefCell<Conf> = RefCell::new( Conf {
-        price: 25_000_000_000,
+        price: 23_000_000_000,
         key: "key1".to_string()  //key_1; dfx_test_key; test_key_1
     });
 }
@@ -102,7 +102,6 @@ async fn public_key() -> Result<PublicKeyReply, String> {
     let request = ECDSAPublicKey {
         canister_id: None,
         derivation_path: vec![caller],
-        //         name: "key_1".to_string(),
         key_id: key_id.clone(),
     };
     let (res, ): (ECDSAPublicKeyReply, ) = ic_cdk::call(ic, "ecdsa_public_key", (request, ))
@@ -119,14 +118,12 @@ async fn public_key() -> Result<PublicKeyReply, String> {
 async fn sign(message: Vec<u8>) -> Result<SignatureReply, String> {
     assert!(message.len() == 32);
 
-
     let conf = KEY.with(|storage| {
         storage.borrow_mut().clone()
     });
 
     let key_id = EcdsaKeyId {
         curve: EcdsaCurve::Secp256k1,
-        //         name: "key_1".to_string(),
         name: conf.key,
     };
     let ic_canister_id = "aaaaa-aa";
