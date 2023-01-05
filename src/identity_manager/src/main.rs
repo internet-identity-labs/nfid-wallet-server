@@ -437,6 +437,7 @@ pub async fn get_canister_log(request: Option<canistergeek_ic_rust::api_type::Ca
     canistergeek_ic_rust::logger::get_canister_log(request)
 }
 
+//some test comment to change hash
 fn main() {}
 
 
