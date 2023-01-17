@@ -127,6 +127,7 @@ type Application = record {
     img: opt text;
     is_nft_storage: opt bool;
     is_trusted: opt bool;
+    is_iframe_allowed: opt bool;
 };
 
 type HTTPApplicationResponse = record {

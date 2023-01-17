@@ -14,6 +14,7 @@ pub struct Application {
     pub name: String,
     pub is_nft_storage: Option<bool>,
     pub is_trusted: Option<bool>,
+    pub is_iframe_allowed: Option<bool>,
 }
 
 impl PartialEq for Application {
