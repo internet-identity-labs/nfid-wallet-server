@@ -37,6 +37,7 @@ describe("Application", () => {
 
     it("should create an application.", async function () {
         const application: Application = {
+            is_iframe_allowed: [true],
             is_trusted: [true],
             is_nft_storage: [true],
             alias: [],
@@ -60,6 +61,7 @@ describe("Application", () => {
 
     it("should return an error due the same domain on creating application.", async function () {
         const application: Application = {
+            is_iframe_allowed: [],
             is_trusted: [],
             alias: [],
             user_limit: userLimit,
@@ -78,6 +80,7 @@ describe("Application", () => {
 
     it("should create the second application with different name and domain.", async function () {
         const application: Application = {
+            is_iframe_allowed: [],
             is_trusted: [],
             alias: [],
             user_limit: userLimit,
@@ -136,6 +139,7 @@ describe("Application", () => {
             persona_id: 'TEST_ID_DD',
         };
         const application: Application = {
+            is_iframe_allowed: [],
             is_trusted: [],
             alias: [],
             user_limit: userLimit,
@@ -185,6 +189,7 @@ describe("Application", () => {
             persona_id: personaId,
         };
         const application: Application = {
+            is_iframe_allowed: [],
             is_trusted: [],
             alias: [],
             user_limit: userLimit,
