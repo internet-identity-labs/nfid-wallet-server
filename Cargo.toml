@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "src/identity_manager",
     "src/ecdsa_signer",
     "src/pub_sub_channel",
     "src/im_addition",
@@ -8,4 +7,4 @@ members = [
     "src/vault",
     "src/libraries/canister_api_macros",
 ]
-exclude = ["src/eth_secret_storage"]
+exclude = ["src/eth_secret_storage", "src/identity_manager"]
