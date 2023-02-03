@@ -170,17 +170,11 @@ async fn public_key() -> Result<PublicKeyReply, String> {
 async fn prepare_signature(message: Vec<u8>) -> String {
     match sign(message.clone()).await {
         Ok(signature_reply) => {
-            match str::from_utf8(&message) {
-                Ok(v) => {
-                    SIGNATURES.with(|signatures| {
-                        signatures.borrow_mut().insert(v.to_string(), signature_reply)
-                    });
-                    v.to_string()
-                }
-                Err(_) => {
-                    trap("Unexpected utf8 byte")
-                }
-            }
+            let hex = hex::encode(&message);
+            SIGNATURES.with(|signatures| {
+                signatures.borrow_mut().insert(hex.clone(), signature_reply)
+            });
+            hex
         }
         Err(err) => {
             trap(&err)

@@ -34,7 +34,7 @@ describe("ECDSA signer test", () => {
         it("should prepare signature", async function () {
             let message = Array(32).fill(1);
             let key = await dfx.ecdsa.actor.prepare_signature(message) as String;
-            expect(key).eq("")
+            expect(key).eq("0101010101010101010101010101010101010101010101010101010101010101")
             let signature = await dfx.ecdsa.actor.get_signature(key) as Result_1;
             console.log(signature)
             // @ts-ignore
