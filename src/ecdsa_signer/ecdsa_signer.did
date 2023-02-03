@@ -1,6 +1,7 @@
 type Conf = record {
     key : text;
-    price : nat64
+    price : nat64;
+    ttl : nat64
 };
 
 type PublicKeyReply = record {
@@ -22,4 +23,6 @@ type SignatureReply = record {
 };service : (opt Conf) ->{
     public_key : () -> (Result);
     sign : (vec nat8) -> (Result_1);
+    prepare_signature : (vec nat8) -> (text);
+    get_signature : (text) -> (Result_1) query;
 }
