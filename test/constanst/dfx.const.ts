@@ -31,5 +31,5 @@ export const DFX = {
     INIT_ESS: () => call(`dfx canister call eth_secret_storage init '()'`),
     LEDGER_FILL_BALANCE: (x:string) => call(`dfx canister call ledger transfer "(record { to=vec { ${x} };
           amount=record { e8s=200_000_000 }; fee=record { e8s=10_000 }; memo=0:nat64; } )"`),
-    DEPLOY_ECDSA: () => execute(`dfx deploy ecdsa_signer --argument '(opt record { key= "dfx_test_key"; price = 25_000_000_000 } )' --no-wallet`)
+    DEPLOY_ECDSA: () => execute(`dfx deploy ecdsa_signer --argument '(opt record { key= "dfx_test_key"; price = 25_000_000_000; ttl=3 } )' --no-wallet`)
 }
