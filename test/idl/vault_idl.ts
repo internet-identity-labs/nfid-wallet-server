@@ -34,6 +34,13 @@ export const idlFactory = ({ IDL }) => {
         'created_date' : IDL.Nat64,
         'policy_id' : IDL.Nat64,
     });
+    const Backup = IDL.Variant({
+        'Users' : IDL.Null,
+        'Wallets' : IDL.Null,
+        'Vaults' : IDL.Null,
+        'Transactions' : IDL.Null,
+        'Policies' : IDL.Null,
+    });
     const ObjectState = IDL.Variant({
         'Active' : IDL.Null,
         'Archived' : IDL.Null,
@@ -109,6 +116,11 @@ export const idlFactory = ({ IDL }) => {
             [Transaction],
             [],
         ),
+        'get_all_json' : IDL.Func(
+            [IDL.Nat32, IDL.Nat32, Backup],
+            [IDL.Text],
+            ['query'],
+        ),
         'get_policies' : IDL.Func([IDL.Nat64], [IDL.Vec(Policy)], ['query']),
         'get_transactions' : IDL.Func([], [IDL.Vec(Transaction)], ['query']),
         'get_vaults' : IDL.Func([], [IDL.Vec(Vault)], ['query']),
@@ -125,6 +137,7 @@ export const idlFactory = ({ IDL }) => {
         'update_policy' : IDL.Func([Policy], [Policy], []),
         'update_vault' : IDL.Func([Vault], [Vault], []),
         'update_wallet' : IDL.Func([Wallet], [Wallet], []),
+        'sync_controllers' : IDL.Func([], [IDL.Vec(IDL.Text)], []),
     });
 };
 export const init = ({ IDL }) => {

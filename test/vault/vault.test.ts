@@ -6,7 +6,6 @@ import {Vault, VaultMember,} from "../idl/vault";
 import {expect} from "chai";
 import {principalToAddress} from "ictool"
 import {DFX} from "../constanst/dfx.const";
-import exp from "constants";
 
 let rootAddress: string;
 let memberAddress: string;
@@ -116,7 +115,7 @@ describe("Vault", () => {
 
         let updated = await dfx.vault.admin_actor.update_vault(request) as Vault;
 
-        let expected =  structuredClone(vault);
+        let expected = structuredClone(vault);
         expected.name = "Updated name";
         expected.description = ["Updated description"];
         expected.state = {'Archived': null};

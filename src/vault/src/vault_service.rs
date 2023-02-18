@@ -3,13 +3,14 @@ use std::hash::{Hash, Hasher};
 
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 use ic_cdk::trap;
+use serde::{Serialize};
 
 use crate::enums::ObjectState;
 use crate::memory::VAULTS;
 use crate::User;
 use crate::VaultRole::Admin;
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct Vault {
     pub id: u64,
     pub name: String,
@@ -22,7 +23,7 @@ pub struct Vault {
     pub modified_date: u64,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize, Eq)]
+#[derive(Clone, Debug, CandidType, Deserialize, Eq, Serialize)]
 pub struct VaultMember {
     pub user_uuid: String,
     pub role: VaultRole,
@@ -36,7 +37,7 @@ impl Hash for VaultMember {
     }
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize, Copy, Eq, PartialEq)]
+#[derive(Clone, Debug, CandidType, Deserialize, Copy, Eq, PartialEq, Serialize)]
 pub enum VaultRole {
     Admin,
     Member,

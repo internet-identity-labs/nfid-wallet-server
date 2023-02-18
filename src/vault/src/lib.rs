@@ -2,15 +2,18 @@ extern crate core;
 #[macro_use]
 extern crate maplit;
 
-use candid::{candid_method, export_service};
+use candid::{candid_method, export_service, Principal};
+use ic_cdk::api::call::CallResult;
+use ic_cdk::api::management_canister::main::CanisterStatusResponse;
+use ic_cdk::{call, caller, id, trap};
 use ic_cdk::export::candid;
 use ic_cdk_macros::*;
 
-use crate::enums::TransactionState;
+use crate::enums::{Backup, TransactionState};
 use crate::memory::{Conf, CONF};
 use crate::policy_service::{Policy, PolicyType, ThresholdPolicy};
 use crate::policy_service::Currency::ICP;
-use crate::request::{PolicyRegisterRequest, TransactionApproveRequest, TransactionRegisterRequest, VaultMemberRequest, VaultRegisterRequest, WalletRegisterRequest};
+use crate::request::{CanisterIdRequest, PolicyRegisterRequest, TransactionApproveRequest, TransactionRegisterRequest, VaultMemberRequest, VaultRegisterRequest, WalletRegisterRequest};
 use crate::security_service::{trap_if_not_permitted, verify_wallets};
 use crate::transaction_service::Transaction;
 use crate::TransactionState::Approved;
@@ -193,6 +196,38 @@ async fn approve_transaction(request: TransactionApproveRequest) -> Transaction 
         }
     }
     approved_transaction
+}
+
+#[update]
+async fn sync_controllers() -> Vec<String> {
+    let res: CallResult<(CanisterStatusResponse, )> = call(
+        Principal::management_canister(),
+        "canister_status",
+        (CanisterIdRequest {
+            canister_id: id(),
+        }, ),
+    ).await;
+
+    let controllers = res.unwrap().0.settings.controllers;
+    CONF.with(|c| c.borrow_mut().controllers.replace(controllers.clone()));
+    controllers.iter().map(|x| x.to_text()).collect()
+}
+
+#[query]
+async fn get_all_json(from: u32, mut to: u32, obj: Backup) -> String {
+    let princ = caller();
+    match CONF.with(|c| c.borrow_mut().controllers.clone())
+    {
+        None => {
+            trap("Unauthorised")
+        }
+        Some(controllers) => {
+            if !controllers.contains(&princ) {
+                trap("Unauthorised")
+            }
+        }
+    }
+    memory::get_all_json(from, to, obj)
 }
 
 #[test]

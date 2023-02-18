@@ -3,11 +3,12 @@ use std::collections::HashSet;
 use candid::CandidType;
 use ic_cdk::trap;
 use serde::Deserialize;
+use serde::Serialize;
 
 use crate::enums::ObjectState;
 use crate::memory::POLICIES;
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct Policy {
     pub id: u64,
     pub vault: u64,
@@ -17,14 +18,14 @@ pub struct Policy {
     pub modified_date: u64,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub enum PolicyType {
     #[serde(rename = "threshold_policy")]
     ThresholdPolicy(ThresholdPolicy)
 }
 
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct ThresholdPolicy {
     pub amount_threshold: u64,
     pub currency: Currency,
@@ -32,7 +33,7 @@ pub struct ThresholdPolicy {
     pub wallets: Option<Vec<String>>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub enum Currency {
     ICP,
 }

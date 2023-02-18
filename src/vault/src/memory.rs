@@ -1,6 +1,7 @@
+use std::borrow::Borrow;
 use candid::Principal;
 use ic_cdk::storage;
-use crate::{Policy, Transaction, User, Vault, Wallet};
+use crate::{Backup, Policy, Transaction, User, Vault, Wallet};
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use std::cell::RefCell;
@@ -13,12 +14,14 @@ pub struct VaultMemoryObject {
     pub wallets: Vec<Wallet>,
     pub transactions: Vec<Transaction>,
     pub policies: Vec<Policy>,
+    pub conf: Option<Conf>
 }
 
 
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq)]
 pub struct Conf {
-   pub ledger_canister_id: Principal,
+    pub ledger_canister_id: Principal,
+    pub controllers: Option<Vec<Principal>>,
 }
 
 
@@ -26,6 +29,7 @@ impl Default for Conf {
     fn default() -> Self {
         Conf {
             ledger_canister_id: MAINNET_LEDGER_CANISTER_ID,
+            controllers: Default::default()
         }
     }
 }
@@ -70,14 +74,98 @@ pub fn pre_upgrade() {
             .map(|l| l.1.clone())
             .collect()
     });
+    let conf: Conf = CONF.with(|conf|{
+        conf.borrow().clone()
+    });
     let memory = VaultMemoryObject {
         vaults,
         users,
         wallets,
         policies,
         transactions,
+        conf: Some(conf)
     };
     storage::stable_save((memory, )).unwrap();
+}
+
+pub fn get_all_json(from: u32, mut to: u32, obj: Backup) -> String {
+    match obj {
+        Backup::Vaults => {
+            let mut raw: Vec<Vault> = VAULTS.with(|vaults| {
+                vaults.borrow()
+                    .iter()
+                    .map(|l| l.1.clone())
+                    .collect()
+            });
+            raw.sort_by(|a, b| a.modified_date.cmp(&b.modified_date));
+            let len = raw.len() as u32;
+            if to > len {
+                to = len;
+            }
+            let resp = &raw[from as usize..to as usize];
+            return serde_json::to_string(&resp).unwrap();
+        }
+        Backup::Wallets => {
+            let mut raw: Vec<Wallet> = WALLETS.with(|wallets| {
+                wallets.borrow()
+                    .iter()
+                    .map(|l| l.1.clone())
+                    .collect()
+            });
+            raw.sort_by(|a, b| a.modified_date.cmp(&b.modified_date));
+            let len = raw.len() as u32;
+            if to > len {
+                to = len;
+            }
+            let resp = &raw[from as usize..to as usize];
+            return serde_json::to_string(&resp).unwrap();
+        }
+        Backup::Users => {
+            let mut raw: Vec<User> = USERS.with(|users| {
+                users.borrow()
+                    .iter()
+                    .map(|l| l.1.clone())
+                    .collect()
+            });
+            raw.sort_by(|a, b| a.address.cmp(&b.address));
+            let len = raw.len() as u32;
+            if to > len {
+                to = len;
+            }
+            let resp = &raw[from as usize..to as usize];
+            return serde_json::to_string(&resp).unwrap();
+        }
+        Backup::Policies => {
+            let mut raw: Vec<Policy> = POLICIES.with(|ps| {
+                ps.borrow()
+                    .iter()
+                    .map(|l| l.1.clone())
+                    .collect()
+            });
+            raw.sort_by(|a, b| a.created_date.cmp(&b.created_date));
+            let len = raw.len() as u32;
+            if to > len {
+                to = len;
+            }
+            let resp = &raw[from as usize..to as usize];
+            return serde_json::to_string(&resp).unwrap();
+        }
+        Backup::Transactions => {
+            let mut raw: Vec<Transaction> = TRANSACTIONS.with(|ts| {
+                ts.borrow()
+                    .iter()
+                    .map(|l| l.1.clone())
+                    .collect()
+            });
+            raw.sort_by(|a, b| a.created_date.cmp(&b.created_date));
+            let len = raw.len() as u32;
+            if to > len {
+                to = len;
+            }
+            let resp = &raw[from as usize..to as usize];
+            return serde_json::to_string(&resp).unwrap();
+        }
+    }
 }
 
 
@@ -103,9 +191,11 @@ pub fn post_upgrade() {
     for transaction in mo.transactions {
         transactions.insert(transaction.id, transaction);
     }
+    let conf = mo.conf.unwrap_or(Conf::default());
     VAULTS.with(|storage| *storage.borrow_mut() = vaults);
     USERS.with(|storage| *storage.borrow_mut() = users);
     WALLETS.with(|storage| *storage.borrow_mut() = wallets);
     POLICIES.with(|storage| *storage.borrow_mut() = policies);
     TRANSACTIONS.with(|storage| *storage.borrow_mut() = transactions);
+    CONF.with(|storage| *storage.borrow_mut() = conf);
 }
