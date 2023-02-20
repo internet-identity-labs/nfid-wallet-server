@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use candid::Principal;
 use ic_cdk::storage;
 use crate::{Backup, Policy, Transaction, User, Vault, Wallet};

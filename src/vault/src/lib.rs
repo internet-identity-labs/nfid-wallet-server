@@ -214,7 +214,7 @@ async fn sync_controllers() -> Vec<String> {
 }
 
 #[query]
-async fn get_all_json(from: u32, mut to: u32, obj: Backup) -> String {
+async fn get_all_json(from: u32, to: u32, obj: Backup) -> String {
     let princ = caller();
     match CONF.with(|c| c.borrow_mut().controllers.clone())
     {
