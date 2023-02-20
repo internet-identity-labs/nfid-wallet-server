@@ -26,7 +26,6 @@ describe("ECDSA signer test", () => {
         it("should sign array", async function () {
             let message = Array(32).fill(1);
             let signature = await dfx.ecdsa.actor.sign(message) as Result_1;
-            console.log(signature)
             // @ts-ignore
             expect(signature.Ok.signature.length).eq(64)
         });
@@ -36,11 +35,9 @@ describe("ECDSA signer test", () => {
             let key = await dfx.ecdsa.actor.prepare_signature(message) as String;
             expect(key).eq("0101010101010101010101010101010101010101010101010101010101010101")
             let signature = await dfx.ecdsa.actor.get_signature(key) as Result_1;
-            console.log(signature)
             // @ts-ignore
             expect(signature.Ok.signature.length).eq(64)
             let signature2 = await dfx.ecdsa.actor.get_signature(key) as Result_1;
-            console.log(signature2)
             // @ts-ignore
             expect(assertArray(signature.Ok.signature, signature2.Ok.signature)).eq(true)
             await new Promise(r => setTimeout(r, 3000));

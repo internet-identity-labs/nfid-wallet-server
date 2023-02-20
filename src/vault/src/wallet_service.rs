@@ -3,11 +3,12 @@ use std::collections::HashSet;
 use candid::{CandidType, Principal};
 use ic_cdk::{call, trap};
 use serde::Deserialize;
+use serde::{Serialize};
 
 use crate::enums::ObjectState;
 use crate::memory::WALLETS;
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct Wallet {
     pub uid: String,
     pub name: Option<String>,

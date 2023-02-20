@@ -2,11 +2,11 @@ use std::collections::HashSet;
 use candid::CandidType;
 use serde::Deserialize;
 use crate::memory::USERS;
-
+use serde::Serialize;
 
 use crate::util::caller_to_address;
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct User {
     pub address: String,
     pub vaults: HashSet<u64>,

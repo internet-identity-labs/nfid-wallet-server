@@ -6,6 +6,11 @@ export interface Approve {
     'signer' : string,
     'created_date' : bigint,
 }
+export type Backup = { 'Users' : null } |
+    { 'Wallets' : null } |
+    { 'Vaults' : null } |
+    { 'Transactions' : null } |
+    { 'Policies' : null };
 export interface Conf { 'ledger_canister_id' : Principal }
 export type Currency = { 'ICP' : null };
 export type ObjectState = { 'Active' : null } |
@@ -104,6 +109,8 @@ export interface WalletRegisterRequest {
 }
 export interface _SERVICE {
     'approve_transaction' : ActorMethod<[TransactionApproveRequest], Transaction>,
+    'get_all_json' : ActorMethod<[number, number, Backup], string>,
+    'count' : ActorMethod<[Backup], bigint>,
     'get_policies' : ActorMethod<[bigint], Array<Policy>>,
     'get_transactions' : ActorMethod<[], Array<Transaction>>,
     'get_vaults' : ActorMethod<[], Array<Vault>>,
@@ -119,4 +126,5 @@ export interface _SERVICE {
     'update_policy' : ActorMethod<[Policy], Policy>,
     'update_vault' : ActorMethod<[Vault], Vault>,
     'update_wallet' : ActorMethod<[Wallet], Wallet>,
+    'sync_controllers' : () => Promise<Array<string>>,
 }
