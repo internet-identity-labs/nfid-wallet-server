@@ -148,6 +148,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             DFX.CONFIGURE_IM(imConfigurationArguments.join("; "));
         }
         if (apps.includes(App.Vault)) {
+            DFX.USE_TEST_ADMIN();
             await console.log(execute(`./test/resource/ledger.sh`))
             await console.log(execute(`./test/resource/vault.sh`))
 
