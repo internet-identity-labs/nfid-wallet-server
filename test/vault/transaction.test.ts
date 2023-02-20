@@ -364,9 +364,8 @@ describe("Transaction", () => {
             expect(e.message).contains("Unauthorised")
             DFX.USE_TEST_ADMIN();
             DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "vault");
-            await dfx.vault.admin_actor.sync_controllers()
-
         }
+        await dfx.vault.admin_actor.sync_controllers()
         let vaultsString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Vaults': null}) as string
         let vaults = JSON.parse(vaultsString) as [Vault]
         expect(vaults.length).eq(3)
