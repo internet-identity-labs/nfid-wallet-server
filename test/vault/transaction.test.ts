@@ -369,19 +369,29 @@ describe("Transaction", () => {
             DFX.ADD_CONTROLLER(dfx.vault.id, "vault");
         }
         await dfx.vault.admin_actor.sync_controllers()
+        let cVaults = await dfx.vault.admin_actor.count({'Vaults': null}) as number
         let vaultsString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Vaults': null}) as string
         let vaults = JSON.parse(vaultsString) as [Vault]
         expect(vaults.length).eq(3)
+        expect(cVaults).eq(3n)
         let walletString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Wallets': null}) as string
+        let cWallets = await dfx.vault.admin_actor.count({'Wallets': null}) as number
         let wallets = JSON.parse(walletString) as [Wallet]
         expect(wallets.length).eq(3)
+        expect(cWallets).eq(3n)
+        let cTr = await dfx.vault.admin_actor.count({'Transactions': null}) as number
         let transactionsString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Transactions': null}) as string
         let transactions = JSON.parse(transactionsString) as [Transaction]
         expect(transactions.length).eq(6)
+        expect(cTr).eq(6n)
+        let cPolicy = await dfx.vault.admin_actor.count({'Policies': null}) as number
         let policyString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Policies': null}) as string
         let policies = JSON.parse(policyString) as [Policy]
         expect(policies.length).eq(5)
+        expect(cPolicy).eq(5n)
         let usersString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Users': null}) as string
+        let cUsers = await dfx.vault.admin_actor.count({'Users': null}) as number
+        expect(cUsers).eq(3n)
         expect(usersString).contains(adminAddress)
         expect(usersString).contains(memberAddress1)
         expect(usersString).contains(memberAddress2)

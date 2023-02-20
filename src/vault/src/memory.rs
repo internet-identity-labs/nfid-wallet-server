@@ -167,6 +167,36 @@ pub fn get_all_json(from: u32, mut to: u32, obj: Backup) -> String {
     }
 }
 
+pub fn count(obj: Backup) -> usize {
+    match obj {
+        Backup::Vaults => {
+            VAULTS.with(|vaults| {
+                vaults.borrow().keys().count()
+            })
+        }
+        Backup::Wallets => {
+           WALLETS.with(|wallets| {
+                wallets.borrow().keys().count()
+            })
+        }
+        Backup::Users => {
+            USERS.with(|users| {
+                users.borrow().keys().count()
+            })
+        }
+        Backup::Policies => {
+           POLICIES.with(|ps| {
+                ps.borrow().keys().count()
+            })
+        }
+        Backup::Transactions => {
+            TRANSACTIONS.with(|ts| {
+                ts.borrow().keys().count()
+            })
+        }
+    }
+}
+
 
 pub fn post_upgrade() {
     let (mo, ): (VaultMemoryObject, ) = storage::stable_restore().unwrap();

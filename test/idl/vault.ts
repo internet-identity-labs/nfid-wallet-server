@@ -110,6 +110,7 @@ export interface WalletRegisterRequest {
 export interface _SERVICE {
     'approve_transaction' : ActorMethod<[TransactionApproveRequest], Transaction>,
     'get_all_json' : ActorMethod<[number, number, Backup], string>,
+    'count' : ActorMethod<[Backup], bigint>,
     'get_policies' : ActorMethod<[bigint], Array<Policy>>,
     'get_transactions' : ActorMethod<[], Array<Transaction>>,
     'get_vaults' : ActorMethod<[], Array<Vault>>,

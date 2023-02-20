@@ -152,4 +152,5 @@ type WalletRegisterRequest = record {
     update_wallet : (Wallet) -> (Wallet);
     get_all_json: (nat32, nat32, Backup) -> (text) query;
     sync_controllers: () -> (vec text);
+    count: (Backup) -> (nat64) query;
 }

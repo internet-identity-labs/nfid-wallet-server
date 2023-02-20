@@ -215,19 +215,14 @@ async fn sync_controllers() -> Vec<String> {
 
 #[query]
 async fn get_all_json(from: u32, to: u32, obj: Backup) -> String {
-    let princ = caller();
-    match CONF.with(|c| c.borrow_mut().controllers.clone())
-    {
-        None => {
-            trap("Unauthorised")
-        }
-        Some(controllers) => {
-            if !controllers.contains(&princ) {
-                trap("Unauthorised")
-            }
-        }
-    }
+    trap_if_not_authenticated();
     memory::get_all_json(from, to, obj)
+}
+
+#[query]
+async fn count(obj: Backup) -> u64 {
+    trap_if_not_authenticated();
+    memory::count(obj) as u64
 }
 
 #[test]
@@ -252,3 +247,17 @@ pub fn post_upgrade() {
 }
 
 
+fn trap_if_not_authenticated() {
+    let princ = caller();
+    match CONF.with(|c| c.borrow_mut().controllers.clone())
+    {
+        None => {
+            trap("Unauthorised")
+        }
+        Some(controllers) => {
+            if !controllers.contains(&princ) {
+                trap("Unauthorised")
+            }
+        }
+    }
+}

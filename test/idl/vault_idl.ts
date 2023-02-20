@@ -121,6 +121,11 @@ export const idlFactory = ({ IDL }) => {
             [IDL.Text],
             ['query'],
         ),
+        'count' : IDL.Func(
+            [Backup],
+            [IDL.Nat64],
+            ['query'],
+        ),
         'get_policies' : IDL.Func([IDL.Nat64], [IDL.Vec(Policy)], ['query']),
         'get_transactions' : IDL.Func([], [IDL.Vec(Transaction)], ['query']),
         'get_vaults' : IDL.Func([], [IDL.Vec(Vault)], ['query']),
