@@ -17,6 +17,7 @@ import {expect} from "chai";
 import {fromHexString, principalToAddress, principalToAddressBytes} from "ictool"
 import {DFX} from "../constanst/dfx.const";
 import {Principal} from "@dfinity/principal";
+import {fail} from "assert";
 
 
 describe("Transaction", () => {
@@ -359,6 +360,7 @@ describe("Transaction", () => {
 
     it("Get backup", async function () {
         try {
+            await dfx.vault.admin_actor.sync_controllers()
             await dfx.vault.admin_actor.get_all_json(0, 10, {'Vaults': null})
         } catch (e) {
             expect(e.message).contains("Unauthorised")
