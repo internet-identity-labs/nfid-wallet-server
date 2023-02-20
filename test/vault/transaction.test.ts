@@ -361,8 +361,10 @@ describe("Transaction", () => {
         try {
             await dfx.vault.admin_actor.get_all_json(0, 10, {'Vaults': null})
         } catch (e) {
+            console.log("AAAAAAAAAAAAAAA")
             expect(e.message).contains("Unauthorised")
             DFX.USE_TEST_ADMIN();
+            console.log("BBBBBBBBBBBBBBB")
             DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "vault");
         }
         await dfx.vault.admin_actor.sync_controllers()
