@@ -88,7 +88,7 @@
       "subnet_type": "system"
     },
     "bitcoin": {
-      "enabled": true,
+      "enabled": false,
       "nodes": [
         "127.0.0.1:18444"
       ],
