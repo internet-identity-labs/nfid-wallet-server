@@ -92,7 +92,7 @@
       "nodes": [
         "127.0.0.1:18444"
       ],
-      "log_level": "info"
+      "log_level": "error"
     },
     "build": {
       "packtool": "",
