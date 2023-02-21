@@ -54,6 +54,12 @@
       "wasm": "internet_identity.wasm",
       "build": "curl -sSL https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_test.wasm -o internet_identity.wasm"
     },
+    "bitcoin": {
+      "type": "custom",
+      "candid": "src/bitcoin/bitcoin.did",
+      "wasm": "bitcoin.wasm",
+      "build":"src/bitcoin/build.sh"
+    },
     "test_ledger": {
       "type": "custom",
       "wasm": "ledger.wasm",
@@ -80,6 +86,17 @@
   "defaults": {
     "replica": {
       "subnet_type": "system"
+    },
+    "bitcoin": {
+      "enabled": false,
+      "nodes": [
+        "127.0.0.1:18444"
+      ],
+      "log_level": "error"
+    },
+    "build": {
+      "packtool": "",
+      "args": ""
     }
   },
   "networks": {
