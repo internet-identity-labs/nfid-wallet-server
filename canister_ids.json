@@ -44,6 +44,10 @@
   },
   "ecdsa_signer": {
     "dev": "txkre-oyaaa-aaaap-qa3za-cai",
+    "fiduciary": "ngt6g-7yaaa-aaaar-qaagq-cai",
     "ic": "qsemi-gqaaa-aaaao-agwfa-cai"
+  },
+  "bitcoin": {
+    "dev": "iohef-tiaaa-aaaal-qbtza-cai"
   }
 }

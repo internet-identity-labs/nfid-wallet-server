@@ -6,6 +6,7 @@ import {idlFactory as vaultIdl} from "../idl/vault_idl";
 import {idlFactory as iitIdl} from "../idl/internet_identity_test_idl";
 import {idlFactory as essIdl} from "../idl/eth_secret_storage_idl";
 import {idlFactory as esdsaIdl} from "../idl/ecdsa_idl";
+import {idlFactory as btcIdl} from "../idl/bitcoin_idl";
 import {TextEncoder} from "util";
 import {App} from "../constanst/app.enum";
 import {IDL} from "@dfinity/candid";
@@ -50,7 +51,11 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             actor_member_2: null,
             member_1: null,
             member_2: null
-        }
+        },
+        btc: {
+            id: null,
+            actor: null,
+        },
     };
 
     while (++i <= 5) {
@@ -88,6 +93,19 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             console.debug(">> ", dfx.ess.id);
 
             dfx.ess.actor = await getActor(dfx.ess.id, dfx.user.identity, essIdl);
+        }
+
+        if (apps.includes(App.BTC)) {
+            if (clean) {
+                DFX.DEPLOY_WITH_ARGUMENT("bitcoin", "variant { Regtest }");
+            } else {
+                DFX.UPGRADE_FORCE("bitcoin");
+            }
+
+            dfx.btc.id = DFX.GET_CANISTER_ID("bitcoin");
+            console.debug(">> ", dfx.btc.id);
+
+            dfx.btc.actor = await getActor(dfx.btc.id, dfx.user.identity, btcIdl);
         }
 
         if (apps.includes(App.IdentityManager)) {
@@ -148,6 +166,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             DFX.CONFIGURE_IM(imConfigurationArguments.join("; "));
         }
         if (apps.includes(App.Vault)) {
+            DFX.USE_TEST_ADMIN();
             await console.log(execute(`./test/resource/ledger.sh`))
             await console.log(execute(`./test/resource/vault.sh`))
 

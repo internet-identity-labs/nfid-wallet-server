@@ -12,7 +12,7 @@ use crate::memory::TRANSACTIONS;
 use crate::policy_service::Currency;
 use crate::TransactionState::{Approved, Canceled, Pending, Rejected};
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct Transaction {
     pub id: u64,
     pub from: String,

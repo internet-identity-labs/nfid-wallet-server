@@ -79,6 +79,14 @@ type TransactionState = variant {
     Pending
 };
 
+type Backup = variant {
+    Vaults;
+    Wallets;
+    Users;
+    Policies;
+    Transactions;
+};
+
 type Vault = record {
     id : nat64;
     members : vec VaultMember;
@@ -142,4 +150,7 @@ type WalletRegisterRequest = record {
     update_policy : (Policy) -> (Policy);
     update_vault : (Vault) -> (Vault);
     update_wallet : (Wallet) -> (Wallet);
+    get_all_json: (nat32, nat32, Backup) -> (text) query;
+    sync_controllers: () -> (vec text);
+    count: (Backup) -> (nat64) query;
 }

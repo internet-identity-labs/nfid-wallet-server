@@ -1,3 +1,4 @@
+use candid::Principal;
 use ic_cdk::export::{candid::{CandidType, Deserialize}};
 
 use crate::{PolicyType, TransactionState, VaultRole};
@@ -41,4 +42,10 @@ pub struct TransactionApproveRequest {
 pub struct PolicyRegisterRequest {
    pub vault_id: u64,
    pub policy_type: PolicyType,
+}
+
+#[derive(CandidType, Debug, Clone, Deserialize)]
+pub struct CanisterIdRequest {
+    #[serde(rename = "canister_id")]
+    pub canister_id: Principal,
 }

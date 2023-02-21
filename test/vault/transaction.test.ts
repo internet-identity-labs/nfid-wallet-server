@@ -17,6 +17,7 @@ import {expect} from "chai";
 import {fromHexString, principalToAddress, principalToAddressBytes} from "ictool"
 import {DFX} from "../constanst/dfx.const";
 import {Principal} from "@dfinity/principal";
+import {fail} from "assert";
 
 
 describe("Transaction", () => {
@@ -24,6 +25,9 @@ describe("Transaction", () => {
     let adminAddress: string;
     let memberAddress1: string;
     let memberAddress2: string;
+    let vault1: Vault;
+    let vault2: Vault;
+    let vault3: Vault;
     let wallet1: Wallet;
     let wallet2: Wallet;
     let wallet3: Wallet;
@@ -43,8 +47,8 @@ describe("Transaction", () => {
             description: ["test"],
             name: "vault1"
         };
-        await dfx.vault.admin_actor.register_vault(request)
-        await dfx.vault.admin_actor.register_vault(request)
+        vault1 = await dfx.vault.admin_actor.register_vault(request) as Vault
+        vault2 = await dfx.vault.admin_actor.register_vault(request) as Vault
 
         let vaultMember: VaultMemberRequest = {
             address: memberAddress1,
@@ -78,7 +82,7 @@ describe("Transaction", () => {
         let request2: PolicyRegisterRequest = {policy_type: {'threshold_policy': tp}, vault_id: 2n};
         policy2 = await dfx.vault.admin_actor.register_policy(request2) as Policy
         to = principalToAddress(Principal.fromText(dfx.vault.id) as any, fromHexString(wallet2.uid))
-        await dfx.vault.actor_member_2.register_vault(request)
+        vault3 = await dfx.vault.actor_member_2.register_vault(request) as Vault
         wallet3 = await dfx.vault.actor_member_2.register_wallet({name: ["Wallet2"], vault_id: 3n}) as Wallet
     });
 
@@ -343,7 +347,7 @@ describe("Transaction", () => {
     });
 
     it("Check upgrade", async function () {
-       DFX.UPGRADE_FORCE('vault')
+        DFX.UPGRADE_FORCE('vault')
         let policies = await dfx.vault.admin_actor.get_policies(1n) as [Policy]
         expect(policies.length > 0).eq(true)
         let vaults = await dfx.vault.admin_actor.get_vaults() as [Vault]
@@ -352,6 +356,45 @@ describe("Transaction", () => {
         expect(wallets.length > 0).eq(true)
         let transactions = await dfx.vault.admin_actor.get_transactions() as Array<Transaction>
         expect(transactions.length > 0).eq(true)
+    });
+
+    it("Get backup", async function () {
+        try {
+            await dfx.vault.admin_actor.get_all_json(0, 10, {'Vaults': null})
+            fail("Should unauthorised")
+        } catch (e) {
+            expect(e.message).contains("Unauthorised")
+            DFX.USE_TEST_ADMIN();
+            DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "vault");
+            DFX.ADD_CONTROLLER(dfx.vault.id, "vault");
+        }
+        await dfx.vault.admin_actor.sync_controllers()
+        let cVaults = await dfx.vault.admin_actor.count({'Vaults': null}) as number
+        let vaultsString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Vaults': null}) as string
+        let vaults = JSON.parse(vaultsString) as [Vault]
+        expect(vaults.length).eq(3)
+        expect(cVaults).eq(3n)
+        let walletString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Wallets': null}) as string
+        let cWallets = await dfx.vault.admin_actor.count({'Wallets': null}) as number
+        let wallets = JSON.parse(walletString) as [Wallet]
+        expect(wallets.length).eq(3)
+        expect(cWallets).eq(3n)
+        let cTr = await dfx.vault.admin_actor.count({'Transactions': null}) as number
+        let transactionsString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Transactions': null}) as string
+        let transactions = JSON.parse(transactionsString) as [Transaction]
+        expect(transactions.length).eq(6)
+        expect(cTr).eq(6n)
+        let cPolicy = await dfx.vault.admin_actor.count({'Policies': null}) as number
+        let policyString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Policies': null}) as string
+        let policies = JSON.parse(policyString) as [Policy]
+        expect(policies.length).eq(5)
+        expect(cPolicy).eq(5n)
+        let usersString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Users': null}) as string
+        let cUsers = await dfx.vault.admin_actor.count({'Users': null}) as number
+        expect(cUsers).eq(3n)
+        expect(usersString).contains(adminAddress)
+        expect(usersString).contains(memberAddress1)
+        expect(usersString).contains(memberAddress2)
     });
 
 
