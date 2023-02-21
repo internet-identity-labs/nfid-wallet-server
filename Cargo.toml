@@ -5,6 +5,7 @@ members = [
     "src/im_addition",
     "src/verifier",
     "src/vault",
+    "src/bitcoin",
     "src/libraries/canister_api_macros",
 ]
 exclude = ["src/eth_secret_storage", "src/identity_manager"]

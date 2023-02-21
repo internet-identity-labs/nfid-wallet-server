@@ -34,6 +34,10 @@ export interface Dfx {
     ecdsa?: {
         id: string;
         actor: Record<string, ActorMethod>;
+    };
+    btc?: {
+        id: string;
+        actor: Record<string, ActorMethod>;
     }
 };
 
