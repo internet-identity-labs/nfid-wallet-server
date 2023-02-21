@@ -8,8 +8,8 @@ import {Result, Result_1} from "./idl/ecdsa";
 import {bitcoin_address, satoshi} from "./idl/bitcoin";
 
 
-describe.skip("BTC", () => {
-    describe("BTC tests", () => {
+describe("BTC", () => {
+    describe.skip("BTC tests", () => {
         var dfx: Dfx;
 
         before(async () => {
