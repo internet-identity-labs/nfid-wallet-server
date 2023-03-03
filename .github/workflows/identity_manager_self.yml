@@ -150,6 +150,12 @@ jobs:
 
           CI_DEBUG="true"
 
+          ci_echo_debug "dfx build --network '${NETWORK_NAME}' 'identity_manager_replica'" >&2
+          if ! result_build=$(dfx build --network "${NETWORK_NAME}" "identity_manager_replica"); then
+            ci_echo_error "Build identity_manager_replica failed ${result_build}" >&2
+            exit 1
+          fi
+
           ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade 'identity_manager_replica'" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "identity_manager_replica"); then
             ci_echo_error "Upgrade failed ${result}" >&2
