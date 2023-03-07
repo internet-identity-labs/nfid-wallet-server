@@ -17,6 +17,7 @@ on:
           - identity_manager
           - identity_manager_replica
           - test_im
+          - vault
       backup_name:
         description: '[optional] Name of the backup folder'
         type: string
