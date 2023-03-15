@@ -1,17 +1,25 @@
 export const idlFactory = ({ IDL }) => {
-    const Conf = IDL.Record({ 'key' : IDL.Text, 'price' : IDL.Nat64 });
-    const PublicKeyReply = IDL.Record({ 'public_key' : IDL.Vec(IDL.Nat8) });
-    const Result = IDL.Variant({ 'Ok' : PublicKeyReply, 'Err' : IDL.Text });
+    const KeyPair = IDL.Record({
+        'public_key' : IDL.Text,
+        'private_key_encrypted' : IDL.Text,
+    });
+    const KeyPairResponse = IDL.Record({ 'key_pair' : IDL.Opt(KeyPair) });
     const SignatureReply = IDL.Record({ 'signature' : IDL.Vec(IDL.Nat8) });
-    const Result_1 = IDL.Variant({ 'Ok' : SignatureReply, 'Err' : IDL.Text });
+    const Result = IDL.Variant({ 'Ok' : SignatureReply, 'Err' : IDL.Text });
+    const PublicKeyReply = IDL.Record({ 'public_key' : IDL.Vec(IDL.Nat8) });
+    const Result_1 = IDL.Variant({ 'Ok' : PublicKeyReply, 'Err' : IDL.Text });
     return IDL.Service({
-        'public_key' : IDL.Func([], [Result], []),
-        'sign' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result_1], []),
+        'add_kp' : IDL.Func([KeyPair], [], []),
+        'get_kp' : IDL.Func([], [KeyPairResponse], ['query']),
+        'get_principal' : IDL.Func(
+            [IDL.Opt(IDL.Text)],
+            [IDL.Text, IDL.Opt(IDL.Text)],
+            ['query'],
+        ),
+        'get_signature' : IDL.Func([IDL.Text], [Result], ['query']),
         'prepare_signature' : IDL.Func([IDL.Vec(IDL.Nat8)], [IDL.Text], []),
-        'get_signature' : IDL.Func([IDL.Text], [Result_1], ['query']),
+        'public_key' : IDL.Func([], [Result_1], []),
+        'sign' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result], []),
     });
 };
-export const init = ({ IDL }) => {
-    const Conf = IDL.Record({ 'key' : IDL.Text, 'price' : IDL.Nat64 });
-    return [IDL.Opt(Conf)];
-};
+export const init = ({ IDL }) => { return []; };

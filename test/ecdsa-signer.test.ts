@@ -4,7 +4,7 @@ import {Dfx} from "./type/dfx";
 import {App} from "./constanst/app.enum";
 import {deploy} from "./util/deployment.util";
 import {DFX} from "./constanst/dfx.const";
-import {Result, Result_1} from "./idl/ecdsa";
+import {KeyPair, KeyPairResponse, Result, Result_1} from "./idl/ecdsa";
 
 describe("ECDSA signer test", () => {
     describe("ECDSA tests", () => {
@@ -17,6 +17,7 @@ describe("ECDSA signer test", () => {
         after(() => {
             DFX.STOP();
         });
+
         it("should return public key", async function () {
             let pk = await dfx.ecdsa.actor.public_key() as Result;
             // @ts-ignore
@@ -43,8 +44,30 @@ describe("ECDSA signer test", () => {
             await new Promise(r => setTimeout(r, 3000));
             await dfx.ecdsa.actor.public_key() as Result; //run cleanup
             let signature3 = await dfx.ecdsa.actor.get_signature(key) as Result_1;
+            console.log(JSON.stringify(signature3))
             // @ts-ignore
             expect(signature3.Err).eq('No such signature')
+        });
+
+        it("should return key pair", async function () {
+            let kp: KeyPair = {
+                private_key_encrypted: "test_private", public_key: "test_public"
+            }
+            let emptyResponse = await dfx.ecdsa.actor.get_kp() as KeyPairResponse;
+            expect(emptyResponse.key_pair.length).eq(0)
+            await dfx.ecdsa.actor.add_kp(kp);
+            try {
+                await dfx.ecdsa.actor.add_kp(kp);
+            } catch (e) {
+                expect(e.message.includes("Already registered"))
+            }
+            let response = await dfx.ecdsa.actor.get_kp() as KeyPairResponse;
+            expect(response.key_pair[0].public_key).eq("test_public")
+            expect(response.key_pair[0].private_key_encrypted).eq("test_private")
+            DFX.UPGRADE_FORCE('ecdsa_signer')
+            response = await dfx.ecdsa.actor.get_kp() as KeyPairResponse;
+            expect(response.key_pair[0].public_key).eq("test_public")
+            expect(response.key_pair[0].private_key_encrypted).eq("test_private")
         });
     });
 

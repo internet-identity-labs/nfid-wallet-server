@@ -1,8 +1,8 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::str;
 use std::str::FromStr;
 use std::time::Duration;
-use std::collections::{HashMap};
 
 use candid::{candid_method, export_service};
 use ic_cdk::{storage, trap};
@@ -19,6 +19,17 @@ mod structure;
 #[derive(CandidType, Serialize, Debug)]
 pub struct PublicKeyReply {
     pub public_key: Vec<u8>,
+}
+
+#[derive(CandidType, Serialize, Debug, Deserialize)]
+pub struct KeyPair {
+    pub public_key: String,
+    pub private_key_encrypted: String,
+}
+
+#[derive(CandidType, Serialize, Debug)]
+pub struct KeyPairResponse {
+    pub key_pair: Option<KeyPair>,
 }
 
 #[derive(CandidType, Serialize, Debug)]
@@ -81,6 +92,7 @@ thread_local! {
     });
     pub static SIGNATURES: RefCell<TtlHashMap<String,SignatureReply>> = RefCell::new(TtlHashMap::new(Duration::from_secs(DEFAULT_TOKEN_TTL)));
     pub static KEYS: RefCell<HashMap<String,PublicKeyReply>> = RefCell::new(HashMap::new());
+    pub static ECDSA_KEYS: RefCell<HashMap<String,KeyPair>> = RefCell::new(HashMap::new());
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq)]
@@ -103,6 +115,49 @@ async fn init(conf: Option<Conf>) -> () {
         }
         _ => {}
     };
+}
+
+
+#[query]
+#[candid_method(query)]
+async fn get_kp() -> KeyPairResponse {
+    let principal = ic_cdk::caller().to_text();
+    ECDSA_KEYS.with(|keys| {
+        match keys.borrow().get(&principal) {
+            None => {
+                KeyPairResponse { key_pair: None }
+            }
+            Some(kp) => {
+                let response = KeyPairResponse {
+                    key_pair: Some(KeyPair {
+                        public_key: kp.public_key.clone(),
+                        private_key_encrypted: kp.private_key_encrypted.clone(),
+                    })
+                };
+                response
+            }
+        }
+    })
+}
+
+#[update]
+#[candid_method(update)]
+async fn add_kp(kp: KeyPair) {
+    let principal = ic_cdk::caller().to_text();
+    ECDSA_KEYS.with(|k| {
+        let mut keys = k.borrow_mut();
+        if keys.contains_key(&principal) {
+            trap( &format!("Already registered {}", principal))
+        }
+        keys.insert(principal, kp);
+    })
+}
+
+#[query]
+#[candid_method(query)]
+async fn get_principal(payload: Option<String>) -> (String, Option<String>) {
+    let principal = ic_cdk::caller().to_text();
+    (principal, payload)
 }
 
 #[update]
@@ -237,7 +292,19 @@ fn pre_upgrade() {
     let conf: Conf = CONFIG.with(|c| {
         return c.borrow_mut().clone();
     });
-    let pre_upgrade_data = PersistedData { conf: Some(conf) };
+    let principal_key_pairs = ECDSA_KEYS.with(|k| {
+        let pkp: Vec<PrincipalKP> = k.borrow_mut()
+            .iter()
+            .map(|a| PrincipalKP {
+                public_key: a.1.public_key.clone(),
+                private_key: a.1.private_key_encrypted.clone(),
+                principal: a.0.clone(),
+            })
+            .collect();
+        pkp
+    });
+
+    let pre_upgrade_data = PersistedData { conf: Some(conf), keys: Some(principal_key_pairs) };
     match storage::stable_save((pre_upgrade_data, 0)) {
         Ok(_) => (),
         Err(_) => trap(&format!("Failed to pre_upgrade"))
@@ -247,6 +314,14 @@ fn pre_upgrade() {
 #[derive(Clone, Debug, Deserialize, CandidType)]
 pub struct PersistedData {
     pub conf: Option<Conf>,
+    pub keys: Option<Vec<PrincipalKP>>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq)]
+pub struct PrincipalKP {
+    pub public_key: String,
+    pub private_key: String,
+    pub principal: String,
 }
 
 #[post_upgrade]
@@ -256,7 +331,19 @@ fn post_upgrade() {
             let (post_data, _a): (PersistedData, i32) = store;
             if post_data.conf.is_some() {
                 CONFIG.with(|storage| {
-                    storage.replace(post_data.conf.unwrap());
+                    storage.replace(post_data.conf.clone().unwrap());
+                });
+            };
+            if post_data.keys.is_some() {
+                ECDSA_KEYS.with(|storage| {
+                    let mut kpp = HashMap::default();
+                    for x in post_data.keys.unwrap().into_iter() {
+                        kpp.insert(x.principal, KeyPair {
+                            public_key: x.public_key,
+                            private_key_encrypted: x.private_key,
+                        });
+                    };
+                    storage.replace(kpp);
                 });
             }
         }
