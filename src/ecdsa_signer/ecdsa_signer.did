@@ -4,25 +4,37 @@ type Conf = record {
     ttl : nat64
 };
 
+type KeyPair = record {
+    public_key : text;
+    private_key_encrypted : text
+};
+
+type KeyPairResponse = record {
+    key_pair : opt KeyPair
+};
+
 type PublicKeyReply = record {
     public_key : vec nat8
 };
 
 type Result = variant {
-    Ok : PublicKeyReply;
+    Ok : SignatureReply;
     Err : text
 };
 
 type Result_1 = variant {
-    Ok : SignatureReply;
+    Ok : PublicKeyReply;
     Err : text
 };
 
 type SignatureReply = record {
     signature : vec nat8
-};service : (opt Conf) ->{
-    public_key : () -> (Result);
-    sign : (vec nat8) -> (Result_1);
+};service: (opt Conf) ->{
+    add_kp : (KeyPair) -> ();
+    get_kp : () -> (KeyPairResponse) query;
+    get_principal : (opt text) -> (text, opt text) query;
+    get_signature : (text) -> (Result) query;
     prepare_signature : (vec nat8) -> (text);
-    get_signature : (text) -> (Result_1) query;
+    public_key : () -> (Result_1);
+    sign : (vec nat8) -> (Result);
 }
