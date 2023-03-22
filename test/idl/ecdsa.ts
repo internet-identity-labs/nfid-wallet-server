@@ -5,8 +5,10 @@ export interface KeyPair {
     'public_key' : string,
     'private_key_encrypted' : string,
 }
-export interface KeyPairResponse { 'key_pair' : [] | [KeyPair] }
-export interface PublicKeyReply { 'public_key' : Uint8Array }
+export interface KeyPairResponse {
+    'key_pair' : [] | [KeyPair],
+    'princ' : string,
+}export interface PublicKeyReply { 'public_key' : Uint8Array }
 export type Result = { 'Ok' : SignatureReply } |
     { 'Err' : string };
 export type Result_1 = { 'Ok' : PublicKeyReply } |

@@ -10,7 +10,8 @@ type KeyPair = record {
 };
 
 type KeyPairResponse = record {
-    key_pair : opt KeyPair
+    key_pair : opt KeyPair;
+    princ: text
 };
 
 type PublicKeyReply = record {

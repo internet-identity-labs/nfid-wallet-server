@@ -64,6 +64,7 @@ describe("ECDSA signer test", () => {
             let response = await dfx.ecdsa.actor.get_kp() as KeyPairResponse;
             expect(response.key_pair[0].public_key).eq("test_public")
             expect(response.key_pair[0].private_key_encrypted).eq("test_private")
+            expect(response.princ).eq(dfx.user.identity.getPrincipal().toText())
             DFX.UPGRADE_FORCE('ecdsa_signer')
             response = await dfx.ecdsa.actor.get_kp() as KeyPairResponse;
             expect(response.key_pair[0].public_key).eq("test_public")

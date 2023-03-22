@@ -30,6 +30,7 @@ pub struct KeyPair {
 #[derive(CandidType, Serialize, Debug)]
 pub struct KeyPairResponse {
     pub key_pair: Option<KeyPair>,
+    pub princ: String,
 }
 
 #[derive(CandidType, Serialize, Debug)]
@@ -125,14 +126,15 @@ async fn get_kp() -> KeyPairResponse {
     ECDSA_KEYS.with(|keys| {
         match keys.borrow().get(&principal) {
             None => {
-                KeyPairResponse { key_pair: None }
+                KeyPairResponse { key_pair: None, princ: principal }
             }
             Some(kp) => {
                 let response = KeyPairResponse {
                     key_pair: Some(KeyPair {
                         public_key: kp.public_key.clone(),
                         private_key_encrypted: kp.private_key_encrypted.clone(),
-                    })
+                    }),
+                    princ: principal,
                 };
                 response
             }
@@ -147,7 +149,7 @@ async fn add_kp(kp: KeyPair) {
     ECDSA_KEYS.with(|k| {
         let mut keys = k.borrow_mut();
         if keys.contains_key(&principal) {
-            trap( &format!("Already registered {}", principal))
+            trap(&format!("Already registered {}", principal))
         }
         keys.insert(principal, kp);
     })
