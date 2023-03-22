@@ -1,9 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-    const Conf = IDL.Record({
-        'key' : IDL.Text,
-        'ttl' : IDL.Nat64,
-        'price' : IDL.Nat64,
-    });
     const KeyPair = IDL.Record({
         'public_key' : IDL.Text,
         'private_key_encrypted' : IDL.Text,
@@ -18,6 +13,8 @@ export const idlFactory = ({ IDL }) => {
     const Result_1 = IDL.Variant({ 'Ok' : PublicKeyReply, 'Err' : IDL.Text });
     return IDL.Service({
         'add_kp' : IDL.Func([KeyPair], [], []),
+        'count' : IDL.Func([], [IDL.Nat64], ['query']),
+        'get_all_json' : IDL.Func([IDL.Nat32, IDL.Nat32], [IDL.Text], ['query']),
         'get_kp' : IDL.Func([], [KeyPairResponse], ['query']),
         'get_principal' : IDL.Func(
             [IDL.Opt(IDL.Text)],
@@ -28,13 +25,7 @@ export const idlFactory = ({ IDL }) => {
         'prepare_signature' : IDL.Func([IDL.Vec(IDL.Nat8)], [IDL.Text], []),
         'public_key' : IDL.Func([], [Result_1], []),
         'sign' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result], []),
+        'sync_controllers' : IDL.Func([], [IDL.Vec(IDL.Text)], []),
     });
 };
-export const init = ({ IDL }) => {
-    const Conf = IDL.Record({
-        'key' : IDL.Text,
-        'ttl' : IDL.Nat64,
-        'price' : IDL.Nat64,
-    });
-    return [IDL.Opt(Conf)];
-};
+export const init = ({ IDL }) => { return []; };

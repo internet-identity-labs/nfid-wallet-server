@@ -5,13 +5,16 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use candid::{candid_method, export_service};
-use ic_cdk::{storage, trap};
+use ic_cdk::{call, caller, id, storage, trap};
+use ic_cdk::api::call::CallResult;
+use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use ic_cdk::export::{
     candid::CandidType,
     Principal,
     serde::{Deserialize, Serialize},
 };
 use ic_cdk_macros::*;
+
 use structure::ttlhashmap::TtlHashMap;
 
 mod structure;
@@ -31,6 +34,12 @@ pub struct KeyPair {
 pub struct KeyPairResponse {
     pub key_pair: Option<KeyPair>,
     pub princ: String,
+}
+
+#[derive(CandidType, Serialize, Debug)]
+pub struct KeyPairObject {
+    pub key_pair: KeyPair,
+    pub created_date: u64,
 }
 
 #[derive(CandidType, Serialize, Debug)]
@@ -89,11 +98,13 @@ thread_local! {
     static CONFIG: RefCell<Conf> = RefCell::new( Conf {
         price: 23_000_000_000,
         key: "test_key_1".to_string(),  //key_1; dfx_test_key; test_key_1
-        ttl: 300
+        ttl: 300,
+        controllers: Default::default(),
+
     });
     pub static SIGNATURES: RefCell<TtlHashMap<String,SignatureReply>> = RefCell::new(TtlHashMap::new(Duration::from_secs(DEFAULT_TOKEN_TTL)));
     pub static KEYS: RefCell<HashMap<String,PublicKeyReply>> = RefCell::new(HashMap::new());
-    pub static ECDSA_KEYS: RefCell<HashMap<String,KeyPair>> = RefCell::new(HashMap::new());
+    pub static ECDSA_KEYS: RefCell<HashMap<String,KeyPairObject>> = RefCell::new(HashMap::new());
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq)]
@@ -101,6 +112,7 @@ pub struct Conf {
     pub key: String,
     pub price: u64,
     pub ttl: u64,
+    pub controllers: Option<Vec<Principal>>,
 }
 
 #[init]
@@ -119,6 +131,29 @@ async fn init(conf: Option<Conf>) -> () {
 }
 
 
+#[derive(CandidType, Debug, Clone, Deserialize)]
+pub struct CanisterIdRequest {
+    #[serde(rename = "canister_id")]
+    pub canister_id: Principal,
+}
+
+#[update]
+#[candid_method(update)]
+async fn sync_controllers() -> Vec<String> {
+    let res: CallResult<(CanisterStatusResponse, )> = call(
+        Principal::management_canister(),
+        "canister_status",
+        (CanisterIdRequest {
+            canister_id: id(),
+        }, ),
+    ).await;
+
+    let controllers = res.unwrap().0.settings.controllers;
+    CONFIG.with(|c| c.borrow_mut().controllers.replace(controllers.clone()));
+    controllers.iter().map(|x| x.to_text()).collect()
+}
+
+
 #[query]
 #[candid_method(query)]
 async fn get_kp() -> KeyPairResponse {
@@ -131,8 +166,8 @@ async fn get_kp() -> KeyPairResponse {
             Some(kp) => {
                 let response = KeyPairResponse {
                     key_pair: Some(KeyPair {
-                        public_key: kp.public_key.clone(),
-                        private_key_encrypted: kp.private_key_encrypted.clone(),
+                        public_key: kp.key_pair.public_key.clone(),
+                        private_key_encrypted: kp.key_pair.private_key_encrypted.clone(),
                     }),
                     princ: principal,
                 };
@@ -151,7 +186,14 @@ async fn add_kp(kp: KeyPair) {
         if keys.contains_key(&principal) {
             trap(&format!("Already registered {}", principal))
         }
-        keys.insert(principal, kp);
+        let kkp = KeyPairObject {
+            key_pair: KeyPair {
+                public_key: kp.public_key.clone(),
+                private_key_encrypted: kp.private_key_encrypted.clone(),
+            },
+            created_date: ic_cdk::api::time(),
+        };
+        keys.insert(principal, kkp);
     })
 }
 
@@ -298,8 +340,9 @@ fn pre_upgrade() {
         let pkp: Vec<PrincipalKP> = k.borrow_mut()
             .iter()
             .map(|a| PrincipalKP {
-                public_key: a.1.public_key.clone(),
-                private_key: a.1.private_key_encrypted.clone(),
+                public_key: a.1.key_pair.public_key.clone(),
+                private_key: a.1.key_pair.private_key_encrypted.clone(),
+                created_date: a.1.created_date.clone(),
                 principal: a.0.clone(),
             })
             .collect();
@@ -313,17 +356,66 @@ fn pre_upgrade() {
     }
 }
 
+#[query]
+async fn get_all_json(from: u32, mut to: u32) -> String {
+    trap_if_not_authenticated();
+    let mut principal_key_pairs = ECDSA_KEYS.with(|k| {
+        let pkp: Vec<PrincipalKP> = k.borrow_mut()
+            .iter()
+            .map(|a| PrincipalKP {
+                public_key: a.1.key_pair.public_key.clone(),
+                private_key: a.1.key_pair.private_key_encrypted.clone(),
+                created_date: a.1.created_date.clone(),
+                principal: a.0.clone(),
+            })
+            .collect();
+        pkp
+    });
+    principal_key_pairs.sort_by(|a, b| a.created_date.cmp(&b.created_date));
+    let len = principal_key_pairs.len() as u32;
+    if to > len {
+        to = len;
+    }
+    let resp = &principal_key_pairs[from as usize..to as usize];
+    return serde_json::to_string(&resp).unwrap();
+}
+
+#[query]
+async fn count() -> u64 {
+    trap_if_not_authenticated();
+    ECDSA_KEYS.with(|k| {
+        k.borrow().len() as u64
+    })
+}
+
+fn trap_if_not_authenticated() {
+    let princ = caller();
+    match CONFIG.with(|c| c.borrow_mut().controllers.clone())
+    {
+        None => {
+            trap("Unauthorised")
+        }
+        Some(controllers) => {
+            if !controllers.contains(&princ) {
+                trap("Unauthorised")
+            }
+        }
+    }
+}
+
+
 #[derive(Clone, Debug, Deserialize, CandidType)]
 pub struct PersistedData {
     pub conf: Option<Conf>,
     pub keys: Option<Vec<PrincipalKP>>,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq)]
+#[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq, Serialize)]
 pub struct PrincipalKP {
     pub public_key: String,
     pub private_key: String,
     pub principal: String,
+    pub created_date: u64,
 }
 
 #[post_upgrade]
@@ -340,10 +432,15 @@ fn post_upgrade() {
                 ECDSA_KEYS.with(|storage| {
                     let mut kpp = HashMap::default();
                     for x in post_data.keys.unwrap().into_iter() {
-                        kpp.insert(x.principal, KeyPair {
-                            public_key: x.public_key,
-                            private_key_encrypted: x.private_key,
-                        });
+                        kpp.insert(x.principal,
+                                   KeyPairObject {
+                                       key_pair: KeyPair {
+                                           public_key: x.public_key,
+                                           private_key_encrypted: x.private_key,
+                                       },
+                                       created_date: x.created_date,
+                                   },
+                        );
                     };
                     storage.replace(kpp);
                 });

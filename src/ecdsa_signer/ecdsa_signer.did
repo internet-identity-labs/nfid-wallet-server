@@ -1,9 +1,3 @@
-type Conf = record {
-    key : text;
-    price : nat64;
-    ttl : nat64
-};
-
 type KeyPair = record {
     public_key : text;
     private_key_encrypted : text
@@ -11,7 +5,7 @@ type KeyPair = record {
 
 type KeyPairResponse = record {
     key_pair : opt KeyPair;
-    princ: text
+    princ : text
 };
 
 type PublicKeyReply = record {
@@ -30,7 +24,7 @@ type Result_1 = variant {
 
 type SignatureReply = record {
     signature : vec nat8
-};service: (opt Conf) ->{
+};service : {
     add_kp : (KeyPair) -> ();
     get_kp : () -> (KeyPairResponse) query;
     get_principal : (opt text) -> (text, opt text) query;

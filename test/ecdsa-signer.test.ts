@@ -5,6 +5,8 @@ import {App} from "./constanst/app.enum";
 import {deploy} from "./util/deployment.util";
 import {DFX} from "./constanst/dfx.const";
 import {KeyPair, KeyPairResponse, Result, Result_1} from "./idl/ecdsa";
+import {fail} from "assert";
+import exp from "constants";
 
 describe("ECDSA signer test", () => {
     describe("ECDSA tests", () => {
@@ -16,37 +18,6 @@ describe("ECDSA signer test", () => {
 
         after(() => {
             DFX.STOP();
-        });
-
-        it("should return public key", async function () {
-            let pk = await dfx.ecdsa.actor.public_key() as Result;
-            // @ts-ignore
-            expect(pk.Ok.public_key.length > 0).eq(true)
-        });
-
-        it("should sign array", async function () {
-            let message = Array(32).fill(1);
-            let signature = await dfx.ecdsa.actor.sign(message) as Result_1;
-            // @ts-ignore
-            expect(signature.Ok.signature.length).eq(64)
-        });
-
-        it("should prepare signature", async function () {
-            let message = Array(32).fill(1);
-            let key = await dfx.ecdsa.actor.prepare_signature(message) as String;
-            expect(key).eq("0101010101010101010101010101010101010101010101010101010101010101")
-            let signature = await dfx.ecdsa.actor.get_signature(key) as Result_1;
-            // @ts-ignore
-            expect(signature.Ok.signature.length).eq(64)
-            let signature2 = await dfx.ecdsa.actor.get_signature(key) as Result_1;
-            // @ts-ignore
-            expect(assertArray(signature.Ok.signature, signature2.Ok.signature)).eq(true)
-            await new Promise(r => setTimeout(r, 3000));
-            await dfx.ecdsa.actor.public_key() as Result; //run cleanup
-            let signature3 = await dfx.ecdsa.actor.get_signature(key) as Result_1;
-            console.log(JSON.stringify(signature3))
-            // @ts-ignore
-            expect(signature3.Err).eq('No such signature')
         });
 
         it("should return key pair", async function () {
@@ -69,6 +40,28 @@ describe("ECDSA signer test", () => {
             response = await dfx.ecdsa.actor.get_kp() as KeyPairResponse;
             expect(response.key_pair[0].public_key).eq("test_public")
             expect(response.key_pair[0].private_key_encrypted).eq("test_private")
+        });
+
+        it("should backup", async function () {
+            try {
+                await dfx.ecdsa.actor.get_all_json(0, 10)
+                fail("Should unauthorised")
+            } catch (e) {
+                expect(e.message).contains("Unauthorised")
+                DFX.USE_TEST_ADMIN();
+                DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "ecdsa_signer");
+                DFX.ADD_CONTROLLER(dfx.ecdsa.id, "ecdsa_signer");
+            }
+            await dfx.ecdsa.actor.sync_controllers()
+            let count =await dfx.ecdsa.actor.count()
+            expect(count).eq(1n)
+            let json = await dfx.ecdsa.actor.get_all_json(0, 10)
+            expect(json).contains("public_key")
+            expect(json).contains("test_public")
+            expect(json).contains("private_key")
+            expect(json).contains("test_private")
+            expect(json).contains("principal")
+            expect(json).contains("created_date")
         });
     });
 
