@@ -16,7 +16,7 @@ on:
         options:
           - identity_manager
           - identity_manager_replica
-          - test_im
+          - vault
       compress_backup:
         description: 'Compress backup'
         type: choice
@@ -77,7 +77,8 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: PRE-BACKUP => Populate env vars.
+      - name: PRE-BACKUP => identity_manager => Populate env vars.
+        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.canister_name == 'identity_manager_replica') }}
         run: |
           source ./ci_libs/CI_LIBS.sh
 
@@ -88,13 +89,15 @@ jobs:
           fi
 
           ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
-          if [ "${NETWORK_NAME}" == 'ic' ];then
-            ID_NAME="prod_admin"
-            IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
-          elif [ "${NETWORK_NAME}" == 'dev' ]; then
+
+          if [ "${NETWORK_NAME}" == 'dev' ]; then
             ID_NAME="dev_admin"
             IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
+          elif [ "${NETWORK_NAME}" == 'ic' ]; then
+            ID_NAME="prod_admin"
+            IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
           fi
+
           ID_PATH="/home/ubuntu/.config/dfx/identity/${ID_NAME}"
 
           ci_echo_debug "Populating env variables" >&2
@@ -108,7 +111,46 @@ jobs:
           echo "ID_NAME=${ID_NAME}" >> $GITHUB_ENV
           echo "ID_PATH=${ID_PATH}" >> $GITHUB_ENV
           echo "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >> $GITHUB_ENV
+
+      - name: PRE-BACKUP => vault => Populate env vars.
+        if: ${{ (github.event.inputs.canister_name == 'vault') }}
+        run: |
+          source ./ci_libs/CI_LIBS.sh
+
+          ci_echo_debug "Getting values from dfx.json" >&2
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
+            ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
           
+          if [ "${NETWORK_NAME}" == 'dev' ]; then
+            ID_NAME="dev_admin"
+            IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
+          elif [ "${NETWORK_NAME}" == 'ic' ]; then
+            ID_NAME="prod_vault"
+            IDENTITY_PEM_NAME_VAR="PROD_VAULT_KEY"
+          fi
+
+          ID_PATH="/home/ubuntu/.config/dfx/identity/${ID_NAME}"
+
+          ci_echo_debug "Populating env variables" >&2
+          CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
+          CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
+          CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
+            
+          echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
+          echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
+          echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
+          echo "ID_NAME=${ID_NAME}" >> $GITHUB_ENV
+          echo "ID_PATH=${ID_PATH}" >> $GITHUB_ENV
+          echo "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >> $GITHUB_ENV
+
+      - name: PRE-BUILD => Print Vars.
+        run: |
+          source ./ci_libs/CI_LIBS.sh
+
           ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
           ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
           ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
@@ -121,12 +163,26 @@ jobs:
 
       - name: PRE-BUILD => Write identity.
         run: |
+          source ./ci_libs/CI_LIBS.sh
+
           mkdir -p "${ID_PATH}"
           echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
-          sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
+
+          if [ "${NETWORK_NAME}" == 'ic' ]; then 
+            ci_echo_warn "Preparing encoded key..." >&2
+            ci_echo_info "Installing base64 package..." >&2
+            sudo apt-get update && sudo apt-get install -y coreutils moreutils
+
+            ci_echo_info "Decoding..." >&2
+            base64 -d "${ID_PATH}/identity.pem" | sponge "${ID_PATH}/identity.pem"
+          else
+            ci_echo_info "Remove trailing symbols in key" >&2
+            sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
+          fi
         env:
-          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
           DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
+          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
+          PROD_VAULT_KEY: ${{secrets.PROD_VAULT_KEY}}
 
       - name: PRE-BUILD => DFX status.
         run: |
@@ -137,8 +193,13 @@ jobs:
           source ./ci_libs/CI_LIBS.sh
           source ./ci_libs/canister_backup_restore.sh
 
+          if [ "${NETWORK_NAME}" == 'ic' ]; then
+            CI_DEBUG=true
+          fi
+
           dfx identity use "${ID_NAME}"
 
+          ci_echo_debug "ci_canister_backup '${CANISTER_NAME}' '${NETWORK_NAME}' '${BACKUP_FOLDER}' '${BACKUP_CHUNK_SIZE}' '${COMPRESS_BACKUP}'" >&2
           ci_canister_backup "${CANISTER_NAME}" "${NETWORK_NAME}" "${BACKUP_FOLDER}" "${BACKUP_CHUNK_SIZE}" "${COMPRESS_BACKUP}"
         env:
           BACKUP_FOLDER: /home/ubuntu/backup/
