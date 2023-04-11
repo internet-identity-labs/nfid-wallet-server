@@ -39,10 +39,10 @@ jobs:
             /home/ubuntu/.cargo/git/db/
             /home/ubuntu/.cargo/cargo_target
             target/
-          key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ env.NETWORK_NAME }}-${{ env.CANISTER_NAME }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: PRE-BACKUP => PROD => Populate env vars.
-        if: ${{(github.event.inputs.network_name == 'ic')}}
+        if: ${{(env.NETWORK_NAME == 'ic')}}
         run: |
           dfx start --background --clean --host 0.0.0.0:8000 &
           source ./ci_libs/CI_LIBS.sh
@@ -105,14 +105,12 @@ jobs:
           dfx --version
 
       - name: BACKUP => Backup.
-        if: ${{(github.event.inputs.network_name == 'ic')}}
+        if: ${{ env.NETWORK_NAME == 'ic' }}
         run: |
           source ./ci_libs/CI_LIBS.sh
           source ./ci_libs/canister_backup_restore.sh
           
-          if [ "${NETWORK_NAME}" == 'ic' ]; then
-            CI_DEBUG=true
-          fi
+          CI_DEBUG=true
 
           dfx identity use "${ID_NAME}"
 
