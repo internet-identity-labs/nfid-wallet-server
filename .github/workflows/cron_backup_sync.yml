@@ -31,7 +31,7 @@ jobs:
 
           ci_echo_info "Syncing to S3" >&2
           ci_echo_debug "docker run --rm -it -v ~/.aws:/root/.aws -v '${BACKUP_FOLDER}':/aws/ amazon/aws-cli:2.11 s3 sync . s3://${BACKUP_S3}/" >&2
-          docker run --rm -it -v ~/.aws:/root/.aws -v "${BACKUP_FOLDER}":/aws/ amazon/aws-cli:2.11 s3 sync . s3://${BACKUP_S3}/"
+          docker run --rm -it -v ~/.aws:/root/.aws -v "${BACKUP_FOLDER}":/aws/ amazon/aws-cli:2.11 s3 sync . s3://${BACKUP_S3}/
         env:
           BACKUP_FOLDER: /home/ubuntu/backup/
           BACKUP_S3: identity-labs-backup
