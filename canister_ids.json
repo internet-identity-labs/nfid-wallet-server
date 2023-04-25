@@ -47,6 +47,10 @@
     "fiduciary": "ngt6g-7yaaa-aaaar-qaagq-cai",
     "ic": "qsemi-gqaaa-aaaao-agwfa-cai"
   },
+  "ecdsa_signer_btc": {
+    "dev": "7b5jg-paaaa-aaaap-aa32q-cai",
+    "prod": "eke5v-vqaaa-aaaag-qb5ea-cai"
+  },
   "bitcoin": {
     "dev": "iohef-tiaaa-aaaal-qbtza-cai"
   }
