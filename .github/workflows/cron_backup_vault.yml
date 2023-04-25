@@ -1,23 +1,21 @@
-name: CRON Internet Identity Test
+name: CRON Backup Vault
 on:
   schedule:
-      # Runs "01:05 every day" (see https://crontab.guru)
-      - cron: '05 1 * * *'
+      # Runs "every hour at 10 minutes" (see https://crontab.guru)
+      - cron: '10 * * * *'
 
 env:
-  NETWORK_NAME: 'dev'
-  CANISTER_NAME: 'internet_identity_test'
+  NETWORK_NAME: 'ic'
+  CANISTER_NAME: 'vault'
+  COMPRESS_BACKUP: 'true'
   CI_DEBUG: 'true'
 
-
 jobs:
-  Deploy:
+  Backup:
     runs-on: [self-hosted, Linux, X64]
     defaults:
       run:
         shell: bash
-
-    if: ${{ github.ref == 'refs/heads/master' }}
 
     steps:
       - name: Checkout repo.
@@ -41,10 +39,12 @@ jobs:
             /home/ubuntu/.cargo/git/db/
             /home/ubuntu/.cargo/cargo_target
             target/
-          key: ${{ runner.os }}-cargo-dev-identity_manager_test-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ env.NETWORK_NAME }}-${{ env.CANISTER_NAME }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: PRE-BUILD => Populate env vars.
+      - name: PRE-BACKUP => PROD => Populate env vars.
+        if: ${{(env.NETWORK_NAME == 'ic')}}
         run: |
+          dfx start --background --clean --host 0.0.0.0:8000 &
           source ./ci_libs/CI_LIBS.sh
 
           ci_echo_debug "Getting values from dfx.json" >&2
@@ -54,13 +54,9 @@ jobs:
           fi
 
           ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
-          if [ "${NETWORK_NAME}" == 'ic' ];then
-            ID_NAME="prod_admin"
-            IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
-          elif [ "${NETWORK_NAME}" == 'dev' ]; then
-            ID_NAME="dev_admin"
-            IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
-          fi
+          ID_NAME="prod_vault"
+          IDENTITY_PEM_NAME_VAR="PROD_VAULT_KEY"
+          
           ID_PATH="/home/ubuntu/.config/dfx/identity/${ID_NAME}"
 
           CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
@@ -73,7 +69,7 @@ jobs:
           echo "ID_NAME=${ID_NAME}" >> $GITHUB_ENV
           echo "ID_PATH=${ID_PATH}" >> $GITHUB_ENV
           echo "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >> $GITHUB_ENV
-          
+
       - name: PRE-BUILD => Print Vars.
         run: |
           source ./ci_libs/CI_LIBS.sh
@@ -86,48 +82,40 @@ jobs:
           ci_echo_info "ID_NAME=${ID_NAME}" >&2
           ci_echo_info "ID_PATH=${ID_PATH}" >&2
           ci_echo_info "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >&2
+          ci_echo_info "COMPRESS_BACKUP=${COMPRESS_BACKUP}" >&2
 
       - name: PRE-BUILD => Write identity.
         run: |
+          source ./ci_libs/CI_LIBS.sh
+
           mkdir -p "${ID_PATH}"
           echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
-          sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
+
+          ci_echo_warn "Preparing encoded key..." >&2
+          ci_echo_info "Installing base64 package..." >&2
+          sudo apt-get update && sudo apt-get install -y coreutils moreutils
+
+          ci_echo_info "Decoding..." >&2
+          base64 -d "${ID_PATH}/identity.pem" | sponge "${ID_PATH}/identity.pem"
         env:
-          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
-          DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
+          PROD_VAULT_KEY: ${{secrets.PROD_VAULT_KEY}}
 
       - name: PRE-BUILD => DFX status.
         run: |
           dfx --version
 
-      - name: BUILD => Build the canister.
+      - name: BACKUP => Backup.
+        if: ${{ env.NETWORK_NAME == 'ic' }}
         run: |
           source ./ci_libs/CI_LIBS.sh
+          source ./ci_libs/canister_backup_restore.sh
+          
+          CI_DEBUG=true
 
           dfx identity use "${ID_NAME}"
 
-          rm -rf .dfx;
-          ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
-          dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
-
-      - name: DEPLOY => Upgrade the canister.
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-
-          dfx identity use "${ID_NAME}"
-
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "${CANISTER_NAME}"); then
-            ci_echo_error "Upgrade failed ${result}" >&2
-            exit 1
-          fi
-
-          ci_echo_debug "Command output was '${result}'" >&2
-
-          # If hash the same - than fail deploy
-          if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
-            ci_echo_error "${result}" >&2
-            exit 1
-          else
-            ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
-          fi
+          ci_echo_debug "ci_canister_backup '${CANISTER_NAME}' '${NETWORK_NAME}' '${BACKUP_FOLDER}' '${BACKUP_CHUNK_SIZE}' '${COMPRESS_BACKUP}'" >&2
+          ci_canister_backup "${CANISTER_NAME}" "${NETWORK_NAME}" "${BACKUP_FOLDER}" "${BACKUP_CHUNK_SIZE}" "${COMPRESS_BACKUP}"
+        env:
+          BACKUP_FOLDER: /home/ubuntu/backup/
+          BACKUP_CHUNK_SIZE: 3000
