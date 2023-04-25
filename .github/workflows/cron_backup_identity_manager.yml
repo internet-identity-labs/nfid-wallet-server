@@ -60,8 +60,10 @@ jobs:
             ID_NAME="dev_admin"
             IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
           fi
+
           ID_PATH="/home/ubuntu/.config/dfx/identity/${ID_NAME}"
 
+          ci_echo_debug "Populating env variables" >&2
           CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
           CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
           CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
@@ -72,7 +74,7 @@ jobs:
           echo "ID_NAME=${ID_NAME}" >> $GITHUB_ENV
           echo "ID_PATH=${ID_PATH}" >> $GITHUB_ENV
           echo "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >> $GITHUB_ENV
-          
+
       - name: PRE-BUILD => Print Vars.
         run: |
           source ./ci_libs/CI_LIBS.sh
@@ -89,12 +91,14 @@ jobs:
 
       - name: PRE-BUILD => Write identity.
         run: |
+          source ./ci_libs/CI_LIBS.sh
+
           mkdir -p "${ID_PATH}"
           echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
           sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
         env:
-          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
           DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
+          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
 
       - name: PRE-BUILD => DFX status.
         run: |
@@ -107,6 +111,7 @@ jobs:
 
           dfx identity use "${ID_NAME}"
 
+          ci_echo_debug "ci_canister_backup '${CANISTER_NAME}' '${NETWORK_NAME}' '${BACKUP_FOLDER}' '${BACKUP_CHUNK_SIZE}' '${COMPRESS_BACKUP}'" >&2
           ci_canister_backup "${CANISTER_NAME}" "${NETWORK_NAME}" "${BACKUP_FOLDER}" "${BACKUP_CHUNK_SIZE}" "${COMPRESS_BACKUP}"
         env:
           BACKUP_FOLDER: /home/ubuntu/backup/
