@@ -41,8 +41,7 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ env.NETWORK_NAME }}-${{ env.CANISTER_NAME }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: PRE-BACKUP => PROD => Populate env vars.
-        if: ${{(env.NETWORK_NAME == 'ic')}}
+      - name: PRE-BACKUP => Populate env vars.
         run: |
           dfx start --background --clean --host 0.0.0.0:8000 &
           source ./ci_libs/CI_LIBS.sh
@@ -54,9 +53,13 @@ jobs:
           fi
 
           ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
-          ID_NAME="prod_vault"
-          IDENTITY_PEM_NAME_VAR="PROD_VAULT_KEY"
-          
+          if [ "${NETWORK_NAME}" == 'ic' ];then
+            ID_NAME="prod_vault"
+            IDENTITY_PEM_NAME_VAR="PROD_VAULT_KEY"
+          elif [ "${NETWORK_NAME}" == 'dev' ]; then
+            ID_NAME="dev_admin"
+            IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
+          fi
           ID_PATH="/home/ubuntu/.config/dfx/identity/${ID_NAME}"
 
           CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
@@ -91,13 +94,19 @@ jobs:
           mkdir -p "${ID_PATH}"
           echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
 
-          ci_echo_warn "Preparing encoded key..." >&2
-          ci_echo_info "Installing base64 package..." >&2
-          sudo apt-get update && sudo apt-get install -y coreutils moreutils
+          if [ "${NETWORK_NAME}" == 'ic' ]; then 
+            ci_echo_warn "Preparing encoded key..." >&2
+            ci_echo_info "Installing base64 package..." >&2
+            sudo apt-get update && sudo apt-get install -y coreutils moreutils
 
-          ci_echo_info "Decoding..." >&2
-          base64 -d "${ID_PATH}/identity.pem" | sponge "${ID_PATH}/identity.pem"
+            ci_echo_info "Decoding..." >&2
+            base64 -d "${ID_PATH}/identity.pem" | sponge "${ID_PATH}/identity.pem"
+          else
+            ci_echo_info "Remove trailing symbols in key" >&2
+            sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
+          fi
         env:
+          DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
           PROD_VAULT_KEY: ${{secrets.PROD_VAULT_KEY}}
 
       - name: PRE-BUILD => DFX status.
@@ -105,12 +114,9 @@ jobs:
           dfx --version
 
       - name: BACKUP => Backup.
-        if: ${{ env.NETWORK_NAME == 'ic' }}
         run: |
           source ./ci_libs/CI_LIBS.sh
           source ./ci_libs/canister_backup_restore.sh
-          
-          CI_DEBUG=true
 
           dfx identity use "${ID_NAME}"
 

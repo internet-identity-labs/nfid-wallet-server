@@ -1,8 +1,8 @@
 name: CRON Backup Sync
 on:
   schedule:
-    # Runs "every day at 0:30 " (see https://crontab.guru)
-    - cron: '30 0 * * *'
+    # Runs "every day at 0:40 " (see https://crontab.guru)
+    - cron: '40 0 * * *'
 
 env:
   CI_DEBUG: 'true'

@@ -1,45 +1,14 @@
-name: BRL - Backup Canister
-on: 
-  workflow_dispatch:
-    inputs:
-      network_name:
-        description: 'Choose applicable network'
-        required: true
-        type: choice
-        options: 
-          - dev
-          - ic
-      canister_name:
-        description: 'Choose applicable canister'
-        required: true
-        type: choice
-        options:
-          - identity_manager
-          - ecdsa_signer
-          - ecdsa_signer_btc
-          - vault
-      compress_backup:
-        description: 'Compress backup'
-        type: choice
-        options: 
-          - 'true'
-          - 'false'
-      debug_messages:
-        description: 'Show debug messages'
-        type: choice
-        options: 
-          - 'false'
-          - 'true'
-      confirmation:
-        description: 'For the ic backup - confirm your choice by typing "Yes"'
-        type: string
+name: CRON Backup ECDSA Signer BTC
+on:
+  schedule:
+      # Runs "every hour at 30 minutes" (see https://crontab.guru)
+      - cron: '30 * * * *'
 
 env:
-  NETWORK_NAME: ${{ github.event.inputs.network_name }}
-  CANISTER_NAME: ${{ github.event.inputs.canister_name }}
-  COMPRESS_BACKUP: ${{ github.event.inputs.compress_backup }}
-  CI_DEBUG: ${{ github.event.inputs.debug_messages }}
-
+  NETWORK_NAME: 'dev'
+  CANISTER_NAME: 'ecdsa_signer_btc'
+  COMPRESS_BACKUP: 'true'
+  CI_DEBUG: 'true'
 
 jobs:
   Backup:
@@ -49,12 +18,6 @@ jobs:
         shell: bash
 
     steps:
-      - name: INPUT => Checks.
-        if: ${{ (github.event.inputs.network_name == 'ic') && (github.event.inputs.confirmation != 'Yes') }}
-        run: |
-          echo "[ERROR] You have try release to network 'ic' without or with wrong confirmation phrase" >&2
-          exit 1
-
       - name: Checkout repo.
         uses: actions/checkout@v3
 
@@ -76,10 +39,11 @@ jobs:
             /home/ubuntu/.cargo/git/db/
             /home/ubuntu/.cargo/cargo_target
             target/
-          key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ env.NETWORK_NAME }}-${{ env.CANISTER_NAME }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: PRE-BACKUP => Populate env vars.
         run: |
+          dfx start --background --clean --host 0.0.0.0:8000 &
           source ./ci_libs/CI_LIBS.sh
 
           ci_echo_debug "Getting values from dfx.json" >&2
@@ -89,26 +53,12 @@ jobs:
           fi
 
           ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
-
-          if [ "${NETWORK_NAME}" == 'dev' ]; then
+          if [ "${NETWORK_NAME}" == 'ic' ];then
+            ID_NAME="prod_admin"
+            IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
+          elif [ "${NETWORK_NAME}" == 'dev' ]; then
             ID_NAME="dev_admin"
             IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
-          elif [ "${NETWORK_NAME}" == 'ic' ]; then
-            case ${CANISTER_NAME} in
-
-              identity_manager)
-                ID_NAME="prod_admin"
-                IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
-                ;;
-              vault)
-                ID_NAME="prod_vault"
-                IDENTITY_PEM_NAME_VAR="PROD_VAULT_KEY"
-                ;;
-              *)
-                ci_echo_error "NOT IMPLEMENTED for canister '${CANISTER_NAME}'" >&2
-                exit 1
-                ;;
-            esac
           fi
 
           ID_PATH="/home/ubuntu/.config/dfx/identity/${ID_NAME}"
@@ -145,22 +95,10 @@ jobs:
 
           mkdir -p "${ID_PATH}"
           echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
-
-          if [ "${NETWORK_NAME}" == 'ic' ]; then 
-            ci_echo_warn "Preparing encoded key..." >&2
-            ci_echo_info "Installing base64 package..." >&2
-            sudo apt-get update && sudo apt-get install -y coreutils moreutils
-
-            ci_echo_info "Decoding..." >&2
-            base64 -d "${ID_PATH}/identity.pem" | sponge "${ID_PATH}/identity.pem"
-          else
-            ci_echo_info "Remove trailing symbols in key" >&2
-            sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
-          fi
+          sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
         env:
           DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
           PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
-          PROD_VAULT_KEY: ${{secrets.PROD_VAULT_KEY}}
 
       - name: PRE-BUILD => DFX status.
         run: |
@@ -170,10 +108,6 @@ jobs:
         run: |
           source ./ci_libs/CI_LIBS.sh
           source ./ci_libs/canister_backup_restore.sh
-
-          if [ "${NETWORK_NAME}" == 'ic' ]; then
-            CI_DEBUG=true
-          fi
 
           dfx identity use "${ID_NAME}"
 
