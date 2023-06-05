@@ -15,8 +15,9 @@ on:
         type: choice
         options:
           - identity_manager
-          - identity_manager_replica
-          - test_im
+          - ecdsa_signer
+          - ecdsa_signer_btc
+          - vault
       backup_name:
         description: '[optional] Name of the backup folder'
         type: string
