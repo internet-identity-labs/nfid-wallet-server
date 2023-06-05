@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::hash::{Hash};
 use std::time::Duration;
 use ic_cdk::export::candid::{CandidType, Deserialize};
@@ -9,8 +9,10 @@ use crate::logger::logger::Logs;
 use crate::repository::account_repo::{Account, Accounts, PrincipalIndex};
 use crate::repository::application_repo::Application;
 use serde::{Serialize};
+use crate::http::requests::WalletVariant;
+use crate::repository::access_point_repo::AccessPoint;
+use crate::repository::persona_repo::Persona;
 
-use crate::repository::phone_number_repo::{PhoneNumberRepo, PhoneNumberRepoTrait};
 
 
 #[derive(Debug, Deserialize, CandidType, Clone)]
@@ -120,19 +122,44 @@ impl ConfigurationRepo {
     }
 }
 
-pub fn is_anchor_exists(anchor: u64) -> bool { //todo move somewhere
+pub fn is_anchor_exists(anchor: u64, wallet: WalletVariant) -> bool {
     let accounts = storage::get_mut::<Accounts>();
     accounts.into_iter()
-        .map(|l| l.1.anchor)
-        .any(|x| x == anchor)
+        .map(|l| l.1)
+        .any(|x| x.anchor == anchor && x.wallet == wallet)
 }
+
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
+pub struct AccountMemoryModel {
+    pub anchor: u64,
+    pub principal_id: String,
+    pub name: Option<String>,
+    pub personas: Vec<Persona>,
+    pub phone_number: Option<String>,
+    pub phone_number_sha2: Option<String>,
+    pub access_points: HashSet<AccessPoint>,
+    pub base_fields: BasicEntity,
+    pub wallet: Option<WalletVariant>
+}
+
 
 pub fn pre_upgrade() {
     canistergeek_ic_rust::logger
     ::log_message("Pre upgrade started".to_string());
     let mut accounts = Vec::new();
     for p in storage::get_mut::<Accounts>().iter() {
-        accounts.push(p.1.clone());
+        accounts.push(
+            AccountMemoryModel {
+                anchor:  p.1.anchor.clone(),
+                principal_id: p.1.principal_id.to_string(),
+                name: p.1.name.clone(),
+                personas: p.1.personas.clone(),
+                phone_number: p.1.phone_number.clone(),
+                phone_number_sha2: p.1.phone_number_sha2.clone(),
+                access_points: p.1.access_points.clone(),
+                base_fields: p.1.base_fields.clone(),
+                wallet: Some(p.1.wallet.clone()),
+            })
     }
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
     let logs = storage::get_mut::<Logs>(); //todo remove somehow
@@ -143,24 +170,32 @@ pub fn pre_upgrade() {
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin, _logs, monitor_data, logs_new, applications): (Vec<Account>, Principal, Logs, Option<canistergeek_ic_rust::monitor::PostUpgradeStableData>, Option<canistergeek_ic_rust::logger::PostUpgradeStableData>, Option<Applications>) = storage::stable_restore().unwrap();
-    let mut phone_numbers = HashMap::default();
+    let (old_accs, admin, _logs, monitor_data, logs_new, applications): (Vec<AccountMemoryModel>, Principal, Logs, Option<canistergeek_ic_rust::monitor::PostUpgradeStableData>, Option<canistergeek_ic_rust::logger::PostUpgradeStableData>, Option<Applications>) = storage::stable_restore().unwrap();
     storage::get_mut::<Option<Principal>>().replace(admin);
     for u in old_accs {
-        let princ = u.clone().principal_id;
-        storage::get_mut::<Accounts>().insert(princ.clone(), u.clone());
+        let princ = u.principal_id.clone();
+        storage::get_mut::<Accounts>().insert(princ.clone(), Account{
+            anchor: u.anchor,
+            principal_id: u.principal_id.to_string(),
+            name: u.name,
+            phone_number: u.phone_number,
+            phone_number_sha2: u.phone_number_sha2,
+            personas: u.personas,
+            access_points: u.access_points.clone(),
+            base_fields: u.base_fields,
+            wallet: match u.wallet {
+                None => { WalletVariant::InternetIdentity}
+                Some(x) => {x}
+            },
+        });
 
         storage::get_mut::<PrincipalIndex>().insert(princ.clone(), princ.clone());
 
-        for x in u.clone().access_points.into_iter() {
+        for x in u.access_points.into_iter() {
             storage::get_mut::<PrincipalIndex>().insert(x.principal_id, princ.clone());
         }
-
-        u.phone_number_sha2.map(|x| phone_numbers.insert(x.clone(), princ.clone()));
     }
     storage::get_mut::<Option<Principal>>().replace(admin);
-    let pn_repo = PhoneNumberRepo {};
-    pn_repo.add_all(phone_numbers);
     match monitor_data {
         None => {}
         Some(data) => {

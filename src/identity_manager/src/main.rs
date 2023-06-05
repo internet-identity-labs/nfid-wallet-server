@@ -1,6 +1,9 @@
 use std::time::Duration;
 
 use ic_cdk::{caller, storage, trap};
+use ic_cdk::export::candid::export_service;
+use ic_cdk::export::candid::candid_method;
+
 use ic_cdk_macros::*;
 
 use canister_api_macros::{admin, admin_or_lambda, collect_metrics, log_error, replicate_account};
@@ -11,7 +14,7 @@ use crate::application_service::ApplicationService;
 use crate::container::container_wrapper;
 use crate::container_wrapper::{get_access_point_service, get_account_repo, get_account_service, get_application_service, get_credential_service, get_persona_service, get_phone_number_service};
 use crate::http::requests;
-use crate::http::requests::AccountResponse;
+use crate::http::requests::{AccountResponse, WalletVariant};
 use crate::http::response_mapper;
 use crate::ic_service::get_caller;
 use crate::persona_service::{PersonaService, PersonaServiceTrait};
@@ -195,25 +198,30 @@ async fn post_token(request: TokenRequest) -> Response {
 #[log_error]
 #[replicate_account]
 #[collect_metrics]
+#[candid_method(update)]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
-    let response = account_service.create_account(account_request.clone()).await;
+    let response = account_service.create_account(account_request).await;
     response
 }
 
 #[update]
 #[log_error]
 #[collect_metrics]
-async fn recover_account(anchor: u64) -> HttpResponse<AccountResponse> {
+async fn recover_account(anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
-    account_service.recover_account(anchor).await
+    account_service.recover_account(anchor, wallet).await
 }
 
 #[query]
 #[admin_or_lambda]
-async fn get_account_by_anchor(anchor: u64) -> HttpResponse<AccountResponse> {
+async fn get_account_by_anchor(anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
-    let response = account_service.get_account_by_anchor(anchor);
+    let wv = match wallet {
+        None => {WalletVariant::InternetIdentity}
+        Some(x) => {x}
+    };
+    let response = account_service.get_account_by_anchor(anchor, wv);
     response
 }
 
@@ -410,6 +418,14 @@ async fn add_all_accounts_json(accounts_json: String) {
     let account_repo = get_account_repo();
     let accounts: Vec<Account> = serde_json::from_str(&accounts_json).unwrap();
     account_repo.store_accounts(accounts);
+}
+
+
+export_service!();
+
+#[ic_cdk_macros::query(name = "__get_candid_interface")]
+fn export_candid() -> String {
+    __export_service()
 }
 
 #[pre_upgrade]

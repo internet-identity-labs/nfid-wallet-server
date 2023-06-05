@@ -4,9 +4,8 @@ import {Dfx} from "./type/dfx";
 import {App} from "./constanst/app.enum";
 import {deploy} from "./util/deployment.util";
 import {DFX} from "./constanst/dfx.const";
-import {KeyPair, KeyPairResponse, Result, Result_1} from "./idl/ecdsa";
+import {KeyPair, KeyPairResponse} from "./idl/ecdsa";
 import {fail} from "assert";
-import exp from "constants";
 
 describe("ECDSA signer test", () => {
     describe("ECDSA tests", () => {
@@ -53,7 +52,7 @@ describe("ECDSA signer test", () => {
                 DFX.ADD_CONTROLLER(dfx.ecdsa.id, "ecdsa_signer");
             }
             await dfx.ecdsa.actor.sync_controllers()
-            let count =await dfx.ecdsa.actor.count()
+            let count = await dfx.ecdsa.actor.count()
             expect(count).eq(1n)
             let json = await dfx.ecdsa.actor.get_all_json(0, 10)
             expect(json).contains("public_key")
@@ -64,15 +63,4 @@ describe("ECDSA signer test", () => {
             expect(json).contains("created_date")
         });
     });
-
-    function assertArray(a: [], b: []) {
-        let i = 0;
-        while (i < 64) {
-            if (a[i] !== b[i]) {
-                return false
-            }
-            i++
-        }
-        return true
-    }
 });
