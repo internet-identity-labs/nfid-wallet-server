@@ -49,7 +49,7 @@ public class AccountITest extends BaseIdentityManagerITest {
     public void replicateAccountExpectCopyOfAccountByHeartbeat() {
         Thread.sleep(2000);
         String actual = call("account/req_get_account", "identity_manager_replica");
-        validateWithFormatIdentity("account/exp_account", actual);
+        validateWithFormatIdentity("account/exp_account_upd_name", actual);
     }
 
     @Test(priority = 52)

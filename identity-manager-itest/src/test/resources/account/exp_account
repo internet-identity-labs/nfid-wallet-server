@@ -5,6 +5,7 @@
       anchor = 12_345 : nat64;
       access_points = vec {};
       personas = vec {};
+      wallet = variant { II };
       principal_id = "%s";
       phone_number = null;
     };
