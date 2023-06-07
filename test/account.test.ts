@@ -33,6 +33,7 @@ describe("Account", () => {
 
         after(() => {
             DFX.STOP();
+            DFX.KILL_PORT();
         });
 
         it("should create correct account.", async function () {

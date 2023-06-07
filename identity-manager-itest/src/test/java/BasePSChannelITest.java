@@ -8,6 +8,7 @@ public class BasePSChannelITest extends BaseDFXITest {
         String channel;
         do {
             call("common/dfx_stop");
+            call("common/dfx_stop_2");
             callDfxCommand("rm -rf .dfx");
             call("common/use_default_persona");
             ROOT_IDENTITY = call("common/get_principal").trim();
