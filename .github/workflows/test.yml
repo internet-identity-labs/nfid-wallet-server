@@ -37,7 +37,7 @@ jobs:
           cp -f identity-manager-itest/src/test/resources/identity/identity.pem /home/ubuntu/.config/dfx/identity/test_admin
           
           pushd identity-manager-itest
-          mvn test --no-transfer-progress
+          mvn -e -X test --no-transfer-progress
 
       - name: BE Integration Tests JS
         run: npm i && npm run test
