@@ -25,7 +25,7 @@ export const DFX = {
     GET_PN_SHA2: (x: string, y: string) => call(`dfx canister call ${x} certify_phone_number_sha2 '("${y}", "domain")'`),
     UPDATE_ACCOUNT_NAME: () => call(`dfx canister call identity_manager update_account '( record {name = opt "TEST_USER_UPDATED";})'`),
     TOKEN: (x: string, y: string, z: string, d: string) => call(`dfx canister call identity_manager post_token '(record { phone_number_encrypted = "${x}"; phone_number_hash = "${y}"; token = "${z}"; principal_id = "${d}"})'`),
-    RECOVER_ACCOUNT: () => call(`dfx canister call identity_manager recover_account '(12_345:nat64)'`), 
+    RECOVER_ACCOUNT: () => call(`dfx canister call identity_manager recover_account '(12_345:nat64, opt variant {II})'`),
     REMOVE_ACCOUNT: (x: string) => call(`dfx canister call ${x} remove_account`), 
     RESTORE_ACCOUNT: (x: string, y: string) => call(`dfx canister call ${x} restore_accounts '("${y}")'`),
     INIT_ESS: () => call(`dfx canister call eth_secret_storage init '()'`),
