@@ -3,7 +3,6 @@ use ic_cdk::export::Principal;
 use ic_cdk::export::serde::Serialize;
 
 use serde_bytes::{ByteBuf};
-use crate::service::ic_service::DeviceData;
 
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

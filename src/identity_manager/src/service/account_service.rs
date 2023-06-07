@@ -1,14 +1,11 @@
 use async_trait::async_trait;
-use ic_cdk::export::Principal;
-use ic_cdk::{print, trap};
+use ic_cdk::trap;
 use itertools::Itertools;
-use magic_crypt::generic_array::typenum::private::IsEqualPrivate;
 
 use crate::{AccessPointServiceTrait, Account, get_caller, HttpResponse};
-use crate::container::container_wrapper::get_account_repo;
 use crate::http::requests::{AccountResponse, WalletVariant};
 use crate::ic_service::{DeviceKey, KeyType};
-use crate::mapper::access_point_mapper::{access_point_request_to_access_point};
+use crate::mapper::access_point_mapper::access_point_request_to_access_point;
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::repository::account_repo::AccountRepoTrait;
 use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
@@ -16,7 +13,7 @@ use crate::requests::{AccountRequest, AccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
-use crate::service::ic_service::{DeviceData, Purpose};
+use crate::service::ic_service::{DeviceData};
 use crate::util::validation_util::validate_name;
 
 #[async_trait(? Send)]
@@ -63,7 +60,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         }
         let mut devices: Vec<DeviceData> = Vec::default();
         let mut acc = account_request_to_account(account_request.clone());
-        if acc.wallet.eq(&WalletVariant::NFID)  {
+        if acc.wallet.eq(&WalletVariant::NFID) {
             //TODO 2fA with email
             acc.anchor = self.account_repo.count_all_nfid_accounts() + 10000;
             match account_request.access_point {
@@ -71,11 +68,11 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
                     trap("Device Data required")
                 }
                 Some(dd) => {
-                    acc.access_points.insert( access_point_request_to_access_point(dd) );
+                    acc.access_points.insert(access_point_request_to_access_point(dd));
                 }
             }
         } else {
-             devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
+            devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
         }
         match { self.account_repo.create_account(acc.clone()) } {
             None => {
@@ -215,8 +212,8 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
 
     async fn recover_account(&mut self, anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse> {
         let vw = match wallet.clone() {
-            None => {WalletVariant::InternetIdentity}
-            Some(x) => {x}
+            None => { WalletVariant::InternetIdentity }
+            Some(x) => { x }
         };
         if vw.eq(&WalletVariant::InternetIdentity) {
             match { self.account_repo.get_account_by_anchor(anchor, vw) } {
@@ -230,7 +227,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
                 }
             }
         } else {
-            match  {self.account_repo.get_account() }  {
+            match { self.account_repo.get_account() } {
                 None => {
                     trap("Recovery not registered")
                 }
