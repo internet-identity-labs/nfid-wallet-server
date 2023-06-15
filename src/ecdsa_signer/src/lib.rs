@@ -15,8 +15,6 @@ use ic_cdk::export::{
 use ic_cdk::export::candid::Principal;
 use ic_cdk_macros::*;
 
-mod structure;
-
 
 #[derive(CandidType, Serialize, Debug, Deserialize)]
 pub struct KeyPair {
