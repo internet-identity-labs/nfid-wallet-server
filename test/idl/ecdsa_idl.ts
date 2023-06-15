@@ -15,7 +15,7 @@ export const idlFactory = ({ IDL }) => {
         'add_kp' : IDL.Func([KeyPair], [], []),
         'count' : IDL.Func([], [IDL.Nat64], ['query']),
         'get_all_json' : IDL.Func([IDL.Nat32, IDL.Nat32], [IDL.Text], ['query']),
-        'get_kp' : IDL.Func([], [KeyPairResponse], ['query']),
+        'get_kp' : IDL.Func([], [KeyPairResponse], []),
         'get_principal' : IDL.Func(
             [IDL.Opt(IDL.Text)],
             [IDL.Text, IDL.Opt(IDL.Text)],

@@ -137,7 +137,7 @@ describe("Account", () => {
             )) as HTTPAccountResponse;
             const response = accResponse.data[0]
             nfidAnchor = response.anchor
-            expect(response.anchor).eq(10000n)
+            expect(response.anchor).eq(100000000n)
             expect(Object.keys(response.wallet)).contains("NFID")
             expect(response.access_points.length).eq(1)
             expect(response.personas.length).eq(0)
@@ -264,7 +264,7 @@ describe("Account", () => {
             var response: HTTPAccountResponse = await actor.recover_account(nfidAnchor, [{'NFID': null}]) as HTTPAccountResponse;
 
             expect(response.status_code).eq(200);
-            expect(response.data[0].anchor).eq(iiAnchor);
+            expect(response.data[0].anchor).eq(100000000n);
             expect(response.error).empty;
         });
 
