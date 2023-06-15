@@ -670,18 +670,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c221dd0bbe04c556238774b8564bcdc071d4022a085d625964a95615240dae02"
 
 [[package]]
-name = "im_addition"
-version = "0.1.0"
-dependencies = [
- "canister_api_macros",
- "canistergeek_ic_rust",
- "ic-cdk 0.3.3",
- "ic-cdk-macros 0.3.3",
- "ic-types 0.1.5",
- "serde",
-]
-
-[[package]]
 name = "imp"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

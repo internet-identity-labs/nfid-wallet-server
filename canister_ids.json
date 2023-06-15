@@ -48,6 +48,9 @@
     "dev": "7b5jg-paaaa-aaaap-aa32q-cai",
     "prod": "eke5v-vqaaa-aaaag-qb5ea-cai"
   },
+  "signer_ic": {
+    "dev": "zhr63-daaaa-aaaap-qbh4q-cai"
+  },
   "bitcoin": {
     "dev": "iohef-tiaaa-aaaal-qbtza-cai"
   }

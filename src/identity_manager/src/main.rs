@@ -1,8 +1,6 @@
 use std::time::Duration;
 
 use ic_cdk::{caller, storage, trap};
-use ic_cdk::export::candid::export_service;
-use ic_cdk::export::candid::candid_method;
 
 use ic_cdk_macros::*;
 
@@ -198,7 +196,6 @@ async fn post_token(request: TokenRequest) -> Response {
 #[log_error]
 #[replicate_account]
 #[collect_metrics]
-#[candid_method(update)]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let response = account_service.create_account(account_request).await;
@@ -231,6 +228,12 @@ async fn get_account_by_principal(princ: String) -> HttpResponse<AccountResponse
     let mut account_service = get_account_service();
     let response = account_service.get_account_by_principal(princ);
     response
+}
+
+#[query]
+async fn get_root_by_principal(princ: String) -> Option<String> {
+    let mut account_service = get_account_service();
+    account_service.get_root_id_by_principal(princ)
 }
 
 #[update]
@@ -418,14 +421,6 @@ async fn add_all_accounts_json(accounts_json: String) {
     let account_repo = get_account_repo();
     let accounts: Vec<Account> = serde_json::from_str(&accounts_json).unwrap();
     account_repo.store_accounts(accounts);
-}
-
-
-export_service!();
-
-#[ic_cdk_macros::query(name = "__get_candid_interface")]
-fn export_candid() -> String {
-    __export_service()
 }
 
 #[pre_upgrade]

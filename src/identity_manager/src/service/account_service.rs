@@ -28,6 +28,7 @@ pub trait AccountServiceTrait {
     fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String>;
     fn get_account_by_anchor(&mut self, anchor: u64, wallet: WalletVariant) -> HttpResponse<AccountResponse>;
     fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse>;
+    fn get_root_id_by_principal(&mut self, princ: String) -> Option<String>;
     async fn recover_account(&mut self, anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse>;
     fn get_all_accounts(&mut self) -> Vec<Account>;
     fn remove_account_by_phone_number(&mut self, phone_number_sha2: String) -> HttpResponse<bool>;
@@ -62,7 +63,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         let mut acc = account_request_to_account(account_request.clone());
         if acc.wallet.eq(&WalletVariant::NFID) {
             //TODO 2fA with email
-            acc.anchor = self.account_repo.count_all_nfid_accounts() + 10000;
+            acc.anchor = self.account_repo.count_all_nfid_accounts() + 100_000_000;
             match account_request.access_point {
                 None => {
                     trap("Device Data required")
@@ -205,6 +206,17 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
             }
             Some(acc) => {
                 to_success_response(account_to_account_response(acc))
+            }
+        }
+    }
+
+    fn get_root_id_by_principal(&mut self, princ: String) -> Option<String> {
+        match { self.account_repo.get_account_by_principal(princ) } {
+            None => {
+                None
+            }
+            Some(acc) => {
+                Some(acc.principal_id)
             }
         }
     }
