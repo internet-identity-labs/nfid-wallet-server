@@ -40,7 +40,7 @@ type CanisterId = Principal;
 thread_local! {
     static CONFIG: RefCell<Conf> = RefCell::new( Conf {
         controllers: Default::default(),
-        storage: None
+        storage: None,
         im_canister: None
     });
     pub static ECDSA_KEYS: RefCell<HashMap<String,KeyPairObject>> = RefCell::new(HashMap::new());
