@@ -5,11 +5,12 @@ use crate::repository::persona_repo::Persona;
 use crate::repository::repo::{BasicEntity, is_anchor_exists};
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
-use ic_cdk::{storage};
+use ic_cdk::{storage, trap};
 use itertools::Itertools;
+use mockers::matchers::none;
 use crate::ic_service;
 use crate::repository::access_point_repo::AccessPoint;
-use serde::{ Serialize};
+use serde::{Serialize};
 use crate::http::requests::WalletVariant;
 
 pub type Accounts = BTreeMap<String, Account>;
@@ -25,7 +26,7 @@ pub struct Account {
     pub personas: Vec<Persona>,
     pub access_points: HashSet<AccessPoint>,
     pub base_fields: BasicEntity,
-    pub wallet: WalletVariant
+    pub wallet: WalletVariant,
 }
 
 #[cfg_attr(test, mocked)]
@@ -42,7 +43,7 @@ pub trait AccountRepoTrait {
     fn update_account_index(&self, additional_principal_id: String);
     fn get_accounts(&self, ids: Vec<String>) -> Vec<Account>;
     fn get_all_accounts(&self) -> Vec<Account>;
-    fn count_all_nfid_accounts(&self) -> u64;
+    fn find_next_nfid_anchor(&self) -> u64;
     fn store_accounts(&self, accounts: Vec<Account>);
     fn get_account_by_id(&self, princ: String) -> Option<Account>;
 }
@@ -83,7 +84,7 @@ impl AccountRepoTrait for AccountRepo {
     fn get_account_by_anchor(&self, anchor: u64, wallet: WalletVariant) -> Option<Account> {
         let accounts = storage::get_mut::<Accounts>();
         match accounts.iter()
-            .find(|l| l.1.anchor == anchor && l.1.wallet == wallet ) {
+            .find(|l| l.1.anchor == anchor && l.1.wallet == wallet) {
             None => { None }
             Some(pair) => {
                 Some(pair.1.to_owned())
@@ -94,8 +95,11 @@ impl AccountRepoTrait for AccountRepo {
     fn create_account(&self, account: Account) -> Option<Account> {
         let accounts = storage::get_mut::<Accounts>();
         let index = storage::get_mut::<PrincipalIndex>();
+        if index.contains_key(&account.principal_id) {
+           return None;
+        }
         if is_anchor_exists(account.anchor, account.wallet.clone()) {
-            None
+            return None;
         } else {
             index.insert(account.principal_id.clone(), account.principal_id.clone());
             accounts.insert(account.principal_id.clone(), account.clone());
@@ -174,11 +178,18 @@ impl AccountRepoTrait for AccountRepo {
             .collect()
     }
 
-    fn count_all_nfid_accounts(&self) -> u64 {
-        self.get_all_accounts()
+    fn find_next_nfid_anchor(&self) -> u64 {
+        let acc = self.get_all_accounts()
             .into_iter()
             .filter(|a| a.wallet.eq(&WalletVariant::NFID))
-            .count() as u64
+            .sorted_by(|a, b| Ord::cmp(&b.anchor, &a.anchor))
+            .last();
+        match acc {
+            None => { 100_000_000 }
+            Some(x) => {
+                x.anchor + 1
+            }
+        }
     }
 
     fn store_accounts(&self, accounts: Vec<Account>) {
