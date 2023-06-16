@@ -5,7 +5,7 @@ use crate::repository::persona_repo::Persona;
 use crate::repository::repo::{BasicEntity, is_anchor_exists};
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
-use ic_cdk::{storage, trap};
+use ic_cdk::{storage};
 use itertools::Itertools;
 use mockers::matchers::none;
 use crate::ic_service;
@@ -182,8 +182,9 @@ impl AccountRepoTrait for AccountRepo {
         let acc = self.get_all_accounts()
             .into_iter()
             .filter(|a| a.wallet.eq(&WalletVariant::NFID))
-            .sorted_by(|a, b| Ord::cmp(&b.anchor, &a.anchor))
+            .sorted_by(|a, b| Ord::cmp(&a.anchor, &b.anchor))
             .last();
+
         match acc {
             None => { 100_000_000 }
             Some(x) => {
