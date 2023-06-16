@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use ic_cdk::trap;
+use ic_cdk::{print, trap};
 use itertools::Itertools;
 
 use crate::{AccessPointServiceTrait, Account, get_caller, HttpResponse};
@@ -62,13 +62,17 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         let mut devices: Vec<DeviceData> = Vec::default();
         let mut acc = account_request_to_account(account_request.clone());
         if acc.wallet.eq(&WalletVariant::NFID) {
-            //TODO 2fA with email
-            acc.anchor = self.account_repo.count_all_nfid_accounts() + 100_000_000;
+            //TODO 2fA with email + key/email exists
+            let anchor =  self.account_repo.find_next_nfid_anchor();
+            acc.anchor = anchor;
             match account_request.access_point {
                 None => {
                     trap("Device Data required")
                 }
                 Some(dd) => {
+                    if !acc.principal_id.eq(&dd.pub_key) {
+                        trap("Incorrect Device Data")
+                    }
                     acc.access_points.insert(access_point_request_to_access_point(dd));
                 }
             }
@@ -80,7 +84,6 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
                 to_error_response("Impossible to link this II anchor, please try another one.")
             }
             Some(_) => {
-                //legacy II flow
                 let recovery_device = devices.into_iter()
                     .find(|dd| dd.key_type.eq(&KeyType::SeedPhrase));
                 match recovery_device {

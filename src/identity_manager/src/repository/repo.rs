@@ -126,7 +126,7 @@ pub fn is_anchor_exists(anchor: u64, wallet: WalletVariant) -> bool {
     let accounts = storage::get_mut::<Accounts>();
     accounts.into_iter()
         .map(|l| l.1)
-        .any(|x| x.anchor == anchor && x.wallet == wallet)
+        .any(|x| x.anchor == anchor && x.wallet.eq(&wallet))
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
