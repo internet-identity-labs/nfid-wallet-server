@@ -96,10 +96,10 @@ impl AccountRepoTrait for AccountRepo {
         let accounts = storage::get_mut::<Accounts>();
         let index = storage::get_mut::<PrincipalIndex>();
         if index.contains_key(&account.principal_id) {
-            None
+           return None;
         }
         if is_anchor_exists(account.anchor, account.wallet.clone()) {
-            None
+            return None;
         } else {
             index.insert(account.principal_id.clone(), account.principal_id.clone());
             accounts.insert(account.principal_id.clone(), account.clone());
