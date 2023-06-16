@@ -7,6 +7,7 @@ use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::{storage, trap};
 use itertools::Itertools;
+use mockers::matchers::none;
 use crate::ic_service;
 use crate::repository::access_point_repo::AccessPoint;
 use serde::{Serialize};
@@ -95,10 +96,10 @@ impl AccountRepoTrait for AccountRepo {
         let accounts = storage::get_mut::<Accounts>();
         let index = storage::get_mut::<PrincipalIndex>();
         if index.contains_key(&account.principal_id) {
-            trap("Principal exists")
+            None
         }
         if is_anchor_exists(account.anchor, account.wallet.clone()) {
-            trap("Anchor exists");
+            None
         } else {
             index.insert(account.principal_id.clone(), account.principal_id.clone());
             accounts.insert(account.principal_id.clone(), account.clone());
