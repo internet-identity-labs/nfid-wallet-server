@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use ic_cdk::{caller, storage, trap};
+
 use ic_cdk_macros::*;
 
 use canister_api_macros::{admin, admin_or_lambda, collect_metrics, log_error, replicate_account};
@@ -11,7 +12,7 @@ use crate::application_service::ApplicationService;
 use crate::container::container_wrapper;
 use crate::container_wrapper::{get_access_point_service, get_account_repo, get_account_service, get_application_service, get_credential_service, get_persona_service, get_phone_number_service};
 use crate::http::requests;
-use crate::http::requests::AccountResponse;
+use crate::http::requests::{AccountResponse, WalletVariant};
 use crate::http::response_mapper;
 use crate::ic_service::get_caller;
 use crate::persona_service::{PersonaService, PersonaServiceTrait};
@@ -197,23 +198,27 @@ async fn post_token(request: TokenRequest) -> Response {
 #[collect_metrics]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
-    let response = account_service.create_account(account_request.clone()).await;
+    let response = account_service.create_account(account_request).await;
     response
 }
 
 #[update]
 #[log_error]
 #[collect_metrics]
-async fn recover_account(anchor: u64) -> HttpResponse<AccountResponse> {
+async fn recover_account(anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
-    account_service.recover_account(anchor).await
+    account_service.recover_account(anchor, wallet).await
 }
 
 #[query]
 #[admin_or_lambda]
-async fn get_account_by_anchor(anchor: u64) -> HttpResponse<AccountResponse> {
+async fn get_account_by_anchor(anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
-    let response = account_service.get_account_by_anchor(anchor);
+    let wv = match wallet {
+        None => {WalletVariant::InternetIdentity}
+        Some(x) => {x}
+    };
+    let response = account_service.get_account_by_anchor(anchor, wv);
     response
 }
 
@@ -223,6 +228,12 @@ async fn get_account_by_principal(princ: String) -> HttpResponse<AccountResponse
     let mut account_service = get_account_service();
     let response = account_service.get_account_by_principal(princ);
     response
+}
+
+#[query]
+async fn get_root_by_principal(princ: String) -> Option<String> {
+    let mut account_service = get_account_service();
+    account_service.get_root_id_by_principal(princ)
 }
 
 #[update]

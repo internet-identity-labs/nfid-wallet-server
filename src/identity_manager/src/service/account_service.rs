@@ -1,9 +1,11 @@
 use async_trait::async_trait;
+use ic_cdk::trap;
 use itertools::Itertools;
 
 use crate::{AccessPointServiceTrait, Account, get_caller, HttpResponse};
-use crate::http::requests::AccountResponse;
+use crate::http::requests::{AccountResponse, WalletVariant};
 use crate::ic_service::{DeviceKey, KeyType};
+use crate::mapper::access_point_mapper::access_point_request_to_access_point;
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::repository::account_repo::AccountRepoTrait;
 use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
@@ -11,6 +13,7 @@ use crate::requests::{AccountRequest, AccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
+use crate::service::ic_service::{DeviceData};
 use crate::util::validation_util::validate_name;
 
 #[async_trait(? Send)]
@@ -23,9 +26,10 @@ pub trait AccountServiceTrait {
     fn remove_account_by_principal(&mut self, principal: String) -> HttpResponse<bool>;
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
     fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String>;
-    fn get_account_by_anchor(&mut self, anchor: u64) -> HttpResponse<AccountResponse>;
+    fn get_account_by_anchor(&mut self, anchor: u64, wallet: WalletVariant) -> HttpResponse<AccountResponse>;
     fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse>;
-    async fn recover_account(&mut self, anchor: u64) -> HttpResponse<AccountResponse>;
+    fn get_root_id_by_principal(&mut self, princ: String) -> Option<String>;
+    async fn recover_account(&mut self, anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse>;
     fn get_all_accounts(&mut self) -> Vec<Account>;
     fn remove_account_by_phone_number(&mut self, phone_number_sha2: String) -> HttpResponse<bool>;
 }
@@ -55,13 +59,28 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         if ic_service::is_anonymous(princ) {
             return to_error_response("User is anonymous");
         }
-        let mut acc = account_request_to_account(account_request);
-        let devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
+        let mut devices: Vec<DeviceData> = Vec::default();
+        let mut acc = account_request_to_account(account_request.clone());
+        if acc.wallet.eq(&WalletVariant::NFID) {
+            //TODO 2fA with email
+            acc.anchor = self.account_repo.count_all_nfid_accounts() + 100_000_000;
+            match account_request.access_point {
+                None => {
+                    trap("Device Data required")
+                }
+                Some(dd) => {
+                    acc.access_points.insert(access_point_request_to_access_point(dd));
+                }
+            }
+        } else {
+            devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
+        }
         match { self.account_repo.create_account(acc.clone()) } {
             None => {
                 to_error_response("Impossible to link this II anchor, please try another one.")
             }
             Some(_) => {
+                //legacy II flow
                 let recovery_device = devices.into_iter()
                     .find(|dd| dd.key_type.eq(&KeyType::SeedPhrase));
                 match recovery_device {
@@ -169,8 +188,8 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         }
     }
 
-    fn get_account_by_anchor(&mut self, anchor: u64) -> HttpResponse<AccountResponse> {
-        match { self.account_repo.get_account_by_anchor(anchor) } {
+    fn get_account_by_anchor(&mut self, anchor: u64, wallet: WalletVariant) -> HttpResponse<AccountResponse> {
+        match { self.account_repo.get_account_by_anchor(anchor, wallet) } {
             None => {
                 to_error_response("Anchor not registered.")
             }
@@ -191,15 +210,45 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         }
     }
 
-    async fn recover_account(&mut self, anchor: u64) -> HttpResponse<AccountResponse> {
-        match { self.account_repo.get_account_by_anchor(anchor) } {
+    fn get_root_id_by_principal(&mut self, princ: String) -> Option<String> {
+        match { self.account_repo.get_account_by_principal(princ) } {
             None => {
-                let account = AccountRequest { anchor };
-                self.create_account(account).await
+                None
             }
             Some(acc) => {
-                ic_service::trap_if_not_authenticated(anchor.clone(), get_caller()).await;
-                to_success_response(account_to_account_response(acc))
+                Some(acc.principal_id)
+            }
+        }
+    }
+
+
+    async fn recover_account(&mut self, anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse> {
+        let vw = match wallet.clone() {
+            None => { WalletVariant::InternetIdentity }
+            Some(x) => { x }
+        };
+        if vw.eq(&WalletVariant::InternetIdentity) {
+            match { self.account_repo.get_account_by_anchor(anchor, vw) } {
+                None => {
+                    let account = AccountRequest { anchor, wallet, access_point: None };
+                    self.create_account(account).await
+                }
+                Some(acc) => {
+                    ic_service::trap_if_not_authenticated(anchor.clone(), get_caller()).await;
+                    to_success_response(account_to_account_response(acc))
+                }
+            }
+        } else {
+            match { self.account_repo.get_account() } {
+                None => {
+                    trap("Recovery not registered")
+                }
+                Some(account) => {
+                    if !account.anchor.eq(&anchor) {
+                        trap("Recovery not registered")
+                    }
+                    to_success_response(account_to_account_response(account))
+                }
             }
         }
     }

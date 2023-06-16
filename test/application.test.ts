@@ -125,8 +125,9 @@ describe("Application", () => {
     });
 
     it("should respond with over the limit response.", async function () {
-        const accountRequest: HTTPAccountRequest = {
-            anchor: 10000n
+        const accountRequest = {
+            anchor: 10000n,
+            access_point: [], wallet: []
         };
         const persona1: PersonaRequest = {
             domain: domain3,

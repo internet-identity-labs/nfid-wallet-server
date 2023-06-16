@@ -1,5 +1,5 @@
 use crate::mapper::persona_mapper::persona_to_persona_response;
-use crate::http::requests::AccountResponse;
+use crate::http::requests::{AccountResponse, WalletVariant};
 use crate::{AccountRequest};
 use crate::mapper::access_point_mapper::access_point_to_access_point_response;
 use crate::repository::account_repo::Account;
@@ -20,6 +20,7 @@ pub fn account_to_account_response(account: Account) -> AccountResponse {
         access_points: account.access_points.into_iter()
             .map(access_point_to_access_point_response)
             .collect(),
+        wallet: account.wallet,
     }
 }
 
@@ -35,5 +36,9 @@ pub fn account_request_to_account(account_request: AccountRequest) -> Account {
         personas,
         access_points: Default::default(),
         base_fields: BasicEntity::new(),
+        wallet: match account_request.wallet {
+            None => { WalletVariant::InternetIdentity }
+            Some(x) => { x }
+        }
     }
 }

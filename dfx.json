@@ -30,12 +30,6 @@
       "wasm": "pub_sub_channel.wasm",
       "type": "custom"
     },
-    "im_addition": {
-      "build": "src/im_addition/build.sh",
-      "candid": "src/im_addition/im_addition.did",
-      "wasm": "im_addition.wasm",
-      "type": "custom"
-    },
     "verifier": {
       "build": "src/verifier/build.sh",
       "candid": "src/verifier/verifier.did",
@@ -52,7 +46,7 @@
       "type": "custom",
       "candid": "src/internet_identity_test/internet_identity.did",
       "wasm": "internet_identity.wasm",
-      "build": "curl -sSL https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_test.wasm -o internet_identity.wasm"
+      "build": "curl -sSL https://github.com/dfinity/internet-identity/releases/download/release-2023-05-30/internet_identity_test.wasm.gz -o internet_identity.wasm"
     },
     "bitcoin": {
       "type": "custom",
@@ -78,6 +72,12 @@
       "type": "custom"
     },
     "ecdsa_signer_btc": {
+      "build": "src/ecdsa_signer/build.sh",
+      "candid": "src/ecdsa_signer/ecdsa_signer.did",
+      "wasm": "ecdsa_signer.wasm",
+      "type": "custom"
+    },
+    "signer_ic": {
       "build": "src/ecdsa_signer/build.sh",
       "candid": "src/ecdsa_signer/ecdsa_signer.did",
       "wasm": "ecdsa_signer.wasm",

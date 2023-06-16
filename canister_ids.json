@@ -27,9 +27,6 @@
     "dev": "wmxhg-4iaaa-aaaam-aanzq-cai",
     "ic": "iyvpb-uqaaa-aaaag-qabxa-cai"
   },
-  "im_addition": {
-    "ic": "5yjgb-gyaaa-aaaao-aabwa-cai"
-  },
   "verifier": {
     "dev": "gzqxf-kqaaa-aaaak-qakba-cai",
     "ic": "sgk26-7yaaa-aaaan-qaovq-cai"
@@ -50,6 +47,9 @@
   "ecdsa_signer_btc": {
     "dev": "7b5jg-paaaa-aaaap-aa32q-cai",
     "prod": "eke5v-vqaaa-aaaag-qb5ea-cai"
+  },
+  "signer_ic": {
+    "dev": "zhr63-daaaa-aaaap-qbh4q-cai"
   },
   "bitcoin": {
     "dev": "iohef-tiaaa-aaaal-qbtza-cai"

@@ -11,6 +11,7 @@
           persona_id = "PERSONA";
         };
       };
+      wallet = variant { II };
       principal_id = "%s";
       phone_number = null;
     };

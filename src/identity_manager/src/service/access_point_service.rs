@@ -2,8 +2,10 @@ use std::collections::HashSet;
 
 use async_trait::async_trait;
 use ic_cdk::export::Principal;
+use ic_cdk::trap;
 
 use crate::{AccessPointRemoveRequest, Account, AccountServiceTrait, get_account_service, ic_service};
+use crate::http::requests::WalletVariant;
 use crate::ic_service::DeviceData;
 use crate::mapper::access_point_mapper::{access_point_request_to_access_point, access_point_to_access_point_response, recovery_device_data_to_access_point};
 use crate::repository::access_point_repo::{AccessPoint, AccessPointRepoTrait};
@@ -54,7 +56,23 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
             Some(acc) => {
                 let mut access_points = acc.access_points;
                 let princ = Principal::from_text(access_point_request.pub_key.clone()).unwrap();
-                ic_service::trap_if_not_authenticated(acc.anchor, princ).await;
+                match access_point_request.wallet {
+                    None => {
+                        ic_service::trap_if_not_authenticated(acc.anchor, princ).await;
+                    }
+                    Some(x) => {
+                        match x {
+                            WalletVariant::NFID => {
+                                if !acc.wallet.eq(&WalletVariant::NFID) {
+                                    trap("Unable to add access point")
+                                }
+                            }
+                            WalletVariant::InternetIdentity => {
+                                ic_service::trap_if_not_authenticated(acc.anchor, princ).await;
+                            }
+                        }
+                    }
+                }
                 let access_point = access_point_request_to_access_point(access_point_request.clone());
                 if access_points.clone().iter()
                     .any(|x| x.eq(&access_point)) {

@@ -10,6 +10,7 @@ use itertools::Itertools;
 use crate::ic_service;
 use crate::repository::access_point_repo::AccessPoint;
 use serde::{ Serialize};
+use crate::http::requests::WalletVariant;
 
 pub type Accounts = BTreeMap<String, Account>;
 pub type PrincipalIndex = BTreeMap<String, String>;
@@ -22,16 +23,16 @@ pub struct Account {
     pub phone_number: Option<String>,
     pub phone_number_sha2: Option<String>,
     pub personas: Vec<Persona>,
-    //TODO hashSet
     pub access_points: HashSet<AccessPoint>,
     pub base_fields: BasicEntity,
+    pub wallet: WalletVariant
 }
 
 #[cfg_attr(test, mocked)]
 pub trait AccountRepoTrait {
     fn get_account(&self) -> Option<Account>;
     fn get_account_by_principal(&self, princ: String) -> Option<Account>;
-    fn get_account_by_anchor(&self, anchor: u64) -> Option<Account>;
+    fn get_account_by_anchor(&self, anchor: u64, wallet: WalletVariant) -> Option<Account>;
     fn create_account(&self, account: Account) -> Option<Account>;
     fn store_account(&self, account: Account) -> Option<Account>;
     fn remove_account(&self) -> Option<Account>;
@@ -41,6 +42,7 @@ pub trait AccountRepoTrait {
     fn update_account_index(&self, additional_principal_id: String);
     fn get_accounts(&self, ids: Vec<String>) -> Vec<Account>;
     fn get_all_accounts(&self) -> Vec<Account>;
+    fn count_all_nfid_accounts(&self) -> u64;
     fn store_accounts(&self, accounts: Vec<Account>);
     fn get_account_by_id(&self, princ: String) -> Option<Account>;
 }
@@ -78,10 +80,10 @@ impl AccountRepoTrait for AccountRepo {
         }
     }
 
-    fn get_account_by_anchor(&self, anchor: u64) -> Option<Account> {
+    fn get_account_by_anchor(&self, anchor: u64, wallet: WalletVariant) -> Option<Account> {
         let accounts = storage::get_mut::<Accounts>();
         match accounts.iter()
-            .find(|l| l.1.anchor == anchor) {
+            .find(|l| l.1.anchor == anchor && l.1.wallet == wallet ) {
             None => { None }
             Some(pair) => {
                 Some(pair.1.to_owned())
@@ -92,7 +94,7 @@ impl AccountRepoTrait for AccountRepo {
     fn create_account(&self, account: Account) -> Option<Account> {
         let accounts = storage::get_mut::<Accounts>();
         let index = storage::get_mut::<PrincipalIndex>();
-        if is_anchor_exists(account.anchor) {
+        if is_anchor_exists(account.anchor, account.wallet.clone()) {
             None
         } else {
             index.insert(account.principal_id.clone(), account.principal_id.clone());
@@ -170,6 +172,13 @@ impl AccountRepoTrait for AccountRepo {
             .values()
             .map(|l| l.to_owned())
             .collect()
+    }
+
+    fn count_all_nfid_accounts(&self) -> u64 {
+        self.get_all_accounts()
+            .into_iter()
+            .filter(|a| a.wallet.eq(&WalletVariant::NFID))
+            .count() as u64
     }
 
     fn store_accounts(&self, accounts: Vec<Account>) {

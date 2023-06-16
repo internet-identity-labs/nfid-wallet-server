@@ -1,5 +1,6 @@
-use crate::{CredentialVariant, HttpResponse, ic_service};
-use crate::CredentialVariant::PhoneNumber;
+use crate::{ HttpResponse, ic_service};
+use crate::http::requests::CredentialVariant;
+use crate::http::requests::CredentialVariant::PhoneNumber;
 use crate::http::response_mapper::{DataResponse, ErrorResponse};
 use crate::repository::account_repo::AccountRepoTrait;
 use crate::requests::PhoneNumberCredential;

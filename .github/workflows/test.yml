@@ -12,6 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Checkout CI repo.
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT }}
+          repository: internet-identity-labs/ci_libs
+          ref: main
+          path: ci_libs
+
       - name: Cache Cargo dependencies.
         uses: actions/cache@v2
         with:
@@ -30,14 +38,28 @@ jobs:
 
       - name: BE ITest
         run: |
+          source ./ci_libs/CI_LIBS.sh
+
           if ! [ -f "/home/ubuntu/.config/dfx/identity/test_admin/identity.pem" ]; then
             dfx identity new test_admin
           fi
 
           cp -f identity-manager-itest/src/test/resources/identity/identity.pem /home/ubuntu/.config/dfx/identity/test_admin
           
-          pushd identity-manager-itest
+          if ! pushd identity-manager-itest > /dev/null; then
+            ci_echo_error "Can't change directory to the 'identity-manager-itest' " >&2
+            exit 1
+          fi
+
+          ci_echo_info "Stopping 'icx-proxy'..." >&2
+          if ! kill -9 $(pgrep icx-proxy) > /dev/null 2>&1; then
+            ci_echo_info "Can't stop 'icx-proxy' or it not found ..." >&2
+          else
+            ci_echo_warn "'icx-proxy' was stopped ..." >&2
+          fi
+          
           mvn test --no-transfer-progress
+
 
       - name: BE Integration Tests JS
         run: npm i && npm run test

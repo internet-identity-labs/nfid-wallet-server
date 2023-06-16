@@ -8,28 +8,8 @@ type KeyPairResponse = record {
     princ : text
 };
 
-type PublicKeyReply = record {
-    public_key : vec nat8
-};
-
-type Result = variant {
-    Ok : SignatureReply;
-    Err : text
-};
-
-type Result_1 = variant {
-    Ok : PublicKeyReply;
-    Err : text
-};
-
-type SignatureReply = record {
-    signature : vec nat8
-};service : {
+service : {
     add_kp : (KeyPair) -> ();
     get_kp : () -> (KeyPairResponse) query;
     get_principal : (opt text) -> (text, opt text) query;
-    get_signature : (text) -> (Result) query;
-    prepare_signature : (vec nat8) -> (text);
-    public_key : () -> (Result_1);
-    sign : (vec nat8) -> (Result);
 }

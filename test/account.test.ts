@@ -12,11 +12,12 @@ import {
     HTTPAccountRequest,
     HTTPAccountResponse,
 } from "./idl/identity_manager";
-import {DeviceData} from "./idl/internet_identity_test";
 import {DFX} from "./constanst/dfx.const";
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {Expected} from "./constanst/expected.const";
 import {Ed25519KeyIdentity} from "@dfinity/identity";
+import {DeviceData} from "./idl/internet_identity_test";
+import {fail} from "assert";
 
 const PHONE = "123456";
 const PHONE_SHA2 = "123456_SHA2";
@@ -32,6 +33,7 @@ describe("Account", () => {
 
         after(() => {
             DFX.STOP();
+            DFX.KILL_PORT();
         });
 
         it("should create correct account.", async function () {
@@ -84,22 +86,68 @@ describe("Account", () => {
 
     describe("Agent tests", () => {
         var dfx: Dfx;
-        var anchor: bigint;
+        var iiAnchor: bigint;
+        var nfidAnchor: bigint
 
         before(async () => {
             dfx = await deploy({apps: [App.IdentityManager, App.InternetIdentityTest]});
-            anchor = await register(dfx.iit.actor, dfx.user.identity);
+            iiAnchor = await register(dfx.iit.actor, dfx.user.identity);
         });
 
         after(() => {
             DFX.STOP();
         });
 
-        it("should throw error due to not authentificated principal on creating account.", async function () {
+        it("should throw an error due to not authenticated NFID principal on creating account.", async function () {
+            //TODO
+        })
+
+        it("should error empty device data on NFID account", async function () {
             var accountRequest: HTTPAccountRequest = {
-                anchor: anchor + 1n,
+                access_point: [],
+                wallet: [{'NFID': null}],
+                anchor: 0n
             };
 
+            try {
+                await dfx.im.actor.create_account(accountRequest);
+                fail("Have to fail")
+            } catch (e) {
+                expect(e.message).contains("Device Data required");
+            }
+        })
+
+        it("should create NFID account", async function () {
+            const identity = getIdentity("87654321876543218765432187654311");
+            const dd: AccessPointRequest = {
+                icon: "Icon",
+                device: "Global",
+                pub_key: identity.getPrincipal().toText(),
+                browser: "Browser"
+            }
+            var accountRequest: HTTPAccountRequest = {
+                access_point: [dd],
+                wallet: [{'NFID': null}],
+                anchor: 0n
+            };
+            const actor = await getActor(dfx.im.id, identity, imIdl);
+
+            const accResponse: HTTPAccountResponse = (await actor.create_account(
+                accountRequest
+            )) as HTTPAccountResponse;
+            const response = accResponse.data[0]
+            nfidAnchor = response.anchor
+            expect(response.anchor).eq(100000000n)
+            expect(Object.keys(response.wallet)).contains("NFID")
+            expect(response.access_points.length).eq(1)
+            expect(response.personas.length).eq(0)
+        })
+
+        it("should throw error due to not authentificated principal on creating account.", async function () {
+            var accountRequest: HTTPAccountRequest = {
+                access_point: [], wallet: [],
+                anchor: iiAnchor + 1n
+            };
             try {
                 await dfx.im.actor.create_account(accountRequest);
             } catch (e) {
@@ -109,14 +157,16 @@ describe("Account", () => {
 
         it("should create account.", async function () {
             var accountRequest: HTTPAccountRequest = {
-                anchor: anchor,
+                access_point: [],
+                wallet: [],
+                anchor: iiAnchor
             };
 
             var response: HTTPAccountResponse = (await dfx.im.actor.create_account(
                 accountRequest
             )) as HTTPAccountResponse;
             expect(response.status_code).eq(200);
-            expect(response.data[0].anchor).eq(anchor);
+            expect(response.data[0].anchor).eq(iiAnchor);
             expect(response.error).empty;
         });
 
@@ -158,16 +208,16 @@ describe("Account", () => {
 
         it("should recover account.", async function () {
             var response: HTTPAccountResponse = (await dfx.im.actor.recover_account(
-                anchor
+                iiAnchor, []
             )) as HTTPAccountResponse;
             expect(response.status_code).eq(200);
-            expect(response.data[0].anchor).eq(anchor);
+            expect(response.data[0].anchor).eq(iiAnchor);
             expect(response.error).empty;
         });
 
         it("should throw error due to not existing anchor.", async function () {
             try {
-                await dfx.im.actor.recover_account(anchor + 1n);
+                await dfx.im.actor.recover_account(iiAnchor + 1n, []);
             } catch (e) {
                 expect(e.message).contains("could not be authenticated");
             }
@@ -198,13 +248,23 @@ describe("Account", () => {
                 credential_id: [],
             };
 
-            await dfx.iit.actor.add(anchor, deviceData);
+            await dfx.iit.actor.add(iiAnchor, deviceData);
 
-            await actor.recover_account(anchor);
+            await actor.recover_account(iiAnchor, []);
             var response: HTTPAccountResponse = (await actor.get_account()) as HTTPAccountResponse;
 
             expect(response.status_code).eq(200);
-            expect(response.data[0].anchor).eq(anchor);
+            expect(response.data[0].anchor).eq(iiAnchor);
+            expect(response.error).empty;
+        });
+
+        it("should recover NFID account using registered device.", async function () {
+            const identity = getIdentity("87654321876543218765432187654311");
+            const actor = await getActor(dfx.im.id, identity, imIdl);
+            var response: HTTPAccountResponse = await actor.recover_account(nfidAnchor, [{'NFID': null}]) as HTTPAccountResponse;
+
+            expect(response.status_code).eq(200);
+            expect(response.data[0].anchor).eq(100000000n);
             expect(response.error).empty;
         });
 
@@ -212,8 +272,10 @@ describe("Account", () => {
             let anchorNew = await register(dfx.iit.actor, dfx.user.identity);
             var accountRequest: HTTPAccountRequest = {
                 anchor: anchorNew,
+                access_point: [],
+                wallet: []
             };
-            await dfx.im.actor.create_account(accountRequest);
+            await dfx.im.actor.create_account(accountRequest as any);
             const backup = await dfx.im.actor.get_all_accounts_json(0, 5);
             const remove = (await dfx.im.actor.remove_account()) as BoolHttpResponse;
             expect(remove.data[0]).eq(true);
@@ -223,6 +285,7 @@ describe("Account", () => {
             response = (await dfx.im.actor.get_account()) as HTTPAccountResponse;
             expect(response.error).empty;
             expect(response.data[0].anchor).eq(anchorNew);
+            expect(Object.keys(response.data[0].wallet)).contains("II");
         });
     });
 });

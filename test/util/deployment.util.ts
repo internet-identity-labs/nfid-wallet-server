@@ -110,7 +110,6 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
 
         if (apps.includes(App.IdentityManager)) {
             DFX.DEPLOY("identity_manager");
-
             var response = DFX.CONFIGURE();
 
             if (response !== "()") {

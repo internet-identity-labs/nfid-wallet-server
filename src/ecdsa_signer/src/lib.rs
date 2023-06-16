@@ -10,19 +10,10 @@ use ic_cdk::api::call::CallResult;
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use ic_cdk::export::{
     candid::CandidType,
-    Principal,
     serde::{Deserialize, Serialize},
 };
+use ic_cdk::export::candid::Principal;
 use ic_cdk_macros::*;
-
-use structure::ttlhashmap::TtlHashMap;
-
-mod structure;
-
-#[derive(CandidType, Serialize, Debug)]
-pub struct PublicKeyReply {
-    pub public_key: Vec<u8>,
-}
 
 #[derive(CandidType, Serialize, Debug, Deserialize)]
 pub struct KeyPair {
@@ -42,92 +33,54 @@ pub struct KeyPairObject {
     pub created_date: u64,
 }
 
-#[derive(CandidType, Serialize, Debug)]
-pub struct SignatureReply {
-    pub signature: Vec<u8>,
-}
-
-#[derive(CandidType, Serialize, Debug)]
-pub struct SignatureAsset {
-    pub signature: Vec<u8>,
-    pub timestamp: Vec<u8>,
-}
-
 type CanisterId = Principal;
 
-#[derive(CandidType, Serialize, Debug)]
-struct ECDSAPublicKey {
-    pub canister_id: Option<CanisterId>,
-    pub derivation_path: Vec<Vec<u8>>,
-    pub key_id: EcdsaKeyId,
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-struct ECDSAPublicKeyReply {
-    pub public_key: Vec<u8>,
-    pub chain_code: Vec<u8>,
-}
-
-#[derive(CandidType, Serialize, Debug)]
-struct SignWithECDSA {
-    pub message_hash: Vec<u8>,
-    pub derivation_path: Vec<Vec<u8>>,
-    pub key_id: EcdsaKeyId,
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-struct SignWithECDSAReply {
-    pub signature: Vec<u8>,
-}
-
-#[derive(CandidType, Serialize, Debug, Clone)]
-struct EcdsaKeyId {
-    pub curve: EcdsaCurve,
-    pub name: String,
-}
-
-#[derive(CandidType, Serialize, Debug, Clone)]
-pub enum EcdsaCurve {
-    #[serde(rename = "secp256k1")]
-    Secp256k1,
-}
-
-const DEFAULT_TOKEN_TTL: u64 = 300;
 
 thread_local! {
     static CONFIG: RefCell<Conf> = RefCell::new( Conf {
-        price: 23_000_000_000,
-        key: "test_key_1".to_string(),  //key_1; dfx_test_key; test_key_1
-        ttl: 300,
         controllers: Default::default(),
-
+        storage: None,
+        im_canister: None
     });
-    pub static SIGNATURES: RefCell<TtlHashMap<String,SignatureReply>> = RefCell::new(TtlHashMap::new(Duration::from_secs(DEFAULT_TOKEN_TTL)));
-    pub static KEYS: RefCell<HashMap<String,PublicKeyReply>> = RefCell::new(HashMap::new());
     pub static ECDSA_KEYS: RefCell<HashMap<String,KeyPairObject>> = RefCell::new(HashMap::new());
+}
+
+
+#[derive(Clone, Copy, Debug, CandidType, Deserialize, PartialEq, Serialize, Hash)]
+pub enum StorageVariant {
+    #[serde(rename = "ETH")]
+    ETH,
+    #[serde(rename = "BTC")]
+    BTC,
+    #[serde(rename = "II")]
+    II,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq)]
 pub struct Conf {
-    pub key: String,
-    pub price: u64,
-    pub ttl: u64,
     pub controllers: Option<Vec<Principal>>,
+    pub storage: Option<StorageVariant>,
+    pub im_canister: Option<String>,
 }
 
 #[init]
 async fn init(conf: Option<Conf>) -> () {
     match conf {
         Some(conf) => {
-            SIGNATURES.with(|signatures| {
-                signatures.borrow_mut().ttl = Duration::from_secs(conf.ttl.clone());
-            });
             CONFIG.with(|storage| {
                 storage.replace(conf);
             });
         }
         _ => {}
     };
+}
+
+#[update]
+async fn reconfig(conf: Conf) -> () {
+    trap_if_not_authenticated_admin();
+    CONFIG.with(|storage| {
+        storage.replace(conf);
+    })
 }
 
 
@@ -154,14 +107,17 @@ async fn sync_controllers() -> Vec<String> {
 }
 
 
-#[query]
+#[update]
 #[candid_method(query)]
 async fn get_kp() -> KeyPairResponse {
-    let principal = ic_cdk::caller().to_text();
+    let key = match get_root_id().await {
+        None => { trap("Unauthorised") }
+        Some(k) => { k }
+    };
     ECDSA_KEYS.with(|keys| {
-        match keys.borrow().get(&principal) {
+        match keys.borrow().get(&key) {
             None => {
-                KeyPairResponse { key_pair: None, princ: principal }
+                KeyPairResponse { key_pair: None, princ: key }
             }
             Some(kp) => {
                 let response = KeyPairResponse {
@@ -169,7 +125,7 @@ async fn get_kp() -> KeyPairResponse {
                         public_key: kp.key_pair.public_key.clone(),
                         private_key_encrypted: kp.key_pair.private_key_encrypted.clone(),
                     }),
-                    princ: principal,
+                    princ: key,
                 };
                 response
             }
@@ -180,11 +136,14 @@ async fn get_kp() -> KeyPairResponse {
 #[update]
 #[candid_method(update)]
 async fn add_kp(kp: KeyPair) {
-    let principal = ic_cdk::caller().to_text();
+    let key = match get_root_id().await {
+        None => { trap("Unauthorised") }
+        Some(k) => { k }
+    };
     ECDSA_KEYS.with(|k| {
         let mut keys = k.borrow_mut();
-        if keys.contains_key(&principal) {
-            trap(&format!("Already registered {}", principal))
+        if keys.contains_key(&key) {
+            trap(&format!("Already registered {}", key))
         }
         let kkp = KeyPairObject {
             key_pair: KeyPair {
@@ -193,7 +152,7 @@ async fn add_kp(kp: KeyPair) {
             },
             created_date: ic_cdk::api::time(),
         };
-        keys.insert(principal, kkp);
+        keys.insert(key, kkp);
     })
 }
 
@@ -203,133 +162,6 @@ async fn get_principal(payload: Option<String>) -> (String, Option<String>) {
     let principal = ic_cdk::caller().to_text();
     (principal, payload)
 }
-
-#[update]
-#[candid_method(update)]
-async fn public_key() -> Result<PublicKeyReply, String> {
-    let conf = CONFIG.with(|storage| {
-        storage.borrow_mut().clone()
-    });
-
-    let key_id = EcdsaKeyId {
-        curve: EcdsaCurve::Secp256k1,
-        name: conf.key,
-    };
-    let ic_canister_id = "aaaaa-aa";
-    let ic = CanisterId::from_str(&ic_canister_id).unwrap();
-
-    let principal = ic_cdk::caller().to_text();
-    let derivation_path = ic_cdk::caller().as_slice().to_vec();
-
-    let request = ECDSAPublicKey {
-        canister_id: None,
-        derivation_path: vec![derivation_path],
-        key_id: key_id.clone(),
-    };
-
-    let saved_key_reply = KEYS.with(|keys| {
-        let k = keys.borrow_mut();
-        match k.get(&principal) {
-            None => { None }
-            Some(kr) => {
-                SIGNATURES.with(|signatures| {
-                    signatures.borrow_mut().cleanup();
-                });
-                Some(kr.public_key.clone())
-            }
-        }
-    });
-
-    match saved_key_reply {
-        None => {
-            let (res, ): (ECDSAPublicKeyReply, ) = ic_cdk::call(ic, "ecdsa_public_key", (request, ))
-                .await
-                .map_err(|e| format!("Failed to call ecdsa_public_key {}", e.1))?;
-
-            KEYS.with(|keys| {
-                keys.borrow_mut().insert(principal, PublicKeyReply {
-                    public_key: res.public_key.clone(),
-                })
-            });
-
-            Ok(PublicKeyReply {
-                public_key: res.public_key,
-            })
-        }
-        Some(key) => {
-            Ok(PublicKeyReply {
-                public_key: key,
-            })
-        }
-    }
-}
-
-#[update]
-#[candid_method(update)]
-async fn prepare_signature(message: Vec<u8>) -> String {
-    match sign(message.clone()).await {
-        Ok(signature_reply) => {
-            let hex = hex::encode(&message);
-            SIGNATURES.with(|signatures| {
-                signatures.borrow_mut().insert(hex.clone(), signature_reply)
-            });
-            hex
-        }
-        Err(err) => {
-            trap(&err)
-        }
-    }
-}
-
-#[query]
-#[candid_method(query)]
-async fn get_signature(key: String) -> Result<SignatureReply, String> {
-    SIGNATURES.with(|signatures| {
-        match signatures.borrow_mut().get(&key) {
-            None => {
-                Err(String::from("No such signature"))
-            }
-            Some(reply) => {
-                Ok(SignatureReply {
-                    signature: reply.signature.clone(),
-                })
-            }
-        }
-    })
-}
-
-#[update]
-#[candid_method(update)]
-async fn sign(message: Vec<u8>) -> Result<SignatureReply, String> {
-    assert!(message.len() == 32);
-
-    let conf = CONFIG.with(|storage| {
-        storage.borrow_mut().clone()
-    });
-
-    let key_id = EcdsaKeyId {
-        curve: EcdsaCurve::Secp256k1,
-        name: conf.key,
-    };
-    let ic_canister_id = "aaaaa-aa";
-    let ic = CanisterId::from_str(&ic_canister_id).unwrap();
-
-    let caller = ic_cdk::caller().as_slice().to_vec();
-    let request = SignWithECDSA {
-        message_hash: message.clone(),
-        derivation_path: vec![caller],
-        key_id,
-    };
-    let (res, ): (SignWithECDSAReply, ) =
-        ic_cdk::api::call::call_with_payment(ic, "sign_with_ecdsa", (request, ), conf.price)
-            .await
-            .map_err(|e| format!("Failed to call sign_with_ecdsa {}", e.1))?;
-
-    Ok(SignatureReply {
-        signature: res.signature,
-    })
-}
-
 
 #[pre_upgrade]
 fn pre_upgrade() {
@@ -358,7 +190,7 @@ fn pre_upgrade() {
 
 #[query]
 async fn get_all_json(from: u32, mut to: u32) -> String {
-    trap_if_not_authenticated();
+    trap_if_not_authenticated_admin();
     let mut principal_key_pairs = ECDSA_KEYS.with(|k| {
         let pkp: Vec<PrincipalKP> = k.borrow_mut()
             .iter()
@@ -382,13 +214,13 @@ async fn get_all_json(from: u32, mut to: u32) -> String {
 
 #[query]
 async fn count() -> u64 {
-    trap_if_not_authenticated();
+    trap_if_not_authenticated_admin();
     ECDSA_KEYS.with(|k| {
         k.borrow().len() as u64
     })
 }
 
-fn trap_if_not_authenticated() {
+fn trap_if_not_authenticated_admin() {
     let princ = caller();
     match CONFIG.with(|c| c.borrow_mut().controllers.clone())
     {
@@ -399,6 +231,24 @@ fn trap_if_not_authenticated() {
             if !controllers.contains(&princ) {
                 trap("Unauthorised")
             }
+        }
+    }
+}
+
+async fn get_root_id() -> Option<String> {
+    match CONFIG.with(|c| c.borrow_mut().im_canister.clone()) {
+        None => {
+            Some(caller().to_text())  //DONE FOR TESTING PURPOSES
+        }
+        Some(canister) => {
+            let princ = caller();
+            let im_canister = Principal::from_text(canister).unwrap();
+
+            let res: Option<String> = match call(im_canister, "get_root_by_principal", (princ.to_text(), 0)).await {
+                Ok((res, )) => res,
+                Err((_, err)) => trap(&format!("failed to request II: {}", err)),
+            };
+            res
         }
     }
 }

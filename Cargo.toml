@@ -2,7 +2,6 @@
 members = [
     "src/ecdsa_signer",
     "src/pub_sub_channel",
-    "src/im_addition",
     "src/verifier",
     "src/vault",
     "src/libraries/canister_api_macros",

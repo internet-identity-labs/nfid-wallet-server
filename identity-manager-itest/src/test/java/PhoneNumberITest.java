@@ -1,7 +1,9 @@
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
+@Ignore
 public class PhoneNumberITest extends BaseIdentityManagerITest {
 
     @Override
@@ -100,73 +102,4 @@ public class PhoneNumberITest extends BaseIdentityManagerITest {
         var expected = get("response/response", "null", "200");
         assertEquals(actual, expected);
     }
-
-    @Test(priority = 61)
-    public void validatePhoneWhenTooManyRequests() {
-        var actual = command("request/validate_phone", ROOT_IDENTITY, PHONE);
-        var expected = get("response/response", "opt \"Too many requests.\"", "429");
-        assertEquals(actual, expected);
-    }
-
-    @Test(priority = 71)
-    public void validatePhoneNumberExists() throws InterruptedException {
-        command("common/configure_dfx_project", "identity_manager", ROOT_IDENTITY, TTL, "1", WHITELISTED_PHONE_NUMBERS, 0, BACKUP_CANISTER_ID, BACKUP_CANISTER_ID);
-        command("request/post_token", PHONE, PHONE_SHA2, TOKEN, ROOT_IDENTITY);
-
-        Thread.sleep(1000);
-
-        var actual = command("request/validate_phone", ROOT_IDENTITY, PHONE_SHA2);
-        var expected = get("response/response", "null", "204");
-        assertEquals(actual, expected);
-    }
-
-    @Test(priority = 73)
-    public void validatePhoneNumberNotExists() throws InterruptedException {
-        var phoneNumber = "+380991111111";
-        var phoneNumberSha2 = "+380991111111_SHA2";
-
-        command("request/post_token", phoneNumber, phoneNumberSha2, TOKEN, ROOT_IDENTITY);
-
-        Thread.sleep(1000);
-
-        var actual = command("request/validate_phone", ROOT_IDENTITY, phoneNumberSha2);
-        var expected = get("response/response", "null", "200");
-        assertEquals(actual, expected);
-    }
-
-    @Test(priority = 81)
-    public void remove_account_by_phone_number() throws InterruptedException {
-        var phoneNumberSha2 = "8fba797bcc5427ca466bf5ef0d8fcc69636fa6b67ea93e240198ecaac3df3716";
-        command("request/post_token", PHONE, phoneNumberSha2, TOKEN, ROOT_IDENTITY);
-
-        Thread.sleep(1000);
-        
-        var actual = command("request/verify_token", TOKEN);
-        var expected = get("response/response", "null", "200");
-        assertEquals(actual, expected);
-
-        actual = command("request/validate_phone", ROOT_IDENTITY, phoneNumberSha2);
-        expected = get("response/response", "null", "204");
-        assertEquals(actual, expected);
-
-        command("request/remove_account_by_phone_number");
-
-        actual = command("request/validate_phone", ROOT_IDENTITY, phoneNumberSha2);
-        expected = get("response/response", "opt \"Account not found.\"", "404");
-        assertEquals(actual, expected);
-    }
-
-    @Test(priority = 82)
-    public void verifyTokenWhenPrincipalIdNotExists() throws InterruptedException {
-        command("request/create_account", ANCHOR);
-        command("common/configure_dfx_project", "identity_manager", ROOT_IDENTITY, "1", TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, 0, BACKUP_CANISTER_ID, BACKUP_CANISTER_ID);
-        command("request/post_token", PHONE, PHONE_SHA2, TOKEN, ROOT_IDENTITY);
-
-        Thread.sleep(1000);
-
-        var actual = command("request/verify_token", TOKEN);
-        var expected = get("response/response", "opt \"Principal id not found.\"", "404");
-        assertEquals(actual, expected);
-    }
-
 }

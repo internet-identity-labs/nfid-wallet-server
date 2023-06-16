@@ -1,5 +1,6 @@
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
+use ic_cdk::export::serde::Serialize;
 
 use serde_bytes::{ByteBuf};
 
@@ -7,6 +8,8 @@ use serde_bytes::{ByteBuf};
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccountRequest {
     pub anchor: u64,
+    pub wallet: Option<WalletVariant>,
+    pub access_point: Option<AccessPointRequest>
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -36,12 +39,22 @@ pub struct AccountResponse {
     pub personas: Vec<PersonaResponse>,
     pub access_points: Vec<AccessPointResponse>,
     pub anchor: u64,
+    pub wallet: WalletVariant
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum CredentialVariant {
     #[serde(rename = "phone_number")]
     PhoneNumber(PhoneNumberCredential),
+}
+
+
+#[derive(Clone, Copy, Debug, CandidType, Deserialize, PartialEq, Serialize)]
+pub enum WalletVariant {
+    #[serde(rename = "NFID")]
+    NFID,
+    #[serde(rename = "II")]
+    InternetIdentity,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -108,6 +121,7 @@ pub struct AccessPointRequest {
     pub icon: String,
     pub device: String,
     pub browser: String,
+    pub wallet: Option<WalletVariant>
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
