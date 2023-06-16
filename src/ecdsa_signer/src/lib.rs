@@ -15,7 +15,6 @@ use ic_cdk::export::{
 use ic_cdk::export::candid::Principal;
 use ic_cdk_macros::*;
 
-
 #[derive(CandidType, Serialize, Debug, Deserialize)]
 pub struct KeyPair {
     pub public_key: String,
@@ -79,14 +78,9 @@ async fn init(conf: Option<Conf>) -> () {
 #[update]
 async fn reconfig(conf: Conf) -> () {
     trap_if_not_authenticated_admin();
-    match conf {
-        Some(conf) => {
-            CONFIG.with(|storage| {
-                storage.replace(conf);
-            });
-        }
-        _ => {}
-    };
+    CONFIG.with(|storage| {
+        storage.replace(conf);
+    })
 }
 
 
@@ -116,9 +110,9 @@ async fn sync_controllers() -> Vec<String> {
 #[update]
 #[candid_method(query)]
 async fn get_kp() -> KeyPairResponse {
-    let key= match  get_root_id().await {
-        None => { trap("Unauthorised")}
-        Some(k) => {k}
+    let key = match get_root_id().await {
+        None => { trap("Unauthorised") }
+        Some(k) => { k }
     };
     ECDSA_KEYS.with(|keys| {
         match keys.borrow().get(&key) {
@@ -142,9 +136,9 @@ async fn get_kp() -> KeyPairResponse {
 #[update]
 #[candid_method(update)]
 async fn add_kp(kp: KeyPair) {
-    let key= match  get_root_id().await {
-        None => { trap("Unauthorised")}
-        Some(k) => {k}
+    let key = match get_root_id().await {
+        None => { trap("Unauthorised") }
+        Some(k) => { k }
     };
     ECDSA_KEYS.with(|k| {
         let mut keys = k.borrow_mut();
@@ -241,22 +235,22 @@ fn trap_if_not_authenticated_admin() {
     }
 }
 
- async fn get_root_id() -> Option<String> {
-     match CONFIG.with(|c| c.borrow_mut().im_canister.clone()) {
-         None => {
-             Some(caller().to_text())  //DONE FOR TESTING PURPOSES
-         }
-         Some(canister) => {
-             let princ = caller();
-             let im_canister = Principal::from_text(canister).unwrap();
+async fn get_root_id() -> Option<String> {
+    match CONFIG.with(|c| c.borrow_mut().im_canister.clone()) {
+        None => {
+            Some(caller().to_text())  //DONE FOR TESTING PURPOSES
+        }
+        Some(canister) => {
+            let princ = caller();
+            let im_canister = Principal::from_text(canister).unwrap();
 
-             let res: Option<String> = match call(im_canister, "get_root_by_principal", (princ.to_text(), 0)).await {
-                 Ok((res, )) => res,
-                 Err((_, err)) => trap(&format!("failed to request II: {}", err)),
-             };
-             res
-         }
-     }
+            let res: Option<String> = match call(im_canister, "get_root_by_principal", (princ.to_text(), 0)).await {
+                Ok((res, )) => res,
+                Err((_, err)) => trap(&format!("failed to request II: {}", err)),
+            };
+            res
+        }
+    }
 }
 
 
