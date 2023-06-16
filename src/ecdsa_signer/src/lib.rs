@@ -76,6 +76,19 @@ async fn init(conf: Option<Conf>) -> () {
     };
 }
 
+#[update]
+async fn reconfig(conf: Conf) -> () {
+    trap_if_not_authenticated_admin();
+    match conf {
+        Some(conf) => {
+            CONFIG.with(|storage| {
+                storage.replace(conf);
+            });
+        }
+        _ => {}
+    };
+}
+
 
 #[derive(CandidType, Debug, Clone, Deserialize)]
 pub struct CanisterIdRequest {
@@ -183,7 +196,7 @@ fn pre_upgrade() {
 
 #[query]
 async fn get_all_json(from: u32, mut to: u32) -> String {
-    trap_if_not_authenticated();
+    trap_if_not_authenticated_admin();
     let mut principal_key_pairs = ECDSA_KEYS.with(|k| {
         let pkp: Vec<PrincipalKP> = k.borrow_mut()
             .iter()
@@ -207,13 +220,13 @@ async fn get_all_json(from: u32, mut to: u32) -> String {
 
 #[query]
 async fn count() -> u64 {
-    trap_if_not_authenticated();
+    trap_if_not_authenticated_admin();
     ECDSA_KEYS.with(|k| {
         k.borrow().len() as u64
     })
 }
 
-fn trap_if_not_authenticated() {
+fn trap_if_not_authenticated_admin() {
     let princ = caller();
     match CONFIG.with(|c| c.borrow_mut().controllers.clone())
     {
