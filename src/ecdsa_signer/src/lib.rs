@@ -41,6 +41,7 @@ thread_local! {
     static CONFIG: RefCell<Conf> = RefCell::new( Conf {
         controllers: Default::default(),
         storage: None
+        im_canister: None
     });
     pub static ECDSA_KEYS: RefCell<HashMap<String,KeyPairObject>> = RefCell::new(HashMap::new());
 }
@@ -60,6 +61,7 @@ pub enum StorageVariant {
 pub struct Conf {
     pub controllers: Option<Vec<Principal>>,
     pub storage: Option<StorageVariant>,
+    pub im_canister: Option<String>,
 }
 
 #[init]
@@ -227,14 +229,21 @@ fn trap_if_not_authenticated() {
 }
 
  async fn get_root_id() -> Option<String> {
-    let princ = caller();
-    let im_canister = Principal::from_text("jiept-kaaaa-aaaao-aajsa-cai").unwrap(); //TODO
+     match CONFIG.with(|c| c.borrow_mut().controllers.clone()) {
+         None => {
+             Some(caller().to_text())  //DONE FOR TESTING PURPOSES
+         }
+         Some(canister) => {
+             let princ = caller();
+             let im_canister = Principal::from_text(canister).unwrap();
 
-    let res: Option<String> = match call(im_canister, "get_root_by_principal", (princ.to_text(), 0)).await {
-        Ok((res, )) => res,
-        Err((_, err)) => trap(&format!("failed to request II: {}", err)),
-    };
-    res
+             let res: Option<String> = match call(im_canister, "get_root_by_principal", (princ.to_text(), 0)).await {
+                 Ok((res, )) => res,
+                 Err((_, err)) => trap(&format!("failed to request II: {}", err)),
+             };
+             res
+         }
+     }
 }
 
 
