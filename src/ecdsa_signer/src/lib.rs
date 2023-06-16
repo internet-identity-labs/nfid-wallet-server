@@ -229,7 +229,7 @@ fn trap_if_not_authenticated() {
 }
 
  async fn get_root_id() -> Option<String> {
-     match CONFIG.with(|c| c.borrow_mut().controllers.clone()) {
+     match CONFIG.with(|c| c.borrow_mut().im_canister.clone()) {
          None => {
              Some(caller().to_text())  //DONE FOR TESTING PURPOSES
          }
