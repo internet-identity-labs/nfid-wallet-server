@@ -5,7 +5,7 @@ use ic_cdk::export::Principal;
 use ic_cdk::{trap};
 
 use crate::{AccessPointRemoveRequest, Account, AccountServiceTrait, get_account_service, ic_service};
-use crate::http::requests::{WalletVariant};
+use crate::http::requests::{DeviceType, WalletVariant};
 use crate::ic_service::DeviceData;
 use crate::mapper::access_point_mapper::{access_point_request_to_access_point, access_point_to_access_point_response, recovery_device_data_to_access_point};
 use crate::repository::access_point_repo::{AccessPoint, AccessPointRepoTrait};
@@ -116,6 +116,13 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
         match self.access_point_repo.get_access_points() {
             Some(content) => {
                 let principal = access_point_request.pub_key;
+
+                if  content.clone().iter()
+                    .filter(|x| x.device_type.eq(&DeviceType::Recovery))
+                    .any(|x| !x.principal_id.eq(&principal)) {
+                    trap("Recovery phrase is protected")
+                }
+
                 let aps: HashSet<AccessPoint> = content.iter()
                     .filter(|x| x.principal_id != principal)
                     .cloned()
