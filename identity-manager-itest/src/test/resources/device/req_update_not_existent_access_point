@@ -3,4 +3,5 @@ pub_key = "2kqda-6wdqw-2be2y-4c5yg-ijw7q-muznw-qh3tm-55v2s-cnnyp-o2ud4-cqe";
 icon = "icon3";
 device = "device3";
 browser = "browser3";
+device_type = variant { Passkey }
 })'

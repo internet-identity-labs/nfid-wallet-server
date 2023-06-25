@@ -6,6 +6,7 @@
       access_points = vec {
         record {
           icon = "icon";
+          device_type = variant { Passkey };
           device = "device";
           browser = "browser";
           principal_id = "%s";

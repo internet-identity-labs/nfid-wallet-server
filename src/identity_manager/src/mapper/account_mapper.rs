@@ -21,6 +21,7 @@ pub fn account_to_account_response(account: Account) -> AccountResponse {
             .map(access_point_to_access_point_response)
             .collect(),
         wallet: account.wallet,
+        is2fa_enabled: account.is2fa_enabled,
     }
 }
 
@@ -39,6 +40,7 @@ pub fn account_request_to_account(account_request: AccountRequest) -> Account {
         wallet: match account_request.wallet {
             None => { WalletVariant::InternetIdentity }
             Some(x) => { x }
-        }
+        },
+        is2fa_enabled: false,
     }
 }

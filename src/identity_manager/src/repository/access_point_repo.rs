@@ -5,6 +5,7 @@ use crate::repository::account_repo::{Account, AccountRepoTrait};
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use crate::repository::repo::BasicEntity;
 use serde::{Serialize};
+use crate::http::requests::DeviceType;
 
 
 #[derive(Clone, Debug, CandidType, Deserialize, Eq, Serialize)]
@@ -14,6 +15,7 @@ pub struct AccessPoint {
     pub device: Option<String>,
     pub browser: Option<String>,
     pub last_used: Option<u64>,
+    pub device_type: DeviceType,
     pub base_fields: BasicEntity,
 }
 

@@ -2,4 +2,5 @@ dfx canister call identity_manager create_access_point '( record {pub_key = "2kq
 icon = "icon2";
 device = "device2";
 browser = "browser2";
+device_type = variant { Recovery }
 })'

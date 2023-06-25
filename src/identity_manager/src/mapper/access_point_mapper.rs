@@ -1,4 +1,5 @@
 use ic_cdk::export::Principal;
+use crate::http::requests::DeviceType;
 use crate::ic_service::{DeviceData};
 use crate::repository::repo::{BasicEntity};
 use crate::repository::access_point_repo::AccessPoint;
@@ -11,6 +12,7 @@ pub fn access_point_to_access_point_response(access_point: AccessPoint) -> Acces
         device: access_point.device.unwrap_or("".to_string()),
         browser: access_point.browser.unwrap_or("".to_string()),
         last_used: access_point.last_used.unwrap_or(0),
+        device_type: access_point.device_type,
     }
 }
 
@@ -22,6 +24,7 @@ pub fn access_point_request_to_access_point(request: AccessPointRequest) -> Acce
         device: Some(request.device),
         browser: Some(request.browser),
         last_used: Some(basic.get_created_date().clone()),
+        device_type: request.device_type,
         base_fields: basic,
     }
 }
@@ -34,6 +37,7 @@ pub fn recovery_device_data_to_access_point(device: DeviceData) -> AccessPoint {
         device: Some("Recovery phrase".to_string()),
         browser: Some("".to_string()),
         last_used: Some(basic.get_created_date().clone()),
+        device_type: DeviceType::Recovery,
         base_fields: basic,
     };
     access_point

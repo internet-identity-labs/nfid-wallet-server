@@ -5,13 +5,12 @@ use crate::repository::persona_repo::Persona;
 use crate::repository::repo::{BasicEntity, is_anchor_exists};
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
-use ic_cdk::{storage};
+use ic_cdk::{caller, storage};
 use itertools::Itertools;
-use mockers::matchers::none;
-use crate::ic_service;
+use crate::{get_account, ic_service};
 use crate::repository::access_point_repo::AccessPoint;
 use serde::{Serialize};
-use crate::http::requests::WalletVariant;
+use crate::http::requests::{DeviceType, WalletVariant};
 
 pub type Accounts = BTreeMap<String, Account>;
 pub type PrincipalIndex = BTreeMap<String, String>;
@@ -27,6 +26,7 @@ pub struct Account {
     pub access_points: HashSet<AccessPoint>,
     pub base_fields: BasicEntity,
     pub wallet: WalletVariant,
+    pub is2fa_enabled: bool
 }
 
 #[cfg_attr(test, mocked)]
@@ -75,7 +75,9 @@ impl AccountRepoTrait for AccountRepo {
             Some(key) => {
                 match accounts.get(key) {
                     None => { None }
-                    Some(acc) => { Option::from(acc.to_owned()) }
+                    Some(acc) => {
+                        // verify_2fa(acc, princ);
+                        Option::from(acc.to_owned()) }
                 }
             }
         }
@@ -114,6 +116,7 @@ impl AccountRepoTrait for AccountRepo {
     }
 
     fn remove_account(&self) -> Option<Account> { //todo not properly tested, used for e2e tests
+        self.get_account(); //security call
         let princ = ic_service::get_caller().to_text();
         let accounts = storage::get_mut::<Accounts>();
         let index = storage::get_mut::<PrincipalIndex>();

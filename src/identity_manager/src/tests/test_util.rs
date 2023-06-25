@@ -1,6 +1,7 @@
 use std::time::Duration;
 use ic_cdk::export::Principal;
 use crate::{AccountRequest, AccountServiceTrait, Configuration, ConfigurationRepo, get_account_service};
+use crate::http::requests::DeviceType;
 
 pub fn init_config(){
     let a = Configuration {

@@ -17,6 +17,7 @@ fn anchor_ex_test() {
         access_points: Default::default(),
         base_fields: Default::default(),
         wallet: WalletVariant::NFID,
+        is2fa_enabled: false,
     };
     let ar = AccountRepo {};
     ar.store_account(acc);

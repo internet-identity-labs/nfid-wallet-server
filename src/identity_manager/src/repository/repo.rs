@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashSet};
 use std::hash::{Hash};
 use std::time::Duration;
 use ic_cdk::export::candid::{CandidType, Deserialize};
@@ -9,10 +9,9 @@ use crate::logger::logger::Logs;
 use crate::repository::account_repo::{Account, Accounts, PrincipalIndex};
 use crate::repository::application_repo::Application;
 use serde::{Serialize};
-use crate::http::requests::WalletVariant;
+use crate::http::requests::{DeviceType, WalletVariant};
 use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::persona_repo::Persona;
-
 
 
 #[derive(Debug, Deserialize, CandidType, Clone)]
@@ -137,9 +136,22 @@ pub struct AccountMemoryModel {
     pub personas: Vec<Persona>,
     pub phone_number: Option<String>,
     pub phone_number_sha2: Option<String>,
-    pub access_points: HashSet<AccessPoint>,
+    pub access_points: HashSet<AccessPointMemoryModel>,
     pub base_fields: BasicEntity,
-    pub wallet: Option<WalletVariant>
+    pub wallet: Option<WalletVariant>,
+    pub is2fa_enabled: Option<bool>,
+}
+
+
+#[derive(Clone, Debug, CandidType, Deserialize,PartialEq ,Eq, Serialize, Hash)]
+pub struct AccessPointMemoryModel {
+    pub principal_id: String,
+    pub icon: Option<String>,
+    pub device: Option<String>,
+    pub browser: Option<String>,
+    pub last_used: Option<u64>,
+    pub device_type: Option<DeviceType>,
+    pub base_fields: BasicEntity,
 }
 
 
@@ -150,15 +162,18 @@ pub fn pre_upgrade() {
     for p in storage::get_mut::<Accounts>().iter() {
         accounts.push(
             AccountMemoryModel {
-                anchor:  p.1.anchor.clone(),
+                anchor: p.1.anchor.clone(),
                 principal_id: p.1.principal_id.to_string(),
                 name: p.1.name.clone(),
                 personas: p.1.personas.clone(),
                 phone_number: p.1.phone_number.clone(),
                 phone_number_sha2: p.1.phone_number_sha2.clone(),
-                access_points: p.1.access_points.clone(),
+                access_points: p.1.access_points.clone()
+                    .into_iter().map(|ap|access_point_to_memory_model(ap))
+                    .collect(),
                 base_fields: p.1.base_fields.clone(),
                 wallet: Some(p.1.wallet.clone()),
+                is2fa_enabled: Some(p.1.is2fa_enabled),
             })
     }
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
@@ -174,18 +189,25 @@ pub fn post_upgrade() {
     storage::get_mut::<Option<Principal>>().replace(admin);
     for u in old_accs {
         let princ = u.principal_id.clone();
-        storage::get_mut::<Accounts>().insert(princ.clone(), Account{
+        storage::get_mut::<Accounts>().insert(princ.clone(), Account {
             anchor: u.anchor,
             principal_id: u.principal_id.to_string(),
             name: u.name,
             phone_number: u.phone_number,
             phone_number_sha2: u.phone_number_sha2,
             personas: u.personas,
-            access_points: u.access_points.clone(),
+            access_points: u.access_points.clone()
+                .into_iter()
+                .map(|ap| access_point_mm_to_ap(ap))
+                .collect(),
             base_fields: u.base_fields,
             wallet: match u.wallet {
-                None => { WalletVariant::InternetIdentity}
-                Some(x) => {x}
+                None => { WalletVariant::InternetIdentity }
+                Some(x) => { x }
+            },
+            is2fa_enabled: match u.is2fa_enabled {
+                None => { false }
+                Some(x) => { x }
             },
         });
 
@@ -219,4 +241,31 @@ pub fn post_upgrade() {
     }
     canistergeek_ic_rust::logger
     ::log_message("Post upgrade completed".to_string());
+}
+
+fn access_point_to_memory_model(ap: AccessPoint) -> AccessPointMemoryModel {
+    return AccessPointMemoryModel {
+        principal_id: ap.principal_id,
+        icon: ap.icon,
+        device: ap.device,
+        browser: ap.browser,
+        last_used: ap.last_used,
+        device_type: Some(ap.device_type),
+        base_fields: ap.base_fields,
+    };
+}
+
+fn access_point_mm_to_ap(ap: AccessPointMemoryModel) -> AccessPoint {
+    return AccessPoint {
+        principal_id: ap.principal_id,
+        icon: ap.icon,
+        device: ap.device,
+        browser: ap.browser,
+        last_used: ap.last_used,
+        device_type: match ap.device_type {
+            None => { DeviceType::Unknown }
+            Some(x) => { x }
+        },
+        base_fields: ap.base_fields,
+    };
 }
