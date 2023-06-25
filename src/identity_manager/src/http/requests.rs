@@ -1,6 +1,7 @@
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::export::serde::Serialize;
+use std::fmt::{Display, Formatter, Result};
 
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
