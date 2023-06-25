@@ -63,8 +63,11 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
                 trap("No such Account")
             }
             Some(mut acc) => {
+                if !acc.access_points.into_iter()
+                    .any(|l| l.device_type == DeviceType::Passkey) {
+                    trap("Forbidden")
+                }
                 acc.is2fa_enabled = state;
-
                 self.account_repo.store_account(acc.clone());
                 account_to_account_response(acc)
             }
