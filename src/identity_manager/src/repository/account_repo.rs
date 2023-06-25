@@ -5,12 +5,12 @@ use crate::repository::persona_repo::Persona;
 use crate::repository::repo::{BasicEntity, is_anchor_exists};
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
-use ic_cdk::{caller, storage};
+use ic_cdk::{storage};
 use itertools::Itertools;
-use crate::{get_account, ic_service};
+use crate::{ic_service};
 use crate::repository::access_point_repo::AccessPoint;
 use serde::{Serialize};
-use crate::http::requests::{DeviceType, WalletVariant};
+use crate::http::requests::{WalletVariant};
 
 pub type Accounts = BTreeMap<String, Account>;
 pub type PrincipalIndex = BTreeMap<String, String>;
@@ -26,7 +26,7 @@ pub struct Account {
     pub access_points: HashSet<AccessPoint>,
     pub base_fields: BasicEntity,
     pub wallet: WalletVariant,
-    pub is2fa_enabled: bool
+    pub is2fa_enabled: bool,
 }
 
 #[cfg_attr(test, mocked)]
@@ -77,7 +77,8 @@ impl AccountRepoTrait for AccountRepo {
                     None => { None }
                     Some(acc) => {
                         // verify_2fa(acc, princ);
-                        Option::from(acc.to_owned()) }
+                        Option::from(acc.to_owned())
+                    }
                 }
             }
         }
@@ -98,7 +99,7 @@ impl AccountRepoTrait for AccountRepo {
         let accounts = storage::get_mut::<Accounts>();
         let index = storage::get_mut::<PrincipalIndex>();
         if index.contains_key(&account.principal_id) {
-           return None;
+            return None;
         }
         if is_anchor_exists(account.anchor, account.wallet.clone()) {
             return None;

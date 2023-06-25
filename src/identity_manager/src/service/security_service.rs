@@ -1,8 +1,8 @@
 use ic_cdk::{caller, trap};
+
 use crate::container::container_wrapper::get_account_repo;
-use crate::get_account;
 use crate::http::requests::DeviceType;
-use crate::repository::account_repo::{Account, AccountRepo, AccountRepoTrait};
+use crate::repository::account_repo::AccountRepoTrait;
 
 pub fn secure_2fa() {
     let principal = caller().to_text();

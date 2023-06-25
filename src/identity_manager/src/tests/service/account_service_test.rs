@@ -1,5 +1,5 @@
 use crate::{AccountRepo, AccountRequest, AccountService, AccountServiceTrait, AccountUpdateRequest, ApplicationRepo, ApplicationService, ic_service, PersonaRepo, PersonaRequest, PersonaService, PersonaServiceTrait};
-use crate::http::requests::{DeviceType, WalletVariant};
+use crate::http::requests::{WalletVariant};
 use crate::repository::access_point_repo::AccessPointRepo;
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::persona_repo::Persona;

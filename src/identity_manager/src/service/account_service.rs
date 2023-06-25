@@ -3,7 +3,6 @@ use ic_cdk::{trap};
 use itertools::Itertools;
 
 use crate::{AccessPointServiceTrait, Account, get_caller, HttpResponse};
-use crate::container::container_wrapper::get_account_service;
 use crate::http::requests::{AccountResponse, DeviceType, WalletVariant};
 use crate::ic_service::{KeyType};
 use crate::mapper::access_point_mapper::access_point_request_to_access_point;

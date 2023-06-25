@@ -35,7 +35,7 @@ pub fn log_error(_: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn twoFA(_: TokenStream, item: TokenStream) -> TokenStream {
+pub fn two_f_a(_: TokenStream, item: TokenStream) -> TokenStream {
     let mut inner = parse_macro_input!(item as ItemFn);
     let wrapper_sig = inner.sig.clone();
     let inner_method_name = format_ident!("{}_log_error", inner.sig.ident);

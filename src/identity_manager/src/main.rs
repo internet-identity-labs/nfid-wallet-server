@@ -4,7 +4,7 @@ use ic_cdk::{caller, storage, trap};
 
 use ic_cdk_macros::*;
 
-use canister_api_macros::{admin, twoFA, admin_or_lambda, collect_metrics, log_error, replicate_account};
+use canister_api_macros::{admin, two_f_a, admin_or_lambda, collect_metrics, log_error, replicate_account};
 use service::{account_service, persona_service, phone_number_service};
 
 use crate::account_service::{AccountService, AccountServiceTrait};
@@ -135,7 +135,7 @@ async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
 #[update]
 #[replicate_account]
 #[collect_metrics]
-#[twoFA]
+#[two_f_a]
 async fn use_access_point(browser: Option<String>) -> HttpResponse<AccessPointResponse> {
     let access_point_service = get_access_point_service();
     access_point_service.use_access_point(browser)
@@ -145,7 +145,7 @@ async fn use_access_point(browser: Option<String>) -> HttpResponse<AccessPointRe
 #[replicate_account]
 #[log_error]
 #[collect_metrics]
-#[twoFA]
+#[two_f_a]
 async fn create_access_point(access_point_request: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     let response = access_point_service.create_access_point(access_point_request.clone()).await;
@@ -156,7 +156,7 @@ async fn create_access_point(access_point_request: AccessPointRequest) -> HttpRe
 #[replicate_account]
 #[log_error]
 #[collect_metrics]
-#[twoFA]
+#[two_f_a]
 async fn update_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.update_access_point(access_point.clone())
@@ -166,7 +166,7 @@ async fn update_access_point(access_point: AccessPointRequest) -> HttpResponse<V
 #[replicate_account]
 #[log_error]
 #[collect_metrics]
-#[twoFA]
+#[two_f_a]
 async fn remove_access_point(access_point: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.remove_access_point(access_point)
@@ -244,7 +244,7 @@ async fn get_root_by_principal(princ: String) -> Option<String> {
 
 
 #[update]
-#[twoFA]
+#[two_f_a]
 async fn update_2fa(state: bool) -> AccountResponse {
     let mut account_service = get_account_service();
      account_service.update_2fa(state)
@@ -254,7 +254,7 @@ async fn update_2fa(state: bool) -> AccountResponse {
 #[log_error]
 #[replicate_account]
 #[collect_metrics]
-#[twoFA]
+#[two_f_a]
 async fn update_account(account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     account_service.update_account(account_request)
@@ -276,7 +276,7 @@ async fn certify_phone_number_sha2(principal_id: String, domain: String) -> Http
 
 #[update]
 #[log_error]
-#[twoFA]
+#[two_f_a]
 async fn remove_account() -> HttpResponse<bool> {
     let mut account_service = get_account_service();
     account_service.remove_account()
@@ -293,7 +293,7 @@ async fn remove_account_by_principal(princ: String) -> HttpResponse<bool> {
 #[update]
 #[log_error]
 #[replicate_account]
-#[twoFA]
+#[two_f_a]
 async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
     let persona_service = get_persona_service();
     persona_service.create_persona(persona)
@@ -302,7 +302,7 @@ async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse
 #[update]
 #[log_error]
 #[replicate_account]
-#[twoFA]
+#[two_f_a]
 async fn update_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
     let persona_service = get_persona_service();
     persona_service.update_persona(persona)
