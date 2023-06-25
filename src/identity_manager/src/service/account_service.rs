@@ -63,8 +63,8 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
                 trap("No such Account")
             }
             Some(mut acc) => {
-                if !acc.access_points.into_iter()
-                    .any(|l| l.device_type == DeviceType::Passkey) {
+                if !acc.access_points.clone().into_iter()
+                    .any(|l| l.device_type.eq(&DeviceType::Passkey)) {
                     trap("Forbidden")
                 }
                 acc.is2fa_enabled = state;
