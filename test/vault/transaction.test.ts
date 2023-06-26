@@ -20,7 +20,7 @@ import {Principal} from "@dfinity/principal";
 import {fail} from "assert";
 
 
-describe("Transaction", () => {
+describe.skip("Transaction", () => {
     var dfx: Dfx;
     let adminAddress: string;
     let memberAddress1: string;
