@@ -52,7 +52,7 @@
       "type": "custom",
       "candid": "src/bitcoin/bitcoin.did",
       "wasm": "bitcoin.wasm",
-      "build":"src/bitcoin/build.sh"
+      "build": "src/bitcoin/build.sh"
     },
     "test_ledger": {
       "type": "custom",
