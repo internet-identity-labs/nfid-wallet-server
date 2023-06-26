@@ -294,8 +294,7 @@ describe("Account", () => {
         });
 
         it("should enable 2fa", async function () {
-            //register new account
-            const identity = getIdentity("87654321876543218765432187654300");
+            const identity = Ed25519KeyIdentity.generate();
             const dd: AccessPointRequest = {
                 icon: "Icon",
                 device: "Global",
