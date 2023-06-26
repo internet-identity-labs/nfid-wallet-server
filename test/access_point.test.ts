@@ -3,11 +3,18 @@ import {expect} from "chai";
 import {Dfx} from "./type/dfx";
 import {App} from "./constanst/app.enum";
 import {deploy, getActor, getIdentity} from "./util/deployment.util";
-import {AccessPointRemoveRequest, AccessPointRequest, HTTPAccountRequest,} from "./idl/identity_manager";
+import {
+    AccessPointRemoveRequest,
+    AccessPointRequest,
+    HTTPAccountRequest,
+    HTTPAccountResponse,
+} from "./idl/identity_manager";
 import {DFX} from "./constanst/dfx.const";
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {Ed25519KeyIdentity} from "@dfinity/identity";
 import {fail} from "assert";
+import {Actor, Agent, HttpAgent} from "@dfinity/agent";
+import {HTTPAccessPointResponse} from "../.dfx/local/canisters/identity_manager/identity_manager.did";
 
 describe("Access Point", () => {
 
@@ -38,9 +45,10 @@ describe("Access Point", () => {
             anchor: 0n
         };
         const actor = await getActor(dfx.im.id, identity, imIdl);
-        await actor.create_account(
+        const acc = (await actor.create_account(
             accountRequest
-        );
+        )) as HTTPAccountResponse;
+        expect(acc.status_code).eq(200)
         const recoveryIdentity = Ed25519KeyIdentity.generate();
         var request: AccessPointRequest = {
             icon: "",
@@ -51,19 +59,26 @@ describe("Access Point", () => {
                 Recovery: null
             }
         };
-        await dfx.im.actor.create_access_point(
+        let ap = (await actor.create_access_point(
             request
-        )
+        ) )as HTTPAccessPointResponse
+        expect(ap.status_code).eq(200)
         var removeRequest: AccessPointRemoveRequest = {
             pub_key: recoveryIdentity.getPrincipal().toText(),
         };
         try {
-            await dfx.im.actor.remove_access_point(
+            await actor.remove_access_point(
                 removeRequest
             )
             fail("")
         } catch (e) {
             expect(e.message).contains("Recovery phrase is protected")
         }
+        let recoveryActor = await getActor(dfx.im.id, recoveryIdentity, imIdl);
+
+        let resp = await recoveryActor.remove_access_point(
+            removeRequest
+        ) as HTTPAccessPointResponse
+        expect(resp.status_code).eq(200)
     });
 });

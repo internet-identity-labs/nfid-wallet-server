@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use async_trait::async_trait;
 use ic_cdk::export::Principal;
-use ic_cdk::{trap};
+use ic_cdk::{caller, trap};
 
 use crate::{AccessPointRemoveRequest, Account, AccountServiceTrait, get_account_service, ic_service};
 use crate::http::requests::{DeviceType, WalletVariant};
@@ -117,9 +117,10 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
             Some(content) => {
                 let principal = access_point_request.pub_key;
 
+                let caller = caller().to_text();
                 if  content.clone().iter()
                     .filter(|x| x.device_type.eq(&DeviceType::Recovery))
-                    .any(|x| !x.principal_id.eq(&principal)) {
+                    .any(|x| !x.principal_id.eq(&caller)) {
                     trap("Recovery phrase is protected")
                 }
 
