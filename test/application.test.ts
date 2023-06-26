@@ -227,7 +227,8 @@ describe("Application", () => {
 
         let app = await dfx.im.actor.get_application(domain3) as HTTPAppResponse;
         expect(app.data[0].alias[0][0]).eq("alias1");
-        await dfx.im.actor.update_application_alias(domain3, "alias2", ["notNeededName"]) as BoolHttpResponse;
+        let resp2 =  await dfx.im.actor.update_application_alias(domain3, "alias2", ["notNeededName"]) as BoolHttpResponse;
+        expect(resp2.data[0]).eq(true);
         app = await dfx.im.actor.get_application(domain3) as HTTPAppResponse;
         expect(app.data[0].alias[0][0]).eq("alias2");
         expect(app.data[0].alias[0][1]).eq("alias1");

@@ -5,7 +5,7 @@ import {App} from "./constanst/app.enum";
 import {deploy, getActor, getIdentity} from "./util/deployment.util";
 import {
     AccessPointRemoveRequest,
-    AccessPointRequest,
+    AccessPointRequest, HTTPAccessPointResponse,
     HTTPAccountRequest,
     HTTPAccountResponse,
 } from "./idl/identity_manager";
@@ -13,8 +13,6 @@ import {DFX} from "./constanst/dfx.const";
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {Ed25519KeyIdentity} from "@dfinity/identity";
 import {fail} from "assert";
-import {Actor, Agent, HttpAgent} from "@dfinity/agent";
-import {HTTPAccessPointResponse} from "../.dfx/local/canisters/identity_manager/identity_manager.did";
 
 describe("Access Point", () => {
 
@@ -80,5 +78,11 @@ describe("Access Point", () => {
             removeRequest
         ) as HTTPAccessPointResponse
         expect(resp.status_code).eq(200)
+        let resp2 = await recoveryActor.remove_access_point(
+            {
+                pub_key: identity.getPrincipal().toText(),
+            }
+        ) as HTTPAccessPointResponse
+        expect(resp2.status_code).eq(200)
     });
 });
