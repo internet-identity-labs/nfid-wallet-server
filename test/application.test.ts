@@ -3,7 +3,6 @@ import {expect} from "chai";
 import {
     Application,
     BoolHttpResponse,
-    HTTPAccountRequest,
     HTTPAccountResponse,
     HTTPApplicationResponse,
     HTTPAppResponse,
@@ -230,8 +229,8 @@ describe("Application", () => {
         expect(app.data[0].alias[0][0]).eq("alias1");
         await dfx.im.actor.update_application_alias(domain3, "alias2", ["notNeededName"]) as BoolHttpResponse;
         app = await dfx.im.actor.get_application(domain3) as HTTPAppResponse;
-        expect(app.data[0].alias[0][1]).eq("alias2");
-        expect(app.data[0].alias[0][0]).eq("alias1");
+        expect(app.data[0].alias[0][0]).eq("alias2");
+        expect(app.data[0].alias[0][1]).eq("alias1");
     });
 
     it("should update icon&truested", async function () {

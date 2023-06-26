@@ -3,4 +3,5 @@ pub_key = "%s";
 icon = "icon3";
 device = "device3";
 browser = "browser3";
+device_type = variant { Passkey }
 })'

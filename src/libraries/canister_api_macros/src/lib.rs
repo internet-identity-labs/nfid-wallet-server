@@ -35,6 +35,33 @@ pub fn log_error(_: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
+pub fn two_f_a(_: TokenStream, item: TokenStream) -> TokenStream {
+    let mut inner = parse_macro_input!(item as ItemFn);
+    let wrapper_sig = inner.sig.clone();
+    let inner_method_name = format_ident!("{}_log_error", inner.sig.ident);
+    inner.sig.ident = inner_method_name.clone();
+
+    let is_async = inner.sig.asyncness.is_some();
+    let arg_names = get_arg_names(&inner.sig);
+
+    let function_call = if is_async {
+        quote! { #inner_method_name ( #(#arg_names),* ) .await }
+    } else {
+        quote! { #inner_method_name ( #(#arg_names),* ) }
+    };
+
+    let expanded = quote!(
+        #[allow(unused_mut)]
+        #wrapper_sig {
+            secure_2fa();
+            #function_call
+        }
+        #inner
+    );
+    TokenStream::from(expanded)
+}
+
+#[proc_macro_attribute]
 pub fn collect_metrics(_: TokenStream, item: TokenStream) -> TokenStream {
     let mut inner = parse_macro_input!(item as ItemFn);
     let wrapper_sig = inner.sig.clone();

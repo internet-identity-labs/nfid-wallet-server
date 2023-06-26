@@ -6,7 +6,7 @@ import {App} from "./constanst/app.enum";
 import {deploy, getActor, getIdentity} from "./util/deployment.util";
 import {register} from "./util/internet_identity.util";
 import {
-    AccessPointRequest,
+    AccessPointRequest, AccountResponse,
     BoolHttpResponse,
     HTTPAccessPointResponse,
     HTTPAccountRequest,
@@ -98,10 +98,6 @@ describe("Account", () => {
             DFX.STOP();
         });
 
-        it("should throw an error due to not authenticated NFID principal on creating account.", async function () {
-            //TODO
-        })
-
         it("should error empty device data on NFID account", async function () {
             var accountRequest: HTTPAccountRequest = {
                 access_point: [],
@@ -123,7 +119,10 @@ describe("Account", () => {
                 icon: "Icon",
                 device: "Global",
                 pub_key: identity.getPrincipal().toText(),
-                browser: "Browser"
+                browser: "Browser",
+                device_type: {
+                    Email: null
+                }
             }
             var accountRequest: HTTPAccountRequest = {
                 access_point: [dd],
@@ -176,6 +175,9 @@ describe("Account", () => {
                 device: "device",
                 pub_key: Ed25519KeyIdentity.generate().getPrincipal().toText(),
                 browser: "browser",
+                device_type: {
+                    Email: null
+                }
             };
 
             try {
@@ -191,6 +193,9 @@ describe("Account", () => {
                 device: "device",
                 pub_key: dfx.user.identity.getPrincipal().toText(),
                 browser: "browser",
+                device_type: {
+                    Email: null
+                }
             };
 
             var response: HTTPAccessPointResponse = (await dfx.im.actor.create_access_point(
@@ -286,6 +291,60 @@ describe("Account", () => {
             expect(response.error).empty;
             expect(response.data[0].anchor).eq(anchorNew);
             expect(Object.keys(response.data[0].wallet)).contains("II");
+        });
+
+        it("should enable 2fa", async function () {
+            const identity = Ed25519KeyIdentity.generate();
+            const dd: AccessPointRequest = {
+                icon: "Icon",
+                device: "Global",
+                pub_key: identity.getPrincipal().toText(),
+                browser: "Browser",
+                device_type: {
+                    Email: null
+                }
+            }
+            var accountRequest: HTTPAccountRequest = {
+                access_point: [dd],
+                wallet: [{'NFID': null}],
+                anchor: 0n
+            };
+            const actor = await getActor(dfx.im.id, identity, imIdl);
+            await actor.create_account(
+                accountRequest
+            )
+            const identityDevice = getIdentity("87654321876543218765432187654123");
+            const deviceData2: AccessPointRequest = {
+                icon: "Icon",
+                device: "Global",
+                pub_key: identityDevice.getPrincipal().toText(),
+                browser: "Browser",
+                device_type: {
+                    Passkey: null
+                }
+            }
+            await actor.create_access_point(deviceData2)
+
+            //enable 2fa
+            let account = (await actor.update_2fa(true)) as AccountResponse
+            expect(account.is2fa_enabled).eq(true)
+            const actorDevice = await getActor(dfx.im.id, identityDevice, imIdl);
+            //try to update from Email
+            try {
+                await actor.update_2fa(false)
+            }catch (e) {
+                expect(e.message).contains("Unauthorised");
+            }
+            let root = (await actorDevice.get_root_by_principal(identityDevice.getPrincipal().toText())) as string
+            expect(root[0]).eq(identity.getPrincipal().toText())
+            try{
+                await actorDevice.get_root_by_principal(identity.getPrincipal().toText())
+                fail("Should Fail")
+            }catch (e) {
+                expect(e.message).contains("Unauthorised");
+            }
+            let updated2fa = (await actorDevice.update_2fa(false)) as AccountResponse
+            expect(updated2fa.is2fa_enabled).eq(false)
         });
     });
 });

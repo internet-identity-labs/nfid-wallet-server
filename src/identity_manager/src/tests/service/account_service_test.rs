@@ -1,5 +1,5 @@
-use crate::{AccountRepo, AccountRequest, AccountService, AccountServiceTrait, AccountUpdateRequest, ApplicationRepo, ApplicationService, ic_service, PersonaRepo, PersonaRequest, PersonaService, PersonaServiceTrait, update_persona};
-use crate::http::requests::WalletVariant;
+use crate::{AccountRepo, AccountRequest, AccountService, AccountServiceTrait, AccountUpdateRequest, ApplicationRepo, ApplicationService, ic_service, PersonaRepo, PersonaRequest, PersonaService, PersonaServiceTrait};
+use crate::http::requests::{WalletVariant};
 use crate::repository::access_point_repo::AccessPointRepo;
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::persona_repo::Persona;
@@ -30,6 +30,7 @@ async fn test_get_account_e2e() {
         access_points: Default::default(),
         base_fields: BasicEntity::new(),
         wallet: WalletVariant::NFID,
+        is2fa_enabled: false,
     };
     let ar = AccountRepo {};
     ar.create_account(v);

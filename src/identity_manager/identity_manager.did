@@ -65,6 +65,7 @@ type AccountResponse = record {
     personas: vec PersonaResponse;
     access_points: vec AccessPointResponse;
     wallet: WalletVariant;
+    is2fa_enabled: bool;
 };
 
 type HTTPAccountResponse = record {
@@ -82,6 +83,10 @@ type HTTPAnchorsResponse = record {
 type WalletVariant = variant {
     NFID;
     II
+};
+
+type DeviceType = variant {
+    Email; Passkey; Recovery; Unknown
 };
 
 type HTTPAccountRequest = record {
@@ -187,6 +192,7 @@ type AccessPointRequest = record {
     icon: text;
     device: text;
     browser: text;
+    device_type: DeviceType
 };
 
 type AccessPointRemoveRequest = record {
@@ -199,6 +205,7 @@ type AccessPointResponse = record {
     device: text;
     browser: text;
     last_used: nat64;
+    device_type: DeviceType
 };
 
 type HTTPAccessPointResponse = record {
@@ -389,6 +396,7 @@ service : () -> {
     */
     get_application: (text) -> (HTTPAppResponse);
     update_application: (Application) -> (HTTPApplicationResponse);
+    update_2fa: (bool) -> (AccountResponse);
 
     create_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
     update_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);

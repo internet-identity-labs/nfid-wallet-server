@@ -246,7 +246,7 @@ async fn get_root_id() -> Option<String> {
 
             let res: Option<String> = match call(im_canister, "get_root_by_principal", (princ.to_text(), 0)).await {
                 Ok((res, )) => res,
-                Err((_, err)) => trap(&format!("failed to request II: {}", err)),
+                Err((_, err)) => trap(&format!("failed to request IM: {}", err)),
             };
             res
         }

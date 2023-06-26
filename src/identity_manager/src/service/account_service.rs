@@ -1,10 +1,10 @@
 use async_trait::async_trait;
-use ic_cdk::{print, trap};
+use ic_cdk::{trap};
 use itertools::Itertools;
 
 use crate::{AccessPointServiceTrait, Account, get_caller, HttpResponse};
-use crate::http::requests::{AccountResponse, WalletVariant};
-use crate::ic_service::{DeviceKey, KeyType};
+use crate::http::requests::{AccountResponse, DeviceType, WalletVariant};
+use crate::ic_service::{KeyType};
 use crate::mapper::access_point_mapper::access_point_request_to_access_point;
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::repository::account_repo::AccountRepoTrait;
@@ -14,12 +14,14 @@ use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
 use crate::service::ic_service::{DeviceData};
+use crate::service::security_service::secure_2fa;
 use crate::util::validation_util::validate_name;
 
 #[async_trait(? Send)]
 pub trait AccountServiceTrait {
     fn get_account_response(&mut self) -> HttpResponse<AccountResponse>;
     fn get_account(&mut self) -> Option<Account>;
+    fn update_2fa(&mut self, state: bool) -> AccountResponse;
     async fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse>;
     fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
     fn remove_account(&mut self) -> HttpResponse<bool>;
@@ -54,6 +56,23 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         self.account_repo.get_account()
     }
 
+    fn update_2fa(&mut self, state: bool) -> AccountResponse {
+        match self.account_repo.get_account() {
+            None => {
+                trap("No such Account")
+            }
+            Some(mut acc) => {
+                if !acc.access_points.clone().into_iter()
+                    .any(|l| l.device_type.eq(&DeviceType::Passkey)) {
+                    trap("Forbidden")
+                }
+                acc.is2fa_enabled = state;
+                self.account_repo.store_account(acc.clone());
+                account_to_account_response(acc)
+            }
+        }
+    }
+
     async fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse> {
         let princ = ic_service::get_caller().to_text();
         if ic_service::is_anonymous(princ) {
@@ -63,7 +82,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         let mut acc = account_request_to_account(account_request.clone());
         if acc.wallet.eq(&WalletVariant::NFID) {
             //TODO 2fA with email + key/email exists
-            let anchor =  self.account_repo.find_next_nfid_anchor();
+            let anchor = self.account_repo.find_next_nfid_anchor();
             acc.anchor = anchor;
             match account_request.access_point {
                 None => {
@@ -72,6 +91,9 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
                 Some(dd) => {
                     if !acc.principal_id.eq(&dd.pub_key) {
                         trap("Incorrect Device Data")
+                    }
+                    if !&dd.device_type.eq(&DeviceType::Email) {
+                        trap("Only email device can be registered as a root")
                     }
                     acc.access_points.insert(access_point_request_to_access_point(dd));
                 }
@@ -136,6 +158,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         to_success_response(true)
     }
 
+    //remove with PN
     fn remove_account_by_principal(&mut self, principal: String) -> HttpResponse<bool> {
         let result = self.account_repo.remove_account_by_principal(principal);
         if result.is_none() {
@@ -237,11 +260,13 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
                     self.create_account(account).await
                 }
                 Some(acc) => {
+                    //TODO looks like we can recover not only with the recovery phrase but with every registered device (bug?)
                     ic_service::trap_if_not_authenticated(anchor.clone(), get_caller()).await;
                     to_success_response(account_to_account_response(acc))
                 }
             }
         } else {
+            secure_2fa();
             match { self.account_repo.get_account() } {
                 None => {
                     trap("Recovery not registered")

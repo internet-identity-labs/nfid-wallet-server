@@ -2,14 +2,12 @@ use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::export::serde::Serialize;
 
-use serde_bytes::{ByteBuf};
-
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccountRequest {
     pub anchor: u64,
     pub wallet: Option<WalletVariant>,
-    pub access_point: Option<AccessPointRequest>
+    pub access_point: Option<AccessPointRequest>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -39,7 +37,8 @@ pub struct AccountResponse {
     pub personas: Vec<PersonaResponse>,
     pub access_points: Vec<AccessPointResponse>,
     pub anchor: u64,
-    pub wallet: WalletVariant
+    pub wallet: WalletVariant,
+    pub is2fa_enabled: bool,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -55,6 +54,18 @@ pub enum WalletVariant {
     NFID,
     #[serde(rename = "II")]
     InternetIdentity,
+}
+
+#[derive(Clone, Copy, Debug, CandidType, Deserialize, PartialEq, Eq, Serialize, Hash)]
+pub enum DeviceType {
+    #[serde(rename = "Email")]
+    Email,
+    #[serde(rename = "Passkey")]
+    Passkey,
+    #[serde(rename = "Recovery")]
+    Recovery,
+    #[serde(rename = "Unknown")]
+    Unknown,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -113,6 +124,7 @@ pub struct AccessPointResponse {
     pub device: String,
     pub browser: String,
     pub last_used: u64,
+    pub device_type: DeviceType
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -121,7 +133,7 @@ pub struct AccessPointRequest {
     pub icon: String,
     pub device: String,
     pub browser: String,
-    pub wallet: Option<WalletVariant>
+    pub device_type: DeviceType
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

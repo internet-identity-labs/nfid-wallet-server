@@ -16,6 +16,7 @@
           persona_id = "TEST_ID_DD";
         };
       };
+      is2fa_enabled = false;
       wallet = variant { II };
       principal_id = "%s";
       phone_number = null;
