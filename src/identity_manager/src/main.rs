@@ -4,7 +4,7 @@ use ic_cdk::{caller, storage, trap};
 
 use ic_cdk_macros::*;
 
-use canister_api_macros::{admin, two_f_a, admin_or_lambda, collect_metrics, log_error, replicate_account};
+use canister_api_macros::{admin, two_f_a, admin_or_lambda, replicate_account};
 use service::{account_service, persona_service, phone_number_service};
 
 use crate::account_service::{AccountService, AccountServiceTrait};
@@ -65,7 +65,6 @@ async fn remove_account_by_phone_number() -> HttpResponse<bool> {
 
 #[update]
 #[admin]
-#[collect_metrics]
 async fn configure(request: ConfigurationRequest) -> () {
     let default = ConfigurationRepo::get_default_config();
     let configuration = Configuration {
@@ -134,7 +133,6 @@ async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
 
 #[update]
 #[replicate_account]
-#[collect_metrics]
 #[two_f_a]
 async fn use_access_point(browser: Option<String>) -> HttpResponse<AccessPointResponse> {
     let access_point_service = get_access_point_service();
@@ -143,8 +141,6 @@ async fn use_access_point(browser: Option<String>) -> HttpResponse<AccessPointRe
 
 #[update]
 #[replicate_account]
-#[log_error]
-#[collect_metrics]
 #[two_f_a]
 async fn create_access_point(access_point_request: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
@@ -154,8 +150,6 @@ async fn create_access_point(access_point_request: AccessPointRequest) -> HttpRe
 
 #[update]
 #[replicate_account]
-#[log_error]
-#[collect_metrics]
 #[two_f_a]
 async fn update_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
@@ -164,8 +158,6 @@ async fn update_access_point(access_point: AccessPointRequest) -> HttpResponse<V
 
 #[update]
 #[replicate_account]
-#[log_error]
-#[collect_metrics]
 #[two_f_a]
 async fn remove_access_point(access_point: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
@@ -174,33 +166,25 @@ async fn remove_access_point(access_point: AccessPointRemoveRequest) -> HttpResp
 
 #[update]
 #[replicate_account]
-#[log_error]
-#[collect_metrics]
 async fn verify_token(token: String) -> Response {
     let phone_number_service = get_phone_number_service();
     phone_number_service.verify_token(token)
 }
 
 #[update]
-#[log_error]
-#[collect_metrics]
 async fn validate_phone(request: ValidatePhoneRequest) -> Response {
     let phone_number_service = get_phone_number_service();
     phone_number_service.validate_phone(request)
 }
 
 #[update]
-#[log_error]
-#[collect_metrics]
 async fn post_token(request: TokenRequest) -> Response {
     let phone_number_service = get_phone_number_service();
     phone_number_service.post_token(request)
 }
 
 #[update]
-#[log_error]
 #[replicate_account]
-#[collect_metrics]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let response = account_service.create_account(account_request).await;
@@ -208,8 +192,6 @@ async fn create_account(account_request: AccountRequest) -> HttpResponse<Account
 }
 
 #[update]
-#[log_error]
-#[collect_metrics]
 async fn recover_account(anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     account_service.recover_account(anchor, wallet).await
@@ -251,9 +233,7 @@ async fn update_2fa(state: bool) -> AccountResponse {
 }
 
 #[update]
-#[log_error]
 #[replicate_account]
-#[collect_metrics]
 #[two_f_a]
 async fn update_account(account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
@@ -268,14 +248,12 @@ async fn get_account() -> HttpResponse<AccountResponse> {
 
 #[query]
 #[admin]
-#[log_error]
 async fn certify_phone_number_sha2(principal_id: String, domain: String) -> HttpResponse<String> {
     let account_service = get_account_service();
     account_service.certify_phone_number_sha2(principal_id, domain)
 }
 
 #[update]
-#[log_error]
 #[two_f_a]
 async fn remove_account() -> HttpResponse<bool> {
     let mut account_service = get_account_service();
@@ -283,7 +261,6 @@ async fn remove_account() -> HttpResponse<bool> {
 }
 
 #[update]
-#[log_error]
 #[admin]
 async fn remove_account_by_principal(princ: String) -> HttpResponse<bool> {
     let mut account_service = get_account_service();
@@ -291,7 +268,6 @@ async fn remove_account_by_principal(princ: String) -> HttpResponse<bool> {
 }
 
 #[update]
-#[log_error]
 #[replicate_account]
 #[two_f_a]
 async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
@@ -300,7 +276,6 @@ async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse
 }
 
 #[update]
-#[log_error]
 #[replicate_account]
 #[two_f_a]
 async fn update_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
@@ -328,27 +303,21 @@ async fn validate_signature(payload: Option<String>) -> (u64, Option<String>) {
 }
 
 #[update]
-#[log_error]
 #[admin]
-#[collect_metrics]
 async fn create_application(app: Application) -> HttpResponse<Vec<Application>> {
     let application_service = get_application_service();
     application_service.create_application(app)
 }
 
 #[update]
-#[log_error]
 #[admin]
-#[collect_metrics]
 async fn update_application(app: Application) -> HttpResponse<Vec<Application>> {
     let application_service = get_application_service();
     application_service.update_application(app)
 }
 
 #[update]
-#[log_error]
 #[admin]
-#[collect_metrics]
 async fn delete_application(app: String) -> HttpResponse<bool> {
     let application_service = get_application_service();
     application_service.delete_application(app)
@@ -390,13 +359,11 @@ async fn heartbeat_function() {
 }
 
 #[update]
-#[log_error]
 async fn flush_account() -> HttpResponse<bool> {
     replica_service::flush().await
 }
 
 #[update]
-#[log_error]
 #[admin]
 async fn store_accounts(accounts: Vec<Account>) -> HttpResponse<bool> {
     let mut account_service = get_account_service();
@@ -405,7 +372,6 @@ async fn store_accounts(accounts: Vec<Account>) -> HttpResponse<bool> {
 }
 
 #[update]
-#[log_error]
 #[admin]
 async fn restore_accounts(canister_id: String) -> HttpResponse<bool> {
     replica_service::restore_and_flush(canister_id).await
@@ -449,21 +415,6 @@ fn pre_upgrade() {
 #[post_upgrade]
 fn post_upgrade() {
     repository::repo::post_upgrade()
-}
-
-#[ic_cdk_macros::query(name = "getCanisterMetrics")]
-pub async fn get_canister_metrics(parameters: canistergeek_ic_rust::api_type::GetMetricsParameters) -> Option<canistergeek_ic_rust::api_type::CanisterMetrics<'static>> {
-    canistergeek_ic_rust::monitor::get_metrics(&parameters)
-}
-
-#[ic_cdk_macros::update(name = "collectCanisterMetrics")]
-pub async fn collect_canister_metrics() -> () {
-    canistergeek_ic_rust::monitor::collect_metrics();
-}
-
-#[ic_cdk_macros::query(name = "getCanisterLog")]
-pub async fn get_canister_log(request: Option<canistergeek_ic_rust::api_type::CanisterLogRequest>) -> Option<canistergeek_ic_rust::api_type::CanisterLogResponse<'static>> {
-    canistergeek_ic_rust::logger::get_canister_log(request)
 }
 
 //some test comment to change hash

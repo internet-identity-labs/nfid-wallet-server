@@ -156,8 +156,6 @@ pub struct AccessPointMemoryModel {
 
 
 pub fn pre_upgrade() {
-    canistergeek_ic_rust::logger
-    ::log_message("Pre upgrade started".to_string());
     let mut accounts = Vec::new();
     for p in storage::get_mut::<Accounts>().iter() {
         accounts.push(
@@ -178,14 +176,12 @@ pub fn pre_upgrade() {
     }
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
     let logs = storage::get_mut::<Logs>(); //todo remove somehow
-    let logs_new = canistergeek_ic_rust::logger::pre_upgrade_stable_data();
-    let monitor_stable_data = canistergeek_ic_rust::monitor::pre_upgrade_stable_data();
     let applications = storage::get_mut::<Applications>();
-    match storage::stable_save((accounts, admin, logs, Some(monitor_stable_data), Some(logs_new), Some(applications))) { _ => () }; //todo migrate to object
+    match storage::stable_save((accounts, admin, logs, Some(applications))) { _ => () }; //todo migrate to object
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin, _logs, monitor_data, logs_new, applications): (Vec<AccountMemoryModel>, Principal, Logs, Option<canistergeek_ic_rust::monitor::PostUpgradeStableData>, Option<canistergeek_ic_rust::logger::PostUpgradeStableData>, Option<Applications>) = storage::stable_restore().unwrap();
+    let (old_accs, admin, _logs, applications): (Vec<AccountMemoryModel>, Principal, Logs, Option<Applications>) = storage::stable_restore().unwrap();
     storage::get_mut::<Option<Principal>>().replace(admin);
     for u in old_accs {
         let princ = u.principal_id.clone();
@@ -218,18 +214,6 @@ pub fn post_upgrade() {
         }
     }
     storage::get_mut::<Option<Principal>>().replace(admin);
-    match monitor_data {
-        None => {}
-        Some(data) => {
-            canistergeek_ic_rust::monitor::post_upgrade_stable_data(data);
-        }
-    }
-    match logs_new {
-        None => {}
-        Some(log) => {
-            canistergeek_ic_rust::logger::post_upgrade_stable_data(log);
-        }
-    }
     match applications {
         None => {}
         Some(applications) => {
@@ -239,8 +223,6 @@ pub fn post_upgrade() {
             })
         }
     }
-    canistergeek_ic_rust::logger
-    ::log_message("Post upgrade completed".to_string());
 }
 
 fn access_point_to_memory_model(ap: AccessPoint) -> AccessPointMemoryModel {
