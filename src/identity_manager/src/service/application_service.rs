@@ -116,7 +116,7 @@ impl<T: ApplicationRepoTrait, N: AccountRepoTrait> ApplicationServiceTrait for A
 
     fn create_application_all(&self, apps: Vec<Application>) -> HttpResponse<Vec<Application>> {
         for app in apps {
-            self.create_application(app)
+            self.create_application(app);
         }
         self.read_applications()
     }
