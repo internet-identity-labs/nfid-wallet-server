@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use crate::{HttpResponse};
+use crate::{create_application, HttpResponse};
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::application_repo::{Application, ApplicationRepoTrait};
 use crate::response_mapper::{to_error_response, to_success_response};
@@ -13,6 +13,7 @@ pub trait ApplicationServiceTrait {
     fn create_application(&self, app: Application) -> HttpResponse<Vec<Application>>;
     fn is_over_the_application_limit(&self, domain: &String) -> HttpResponse<bool>;
     fn is_over_the_limit(&self, domain: &String) -> bool;
+    fn create_application_all(&self, apps: Vec<Application>) -> HttpResponse<Vec<Application>>;
 }
 
 #[derive(Default)]
@@ -110,6 +111,14 @@ impl<T: ApplicationRepoTrait, N: AccountRepoTrait> ApplicationServiceTrait for A
         }
         let apps = self.application_repo.create_application(app);
         to_success_response(apps)
+    }
+
+
+    fn create_application_all(&self, apps: Vec<Application>) -> HttpResponse<Vec<Application>> {
+        for app in apps {
+            self.create_application(app);
+        }
+        self.read_applications()
     }
 
     fn is_over_the_application_limit(&self, domain: &String) -> HttpResponse<bool> {
