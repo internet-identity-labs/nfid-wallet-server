@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use crate::{create_application, HttpResponse};
+use crate::{HttpResponse};
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::application_repo::{Application, ApplicationRepoTrait};
 use crate::response_mapper::{to_error_response, to_success_response};
