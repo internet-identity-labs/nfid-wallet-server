@@ -311,6 +311,13 @@ async fn create_application(app: Application) -> HttpResponse<Vec<Application>> 
 
 #[update]
 #[admin]
+async fn create_application_all(app: Vec<Application>) -> HttpResponse<Vec<Application>> {
+    let application_service = get_application_service();
+    application_service.create_application_all(app)
+}
+
+#[update]
+#[admin]
 async fn update_application(app: Application) -> HttpResponse<Vec<Application>> {
     let application_service = get_application_service();
     application_service.update_application(app)
