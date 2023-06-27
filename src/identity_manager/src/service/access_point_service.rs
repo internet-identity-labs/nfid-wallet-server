@@ -117,11 +117,13 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
             Some(content) => {
                 let principal = access_point_request.pub_key;
 
-                let caller = caller().to_text();
-                if  content.clone().iter()
-                    .filter(|x| x.device_type.eq(&DeviceType::Recovery))
-                    .any(|x| !x.principal_id.eq(&caller)) {
-                    trap("Recovery phrase is protected")
+                if self.access_point_repo.get_wallet().eq(&WalletVariant::NFID) {
+                    let caller = caller().to_text();
+                    if  content.clone().iter()
+                        .filter(|x| x.device_type.eq(&DeviceType::Recovery))
+                        .any(|x| !x.principal_id.eq(&caller)) {
+                        trap("Recovery phrase is protected")
+                    }
                 }
 
                 let aps: HashSet<AccessPoint> = content.iter()

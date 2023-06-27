@@ -5,7 +5,7 @@ use crate::repository::account_repo::{Account, AccountRepoTrait};
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use crate::repository::repo::BasicEntity;
 use serde::{Serialize};
-use crate::http::requests::DeviceType;
+use crate::http::requests::{DeviceType, WalletVariant};
 
 
 #[derive(Clone, Debug, CandidType, Deserialize, Eq, Serialize)]
@@ -33,6 +33,7 @@ impl Hash for AccessPoint {
 
 pub trait AccessPointRepoTrait {
     fn get_access_points(&self) -> Option<HashSet<AccessPoint>>;
+    fn get_wallet(&self) -> WalletVariant;
     fn get_access_points_by_principal(&self, princ: String) -> Option<HashSet<AccessPoint>>;
     fn use_access_point(&self, ap_principal: String, time: u64, browser: Option<String>) -> Option<AccessPoint>;
     fn store_access_points(&self, access_points: HashSet<AccessPoint>) -> Option<Account>;
@@ -49,6 +50,11 @@ impl AccessPointRepoTrait for AccessPointRepo {
     fn get_access_points(&self) -> Option<HashSet<AccessPoint>> {
         self.account_repo.get_account()
             .map(|x| x.access_points.clone()) //todo &
+    }
+
+    fn get_wallet(&self) -> WalletVariant {
+        self.account_repo.get_account()
+            .unwrap().wallet
     }
 
     fn get_access_points_by_principal(&self, princ: String) -> Option<HashSet<AccessPoint>> {

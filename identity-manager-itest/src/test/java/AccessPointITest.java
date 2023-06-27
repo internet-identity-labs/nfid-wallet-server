@@ -64,6 +64,11 @@ public class AccessPointITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("device/exp_update_access_point", tuple.first());
     }
 
+    @Test(priority = 70)
+    public void removeExistentAccessPointExpectVector() {
+        validateWithFormatIdentity("device/exp_remove_access_point", callAndCutLastUsed("device/req_remove_access_point", ROOT_IDENTITY));
+    }
+
     private String callAndCutLastUsed(String doc, Object... params) {
         Pair<String, String> result = TestUtils.cutField(call(doc, params), "last_used");
         return result.first();
