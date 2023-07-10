@@ -122,7 +122,8 @@ describe("Account", () => {
                 browser: "Browser",
                 device_type: {
                     Email: null
-                }
+                },
+                credential_id: []
             }
             var accountRequest: HTTPAccountRequest = {
                 access_point: [dd],
@@ -177,7 +178,8 @@ describe("Account", () => {
                 browser: "browser",
                 device_type: {
                     Email: null
-                }
+                },
+                credential_id: []
             };
 
             try {
@@ -195,7 +197,8 @@ describe("Account", () => {
                 browser: "browser",
                 device_type: {
                     Email: null
-                }
+                },
+                credential_id: ["test_id"]
             };
 
             var response: HTTPAccessPointResponse = (await dfx.im.actor.create_access_point(
@@ -207,6 +210,7 @@ describe("Account", () => {
             expect(point.icon).eq("icon");
             expect(point.device).eq("device");
             expect(point.browser).eq("browser");
+            expect(point.credential_id[0]).eq("test_id");
 
             expect(response.error).empty;
         });
@@ -302,7 +306,8 @@ describe("Account", () => {
                 browser: "Browser",
                 device_type: {
                     Email: null
-                }
+                },
+                credential_id: []
             }
             var accountRequest: HTTPAccountRequest = {
                 access_point: [dd],
@@ -321,7 +326,8 @@ describe("Account", () => {
                 browser: "Browser",
                 device_type: {
                     Passkey: null
-                }
+                },
+                credential_id: ["some_id"]
             }
             await actor.create_access_point(deviceData2)
 

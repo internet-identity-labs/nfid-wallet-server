@@ -7,6 +7,7 @@
         device = "device";
         browser = "browser";
         principal_id = "%s";
+        credential_id = null;
       };
     };
     error = null;

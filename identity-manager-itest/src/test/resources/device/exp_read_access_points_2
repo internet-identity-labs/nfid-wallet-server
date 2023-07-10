@@ -7,6 +7,7 @@
         device = "device2";
         browser = "browser2";
         principal_id = "2kqda-6wdqw-2be7y-4c5yg-ijw7q-muznw-qh3tm-55v2s-cnnyp-o2ud4-cqe";
+        credential_id = null;
       };
       record {
         icon = "icon";
@@ -14,6 +15,7 @@
         device = "device";
         browser = "browser";
         principal_id = "%s";
+        credential_id = null;
       };
     };
     error = null;

@@ -8,6 +8,7 @@ use crate::requests::{AccessPointRequest, AccessPointResponse};
 pub fn access_point_to_access_point_response(access_point: AccessPoint) -> AccessPointResponse {
     AccessPointResponse {
         principal_id: access_point.principal_id,
+        credential_id: access_point.credential_id,
         icon: access_point.icon.unwrap_or("".to_string()),
         device: access_point.device.unwrap_or("".to_string()),
         browser: access_point.browser.unwrap_or("".to_string()),
@@ -20,6 +21,7 @@ pub fn access_point_request_to_access_point(request: AccessPointRequest) -> Acce
     let basic = BasicEntity::new();
     AccessPoint {
         principal_id: request.pub_key,
+        credential_id: request.credential_id,
         icon: Some(request.icon),
         device: Some(request.device),
         browser: Some(request.browser),
@@ -33,6 +35,7 @@ pub fn recovery_device_data_to_access_point(device: DeviceData) -> AccessPoint {
     let basic = BasicEntity::new();
     let access_point = AccessPoint {
         principal_id: Principal::self_authenticating(device.pubkey).to_text(),
+        credential_id: None,
         icon:Some("document".to_string()),
         device: Some("Recovery phrase".to_string()),
         browser: Some("".to_string()),

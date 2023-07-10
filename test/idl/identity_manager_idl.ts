@@ -35,6 +35,7 @@ export const idlFactory = ({ IDL }) => {
         'device' : IDL.Text,
         'pub_key' : IDL.Text,
         'browser' : IDL.Text,
+        'credential_id' : IDL.Opt(IDL.Text),
     });
     const AccessPointResponse = IDL.Record({
         'icon' : IDL.Text,
@@ -43,6 +44,7 @@ export const idlFactory = ({ IDL }) => {
         'browser' : IDL.Text,
         'last_used' : IDL.Nat64,
         'principal_id' : IDL.Text,
+        'credential_id' : IDL.Opt(IDL.Text),
     });
     const HTTPAccessPointResponse = IDL.Record({
         'data' : IDL.Opt(IDL.Vec(AccessPointResponse)),
@@ -271,6 +273,11 @@ export const idlFactory = ({ IDL }) => {
         ),
         'create_application' : IDL.Func(
             [Application],
+            [HTTPApplicationResponse],
+            [],
+        ),
+        'create_application_all' : IDL.Func(
+            [IDL.Vec(Application)],
             [HTTPApplicationResponse],
             [],
         ),

@@ -192,7 +192,8 @@ type AccessPointRequest = record {
     icon: text;
     device: text;
     browser: text;
-    device_type: DeviceType
+    device_type: DeviceType;
+    credential_id: opt text;
 };
 
 type AccessPointRemoveRequest = record {
@@ -205,7 +206,8 @@ type AccessPointResponse = record {
     device: text;
     browser: text;
     last_used: nat64;
-    device_type: DeviceType
+    device_type: DeviceType;
+    credential_id: opt text;
 };
 
 type HTTPAccessPointResponse = record {
