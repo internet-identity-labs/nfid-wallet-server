@@ -146,6 +146,7 @@ pub struct AccountMemoryModel {
 #[derive(Clone, Debug, CandidType, Deserialize,PartialEq ,Eq, Serialize, Hash)]
 pub struct AccessPointMemoryModel {
     pub principal_id: String,
+    pub credential_id: Option<String>,
     pub icon: Option<String>,
     pub device: Option<String>,
     pub browser: Option<String>,
@@ -228,6 +229,7 @@ pub fn post_upgrade() {
 fn access_point_to_memory_model(ap: AccessPoint) -> AccessPointMemoryModel {
     return AccessPointMemoryModel {
         principal_id: ap.principal_id,
+        credential_id: ap.credential_id,
         icon: ap.icon,
         device: ap.device,
         browser: ap.browser,
@@ -240,6 +242,7 @@ fn access_point_to_memory_model(ap: AccessPoint) -> AccessPointMemoryModel {
 fn access_point_mm_to_ap(ap: AccessPointMemoryModel) -> AccessPoint {
     return AccessPoint {
         principal_id: ap.principal_id,
+        credential_id: ap.credential_id,
         icon: ap.icon,
         device: ap.device,
         browser: ap.browser,

@@ -120,6 +120,7 @@ pub struct ConfigurationResponse {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccessPointResponse {
     pub principal_id: String,
+    pub credential_id: Option<String>,
     pub icon: String,
     pub device: String,
     pub browser: String,
@@ -133,7 +134,8 @@ pub struct AccessPointRequest {
     pub icon: String,
     pub device: String,
     pub browser: String,
-    pub device_type: DeviceType
+    pub device_type: DeviceType,
+    pub credential_id: Option<String>
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

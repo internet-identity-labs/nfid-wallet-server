@@ -35,7 +35,8 @@ describe("Access Point", () => {
             browser: "Browser",
             device_type: {
                 Email: null
-            }
+            },
+            credential_id: []
         }
         var accountRequest: HTTPAccountRequest = {
             access_point: [dd],
@@ -55,7 +56,8 @@ describe("Access Point", () => {
             browser: "",
             device_type: {
                 Recovery: null
-            }
+            },
+            credential_id: []
         };
         let ap = (await actor.create_access_point(
             request

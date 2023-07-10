@@ -11,6 +11,7 @@ use crate::http::requests::{DeviceType, WalletVariant};
 #[derive(Clone, Debug, CandidType, Deserialize, Eq, Serialize)]
 pub struct AccessPoint {
     pub principal_id: String,
+    pub credential_id: Option<String>,
     pub icon: Option<String>,
     pub device: Option<String>,
     pub browser: Option<String>,

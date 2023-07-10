@@ -10,6 +10,7 @@
           device = "device";
           browser = "browser";
           principal_id = "%s";
+          credential_id = null;
         };
       };
       personas = vec {};
