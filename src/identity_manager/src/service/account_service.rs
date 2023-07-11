@@ -256,7 +256,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         if vw.eq(&WalletVariant::InternetIdentity) {
             match { self.account_repo.get_account_by_anchor(anchor, vw) } {
                 None => {
-                    let account = AccountRequest { anchor, wallet, access_point: None };
+                    let account = AccountRequest { anchor, wallet, access_point: None, email: None };
                     self.create_account(account).await
                 }
                 Some(acc) => {

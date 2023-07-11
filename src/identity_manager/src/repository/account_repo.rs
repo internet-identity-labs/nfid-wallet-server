@@ -27,6 +27,7 @@ pub struct Account {
     pub base_fields: BasicEntity,
     pub wallet: WalletVariant,
     pub is2fa_enabled: bool,
+    pub email: Option<String>,
 }
 
 #[cfg_attr(test, mocked)]

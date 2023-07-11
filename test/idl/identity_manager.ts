@@ -27,7 +27,8 @@ export interface Account {
     'personas' : Array<PersonaResponse>,
     'wallet' : WalletVariant,
     'principal_id' : string,
-    'phone_number' : [] | [string],
+    'phone_number': [] | [string],
+    'email' : [] | [string],
 }
 export interface AccountResponse {
     'name' : [] | [string],
@@ -37,7 +38,8 @@ export interface AccountResponse {
     'is2fa_enabled' : boolean,
     'wallet' : WalletVariant,
     'principal_id' : string,
-    'phone_number' : [] | [string],
+    'phone_number': [] | [string],
+    'email' : [] | [string],
 }
 export interface Application {
     'img' : [] | [string],
@@ -154,6 +156,7 @@ export interface HTTPAccountRequest {
     'anchor' : bigint,
     'access_point' : [] | [AccessPointRequest],
     'wallet' : [] | [WalletVariant],
+    'email' : [] | [string],
 }
 export interface HTTPAccountResponse {
     'data' : [] | [AccountResponse],

@@ -8,6 +8,7 @@ pub struct AccountRequest {
     pub anchor: u64,
     pub wallet: Option<WalletVariant>,
     pub access_point: Option<AccessPointRequest>,
+    pub email: Option<String>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -39,6 +40,7 @@ pub struct AccountResponse {
     pub anchor: u64,
     pub wallet: WalletVariant,
     pub is2fa_enabled: bool,
+    pub email: Option<String>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

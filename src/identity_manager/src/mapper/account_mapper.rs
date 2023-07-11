@@ -22,6 +22,7 @@ pub fn account_to_account_response(account: Account) -> AccountResponse {
             .collect(),
         wallet: account.wallet,
         is2fa_enabled: account.is2fa_enabled,
+        email: account.email,
     }
 }
 
@@ -42,5 +43,6 @@ pub fn account_request_to_account(account_request: AccountRequest) -> Account {
             Some(x) => { x }
         },
         is2fa_enabled: false,
+        email: account_request.email,
     }
 }

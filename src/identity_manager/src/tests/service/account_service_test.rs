@@ -72,6 +72,7 @@ async fn test_base_entity_on_account_create() {
         anchor: 10,
         wallet: None,
         access_point: None,
+        email: None,
     };
     let ar = AccountRepo {};
     let mut acc_serv = AccountService {

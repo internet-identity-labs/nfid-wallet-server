@@ -82,6 +82,13 @@ describe("Account", () => {
             expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.ERROR("Unable to remove Account", "404"));
             expect(DFX.CREATE_ACCOUNT_2()).eq(Expected.ACCOUNT("null", dfx.root));
         });
+
+        it("should remove account and create new one with email.", async function () {
+            expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.BOOL("true", "200"));
+            expect(DFX.CREATE_ACCOUNT_WITH_EMAIL("12345", 'opt "e@mail.com"')).eq(
+                Expected.ACCOUNT("null", dfx.root, 'opt "e@mail.com"')
+            );
+        });
     });
 
     describe("Agent tests", () => {
@@ -101,8 +108,9 @@ describe("Account", () => {
         it("should error empty device data on NFID account", async function () {
             var accountRequest: HTTPAccountRequest = {
                 access_point: [],
-                wallet: [{'NFID': null}],
-                anchor: 0n
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: [],
             };
 
             try {
@@ -128,7 +136,8 @@ describe("Account", () => {
             var accountRequest: HTTPAccountRequest = {
                 access_point: [dd],
                 wallet: [{'NFID': null}],
-                anchor: 0n
+                anchor: 0n,
+                email: ["e@mail.com"],
             };
             const actor = await getActor(dfx.im.id, identity, imIdl);
 
@@ -141,12 +150,14 @@ describe("Account", () => {
             expect(Object.keys(response.wallet)).contains("NFID")
             expect(response.access_points.length).eq(1)
             expect(response.personas.length).eq(0)
+            expect(response.email[0]).contains("e@mail.com");
         })
 
         it("should throw error due to not authentificated principal on creating account.", async function () {
             var accountRequest: HTTPAccountRequest = {
                 access_point: [], wallet: [],
-                anchor: iiAnchor + 1n
+                anchor: iiAnchor + 1n,
+                email: [],
             };
             try {
                 await dfx.im.actor.create_account(accountRequest);
@@ -159,7 +170,8 @@ describe("Account", () => {
             var accountRequest: HTTPAccountRequest = {
                 access_point: [],
                 wallet: [],
-                anchor: iiAnchor
+                anchor: iiAnchor,
+                email: [],
             };
 
             var response: HTTPAccountResponse = (await dfx.im.actor.create_account(
@@ -282,7 +294,8 @@ describe("Account", () => {
             var accountRequest: HTTPAccountRequest = {
                 anchor: anchorNew,
                 access_point: [],
-                wallet: []
+                wallet: [],
+                email: [],
             };
             await dfx.im.actor.create_account(accountRequest as any);
             const backup = await dfx.im.actor.get_all_accounts_json(0, 5);
@@ -311,8 +324,9 @@ describe("Account", () => {
             }
             var accountRequest: HTTPAccountRequest = {
                 access_point: [dd],
-                wallet: [{'NFID': null}],
-                anchor: 0n
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: [],
             };
             const actor = await getActor(dfx.im.id, identity, imIdl);
             await actor.create_account(

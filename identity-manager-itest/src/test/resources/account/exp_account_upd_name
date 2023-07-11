@@ -4,6 +4,7 @@
       name = opt "TEST_USER_UPDATED";
       anchor = 12_345 : nat64;
       access_points = vec {};
+      email = null;
       personas = vec {};
       is2fa_enabled = false;
       wallet = variant { II };

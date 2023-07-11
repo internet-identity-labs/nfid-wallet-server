@@ -13,6 +13,7 @@
           credential_id = null;
         };
       };
+      email = null;
       personas = vec {};
       is2fa_enabled = false;
       wallet = variant { II };
