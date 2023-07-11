@@ -140,6 +140,7 @@ pub struct AccountMemoryModel {
     pub base_fields: BasicEntity,
     pub wallet: Option<WalletVariant>,
     pub is2fa_enabled: Option<bool>,
+    pub email: Option<String>,
 }
 
 
@@ -173,7 +174,8 @@ pub fn pre_upgrade() {
                 base_fields: p.1.base_fields.clone(),
                 wallet: Some(p.1.wallet.clone()),
                 is2fa_enabled: Some(p.1.is2fa_enabled),
-            })
+                email: p.1.email.clone(),
+        })
     }
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
     let logs = storage::get_mut::<Logs>(); //todo remove somehow
@@ -206,6 +208,7 @@ pub fn post_upgrade() {
                 None => { false }
                 Some(x) => { x }
             },
+            email: u.email,
         });
 
         storage::get_mut::<PrincipalIndex>().insert(princ.clone(), princ.clone());

@@ -66,6 +66,7 @@ type AccountResponse = record {
     access_points: vec AccessPointResponse;
     wallet: WalletVariant;
     is2fa_enabled: bool;
+    email: opt text;
 };
 
 type HTTPAccountResponse = record {
@@ -92,7 +93,8 @@ type DeviceType = variant {
 type HTTPAccountRequest = record {
     anchor: nat64;
     wallet: opt WalletVariant;
-    access_point: opt AccessPointRequest
+    access_point: opt AccessPointRequest;
+    email: opt text;
 };
 
 type HTTPAccountUpdateRequest = record {
@@ -107,7 +109,8 @@ type Account = record {
     personas: vec PersonaResponse;
     access_points: vec AccessPointRequest;
     basic_entity: BasicEntity;
-    wallet: WalletVariant
+    wallet: WalletVariant;
+    email: opt text;
 };
 
     //  ----------------------PERSONA SECTION----------------------------

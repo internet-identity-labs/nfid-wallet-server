@@ -19,6 +19,7 @@ export const DFX = {
     CONFIGURE_IM: (x: string) => call(`dfx canister call identity_manager configure '(record {${x}})'`),
     CONFIGURE_REPLICA: (x: string) => call(`dfx canister call identity_manager_replica configure '(record {env = opt "test"; whitelisted_canisters = opt vec { principal "${x}" }})'`),
     CREATE_ACCOUNT: (x: string) => call(`dfx canister call identity_manager create_account '( record { anchor = ${x} })'`),
+    CREATE_ACCOUNT_WITH_EMAIL: (x: string, y: string) => call(`dfx canister call identity_manager create_account '( record { anchor = ${x}; email = ${y} })'`),
     CREATE_ACCOUNT_2: () => call(`dfx canister call identity_manager create_account '( record {name = "TEST_USER"; anchor = 12345})'`),
     CREATE_ACCOUNT_FULL: () => call(`dfx canister call identity_manager create_account '( record {name = "TEST_USER"; anchor = 12345; phone_number = "1234567";  token = "1234"})'`),
     GET_ACCOUNT: (x: string) => call(`dfx canister call ${x} get_account`),

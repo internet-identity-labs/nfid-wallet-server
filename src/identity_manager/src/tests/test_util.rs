@@ -24,6 +24,7 @@ pub(crate) async fn create_default_account(){
         anchor: 5,
         wallet: None,
         access_point: None,
+        email: None,
     };
     let mut account_service = get_account_service();
     account_service.create_account(acc).await;

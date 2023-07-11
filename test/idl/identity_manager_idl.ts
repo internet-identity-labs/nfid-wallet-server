@@ -56,6 +56,7 @@ export const idlFactory = ({ IDL }) => {
         'anchor' : IDL.Nat64,
         'access_point' : IDL.Opt(AccessPointRequest),
         'wallet' : IDL.Opt(WalletVariant),
+        'email' : IDL.Opt(IDL.Text),
     });
     const PersonaResponse = IDL.Record({
         'domain' : IDL.Text,
@@ -70,7 +71,8 @@ export const idlFactory = ({ IDL }) => {
         'is2fa_enabled' : IDL.Bool,
         'wallet' : WalletVariant,
         'principal_id' : IDL.Text,
-        'phone_number' : IDL.Opt(IDL.Text),
+        'phone_number': IDL.Opt(IDL.Text),
+        'email' : IDL.Opt(IDL.Text),
     });
     const HTTPAccountResponse = IDL.Record({
         'data' : IDL.Opt(AccountResponse),
@@ -237,7 +239,8 @@ export const idlFactory = ({ IDL }) => {
         'personas' : IDL.Vec(PersonaResponse),
         'wallet' : WalletVariant,
         'principal_id' : IDL.Text,
-        'phone_number' : IDL.Opt(IDL.Text),
+        'phone_number': IDL.Opt(IDL.Text),
+        'email' : IDL.Opt(IDL.Text),
     });
     const HTTPAccountUpdateRequest = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
     const HTTPOneAccessPointResponse = IDL.Record({

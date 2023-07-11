@@ -41,7 +41,8 @@ describe("Access Point", () => {
         var accountRequest: HTTPAccountRequest = {
             access_point: [dd],
             wallet: [{'NFID': null}],
-            anchor: 0n
+            anchor: 0n,
+            email: []
         };
         const actor = await getActor(dfx.im.id, identity, imIdl);
         const acc = (await actor.create_account(
