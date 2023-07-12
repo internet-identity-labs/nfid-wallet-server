@@ -14,6 +14,7 @@ pub struct AccountRequest {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct AccountUpdateRequest {
     pub name: Option<String>,
+    pub email: Option<String>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

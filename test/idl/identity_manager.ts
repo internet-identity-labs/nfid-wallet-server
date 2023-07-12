@@ -163,7 +163,7 @@ export interface HTTPAccountResponse {
     'error' : [] | [Error],
     'status_code' : number,
 }
-export interface HTTPAccountUpdateRequest { 'name' : [] | [string] }
+export interface HTTPAccountUpdateRequest { 'name' : [] | [string], 'email' : [] | [string] }
 export interface HTTPAnchorsResponse {
     'data' : [] | [BigUint64Array],
     'error' : [] | [Error],

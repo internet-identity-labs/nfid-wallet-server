@@ -26,6 +26,7 @@ export const DFX = {
     GET_ACCOUNT_BY_PRINCIPAL: (x: string, y: string) => call(`dfx canister call ${x} get_account_by_principal '("${y}")'`),
     GET_PN_SHA2: (x: string, y: string) => call(`dfx canister call ${x} certify_phone_number_sha2 '("${y}", "domain")'`),
     UPDATE_ACCOUNT_NAME: () => call(`dfx canister call identity_manager update_account '( record {name = opt "TEST_USER_UPDATED";})'`),
+    UPDATE_ACCOUNT_EMAIL: (x: string) => call(`dfx canister call identity_manager update_account '( record { email = opt "${x}";})'`),
     TOKEN: (x: string, y: string, z: string, d: string) => call(`dfx canister call identity_manager post_token '(record { phone_number_encrypted = "${x}"; phone_number_hash = "${y}"; token = "${z}"; principal_id = "${d}"})'`),
     RECOVER_ACCOUNT: () => call(`dfx canister call identity_manager recover_account '(12_345:nat64, opt variant {II})'`),
     REMOVE_ACCOUNT: (x: string) => call(`dfx canister call ${x} remove_account`), 

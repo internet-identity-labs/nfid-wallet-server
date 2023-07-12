@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use ic_cdk::{trap};
 use itertools::Itertools;
 
+use crate::http::response_mapper::ErrorResponse;
 use crate::{AccessPointServiceTrait, Account, get_caller, HttpResponse};
 use crate::http::requests::{AccountResponse, DeviceType, WalletVariant};
 use crate::ic_service::{KeyType};
@@ -128,6 +129,12 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
                         return to_error_response("Name must only contain letters and numbers (5-15 characters)");
                     }
                     new_acc.name = account_request.name.clone();
+                }
+                if account_request.email.is_some() {
+                    if new_acc.email.as_ref().is_some() {
+                        return HttpResponse::error(400, "Email cannot be updated if set once.")
+                    }
+                    new_acc.email = account_request.email.clone();
                 }
                 new_acc.base_fields.update_modified_date();
                 self.account_repo.store_account(new_acc.clone());
