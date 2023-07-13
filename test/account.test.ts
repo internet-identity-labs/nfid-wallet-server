@@ -83,11 +83,19 @@ describe("Account", () => {
             expect(DFX.CREATE_ACCOUNT_2()).eq(Expected.ACCOUNT("null", dfx.root));
         });
 
+        it("should update email.", async function () {
+            expect(DFX.UPDATE_ACCOUNT_EMAIL("email")).eq(Expected.ACCOUNT(`null`, dfx.root, "opt \"email\""));
+        });
+
         it("should remove account and create new one with email.", async function () {
             expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.BOOL("true", "200"));
             expect(DFX.CREATE_ACCOUNT_WITH_EMAIL("12345", 'opt "e@mail.com"')).eq(
                 Expected.ACCOUNT("null", dfx.root, 'opt "e@mail.com"')
             );
+        });
+
+        it("should update account with email and receive an error.", async function () {
+            expect(DFX.UPDATE_ACCOUNT_EMAIL("email")).eq(Expected.ERROR("Email cannot be updated if set once.", "400"));
         });
     });
 

@@ -99,6 +99,7 @@ type HTTPAccountRequest = record {
 
 type HTTPAccountUpdateRequest = record {
     name: opt text;
+    email: opt text;
 };
 
 type Account = record {

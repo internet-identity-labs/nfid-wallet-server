@@ -242,7 +242,7 @@ export const idlFactory = ({ IDL }) => {
         'phone_number': IDL.Opt(IDL.Text),
         'email' : IDL.Opt(IDL.Text),
     });
-    const HTTPAccountUpdateRequest = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
+    const HTTPAccountUpdateRequest = IDL.Record({ 'name' : IDL.Opt(IDL.Text), 'email' : IDL.Opt(IDL.Text) });
     const HTTPOneAccessPointResponse = IDL.Record({
         'data' : IDL.Opt(AccessPointResponse),
         'error' : IDL.Opt(Error),
