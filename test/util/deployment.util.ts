@@ -40,7 +40,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             id: null,
             actor: null,
         },
-        ecdsa: {
+        eth_signer: {
             id: null,
             actor: null,
         },
@@ -93,19 +93,6 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             console.debug(">> ", dfx.ess.id);
 
             dfx.ess.actor = await getActor(dfx.ess.id, dfx.user.identity, essIdl);
-        }
-
-        if (apps.includes(App.BTC)) {
-            if (clean) {
-                DFX.DEPLOY_WITH_ARGUMENT("bitcoin", "variant { Regtest }");
-            } else {
-                DFX.UPGRADE_FORCE("bitcoin");
-            }
-
-            dfx.btc.id = DFX.GET_CANISTER_ID("bitcoin");
-            console.debug(">> ", dfx.btc.id);
-
-            dfx.btc.actor = await getActor(dfx.btc.id, dfx.user.identity, btcIdl);
         }
 
         if (apps.includes(App.IdentityManager)) {
@@ -182,10 +169,10 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         if (apps.includes(App.ECDSASigner)) {
            DFX.DEPLOY_ECDSA();
 
-            dfx.ecdsa.id = DFX.GET_CANISTER_ID("ecdsa_signer");
-            console.log(">> ", dfx.ecdsa.id);
+            dfx.eth_signer.id = DFX.GET_CANISTER_ID("signer_eth");
+            console.log(">> ", dfx.eth_signer.id);
 
-            dfx.ecdsa.actor = await getActor(dfx.ecdsa.id, dfx.user.identity, esdsaIdl);
+            dfx.eth_signer.actor = await getActor(dfx.eth_signer.id, dfx.user.identity, esdsaIdl);
             return dfx;
         }
 

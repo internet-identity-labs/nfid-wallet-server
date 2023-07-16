@@ -65,13 +65,13 @@
       "wasm": "vault.wasm",
       "type": "custom"
     },
-    "ecdsa_signer": {
+    "signer_eth": {
       "build": "src/ecdsa_signer/build.sh",
       "candid": "src/ecdsa_signer/ecdsa_signer.did",
       "wasm": "ecdsa_signer.wasm",
       "type": "custom"
     },
-    "ecdsa_signer_btc": {
+    "signer_btc": {
       "build": "src/ecdsa_signer/build.sh",
       "candid": "src/ecdsa_signer/ecdsa_signer.did",
       "wasm": "ecdsa_signer.wasm",

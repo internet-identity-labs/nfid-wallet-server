@@ -31,7 +31,7 @@ export interface Dfx {
         id: string;
         actor: Record<string, ActorMethod>;
     };
-    ecdsa?: {
+    eth_signer?: {
         id: string;
         actor: Record<string, ActorMethod>;
     };

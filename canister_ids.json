@@ -39,19 +39,16 @@
     "dev": "25nnx-kyaaa-aaaao-ab43a-cai",
     "ic": "ckqrk-4yaaa-aaaak-adxsa-cai"
   },
-  "ecdsa_signer": {
+  "signer_eth": {
     "dev": "txkre-oyaaa-aaaap-qa3za-cai",
-    "fiduciary": "ngt6g-7yaaa-aaaar-qaagq-cai",
     "ic": "qsemi-gqaaa-aaaao-agwfa-cai"
   },
-  "ecdsa_signer_btc": {
-    "dev": "7b5jg-paaaa-aaaap-aa32q-cai",
-    "prod": "eke5v-vqaaa-aaaag-qb5ea-cai"
-  },
   "signer_ic": {
-    "dev": "zhr63-daaaa-aaaap-qbh4q-cai"
+    "dev": "nux62-yqaaa-aaaak-ae2pq-cai",
+    "ic": "us7ed-qyaaa-aaaam-abpoa-cai"
   },
-  "bitcoin": {
-    "dev": "iohef-tiaaa-aaaal-qbtza-cai"
+  "signer_btc": {
+    "dev": "iohef-tiaaa-aaaal-qbtza-cai",
+    "ic": "7d6fq-liaaa-aaaag-absuq-cai"
   }
 }
