@@ -35,7 +35,7 @@ describe("ECDSA signer test", () => {
             expect(response.key_pair[0].public_key).eq("test_public")
             expect(response.key_pair[0].private_key_encrypted).eq("test_private")
             expect(response.princ).eq(dfx.user.identity.getPrincipal().toText())
-            DFX.UPGRADE_FORCE('ecdsa_signer')
+            DFX.UPGRADE_FORCE('signer_eth')
             response = await dfx.eth_signer.actor.get_kp() as KeyPairResponse;
             expect(response.key_pair[0].public_key).eq("test_public")
             expect(response.key_pair[0].private_key_encrypted).eq("test_private")
@@ -48,8 +48,8 @@ describe("ECDSA signer test", () => {
             } catch (e) {
                 expect(e.message).contains("Unauthorised")
                 DFX.USE_TEST_ADMIN();
-                DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "ecdsa_signer");
-                DFX.ADD_CONTROLLER(dfx.eth_signer.id, "ecdsa_signer");
+                DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "signer_eth");
+                DFX.ADD_CONTROLLER(dfx.eth_signer.id, "signer_eth");
             }
             await dfx.eth_signer.actor.sync_controllers()
             let count = await dfx.eth_signer.actor.count()
