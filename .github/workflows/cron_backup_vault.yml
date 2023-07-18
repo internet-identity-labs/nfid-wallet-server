@@ -37,7 +37,7 @@ jobs:
             /home/ubuntu/.cargo/registry/index/
             /home/ubuntu/.cargo/registry/cache/
             /home/ubuntu/.cargo/git/db/
-            /home/ubuntu/.cargo/cargo_target
+            /home/ubuntu/.cargo/cargo_target/
             target/
           key: ${{ runner.os }}-cargo-${{ env.NETWORK_NAME }}-${{ env.CANISTER_NAME }}-${{ hashFiles('**/Cargo.lock') }}
 
@@ -62,6 +62,7 @@ jobs:
           fi
           ID_PATH="/home/ubuntu/.config/dfx/identity/${ID_NAME}"
 
+          ci_echo_debug "Populating env variables" >&2
           CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
           CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
           CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
@@ -73,10 +74,9 @@ jobs:
           echo "ID_PATH=${ID_PATH}" >> $GITHUB_ENV
           echo "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >> $GITHUB_ENV
 
-      - name: PRE-BUILD => Print Vars.
+      - name: PRE-BACKUP => Print Vars.
         run: |
           source ./ci_libs/CI_LIBS.sh
-
           ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
           ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
           ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
@@ -87,7 +87,7 @@ jobs:
           ci_echo_info "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >&2
           ci_echo_info "COMPRESS_BACKUP=${COMPRESS_BACKUP}" >&2
 
-      - name: PRE-BUILD => Write identity.
+      - name: PRE-BACKUP => Write identity.
         run: |
           source ./ci_libs/CI_LIBS.sh
 
@@ -109,7 +109,7 @@ jobs:
           DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
           PROD_VAULT_KEY: ${{secrets.PROD_VAULT_KEY}}
 
-      - name: PRE-BUILD => DFX status.
+      - name: PRE-BACKUP => DFX status.
         run: |
           dfx --version
 

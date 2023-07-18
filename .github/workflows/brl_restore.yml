@@ -93,7 +93,7 @@ jobs:
             /home/ubuntu/.cargo/registry/index/
             /home/ubuntu/.cargo/registry/cache/
             /home/ubuntu/.cargo/git/db/
-            /home/ubuntu/.cargo/cargo_target
+            /home/ubuntu/.cargo/cargo_target/
             target/
           key: ${{ runner.os }}-cargo-${{ github.event.inputs.source_network_name }}-${{ github.event.inputs.source_canister_name }}-${{ hashFiles('**/Cargo.lock') }}
 
@@ -125,7 +125,10 @@ jobs:
           echo "ID_NAME=${ID_NAME}" >> $GITHUB_ENV
           echo "ID_PATH=${ID_PATH}" >> $GITHUB_ENV
           echo "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >> $GITHUB_ENV
-          
+
+      - name: PRE-BUILD => Print Vars.
+        run: |
+          source ./ci_libs/CI_LIBS.sh
           ci_echo_info "RESTORE_NAME=${RESTORE_NAME}" >&2
           ci_echo_info "SOURCE_NETWORK_NAME=${SOURCE_NETWORK_NAME}" >&2
           ci_echo_info "SOURCE_CANISTER_NAME=${SOURCE_CANISTER_NAME}" >&2
@@ -137,12 +140,14 @@ jobs:
 
       - name: PRE-BUILD => Write identity.
         run: |
+          source ./ci_libs/CI_LIBS.sh
+
           mkdir -p "${ID_PATH}"
           echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
           sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
         env:
-          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
           DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
+          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
 
       - name: PRE-BUILD => DFX status.
         run: |
@@ -159,5 +164,3 @@ jobs:
           ci_canister_restore "${DESTINATION_CANISTER_NAME}" "${DESTINATION_NETWORK_NAME}" "${BACKUP_FOLDER}" "${BACKUP_FILES_PATH}"
         env:
           BACKUP_FOLDER: /home/ubuntu/backup/
-
-
