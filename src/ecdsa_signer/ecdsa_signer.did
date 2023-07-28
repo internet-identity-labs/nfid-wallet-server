@@ -10,6 +10,7 @@ type KeyPairResponse = record {
 
 service : {
     add_kp : (KeyPair) -> ();
-    get_kp : () -> (KeyPairResponse) query;
+    get_kp : () -> (KeyPairResponse);
     get_principal : (opt text) -> (text, opt text) query;
+    get_pk_by_principal : (text) -> (text);
 }

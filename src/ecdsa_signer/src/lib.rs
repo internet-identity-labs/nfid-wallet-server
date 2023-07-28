@@ -134,6 +134,20 @@ async fn get_kp() -> KeyPairResponse {
 }
 
 #[update]
+async fn get_pk_by_principal(key: String) -> String {
+    ECDSA_KEYS.with(|keys| {
+        match keys.borrow().get(&key) {
+            None => {
+                trap("Nope")
+            }
+            Some(kp) => {
+                kp.key_pair.public_key.clone()
+            }
+        }
+    })
+}
+
+#[update]
 #[candid_method(update)]
 async fn add_kp(kp: KeyPair) {
     let key = match get_root_id().await {

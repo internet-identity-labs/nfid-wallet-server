@@ -39,6 +39,9 @@ describe("ECDSA signer test", () => {
             response = await dfx.ecdsa.actor.get_kp() as KeyPairResponse;
             expect(response.key_pair[0].public_key).eq("test_public")
             expect(response.key_pair[0].private_key_encrypted).eq("test_private")
+            let publicKey = await dfx.ecdsa.actor.get_pk_by_principal(response.princ) as String;
+            expect(publicKey).eq("test_public")
+
         });
 
         it("should backup", async function () {
