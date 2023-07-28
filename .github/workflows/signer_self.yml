@@ -1,4 +1,4 @@
-name: SH - Pub Sub
+name: SH - Signers
 on: 
   workflow_dispatch:
     inputs:
@@ -8,13 +8,15 @@ on:
         type: choice
         options: 
           - dev
-          - ic
+          # - ic
       canister_name:
         description: 'Choose applicable canister'
         required: true
         type: choice
         options:
-          - pub_sub_channel
+          - ecdsa_signer
+          - ecdsa_signer_btc
+          - signer_ic
       debug_messages:
         description: 'Show debug messages'
         type: choice
@@ -100,7 +102,7 @@ jobs:
           echo "ID_NAME=${ID_NAME}" >> $GITHUB_ENV
           echo "ID_PATH=${ID_PATH}" >> $GITHUB_ENV
           echo "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >> $GITHUB_ENV
-
+          
       - name: PRE-BUILD => Print Vars.
         run: |
           source ./ci_libs/CI_LIBS.sh
@@ -164,64 +166,65 @@ jobs:
             ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
           fi
 
+      - name: DEPLOY => Reconfig the canister and sync controllers.
+        run: |
+          source ./ci_libs/CI_LIBS.sh
+
+          dfx identity use "${ID_NAME}"
+
+          if [ "${NETWORK_NAME}" == 'ic' ]; then
+            ci_echo_warn "Performing PROD config Update" >&2
+            CI_DEBUG="true"
+            CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_PROD_DATA"
+          else
+            CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_DATA"
+          fi
+
+          CANISTER_DATA="${!CANISTER_DATA_NAME_VAR}"
+
+          # Reconfig command
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' reconfig '${CANISTER_DATA}'" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" reconfig "${CANISTER_DATA}"); then
+            ci_echo_error "Configure failed ${result}" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Command output was '${result}'" >&2
+
+          # If '()' not found - than fail
+          if ! echo "${result}" | grep -q '()'; then
+            ci_echo_error "${result}" >&2
+            exit 1
+          else
+            ci_echo_success "${result}" >&2
+          fi
+          
+          # Sync command
+          ci_echo_info "Synching controllers for the canister." >&2
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' sync_controllers" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" sync_controllers); then
+            ci_echo_warn "Synching controllers failed ${result}" >&2
+          else
+            ci_echo_success "${result}" >&2
+          fi
+
+        env:
+          CANISTER_CONFIG_DATA: >-
+            (
+              record {
+                im_canister = opt "74gpt-tiaaa-aaaak-aacaa-cai"
+              }
+            )
+          CANISTER_CONFIG_PROD_DATA: >-
+            (
+              record {
+                im_canister = opt "";
+              }
+            )
+
       - name: Save artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.CANISTER_WASM }}
           path: ${{ github.workspace }}/${{ env.CANISTER_WASM }}
-
-      - name: Frontend => Checkout repo.
-        uses: actions/checkout@v3
-        if: ${{ github.event.inputs.network_name != 'ic' }}
-        with:
-          token: ${{ secrets.PAT }}
-          repository: internet-identity-labs/nfid-frontend
-          ref: main
-          path: frontend
-
-      - name: Frontend => Update did files.
-        if: ${{ github.event.inputs.network_name != 'ic' }}
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-
-          ci_echo_info "Updating DID file." >&2
-          ci_echo_debug "Cleaning destination files" >&2
-          rm -fv "./frontend/src/integration/_ic_api/${CANISTER_NAME}.did.d.ts" "./frontend/src/integration/_ic_api/${CANISTER_NAME}_idl.js"
-
-          ci_echo_debug "Cutting text..." >&2
-          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.d.ts" "./frontend/src/integration/_ic_api/${CANISTER_NAME}.did.d.ts"
-          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.js" "./frontend/src/integration/_ic_api/${CANISTER_NAME}_idl.js"
-        env:
-          START_PLACEHOLDER: '\/\/---BEGIN-CUT---'
-          STOP_PLACEHOLDER: '\/\/---END-CUT---'
-
-      - name: Frontend => Format did files.
-        if: ${{ github.event.inputs.network_name != 'ic' }}
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-          ci_echo_debug "Add PSYCHEDELIC_GH_NPM_REGISTRY" >&2
-          cat > ~/.npmrc << EOF
-          @psychedelic:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${PSYCHEDELIC_GH_NPM_REGISTRY}
-          EOF
-
-          sudo npm install --global yarn
-          cd ./frontend
-
-          yarn
-          yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}.did.d.ts
-          yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}_idl.js
-          git diff
-        env:
-          PSYCHEDELIC_GH_NPM_REGISTRY: ${{secrets.PSYCHEDELIC_GH_NPM_REGISTRY}}
-
-      - name: Frontend => Create a pull request.
-        if: ${{ github.event.inputs.network_name != 'ic' }}
-        uses: peter-evans/create-pull-request@v4
-        with:
-          token: ${{ secrets.PAT }}
-          commit-message: "ci: update ${{ env.NETWORK_NAME }} - ${{ env.CANISTER_NAME }} did files"
-          title: "ci: update ${{ env.NETWORK_NAME }} - ${{ env.CANISTER_NAME }} did files"
-          branch: update-did-files
-          path: frontend
-          reviewers: plitzenberger
+    
