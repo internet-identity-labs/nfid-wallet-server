@@ -23,38 +23,38 @@ describe("ECDSA signer test", () => {
             let kp: KeyPair = {
                 private_key_encrypted: "test_private", public_key: "test_public"
             }
-            let emptyResponse = await dfx.ecdsa.actor.get_kp() as KeyPairResponse;
+            let emptyResponse = await dfx.eth_signer.actor.get_kp() as KeyPairResponse;
             expect(emptyResponse.key_pair.length).eq(0)
-            await dfx.ecdsa.actor.add_kp(kp);
+            await dfx.eth_signer.actor.add_kp(kp);
             try {
-                await dfx.ecdsa.actor.add_kp(kp);
+                await dfx.eth_signer.actor.add_kp(kp);
             } catch (e) {
                 expect(e.message.includes("Already registered"))
             }
-            let response = await dfx.ecdsa.actor.get_kp() as KeyPairResponse;
+            let response = await dfx.eth_signer.actor.get_kp() as KeyPairResponse;
             expect(response.key_pair[0].public_key).eq("test_public")
             expect(response.key_pair[0].private_key_encrypted).eq("test_private")
             expect(response.princ).eq(dfx.user.identity.getPrincipal().toText())
-            DFX.UPGRADE_FORCE('ecdsa_signer')
-            response = await dfx.ecdsa.actor.get_kp() as KeyPairResponse;
+            DFX.UPGRADE_FORCE('signer_eth')
+            response = await dfx.eth_signer.actor.get_kp() as KeyPairResponse;
             expect(response.key_pair[0].public_key).eq("test_public")
             expect(response.key_pair[0].private_key_encrypted).eq("test_private")
         });
 
         it("should backup", async function () {
             try {
-                await dfx.ecdsa.actor.get_all_json(0, 10)
+                await dfx.eth_signer.actor.get_all_json(0, 10)
                 fail("Should unauthorised")
             } catch (e) {
                 expect(e.message).contains("Unauthorised")
                 DFX.USE_TEST_ADMIN();
-                DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "ecdsa_signer");
-                DFX.ADD_CONTROLLER(dfx.ecdsa.id, "ecdsa_signer");
+                DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "signer_eth");
+                DFX.ADD_CONTROLLER(dfx.eth_signer.id, "signer_eth");
             }
-            await dfx.ecdsa.actor.sync_controllers()
-            let count = await dfx.ecdsa.actor.count()
+            await dfx.eth_signer.actor.sync_controllers()
+            let count = await dfx.eth_signer.actor.count()
             expect(count).eq(1n)
-            let json = await dfx.ecdsa.actor.get_all_json(0, 10)
+            let json = await dfx.eth_signer.actor.get_all_json(0, 10)
             expect(json).contains("public_key")
             expect(json).contains("test_public")
             expect(json).contains("private_key")

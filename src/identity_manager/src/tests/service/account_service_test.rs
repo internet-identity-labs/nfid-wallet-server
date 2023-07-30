@@ -31,6 +31,7 @@ async fn test_get_account_e2e() {
         base_fields: BasicEntity::new(),
         wallet: WalletVariant::NFID,
         is2fa_enabled: false,
+        email: None,
     };
     let ar = AccountRepo {};
     ar.create_account(v);
@@ -94,6 +95,7 @@ async fn test_base_entity_on_account_update() {
         anchor: 11,
         wallet: None,
         access_point: None,
+        email: None,
     };
     let ar = AccountRepo {};
     let mut acc_serv = AccountService {
@@ -104,7 +106,8 @@ async fn test_base_entity_on_account_update() {
     let acc_repo = AccountRepo {};
     assert_eq!(11, acc_serv.create_account(v).await.data.unwrap().anchor);
     let vv = AccountUpdateRequest {
-        name: Option::from("321".to_string())
+        name: Option::from("321".to_string()),
+        email: None,
     };
     acc_serv.update_account(vv);
     assert_eq!(123456789, acc_repo.get_account().unwrap().base_fields.get_modified_date());
