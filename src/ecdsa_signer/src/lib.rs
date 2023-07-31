@@ -134,6 +134,13 @@ async fn get_kp() -> KeyPairResponse {
 }
 
 #[update]
+async fn get_origins() -> Vec<String> {
+    vec![
+        String::from("nfid.one")
+    ]
+}
+
+#[update]
 #[candid_method(update)]
 async fn add_kp(kp: KeyPair) {
     let key = match get_root_id().await {
