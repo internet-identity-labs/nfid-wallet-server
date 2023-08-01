@@ -134,7 +134,7 @@ async fn get_kp() -> KeyPairResponse {
 }
 
 #[update]
-async fn get_origins() -> Vec<String> {
+async fn get_trusted_origins() -> Vec<String> {
     vec![
         String::from("nfid.one")
     ]

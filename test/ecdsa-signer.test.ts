@@ -42,7 +42,7 @@ describe("ECDSA signer test", () => {
         });
 
         it("origins", async function () {
-            const result = await dfx.ecdsa.actor.get_origins()
+            const result = await dfx.eth_signer.actor.get_trusted_origins()
             expect(result).contains("nfid.one")
         })
 

@@ -12,5 +12,5 @@ service : {
     add_kp : (KeyPair) -> ();
     get_kp : () -> (KeyPairResponse) query;
     get_principal : (opt text) -> (text, opt text) query;
-    get_origins : () -> (vec text);
+    get_trusted_origins : () -> (vec text);
 }

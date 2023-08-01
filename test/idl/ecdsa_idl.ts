@@ -26,7 +26,7 @@ export const idlFactory = ({ IDL }) => {
         'public_key' : IDL.Func([], [Result_1], []),
         'sign' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result], []),
         'sync_controllers' : IDL.Func([], [IDL.Vec(IDL.Text)], []),
-        'get_origins' : IDL.Func([], [IDL.Vec(IDL.Text)], []),
+        'get_trusted_origins' : IDL.Func([], [IDL.Vec(IDL.Text)], []),
     });
 };
 export const init = ({ IDL }) => { return []; };
