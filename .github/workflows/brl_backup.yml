@@ -149,8 +149,16 @@ jobs:
             ci_echo_info "Installing base64 package..." >&2
             sudo apt-get update && sudo apt-get install -y coreutils moreutils
 
-            ci_echo_info "Decoding..." >&2
-            base64 -d "${ID_PATH}/identity.pem" | sponge "${ID_PATH}/identity.pem"
+            # TODO https://app.shortcut.com/the-internet-portal/story/8048
+            # sc-8048
+            # Due to PROD_ADMIN_KEY is not base64 - skip such action for it
+            if [ "${IDENTITY_PEM_NAME_VAR}" != "PROD_ADMIN_KEY" ]; then
+              ci_echo_info "Decoding..." >&2
+              base64 -d "${ID_PATH}/identity.pem" | sponge "${ID_PATH}/identity.pem"
+            else
+              ci_echo_info "Remove trailing symbols in key" >&2
+              sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
+            fi
           else
             ci_echo_info "Remove trailing symbols in key" >&2
             sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
