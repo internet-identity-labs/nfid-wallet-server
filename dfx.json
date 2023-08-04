@@ -118,6 +118,12 @@
       ],
       "type": "persistent"
     },
+    "stage": {
+      "providers": [
+        "https://ic0.app/"
+      ],
+      "type": "persistent"
+    },
     "prod": {
       "providers": [
         "https://ic0.app/"
