@@ -8,6 +8,7 @@ crate-type = ["cdylib"]
 proc-macro = true
 
 [dependencies]
+candid = "0.7.18"
 ic-cdk = "0.3.2"
 ic-cdk-macros = "0.3.3"
 ic-types = "0.1.1"

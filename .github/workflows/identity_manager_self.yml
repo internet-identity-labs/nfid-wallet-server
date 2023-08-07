@@ -212,6 +212,7 @@ jobs:
           CANISTER_CONFIG_TEST_DATA: >-
             (
                 record {
+                    lambda_url = opt "https://28oge2ricd.execute-api.us-east-1.amazonaws.com/prod";
                     lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                     whitelisted_canisters = opt vec {principal "bryxc-zqaaa-aaaal-aajga-cai"};
                     git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
@@ -316,6 +317,7 @@ jobs:
           CANISTER_CONFIG_DATA: >-
             (
               record {
+                lambda_url = opt "https://ia15v0pzlb.execute-api.us-east-1.amazonaws.com/dev";
                 ii_canister_id = opt principal "nprnb-waaaa-aaaaj-qax4a-cai";
                 lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
@@ -326,6 +328,7 @@ jobs:
           CANISTER_CONFIG_PROD_DATA: >-
             (
               record {
+                lambda_url = opt "https://28oge2ricd.execute-api.us-east-1.amazonaws.com/prod";
                 ii_canister_id = opt principal "rdmx6-jaaaa-aaaaa-aaadq-cai";
                 lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                 heartbeat = opt 900;

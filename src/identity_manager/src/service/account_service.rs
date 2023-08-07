@@ -3,6 +3,8 @@ use ic_cdk::{trap};
 use itertools::Itertools;
 
 use crate::http::response_mapper::ErrorResponse;
+use crate::repository::repo::ConfigurationRepo;
+use crate::service::http_outcall_service::{CanisterHttpRequestArgument, HttpMethod, HttpHeader, http_request};
 use crate::{AccessPointServiceTrait, Account, get_caller, HttpResponse};
 use crate::http::requests::{AccountResponse, DeviceType, WalletVariant};
 use crate::ic_service::{KeyType};
@@ -17,6 +19,7 @@ use crate::service::ic_service;
 use crate::service::ic_service::{DeviceData};
 use crate::service::security_service::secure_2fa;
 use crate::util::validation_util::validate_name;
+use serde::{Deserialize, Serialize};
 
 #[async_trait(? Send)]
 pub trait AccountServiceTrait {
@@ -24,7 +27,7 @@ pub trait AccountServiceTrait {
     fn get_account(&mut self) -> Option<Account>;
     fn update_2fa(&mut self, state: bool) -> AccountResponse;
     async fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse>;
-    fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
+    async fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse>;
     fn remove_account(&mut self) -> HttpResponse<bool>;
     fn remove_account_by_principal(&mut self, principal: String) -> HttpResponse<bool>;
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
@@ -35,6 +38,7 @@ pub trait AccountServiceTrait {
     async fn recover_account(&mut self, anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse>;
     fn get_all_accounts(&mut self) -> Vec<Account>;
     fn remove_account_by_phone_number(&mut self, phone_number_sha2: String) -> HttpResponse<bool>;
+    async fn validate_email_and_principal(email: &str, principal: &str) -> bool;
 }
 
 #[derive(Default)]
@@ -76,13 +80,20 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
 
     async fn create_account(&mut self, account_request: AccountRequest) -> HttpResponse<AccountResponse> {
         let princ = ic_service::get_caller().to_text();
-        if ic_service::is_anonymous(princ) {
+        if ic_service::is_anonymous(princ.clone()) {
             return to_error_response("User is anonymous");
         }
         let mut devices: Vec<DeviceData> = Vec::default();
         let mut acc = account_request_to_account(account_request.clone());
+        if account_request.email.is_some() {
+            if !Self::validate_email_and_principal(account_request.email.clone().unwrap().as_str(), &princ).await {
+                trap("Email and principal are not valid.")
+            }
+        }
         if acc.wallet.eq(&WalletVariant::NFID) {
-            //TODO 2fA with email + key/email exists
+            if account_request.email.is_none() {
+                trap("Email is empty");
+            }
             let anchor = self.account_repo.find_next_nfid_anchor();
             acc.anchor = anchor;
             match account_request.access_point {
@@ -120,7 +131,7 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         }
     }
 
-    fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse> {
+    async fn update_account(&mut self, account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse> {
         match self.account_repo.get_account() {
             Some(acc) => {
                 let mut new_acc = acc.clone();
@@ -134,7 +145,12 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
                     if new_acc.email.as_ref().is_some() {
                         return HttpResponse::error(400, "Email cannot be updated if set once.")
                     }
-                    new_acc.email = account_request.email.clone();
+                    let princ = ic_service::get_caller().to_text();
+                    let email = account_request.email.clone().unwrap();
+                    if !Self::validate_email_and_principal(&email, &princ).await {
+                        trap("Email and principal are not valid.")
+                    }
+                    new_acc.email = account_request.email;
                 }
                 new_acc.base_fields.update_modified_date();
                 self.account_repo.store_account(new_acc.clone());
@@ -297,6 +313,40 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
             None => to_error_response("Unable to find the Phone Number."),
             Some(principal_id) => {
                 return self.remove_account_by_principal(principal_id.clone());
+            }
+        }
+    }
+
+    async fn validate_email_and_principal(email: &str, principal: &str) -> bool {
+        let url = &ConfigurationRepo::get().lambda_url;
+    
+        #[derive(Debug, Deserialize, Serialize)]
+        struct CheckEmailAndPrincipalExistsResponse {
+            isExists: bool,
+        }
+    
+        let request = CanisterHttpRequestArgument {
+            url: url.clone() + "/check_email_and_principal_exists",
+            method: HttpMethod::POST,
+            headers: vec![
+                HttpHeader {
+                    name: "Content-Type".to_string(),
+                    value: "application/json".to_string(),
+                },
+            ],
+            body: Some(format!(r#"{{"email": "{}", "principal": "{}"}}"#, email, principal).into_bytes()),
+            max_response_bytes: None,
+        };
+    
+        match http_request(request).await {
+            Ok((response,)) => {
+                let str_body = String::from_utf8(response.body).expect("Not UTF-8 encoded.");
+                let json: CheckEmailAndPrincipalExistsResponse = serde_json::from_str(&str_body).expect("JSON parsing failed");
+                json.isExists
+            }
+            Err((r, m)) => {
+                let message = format!("RejectionCode: {:#?} and message: {}.", r, m);
+                trap(&message);
             }
         }
     }
