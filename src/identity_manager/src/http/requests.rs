@@ -92,6 +92,7 @@ pub struct PersonaRequest {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct ConfigurationRequest {
+    pub lambda_url: Option<String>,
     pub lambda: Option<Principal>,
     pub token_ttl: Option<u64>,
     pub token_refresh_ttl: Option<u64>,
