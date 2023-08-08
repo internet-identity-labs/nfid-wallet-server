@@ -85,15 +85,15 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         }
         let mut devices: Vec<DeviceData> = Vec::default();
         let mut acc = account_request_to_account(account_request.clone());
-        if account_request.email.is_some() {
-            if !Self::validate_email_and_principal(account_request.email.clone().unwrap().as_str(), &princ).await {
-                trap("Email and principal are not valid.")
-            }
-        }
+        // if account_request.email.is_some() {
+        //     if !Self::validate_email_and_principal(account_request.email.clone().unwrap().as_str(), &princ).await {
+        //         trap("Email and principal are not valid.")
+        //     }
+        // }
         if acc.wallet.eq(&WalletVariant::NFID) {
-            if account_request.email.is_none() {
-                trap("Email is empty");
-            }
+            // if account_request.email.is_none() {
+            //     trap("Email is empty");
+            // }
             let anchor = self.account_repo.find_next_nfid_anchor();
             acc.anchor = anchor;
             match account_request.access_point {
