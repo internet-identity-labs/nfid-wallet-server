@@ -5,13 +5,8 @@
   },
   "identity_manager": {
     "dev": "74gpt-tiaaa-aaaak-aacaa-cai",
-    "ic": "bryxc-zqaaa-aaaal-aajga-cai"
-  },
-  "test_im": {
-    "dev": "jiept-kaaaa-aaaao-aajsa-cai"
-  },
-  "test_ledger": {
-    "dev": "qt7cv-eyaaa-aaaap-qapga-cai"
+    "ic": "bryxc-zqaaa-aaaal-aajga-cai",
+    "stage": "jiept-kaaaa-aaaao-aajsa-cai"
   },
   "internet_identity_test": {
     "dev-old": "wookt-ayaaa-aaaaj-addwq-cai",
@@ -24,11 +19,9 @@
     "dev": "vwali-piaaa-aaaal-qatfq-cai"
   },
   "pub_sub_channel": {
-    "dev": "wmxhg-4iaaa-aaaam-aanzq-cai",
     "ic": "iyvpb-uqaaa-aaaag-qabxa-cai"
   },
   "verifier": {
-    "dev": "gzqxf-kqaaa-aaaak-qakba-cai",
     "ic": "sgk26-7yaaa-aaaan-qaovq-cai"
   },
   "vault": {
@@ -41,14 +34,17 @@
   },
   "signer_eth": {
     "dev": "txkre-oyaaa-aaaap-qa3za-cai",
+    "stage": "wmxhg-4iaaa-aaaam-aanzq-cai",
     "ic": "qsemi-gqaaa-aaaao-agwfa-cai"
   },
   "signer_ic": {
     "dev": "nux62-yqaaa-aaaak-ae2pq-cai",
+    "stage": "gzqxf-kqaaa-aaaak-qakba-cai",
     "ic": "us7ed-qyaaa-aaaam-abpoa-cai"
   },
   "signer_btc": {
     "dev": "7b5jg-paaaa-aaaap-aa32q-cai",
-    "ic": "7d6fq-liaaa-aaaag-absuq-cai"
+    "ic": "7d6fq-liaaa-aaaag-absuq-cai",
+    "stage": "qt7cv-eyaaa-aaaap-qapga-cai"
   }
 }
