@@ -16,6 +16,7 @@ use crate::repository::persona_repo::Persona;
 
 #[derive(Debug, Deserialize, CandidType, Clone)]
 pub struct Configuration {
+    pub lambda_url: String,
     pub lambda: Principal,
     pub token_ttl: Duration,
     pub token_refresh_ttl: Duration,
@@ -106,6 +107,7 @@ impl ConfigurationRepo {
     pub fn get_default_config() -> Configuration {
         let lambda = Principal::self_authenticating("mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe");
         Configuration {
+            lambda_url: "https://ia15v0pzlb.execute-api.us-east-1.amazonaws.com/dev".to_string(),
             lambda: lambda,
             token_ttl: Duration::from_secs(60),
             token_refresh_ttl: Duration::from_secs(60),

@@ -2,7 +2,7 @@ import "mocha";
 import {expect} from "chai";
 import {Dfx} from "./type/dfx";
 import {App} from "./constanst/app.enum";
-import {deploy, getActor} from "./util/deployment.util";
+import {deploy, getActor, getIdentity} from "./util/deployment.util";
 import {
     AccessPointRemoveRequest,
     AccessPointRequest, HTTPAccessPointResponse,
@@ -27,7 +27,7 @@ describe("Access Point", () => {
     });
 
     it("should protect recovery phrase", async function () {
-        const identity = Ed25519KeyIdentity.generate();
+        const identity = getIdentity("87654321876543218765432187654311");
         const dd: AccessPointRequest = {
             icon: "Icon",
             device: "Global",
@@ -42,7 +42,7 @@ describe("Access Point", () => {
             access_point: [dd],
             wallet: [{'NFID': null}],
             anchor: 0n,
-            email: []
+            email: ["test@test.test"]
         };
         const actor = await getActor(dfx.im.id, identity, imIdl);
         const acc = (await actor.create_account(

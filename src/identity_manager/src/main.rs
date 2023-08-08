@@ -68,6 +68,7 @@ async fn remove_account_by_phone_number() -> HttpResponse<bool> {
 async fn configure(request: ConfigurationRequest) -> () {
     let default = ConfigurationRepo::get_default_config();
     let configuration = Configuration {
+        lambda_url: request.lambda_url.unwrap_or(default.lambda_url),
         lambda: request.lambda.unwrap_or(default.lambda),
         token_ttl: if request.token_ttl.is_some() { Duration::from_secs(request.token_ttl.unwrap()) } else { default.token_ttl },
         token_refresh_ttl: if request.token_ttl.is_some() { Duration::from_secs(request.token_refresh_ttl.unwrap()) } else { default.token_refresh_ttl },
@@ -237,7 +238,7 @@ async fn update_2fa(state: bool) -> AccountResponse {
 #[two_f_a]
 async fn update_account(account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
-    account_service.update_account(account_request)
+    account_service.update_account(account_request).await
 }
 
 #[query]
