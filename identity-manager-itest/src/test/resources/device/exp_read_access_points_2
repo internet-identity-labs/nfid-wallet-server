@@ -6,7 +6,7 @@
         device_type = variant { Passkey };
         device = "device";
         browser = "browser";
-        principal_id = "sculj-2sjuf-dxqlm-dcv5y-hin5x-zfyvr-tzngf-bt5b5-dwhcc-zbsqf-rae";
+        principal_id = "%s";
         credential_id = null;
       };
       record {
