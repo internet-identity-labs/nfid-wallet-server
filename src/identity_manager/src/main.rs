@@ -121,12 +121,6 @@ async fn anchors() -> HttpResponse<Vec<u64>> {
 }
 
 #[query]
-async fn credentials() -> HttpResponse<Vec<CredentialVariant>> {
-    let credential_service = get_credential_service();
-    credential_service.credentials()
-}
-
-#[query]
 async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.read_access_points()
@@ -163,25 +157,6 @@ async fn update_access_point(access_point: AccessPointRequest) -> HttpResponse<V
 async fn remove_access_point(access_point: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.remove_access_point(access_point)
-}
-
-#[update]
-#[replicate_account]
-async fn verify_token(token: String) -> Response {
-    let phone_number_service = get_phone_number_service();
-    phone_number_service.verify_token(token)
-}
-
-#[update]
-async fn validate_phone(request: ValidatePhoneRequest) -> Response {
-    let phone_number_service = get_phone_number_service();
-    phone_number_service.validate_phone(request)
-}
-
-#[update]
-async fn post_token(request: TokenRequest) -> Response {
-    let phone_number_service = get_phone_number_service();
-    phone_number_service.post_token(request)
 }
 
 #[update]

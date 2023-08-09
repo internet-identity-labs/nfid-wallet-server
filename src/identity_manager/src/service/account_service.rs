@@ -11,7 +11,6 @@ use crate::ic_service::{KeyType};
 use crate::mapper::access_point_mapper::access_point_request_to_access_point;
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::repository::account_repo::AccountRepoTrait;
-use crate::repository::phone_number_repo::PhoneNumberRepoTrait;
 use crate::requests::{AccountRequest, AccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
@@ -31,25 +30,22 @@ pub trait AccountServiceTrait {
     fn remove_account(&mut self) -> HttpResponse<bool>;
     fn remove_account_by_principal(&mut self, principal: String) -> HttpResponse<bool>;
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
-    fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String>;
     fn get_account_by_anchor(&mut self, anchor: u64, wallet: WalletVariant) -> HttpResponse<AccountResponse>;
     fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse>;
     fn get_root_id_by_principal(&mut self, princ: String) -> Option<String>;
     async fn recover_account(&mut self, anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse>;
     fn get_all_accounts(&mut self) -> Vec<Account>;
-    fn remove_account_by_phone_number(&mut self, phone_number_sha2: String) -> HttpResponse<bool>;
     async fn validate_email_and_principal(email: &str, principal: &str) -> bool;
 }
 
 #[derive(Default)]
 pub struct AccountService<T, N, A> {
     pub account_repo: T,
-    pub phone_number_repo: N,
     pub access_point_service: A,
 }
 
 #[async_trait(? Send)]
-impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for AccountService<T, N, A> {
+impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for AccountService<T, N, A> {
     fn get_account_response(&mut self) -> HttpResponse<AccountResponse> {
         match self.account_repo.get_account() {
             Some(content) => to_success_response(account_to_account_response(content.clone())),
@@ -208,35 +204,6 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         to_success_response(true)
     }
 
-    fn certify_phone_number_sha2(&self, principal_id: String, domain: String) -> HttpResponse<String> {
-        match self.account_repo.get_account_by_id(principal_id)
-        {
-            None => { to_error_response("Account not exist") }
-            Some(mut account) => {
-                match account.phone_number_sha2 {
-                    None => { to_error_response("Phone number not verified") }
-                    Some(ref pn_sha2) => {
-                        if !account.personas.clone().into_iter()
-                            .any(|l| (l.domain.eq(&domain) && l.domain_certified.is_none())) {
-                            return to_error_response("No non certified persona with such domain");
-                        }
-                        let personas = account.personas.clone().into_iter()
-                            .map(|mut l| {
-                                if l.domain.eq(&domain) {
-                                    l.domain_certified = Some(ic_cdk::api::time())
-                                };
-                                l
-                            })
-                            .collect_vec();
-                        account.personas = personas;
-                        self.account_repo.store_account(account.clone());
-                        to_success_response(pn_sha2.to_owned())
-                    }
-                }
-            }
-        }
-    }
-
     fn get_account_by_anchor(&mut self, anchor: u64, wallet: WalletVariant) -> HttpResponse<AccountResponse> {
         match { self.account_repo.get_account_by_anchor(anchor, wallet) } {
             None => {
@@ -306,15 +273,6 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
 
     fn get_all_accounts(&mut self) -> Vec<Account> {
         self.account_repo.get_all_accounts()
-    }
-
-    fn remove_account_by_phone_number(&mut self, phone_number_sha2: String) -> HttpResponse<bool> {
-        match self.phone_number_repo.get(&phone_number_sha2) {
-            None => to_error_response("Unable to find the Phone Number."),
-            Some(principal_id) => {
-                return self.remove_account_by_principal(principal_id.clone());
-            }
-        }
     }
 
     async fn validate_email_and_principal(email: &str, principal: &str) -> bool {

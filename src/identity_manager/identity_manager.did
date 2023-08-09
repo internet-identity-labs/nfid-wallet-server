@@ -1,5 +1,4 @@
 type Error = text;
-type Token = text;
 
     //---BEGIN-CUT---
 
@@ -156,35 +155,6 @@ type HTTPApplicationResponse = record {
 
 type HTTPAppResponse = record {
     data: opt Application;
-    error: opt Error;
-    status_code: nat16;
-};
-
-
-    //  ----------------------PHONE SECTION----------------------------
-
-type TokenRequest = record {
-    phone_number_encrypted: text;
-    phone_number_hash: text;
-    token: text;
-    principal_id: text;
-};
-
-type ValidatePhoneRequest = record {
-    phone_number_hash: text;
-    principal_id: text;
-};
-
-type PhoneNumberCredential = record {
-    phone_number: text;
-};
-
-type Credential = variant {
-    phone_number: PhoneNumberCredential;
-};
-
-type CredentialResponse = record {
-    data: opt vec Credential;
     error: opt Error;
     status_code: nat16;
 };
@@ -380,11 +350,6 @@ service : () -> {
     create_persona: (PersonaRequest) -> (HTTPAccountResponse);
     update_persona: (PersonaRequest) -> (HTTPAccountResponse);
     read_personas: () -> (HTTPPersonasResponse) query;
-
-    validate_phone: (ValidatePhoneRequest) -> (Response);
-    post_token: (TokenRequest) -> (Response);
-    verify_token: (Token) -> (Response);
-    credentials: () -> (CredentialResponse);
 
     create_application: (Application) -> (HTTPApplicationResponse);
     create_application_all: (vec Application) -> (HTTPApplicationResponse);
