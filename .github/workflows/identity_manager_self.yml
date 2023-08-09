@@ -317,7 +317,7 @@ jobs:
           CANISTER_CONFIG_DATA: >-
             (
               record {
-                lambda_url = opt "https://ia15v0pzlb.execute-api.us-east-1.amazonaws.com/dev";
+                lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/dev";
                 ii_canister_id = opt principal "nprnb-waaaa-aaaaj-qax4a-cai";
                 lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";

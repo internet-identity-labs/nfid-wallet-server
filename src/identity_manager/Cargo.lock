@@ -784,6 +784,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic0"
+version = "0.18.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "576c539151d4769fb4d1a0c25c4108dd18facd04c5695b02cf2d226ab4e43aa5"
+
+[[package]]
 name = "ident_case"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -801,6 +807,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-macros",
  "ic-types 0.1.5",
+ "ic0",
  "inject",
  "itertools 0.10.3",
  "lazy_static 1.4.0",

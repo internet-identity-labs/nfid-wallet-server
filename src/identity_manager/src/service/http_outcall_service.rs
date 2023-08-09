@@ -1,21 +1,104 @@
-use std::convert::TryInto;
+use std::convert::{TryInto, TryFrom};
 
-use ic_cdk::{export::{candid::{CandidType, self, Nat}, Principal}, api::call::{RejectionCode, call_with_payment}};
+use ic_cdk::{export::{candid::{CandidType, self}, Principal}, api::call::{RejectionCode, call_with_payment}};
 use serde::{Deserialize, Serialize};
+use candid::{
+    parser::types::FuncMode,
+    types::{Function, Serializer, Type}
+};
+
+#[ic_cdk_macros::query]
+ pub fn transorm_response_no_headers(arg: TransformArgs) -> HttpResponse {
+    HttpResponse {
+        status: arg.response.status,
+        headers: vec![],
+        body: arg.response.body,
+    }
+}
+
+#[derive(Deserialize, Debug, PartialEq, Eq, Clone)]
+pub struct TransformFunc(pub candid::Func);
+
+impl CandidType for TransformFunc {
+    fn _ty() -> Type {
+        Type::Func(Function {
+            modes: vec![FuncMode::Query],
+            args: vec![TransformArgs::ty()],
+            rets: vec![HttpResponse::ty()],
+        })
+    }
+
+    fn idl_serialize<S: Serializer>(&self, serializer: S) -> Result<(), S::Error> {
+        serializer.serialize_function(self.0.principal.as_slice(), &self.0.method)
+    }
+}
+
+#[derive(CandidType, Clone, Debug, Deserialize, PartialEq, Eq)]
+pub struct TransformContext {
+    pub function: TransformFunc,
+
+    #[serde(with = "serde_bytes")]
+    pub context: Vec<u8>,
+}
+
+impl TransformContext {
+    pub fn new<T>(func: T, context: Vec<u8>) -> Self
+    where
+        T: Fn(TransformArgs) -> HttpResponse,
+    {
+        Self {
+            function: TransformFunc(candid::Func {
+                principal: id(),
+                method: get_function_name(func).to_string(),
+            }),
+            context,
+        }
+    }
+}
+
+pub fn id() -> Principal {
+    let len: u32 = unsafe { ic0::canister_self_size() as u32 };
+    let mut bytes = vec![0u8; len as usize];
+    unsafe {
+        ic0::canister_self_copy(bytes.as_mut_ptr() as i32, 0, len as i32);
+    }
+    Principal::try_from(&bytes).unwrap()
+}
+
+fn get_function_name<F>(_: F) -> &'static str {
+    let full_name = std::any::type_name::<F>();
+    match full_name.rfind(':') {
+        Some(index) => &full_name[index + 1..],
+        None => full_name,
+    }
+}
+
+#[derive(
+    CandidType, Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Default,
+)]
+pub struct HttpResponse {
+    pub status: candid::Nat,
+    pub headers: Vec<HttpHeader>,
+    pub body: Vec<u8>,
+}
+
+#[derive(CandidType, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct TransformArgs {
+    pub response: HttpResponse,
+
+    #[serde(with = "serde_bytes")]
+    pub context: Vec<u8>,
+}
 
 /// Argument type of [http_request].
 #[derive(CandidType, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct CanisterHttpRequestArgument {
-    /// The requested URL.
     pub url: String,
-    /// The maximal size of the response in bytes. If None, 2MiB will be the limit.
     pub max_response_bytes: Option<u64>,
-    /// The method of HTTP request.
     pub method: HttpMethod,
-    /// List of HTTP request headers and their corresponding values.
     pub headers: Vec<HttpHeader>,
-    /// Optionally provide request body.
     pub body: Option<Vec<u8>>,
+    pub transform: Option<TransformContext>,
 }
 
 pub type CallResult<R> = Result<R, (RejectionCode, String)>;
@@ -24,9 +107,7 @@ pub type CallResult<R> = Result<R, (RejectionCode, String)>;
     CandidType, Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Default,
 )]
 pub struct HttpHeader {
-    /// Name
     pub name: String,
-    /// Value
     pub value: String,
 }
 
@@ -34,13 +115,10 @@ pub struct HttpHeader {
     CandidType, Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy,
 )]
 pub enum HttpMethod {
-    /// GET
     #[serde(rename = "get")]
     GET,
-    /// POST
     #[serde(rename = "post")]
     POST,
-    /// HEAD
     #[serde(rename = "head")]
     HEAD,
 }
@@ -49,11 +127,8 @@ pub enum HttpMethod {
     CandidType, Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Default,
 )]
 pub struct HttpResponseHttpOutcall {
-    /// The response status (e.g., 200, 404).
     pub status: candid::Nat,
-    /// List of HTTP response headers and their corresponding values.
     pub headers: Vec<HttpHeader>,
-    /// The response’s body.
     pub body: Vec<u8>,
 }
 
