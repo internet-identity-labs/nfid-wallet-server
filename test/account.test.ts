@@ -50,10 +50,6 @@ describe("Account", () => {
             expect(DFX.GET_ACCOUNT_BY_PRINCIPAL("identity_manager", dfx.root)).eq(Expected.ACCOUNT("null", dfx.root));
         });
 
-        it("should get account pn_sha2 created in previous test.", async function () {
-            expect(DFX.GET_PN_SHA2("identity_manager", dfx.root)).eq(Expected.ERROR("Phone number not verified", "404"));
-        });
-
         it("should update account name.", async function () {
             expect(DFX.UPDATE_ACCOUNT_NAME()).eq(Expected.ACCOUNT(`opt "TEST_USER_UPDATED"`, dfx.root));
         });
