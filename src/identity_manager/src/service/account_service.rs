@@ -39,13 +39,13 @@ pub trait AccountServiceTrait {
 }
 
 #[derive(Default)]
-pub struct AccountService<T, N, A> {
+pub struct AccountService<T, A> {
     pub account_repo: T,
     pub access_point_service: A,
 }
 
 #[async_trait(? Send)]
-impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for AccountService<T, N, A> {
+impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for AccountService<T, A> {
     fn get_account_response(&mut self) -> HttpResponse<AccountResponse> {
         match self.account_repo.get_account() {
             Some(content) => to_success_response(account_to_account_response(content.clone())),
@@ -162,18 +162,6 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             return to_error_response("Unable to remove Account");
         }
 
-        let account = result.unwrap();
-        if account.phone_number.is_none() {
-            return to_success_response(true);
-        }
-
-        let phone_number = account.phone_number_sha2.unwrap();
-        let success = self.phone_number_repo.remove(&phone_number);
-
-        if !success {
-            return to_error_response("Unable to remove Phone Number");
-        }
-
         to_success_response(true)
     }
 
@@ -182,18 +170,6 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
         let result = self.account_repo.remove_account_by_principal(principal);
         if result.is_none() {
             return to_error_response("Unable to remove Account");
-        }
-
-        let account = result.unwrap();
-        if account.phone_number.is_none() {
-            return to_success_response(true);
-        }
-
-        let phone_number = account.phone_number_sha2.unwrap();
-        let success = self.phone_number_repo.remove(&phone_number);
-
-        if !success {
-            return to_error_response("Unable to remove Phone Number");
         }
 
         to_success_response(true)

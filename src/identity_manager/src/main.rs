@@ -5,18 +5,17 @@ use ic_cdk::{caller, storage, trap};
 use ic_cdk_macros::*;
 
 use canister_api_macros::{admin, two_f_a, admin_or_lambda, replicate_account};
-use service::{account_service, persona_service, phone_number_service};
+use service::{account_service, persona_service};
 
 use crate::account_service::{AccountService, AccountServiceTrait};
 use crate::application_service::ApplicationService;
 use crate::container::container_wrapper;
-use crate::container_wrapper::{get_access_point_service, get_account_repo, get_account_service, get_application_service, get_credential_service, get_persona_service, get_phone_number_service};
+use crate::container_wrapper::{get_access_point_service, get_account_repo, get_account_service, get_application_service, get_persona_service};
 use crate::http::requests;
 use crate::http::requests::{AccountResponse, WalletVariant};
 use crate::http::response_mapper;
 use crate::ic_service::get_caller;
 use crate::persona_service::{PersonaService, PersonaServiceTrait};
-use crate::phone_number_service::PhoneNumberService;
 use crate::replica_service::HearthCount;
 use crate::repository::account_repo::{Account, AccountRepo, AccountRepoTrait};
 use crate::repository::application_repo::{Application, ApplicationRepo};
@@ -28,8 +27,6 @@ use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
 use crate::service::access_point_service::AccessPointServiceTrait;
 use crate::service::application_service::ApplicationServiceTrait;
-use crate::service::credential_service::CredentialServiceTrait;
-use crate::service::phone_number_service::PhoneNumberServiceTrait;
 use crate::service::replica_service::AccountsToReplicate;
 use crate::service::security_service::{secure_2fa, secure_principal_2fa};
 
@@ -53,14 +50,6 @@ async fn sync_controllers() -> Vec<String> {
     let controllers = ic_service::get_controllers().await;
     ControllersRepo::save(controllers);
     ControllersRepo::get().iter().map(|x| x.to_text()).collect()
-}
-
-#[update]
-#[admin_or_lambda]
-async fn remove_account_by_phone_number() -> HttpResponse<bool> {
-    let phone_number_sha2 = String::from("8fba797bcc5427ca466bf5ef0d8fcc69636fa6b67ea93e240198ecaac3df3716");
-    let mut account_service = get_account_service();
-    account_service.remove_account_by_phone_number(phone_number_sha2)
 }
 
 #[update]
@@ -220,13 +209,6 @@ async fn update_account(account_request: AccountUpdateRequest) -> HttpResponse<A
 async fn get_account() -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     account_service.get_account_response()
-}
-
-#[query]
-#[admin]
-async fn certify_phone_number_sha2(principal_id: String, domain: String) -> HttpResponse<String> {
-    let account_service = get_account_service();
-    account_service.certify_phone_number_sha2(principal_id, domain)
 }
 
 #[update]
