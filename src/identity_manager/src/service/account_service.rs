@@ -4,7 +4,7 @@ use itertools::Itertools;
 
 use crate::http::response_mapper::ErrorResponse;
 use crate::repository::repo::ConfigurationRepo;
-use crate::service::http_outcall_service::{CanisterHttpRequestArgument, HttpMethod, HttpHeader, http_request};
+use crate::service::http_outcall_service::{CanisterHttpRequestArgument, HttpMethod, HttpHeader, http_request, TransformContext, transorm_response_no_headers};
 use crate::{AccessPointServiceTrait, Account, get_caller, HttpResponse};
 use crate::http::requests::{AccountResponse, DeviceType, WalletVariant};
 use crate::ic_service::{KeyType};
@@ -85,15 +85,15 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
         }
         let mut devices: Vec<DeviceData> = Vec::default();
         let mut acc = account_request_to_account(account_request.clone());
-        // if account_request.email.is_some() {
-        //     if !Self::validate_email_and_principal(account_request.email.clone().unwrap().as_str(), &princ).await {
-        //         trap("Email and principal are not valid.")
-        //     }
-        // }
+        if account_request.email.is_some() {
+            if !Self::validate_email_and_principal(account_request.email.clone().unwrap().as_str(), &princ).await {
+                trap("Email and principal are not valid.")
+            }
+        }
         if acc.wallet.eq(&WalletVariant::NFID) {
-            // if account_request.email.is_none() {
-            //     trap("Email is empty");
-            // }
+            if account_request.email.is_none() {
+                trap("Email is empty");
+            }
             let anchor = self.account_repo.find_next_nfid_anchor();
             acc.anchor = anchor;
             match account_request.access_point {
@@ -335,7 +335,8 @@ impl<T: AccountRepoTrait, N: PhoneNumberRepoTrait, A: AccessPointServiceTrait> A
                 },
             ],
             body: Some(format!(r#"{{"email": "{}", "principal": "{}"}}"#, email, principal).into_bytes()),
-            max_response_bytes: None,
+            max_response_bytes: Some(700),
+            transform: Some(TransformContext::new(transorm_response_no_headers, vec![]))
         };
     
         match http_request(request).await {
