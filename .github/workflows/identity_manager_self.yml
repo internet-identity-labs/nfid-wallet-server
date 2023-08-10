@@ -328,7 +328,7 @@ jobs:
           CANISTER_CONFIG_PROD_DATA: >-
             (
               record {
-                lambda_url = opt "https://28oge2ricd.execute-api.us-east-1.amazonaws.com/prod";
+                lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/prod";
                 ii_canister_id = opt principal "rdmx6-jaaaa-aaaaa-aaadq-cai";
                 lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                 heartbeat = opt 900;

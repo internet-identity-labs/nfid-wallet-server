@@ -4,6 +4,7 @@ use crate::{AccountRequest, AccountServiceTrait, Configuration, ConfigurationRep
 
 pub fn init_config(){
     let a = Configuration {
+        lambda_url: "https://d8m9ttp390ku4.cloudfront.net/dev".to_string(),
         lambda: Principal::anonymous(),
         token_ttl: Duration::from_secs(0),
         token_refresh_ttl: Duration::from_secs(0),
