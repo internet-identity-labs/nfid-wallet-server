@@ -42,6 +42,7 @@ pub trait AccountRepoTrait {
     fn exists(&self, principal: &Principal) -> bool;
     fn update_account_index_with_pub_key(&self, additional_key: String, princ: String);
     fn update_account_index(&self, additional_principal_id: String);
+    fn remove_account_index(&self, additional_principal_id: String);
     fn get_accounts(&self, ids: Vec<String>) -> Vec<Account>;
     fn get_all_accounts(&self) -> Vec<Account>;
     fn find_next_nfid_anchor(&self) -> u64;
@@ -118,11 +119,10 @@ impl AccountRepoTrait for AccountRepo {
     }
 
     fn remove_account(&self) -> Option<Account> { //todo not properly tested, used for e2e tests
-        self.get_account(); //security call
-        let princ = ic_service::get_caller().to_text();
+        let acc =  self.get_account().unwrap(); //security call
         let accounts = storage::get_mut::<Accounts>();
         let index = storage::get_mut::<PrincipalIndex>();
-        match accounts.remove(&princ) {
+        match accounts.remove(&acc.principal_id) {
             None => { None }
             Some(acc) => {
                 (&acc.access_points).into_iter()
@@ -159,6 +159,11 @@ impl AccountRepoTrait for AccountRepo {
     fn update_account_index(&self, additional_principal_id: String) {
         let index = storage::get_mut::<PrincipalIndex>();
         index.insert(additional_principal_id.clone(), additional_principal_id);
+    }
+
+    fn remove_account_index(&self, additional_principal_id: String) {
+        let index = storage::get_mut::<PrincipalIndex>();
+        index.remove( &additional_principal_id);
     }
 
     fn get_accounts(&self, ids: Vec<String>) -> Vec<Account> {

@@ -38,6 +38,7 @@ pub trait AccessPointRepoTrait {
     fn get_access_points_by_principal(&self, princ: String) -> Option<HashSet<AccessPoint>>;
     fn use_access_point(&self, ap_principal: String, time: u64, browser: Option<String>) -> Option<AccessPoint>;
     fn store_access_points(&self, access_points: HashSet<AccessPoint>) -> Option<Account>;
+    fn remove_ap_index(&self, access_point: String) -> Option<Account>;
     fn store_access_points_by_principal(&self, access_points: HashSet<AccessPoint>, root_princ: String) -> Option<Account>;
     fn update_account_index(&self, additional_principal_id: String, root_princ: String);
 }
@@ -86,6 +87,10 @@ impl AccessPointRepoTrait for AccessPointRepo {
         acc.access_points = access_points.clone();
         let resp = self.account_repo.store_account(acc);
         resp
+    }
+
+    fn remove_ap_index(&self, access_point: String){
+       self.account_repo.remove_account_index(access_point)
     }
 
     fn store_access_points_by_principal(&self, access_points: HashSet<AccessPoint>, root_princ: String) -> Option<Account> {
