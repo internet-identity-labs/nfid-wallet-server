@@ -42,6 +42,7 @@ pub trait AccountRepoTrait {
     fn exists(&self, principal: &Principal) -> bool;
     fn update_account_index_with_pub_key(&self, additional_key: String, princ: String);
     fn update_account_index(&self, additional_principal_id: String);
+    fn remove_account_index(&self, additional_principal_id: String);
     fn get_accounts(&self, ids: Vec<String>) -> Vec<Account>;
     fn get_all_accounts(&self) -> Vec<Account>;
     fn find_next_nfid_anchor(&self) -> u64;
@@ -159,6 +160,11 @@ impl AccountRepoTrait for AccountRepo {
     fn update_account_index(&self, additional_principal_id: String) {
         let index = storage::get_mut::<PrincipalIndex>();
         index.insert(additional_principal_id.clone(), additional_principal_id);
+    }
+
+    fn remove_account_index(&self, additional_principal_id: String) {
+        let index = storage::get_mut::<PrincipalIndex>();
+        index.remove( &additional_principal_id);
     }
 
     fn get_accounts(&self, ids: Vec<String>) -> Vec<Account> {

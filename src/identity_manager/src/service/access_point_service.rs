@@ -134,6 +134,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
                     return to_error_response("Access Point not exists.");
                 }
                 self.access_point_repo.store_access_points(aps.clone());
+                self.access_point_repo.remove_ap_index(principal);
                 let response: Vec<AccessPointResponse> = aps.into_iter()
                     .map(access_point_to_access_point_response)
                     .collect();
