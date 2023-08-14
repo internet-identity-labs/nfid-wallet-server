@@ -86,6 +86,13 @@ describe("Access Point", () => {
                 pub_key: identity.getPrincipal().toText(),
             }
         ) as HTTPAccessPointResponse
-        expect(resp2.status_code).eq(200)
+        expect(resp2.status_code).eq(404)
+
+        let resp3 = await actor.remove_access_point(
+            {
+                pub_key: identity.getPrincipal().toText(),
+            }
+        ) as HTTPAccessPointResponse
+        expect(resp3.status_code).eq(200)
     });
 });
