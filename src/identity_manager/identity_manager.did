@@ -4,6 +4,7 @@ type Token = text;
     //---BEGIN-CUT---
 
 type ConfigurationRequest = record {
+    lambda_url: opt text;
     lambda: opt principal;
     token_ttl: opt nat64;
     token_refresh_ttl: opt nat64;
@@ -18,6 +19,7 @@ type ConfigurationRequest = record {
 };
 
 type ConfigurationResponse = record {
+    lambda_url: opt text;
     lambda: opt principal;
     token_ttl: opt nat64;
     token_refresh_ttl: opt nat64;
