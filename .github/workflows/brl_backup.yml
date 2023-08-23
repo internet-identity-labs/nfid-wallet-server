@@ -67,17 +67,17 @@ jobs:
           ref: main
           path: ci_libs
 
-      - name: Cache Cargo dependencies.
-        uses: actions/cache@v3
-        with:
-          path: |
-            /home/ubuntu/.cargo/bin/
-            /home/ubuntu/.cargo/registry/index/
-            /home/ubuntu/.cargo/registry/cache/
-            /home/ubuntu/.cargo/git/db/
-            /home/ubuntu/.cargo/cargo_target/
-            target/
-          key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
+      # - name: Cache Cargo dependencies.
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       /home/ubuntu/.cargo/bin/
+      #       /home/ubuntu/.cargo/registry/index/
+      #       /home/ubuntu/.cargo/registry/cache/
+      #       /home/ubuntu/.cargo/git/db/
+      #       /home/ubuntu/.cargo/cargo_target/
+      #       target/
+      #     key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: PRE-BACKUP => Populate env vars.
         run: |
@@ -97,7 +97,7 @@ jobs:
           elif [ "${NETWORK_NAME}" == 'ic' ]; then
             case ${CANISTER_NAME} in
 
-              identity_manager)
+              identity_manager | signer_btc | signer_eth | signer_ic )
                 ID_NAME="prod_admin"
                 IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
                 ;;
