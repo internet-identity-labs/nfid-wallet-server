@@ -115,11 +115,12 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
     fn remove_access_point(&self, access_point_request: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>> {
         match self.access_point_repo.get_access_points() {
             Some(content) => {
-                let principal = access_point_request.pub_key;
+                let principal = access_point_request.pub_key.clone();
 
                 if self.access_point_repo.get_wallet().eq(&WalletVariant::NFID) {
                     let caller = caller().to_text();
                     if  content.clone().iter()
+                        .filter(|m| m.principal_id.eq(&access_point_request.pub_key))
                         .filter(|x| x.device_type.eq(&DeviceType::Recovery))
                         .any(|x| !x.principal_id.eq(&caller)) {
                         trap("Recovery phrase is protected")
