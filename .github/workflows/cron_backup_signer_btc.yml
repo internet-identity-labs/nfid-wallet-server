@@ -5,7 +5,7 @@ on:
       - cron: '30 * * * *'
 
 env:
-  NETWORK_NAME: 'dev'
+  NETWORK_NAME: 'ic'
   CANISTER_NAME: 'signer_btc'
   COMPRESS_BACKUP: 'true'
   CI_DEBUG: 'true'
