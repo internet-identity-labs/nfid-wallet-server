@@ -1,0 +1,5 @@
+service : () -> {
+    get_trusted_origins: () -> (vec text);
+    update_trusted_origins: (vec text) -> (vec text);
+    get_principal: () -> (text) query;
+}
