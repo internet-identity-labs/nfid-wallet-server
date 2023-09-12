@@ -106,6 +106,12 @@
     }
   },
   "networks": {
+    "test": {
+      "providers": [
+        "https://ic0.app/"
+      ],
+      "type": "persistent"
+    },
     "dev": {
       "providers": [
         "https://ic0.app/"

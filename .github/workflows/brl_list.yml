@@ -15,8 +15,9 @@ on:
         type: choice
         options:
           - identity_manager
-          - ecdsa_signer
-          - ecdsa_signer_btc
+          - signer_eth
+          - signer_btc
+          - signer_ic
           - vault
       backup_name:
         description: '[optional] Name of the backup folder'

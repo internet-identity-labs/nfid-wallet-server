@@ -108,6 +108,7 @@ pub struct ConfigurationRequest {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct ConfigurationResponse {
+    pub lambda_url: Option<String>,
     pub lambda: Option<Principal>,
     pub token_ttl: Option<u64>,
     pub token_refresh_ttl: Option<u64>,

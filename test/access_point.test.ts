@@ -28,7 +28,7 @@ describe("Access Point", () => {
 
     it("should protect recovery phrase", async function () {
         const identity = getIdentity("87654321876543218765432187654311");
-        const dd: AccessPointRequest = {
+        const passKeyEmailRequest: AccessPointRequest = {
             icon: "Icon",
             device: "Global",
             pub_key: identity.getPrincipal().toText(),
@@ -39,7 +39,7 @@ describe("Access Point", () => {
             credential_id: []
         }
         var accountRequest: HTTPAccountRequest = {
-            access_point: [dd],
+            access_point: [passKeyEmailRequest],
             wallet: [{'NFID': null}],
             anchor: 0n,
             email: ["test@test.test"]
@@ -64,12 +64,12 @@ describe("Access Point", () => {
             request
         ) )as HTTPAccessPointResponse
         expect(ap.status_code).eq(200)
-        var removeRequest: AccessPointRemoveRequest = {
+        var recoveryRemoveRequest: AccessPointRemoveRequest = {
             pub_key: recoveryIdentity.getPrincipal().toText(),
         };
         try {
             await actor.remove_access_point(
-                removeRequest
+                recoveryRemoveRequest
             )
             fail("")
         } catch (e) {
@@ -77,15 +77,52 @@ describe("Access Point", () => {
         }
         let recoveryActor = await getActor(dfx.im.id, recoveryIdentity, imIdl);
 
+
+        let pkIdentity = Ed25519KeyIdentity.generate()
+        //get device back
+        const passKeyRequest: AccessPointRequest = {
+            icon: "Icon",
+            device: "Global",
+            pub_key: pkIdentity.getPrincipal().toText(),
+            browser: "Browser",
+            device_type: {
+                Passkey: null
+            },
+            credential_id: []
+        }
+        ap = (await actor.create_access_point(
+            passKeyRequest
+        ) )as HTTPAccessPointResponse
+        expect(ap.status_code).eq(200)
+
+        //verify that recovery phrase does not affect pass keys
+        let removeFromPKActor = await actor.remove_access_point(
+            {
+                pub_key: pkIdentity.getPrincipal().toText(),
+            }
+        ) as HTTPAccessPointResponse
+        expect(removeFromPKActor.status_code).eq(200)
+
+        //verify that you can remove recovery from recovery
         let resp = await recoveryActor.remove_access_point(
-            removeRequest
+            recoveryRemoveRequest
         ) as HTTPAccessPointResponse
         expect(resp.status_code).eq(200)
+
+        //verify that recovery principal removed from the index
         let resp2 = await recoveryActor.remove_access_point(
             {
                 pub_key: identity.getPrincipal().toText(),
             }
         ) as HTTPAccessPointResponse
-        expect(resp2.status_code).eq(200)
+        expect(resp2.status_code).eq(404)
+
+        //verify that we can remove root device (should not be a case for FE)
+        let resp3 = await actor.remove_access_point(
+            {
+                pub_key: identity.getPrincipal().toText(),
+            }
+        ) as HTTPAccessPointResponse
+        expect(resp3.status_code).eq(200)
     });
 });

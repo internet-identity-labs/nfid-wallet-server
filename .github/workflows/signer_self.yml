@@ -14,8 +14,8 @@ on:
         required: true
         type: choice
         options:
-          - ecdsa_signer
-          - ecdsa_signer_btc
+          - signer_eth
+          - signer_btc
           - signer_ic
       debug_messages:
         description: 'Show debug messages'

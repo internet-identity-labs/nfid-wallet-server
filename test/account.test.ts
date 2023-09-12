@@ -81,14 +81,14 @@ describe("Account", () => {
             expect(DFX.CREATE_ACCOUNT_2()).eq(Expected.ACCOUNT("null", dfx.root));
         });
 
-        // it("should update email and receive an error.", async function () {
-        //     expect(DFX.UPDATE_ACCOUNT_EMAIL("test@test.test")).contains("Email and principal are not valid.");
-        // });
+        it("should update email and receive an error.", async function () {
+            expect(DFX.UPDATE_ACCOUNT_EMAIL("test@test.test")).contains("Email and principal are not valid.");
+        });
 
-        // it("should remove account and create new one with email and receive an error.", async function () {
-        //     expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.BOOL("true", "200"));
-        //     expect(DFX.CREATE_ACCOUNT_WITH_EMAIL("12345", 'opt "test@test.test"')).contains("Email and principal are not valid.");
-        // });
+        it("should remove account and create new one with email and receive an error.", async function () {
+            expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.BOOL("true", "200"));
+            expect(DFX.CREATE_ACCOUNT_WITH_EMAIL("12345", 'opt "test@test.test"')).contains("Email and principal are not valid.");
+        });
     });
 
     describe("Agent tests", () => {
@@ -197,35 +197,35 @@ describe("Account", () => {
             expect(updateResponse.data[0].email[0]).contains("testdefault@test.test");
         });
 
-        // it("should try to create account and receive incorrect email and principal when incorrect email.", async function () {
-        //     var accountRequest: HTTPAccountRequest = {
-        //         access_point: [],
-        //         wallet: [{ NFID: null }],
-        //         anchor: iiAnchor,
-        //         email: ["invalid@test.test"],
-        //     };
+        it("should try to create account and receive incorrect email and principal when incorrect email.", async function () {
+            var accountRequest: HTTPAccountRequest = {
+                access_point: [],
+                wallet: [{ NFID: null }],
+                anchor: iiAnchor,
+                email: ["invalid@test.test"],
+            };
 
-        //     try {
-        //         await dfx.im.actor.create_account(accountRequest);
-        //     } catch (e) {
-        //         expect(e.message).contains("unreachable");
-        //     }
-        // });
+            try {
+                await dfx.im.actor.create_account(accountRequest);
+            } catch (e) {
+                expect(e.message).contains("unreachable");
+            }
+        });
 
-        // it("should try to create account and receive incorrect email and principal when incorrect principal.", async function () {
-        //     var accountRequest: HTTPAccountRequest = {
-        //         access_point: [],
-        //         wallet: [{ NFID: null }],
-        //         anchor: iiAnchor,
-        //         email: ["test@test.test"],
-        //     };
+        it("should try to create account and receive incorrect email and principal when incorrect principal.", async function () {
+            var accountRequest: HTTPAccountRequest = {
+                access_point: [],
+                wallet: [{ NFID: null }],
+                anchor: iiAnchor,
+                email: ["test@test.test"],
+            };
 
-        //     try {
-        //         await dfx.im.actor.create_account(accountRequest);
-        //     } catch (e) {
-        //         expect(e.message).contains("Email and principal are not valid.");
-        //     }
-        // });
+            try {
+                await dfx.im.actor.create_account(accountRequest);
+            } catch (e) {
+                expect(e.message).contains("Email and principal are not valid.");
+            }
+        });
 
         it("should throw error due to not authentificated principal on creating access point.", async function () {
             var request: AccessPointRequest = {

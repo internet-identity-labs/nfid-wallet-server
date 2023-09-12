@@ -29,17 +29,17 @@ jobs:
           ref: main
           path: ci_libs
 
-      - name: Cache Cargo dependencies.
-        uses: actions/cache@v3
-        with:
-          path: |
-            /home/ubuntu/.cargo/bin/
-            /home/ubuntu/.cargo/registry/index/
-            /home/ubuntu/.cargo/registry/cache/
-            /home/ubuntu/.cargo/git/db/
-            /home/ubuntu/.cargo/cargo_target/
-            target/
-          key: ${{ runner.os }}-cargo-${{ env.NETWORK_NAME }}-${{ env.CANISTER_NAME }}-${{ hashFiles('**/Cargo.lock') }}
+      # - name: Cache Cargo dependencies.
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       /home/ubuntu/.cargo/bin/
+      #       /home/ubuntu/.cargo/registry/index/
+      #       /home/ubuntu/.cargo/registry/cache/
+      #       /home/ubuntu/.cargo/git/db/
+      #       /home/ubuntu/.cargo/cargo_target/
+      #       target/
+      #     key: ${{ runner.os }}-cargo-${{ env.NETWORK_NAME }}-${{ env.CANISTER_NAME }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: PRE-BACKUP => Populate env vars.
         run: |

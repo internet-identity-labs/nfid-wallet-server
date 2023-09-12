@@ -1,12 +1,12 @@
-name: CRON Backup ECDSA Signer BTC
+name: CRON Backup Signer IC
 on:
   schedule:
-      # Runs "every hour at 30 minutes" (see https://crontab.guru)
-      - cron: '30 * * * *'
+      # Runs "every hour at 40 minutes" (see https://crontab.guru)
+      - cron: '40 * * * *'
 
 env:
-  NETWORK_NAME: 'dev'
-  CANISTER_NAME: 'ecdsa_signer_btc'
+  NETWORK_NAME: 'ic'
+  CANISTER_NAME: 'signer_ic'
   COMPRESS_BACKUP: 'true'
   CI_DEBUG: 'true'
 
@@ -29,17 +29,17 @@ jobs:
           ref: main
           path: ci_libs
 
-      - name: Cache Cargo dependencies.
-        uses: actions/cache@v3
-        with:
-          path: |
-            /home/ubuntu/.cargo/bin/
-            /home/ubuntu/.cargo/registry/index/
-            /home/ubuntu/.cargo/registry/cache/
-            /home/ubuntu/.cargo/git/db/
-            /home/ubuntu/.cargo/cargo_target/
-            target/
-          key: ${{ runner.os }}-cargo-${{ env.NETWORK_NAME }}-${{ env.CANISTER_NAME }}-${{ hashFiles('**/Cargo.lock') }}
+      # - name: Cache Cargo dependencies.
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       /home/ubuntu/.cargo/bin/
+      #       /home/ubuntu/.cargo/registry/index/
+      #       /home/ubuntu/.cargo/registry/cache/
+      #       /home/ubuntu/.cargo/git/db/
+      #       /home/ubuntu/.cargo/cargo_target/
+      #       target/
+      #     key: ${{ runner.os }}-cargo-${{ env.NETWORK_NAME }}-${{ env.CANISTER_NAME }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: PRE-BACKUP => Populate env vars.
         run: |

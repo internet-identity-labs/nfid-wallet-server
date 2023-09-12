@@ -78,6 +78,7 @@ async fn configure(request: ConfigurationRequest) -> () {
 async fn get_config() -> ConfigurationResponse {
     let config = ConfigurationRepo::get().clone();
     ConfigurationResponse {
+        lambda_url: Some(config.lambda_url),
         lambda: Some(config.lambda),
         token_ttl: Some(config.token_ttl.as_secs()),
         token_refresh_ttl: Some(config.token_refresh_ttl.as_secs()),
