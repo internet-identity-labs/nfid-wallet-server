@@ -83,6 +83,12 @@
       "wasm": "ecdsa_signer.wasm",
       "type": "custom"
     },
+    "test_canister": {
+      "build": "src/test_canister/build.sh",
+      "candid": "src/test_canister/test_canister.did",
+      "wasm": "test_canister.wasm",
+      "type": "custom"
+    },
     "ledger": {
       "type": "custom",
       "candid": "ledger.public.did",

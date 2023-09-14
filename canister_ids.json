@@ -47,5 +47,8 @@
     "dev": "7b5jg-paaaa-aaaap-aa32q-cai",
     "ic": "7d6fq-liaaa-aaaag-absuq-cai",
     "stage": "qt7cv-eyaaa-aaaap-qapga-cai"
+  },
+  "test_canister": {
+    "dev": "irshc-3aaaa-aaaam-absla-cai"
   }
 }
