@@ -93,6 +93,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             console.debug(">> ", dfx.ess.id);
 
             dfx.ess.actor = await getActor(dfx.ess.id, dfx.user.identity, essIdl);
+            return dfx;
         }
 
         if (apps.includes(App.IdentityManager)) {

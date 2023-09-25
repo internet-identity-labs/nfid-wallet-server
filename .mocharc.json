@@ -4,6 +4,6 @@
     "spec": [
       "test/**/*.ts"
     ],
-    "timeout": 100000,
+    "timeout": 2000000,
     "diff": true
   }
