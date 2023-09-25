@@ -36,6 +36,12 @@ jobs:
         run: |
           cargo test -- --test-threads=1
 
+      - name: DFX version
+        run: dfx --version
+
+      - name: NodeJs version
+        run: node -v
+
       - name: BE ITest
         run: |
           source ./ci_libs/CI_LIBS.sh
@@ -59,7 +65,6 @@ jobs:
           fi
           
           mvn test --no-transfer-progress
-
 
       - name: BE Integration Tests JS
         run: npm i && npm run test

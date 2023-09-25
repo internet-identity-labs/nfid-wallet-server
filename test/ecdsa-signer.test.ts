@@ -23,7 +23,9 @@ describe("ECDSA signer test", () => {
             let kp: KeyPair = {
                 private_key_encrypted: "test_private", public_key: "test_public"
             }
-            let emptyResponse = await dfx.eth_signer.actor.get_kp() as KeyPairResponse;
+            let emptyResponseForDefaultPrincipal = await dfx.eth_signer.actor.get_kp([]) as KeyPairResponse;
+            expect(emptyResponseForDefaultPrincipal.key_pair.length).eq(0)
+            let emptyResponse = await dfx.eth_signer.actor.get_kp([dfx.user.principal]) as KeyPairResponse;
             expect(emptyResponse.key_pair.length).eq(0)
             await dfx.eth_signer.actor.add_kp(kp);
             try {
@@ -31,12 +33,12 @@ describe("ECDSA signer test", () => {
             } catch (e) {
                 expect(e.message.includes("Already registered"))
             }
-            let response = await dfx.eth_signer.actor.get_kp() as KeyPairResponse;
+            let response = await dfx.eth_signer.actor.get_kp([dfx.user.principal]) as KeyPairResponse;
             expect(response.key_pair[0].public_key).eq("test_public")
             expect(response.key_pair[0].private_key_encrypted).eq("test_private")
             expect(response.princ).eq(dfx.user.identity.getPrincipal().toText())
             DFX.UPGRADE_FORCE('signer_eth')
-            response = await dfx.eth_signer.actor.get_kp() as KeyPairResponse;
+            response = await dfx.eth_signer.actor.get_kp([dfx.user.principal]) as KeyPairResponse;
             expect(response.key_pair[0].public_key).eq("test_public")
             expect(response.key_pair[0].private_key_encrypted).eq("test_private")
         });

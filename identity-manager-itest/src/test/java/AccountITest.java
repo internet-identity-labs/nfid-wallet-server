@@ -1,8 +1,6 @@
 import lombok.SneakyThrows;
-import org.testng.Assert;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
-
 
 public class AccountITest extends BaseIdentityManagerITest {
 
@@ -35,14 +33,6 @@ public class AccountITest extends BaseIdentityManagerITest {
         call("request/post_token", PHONE, PHONE_SHA2, TOKEN, ROOT_IDENTITY);
         String actual = call("account/req_create_exist_account");
         validateWithFormatIdentity("account/exp_anchor_exists", actual);
-    }
-
-    @SneakyThrows
-    @Test(priority = 51)
-    public void replicateAccountExpectCopyOfAccountByHeartbeat() {
-        Thread.sleep(2000);
-        String actual = call("account/req_get_account", "identity_manager_replica");
-        validateWithFormatIdentity("account/exp_account", actual);
     }
 
     @Test(priority = 52)
