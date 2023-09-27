@@ -9,6 +9,11 @@ export interface KeyPairResponse {
     'key_pair' : [] | [KeyPair],
     'princ' : string,
 }
+export interface CertifiedKeyPairResponse {
+    'certificate' : Uint8Array | number[],
+    'witness' : Uint8Array | number[],
+    'response' : KeyPairResponse,
+}
 export interface PublicKeyReply { 'public_key' : Uint8Array }
 export type Result = { 'Ok' : SignatureReply } |
     { 'Err' : string };
@@ -27,4 +32,5 @@ export interface _SERVICE {
     'public_key' : ActorMethod<[], Result_1>,
     'sign' : ActorMethod<[Uint8Array], Result>,
     'sync_controllers' : ActorMethod<[], Array<string>>,
+    'get_kp_certified' : ActorMethod<[string], CertifiedKeyPairResponse>,
 }
