@@ -106,20 +106,28 @@ async fn sync_controllers() -> Vec<String> {
     controllers.iter().map(|x| x.to_text()).collect()
 }
 
+#[query]
+#[candid_method(query)]
+async fn get_public_key(root_principal: String) -> Option<String> {
+    ECDSA_KEYS.with(|keys| {
+        match keys.borrow().get(&root_principal) {
+            None => {
+                None
+            }
+            Some(kp) => {
+                Some(kp.key_pair.public_key.clone())
+            }
+        }
+    })
+}
+
 #[update]
 #[candid_method(query)]
-async fn get_kp(root: Option<String>) -> KeyPairResponse {
-    let key = match root {
-        None => {
-            let key = match get_root_id().await {
-                None => { trap("Unauthorised") }
-                Some(k) => { k }
-            };
-            key
-        }
-        Some(k) => k
+async fn get_kp() -> KeyPairResponse {
+    let key = match get_root_id().await {
+        None => { trap("Unauthorised") }
+        Some(k) => { k }
     };
-
     ECDSA_KEYS.with(|keys| {
         match keys.borrow().get(&key) {
             None => {
