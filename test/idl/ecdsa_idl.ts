@@ -7,6 +7,11 @@ export const idlFactory = ({ IDL }) => {
         'key_pair' : IDL.Opt(KeyPair),
         'princ' : IDL.Text,
     });
+    const CertifiedKeyPairResponse = IDL.Record({
+        'certificate' : IDL.Vec(IDL.Nat8),
+        'witness' : IDL.Vec(IDL.Nat8),
+        'response' : KeyPairResponse,
+    });
     const SignatureReply = IDL.Record({ 'signature' : IDL.Vec(IDL.Nat8) });
     const Result = IDL.Variant({ 'Ok' : SignatureReply, 'Err' : IDL.Text });
     const PublicKeyReply = IDL.Record({ 'public_key' : IDL.Vec(IDL.Nat8) });
@@ -28,6 +33,7 @@ export const idlFactory = ({ IDL }) => {
         'sign' : IDL.Func([IDL.Vec(IDL.Nat8)], [Result], []),
         'sync_controllers' : IDL.Func([], [IDL.Vec(IDL.Text)], []),
         'get_trusted_origins' : IDL.Func([], [IDL.Vec(IDL.Text)], []),
+        'get_kp_certified' : IDL.Func([IDL.Text], [CertifiedKeyPairResponse], ['query']),
     });
 };
 export const init = ({ IDL }) => { return []; };
