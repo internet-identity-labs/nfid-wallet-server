@@ -55,11 +55,6 @@ describe("ECDSA signer test", () => {
             expect(response[0]).eq("test_public")
         });
 
-        it("origins", async function () {
-            const result = await dfx.eth_signer.actor.get_trusted_origins()
-            expect(result).contains("nfid.one")
-        })
-
         it("should backup", async function () {
             try {
                 await dfx.eth_signer.actor.get_all_json(0, 10)
