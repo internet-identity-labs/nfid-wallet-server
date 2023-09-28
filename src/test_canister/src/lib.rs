@@ -64,6 +64,16 @@ async fn update_trusted_origins(a: Vec<String>) -> Vec<String> {
     })
 }
 
+
+#[update]
+#[candid_method(update)]
+async fn update_trusted_origins_raw(a: Vec<String>) -> Vec<String> {
+    ORIGIN_STORAGE.with(|storage| {
+        storage.replace(a);
+        storage.borrow().clone()
+    })
+}
+
 #[query]
 #[candid_method(query)]
 async fn get_principal() -> String {

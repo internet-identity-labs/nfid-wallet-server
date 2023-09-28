@@ -49,6 +49,7 @@
     "stage": "qt7cv-eyaaa-aaaap-qapga-cai"
   },
   "test_canister": {
-    "dev": "irshc-3aaaa-aaaam-absla-cai"
+    "dev": "irshc-3aaaa-aaaam-absla-cai",
+    "ic": "c543j-2qaaa-aaaal-ac4dq-cai"
   }
 }
