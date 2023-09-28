@@ -18,7 +18,8 @@ struct CertifiedResponse {
 }
 
 thread_local! {
-    static ORIGIN_STORAGE: RefCell<Vec<String>> = RefCell::new(Default::default());
+    static ORIGIN_STORAGE_CERTIFIED: RefCell<Vec<String>> = RefCell::new(Default::default());
+    static ORIGIN_STORAGE_RAW: RefCell<Vec<String>> = RefCell::new(Default::default());
     static TREE: RefCell<RbTree<String, Vec<u8>>> = RefCell::new(RbTree::new());
 }
 
@@ -26,7 +27,7 @@ thread_local! {
 #[update]
 #[candid_method(update)]
 async fn get_trusted_origins() -> Vec<String> {
-    ORIGIN_STORAGE.with(|storage| {
+    ORIGIN_STORAGE_RAW.with(|storage| {
         storage.borrow().clone()
     })
 }
@@ -40,7 +41,7 @@ async fn get_trusted_origins_certified() -> CertifiedResponse {
             Vec::default()
         }
     };
-    let origins = ORIGIN_STORAGE.with(|storage| {
+    let origins = ORIGIN_STORAGE_CERTIFIED.with(|storage| {
         storage.borrow().clone()
     });
 
@@ -58,7 +59,7 @@ async fn get_trusted_origins_certified() -> CertifiedResponse {
 #[candid_method(update)]
 async fn update_trusted_origins(a: Vec<String>) -> Vec<String> {
     update_certify_keys("origins".to_string(), a.clone());
-    ORIGIN_STORAGE.with(|storage| {
+    ORIGIN_STORAGE_CERTIFIED.with(|storage| {
         storage.replace(a);
         storage.borrow().clone()
     })
@@ -68,7 +69,7 @@ async fn update_trusted_origins(a: Vec<String>) -> Vec<String> {
 #[update]
 #[candid_method(update)]
 async fn update_trusted_origins_raw(a: Vec<String>) -> Vec<String> {
-    ORIGIN_STORAGE.with(|storage| {
+    ORIGIN_STORAGE_RAW.with(|storage| {
         storage.replace(a);
         storage.borrow().clone()
     })
@@ -87,7 +88,8 @@ async fn post_upgrade() {
                               "nfid.one".to_string(),
                               "https://wzkxy-vyaaa-aaaaj-qab3q-cai.ic0.app".to_string(),
                               "https://playground-dev.nfid.one".to_string(), ];
-    update_trusted_origins(a).await;
+    update_trusted_origins(a.clone()).await;
+    update_trusted_origins_raw(a).await;
 }
 
 
