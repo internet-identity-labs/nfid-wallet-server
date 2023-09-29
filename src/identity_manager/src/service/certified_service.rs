@@ -7,7 +7,7 @@ use ic_cdk::export::{
 use serde::Serialize;
 
 thread_local! {
-    static TREE: RefCell<RbTree<String, Vec<u8>>> = RefCell::new(RbTree::new());
+  pub static TREE: RefCell<RbTree<String, Vec<u8>>> = RefCell::new(RbTree::new());
 }
 
 
