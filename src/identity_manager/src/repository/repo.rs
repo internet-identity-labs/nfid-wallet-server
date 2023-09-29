@@ -12,6 +12,7 @@ use serde::{Serialize};
 use crate::http::requests::{DeviceType, WalletVariant};
 use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::persona_repo::Persona;
+use crate::service::certified_service::update_certify_keys;
 
 
 #[derive(Debug, Deserialize, CandidType, Clone)]
@@ -216,6 +217,7 @@ pub fn post_upgrade() {
         storage::get_mut::<PrincipalIndex>().insert(princ.clone(), princ.clone());
 
         for x in u.access_points.into_iter() {
+            update_certify_keys(x.principal_id.clone(), princ.clone());
             storage::get_mut::<PrincipalIndex>().insert(x.principal_id, princ.clone());
         }
     }

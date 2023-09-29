@@ -6,6 +6,7 @@ use ic_cdk::export::candid::{CandidType, Deserialize};
 use crate::repository::repo::BasicEntity;
 use serde::{Serialize};
 use crate::http::requests::{DeviceType, WalletVariant};
+use crate::service::certified_service::update_certify_keys;
 
 
 #[derive(Clone, Debug, CandidType, Deserialize, Eq, Serialize)]
@@ -102,6 +103,7 @@ impl AccessPointRepoTrait for AccessPointRepo {
     }
 
     fn update_account_index(&self, additional_principal_id: String, root_princ: String) {
-        self.account_repo.update_account_index_with_pub_key(additional_principal_id, root_princ)
+        update_certify_keys(additional_principal_id.clone(), root_princ.clone());
+        self.account_repo.update_account_index_with_pub_key(additional_principal_id, root_princ);
     }
 }

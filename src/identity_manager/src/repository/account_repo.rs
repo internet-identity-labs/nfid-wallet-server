@@ -11,6 +11,7 @@ use crate::{ic_service};
 use crate::repository::access_point_repo::AccessPoint;
 use serde::{Serialize};
 use crate::http::requests::{WalletVariant};
+use crate::service::certified_service::{remove_certify_keys, update_certify_keys};
 
 pub type Accounts = BTreeMap<String, Account>;
 pub type PrincipalIndex = BTreeMap<String, String>;
@@ -107,6 +108,7 @@ impl AccountRepoTrait for AccountRepo {
             return None;
         } else {
             index.insert(account.principal_id.clone(), account.principal_id.clone());
+            update_certify_keys(account.principal_id.clone(), account.principal_id.clone());
             accounts.insert(account.principal_id.clone(), account.clone());
             Some(account)
         }
@@ -129,6 +131,7 @@ impl AccountRepoTrait for AccountRepo {
                 (&acc.access_points).into_iter()
                     .for_each(|ap| { index.remove(&ap.principal_id); });
                 index.remove(&acc.principal_id.clone());
+                remove_certify_keys(acc.principal_id.clone());
                 Option::from(acc.to_owned())
             }
         }
@@ -154,16 +157,19 @@ impl AccountRepoTrait for AccountRepo {
 
     fn update_account_index_with_pub_key(&self, additional_principal_id: String, princ: String) {
         let index = storage::get_mut::<PrincipalIndex>();
+        update_certify_keys(additional_principal_id.clone(), princ.clone());
         index.insert(additional_principal_id, princ);
     }
 
     fn update_account_index(&self, additional_principal_id: String) {
         let index = storage::get_mut::<PrincipalIndex>();
+        update_certify_keys(additional_principal_id.clone(), additional_principal_id.clone());
         index.insert(additional_principal_id.clone(), additional_principal_id);
     }
 
     fn remove_account_index(&self, additional_principal_id: String) {
         let index = storage::get_mut::<PrincipalIndex>();
+        remove_certify_keys(additional_principal_id.clone());
         index.remove( &additional_principal_id);
     }
 
