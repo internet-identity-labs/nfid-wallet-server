@@ -1,5 +1,11 @@
 service : () -> {
     get_trusted_origins: () -> (vec text);
+    get_trusted_origins_certified: () -> (record {
+        response: vec text;
+        certificate: vec nat8;
+        witness: vec nat8;
+    }) query;
     update_trusted_origins: (vec text) -> (vec text);
+    update_trusted_origins_raw: (vec text) -> (vec text);
     get_principal: () -> (text) query;
 }
