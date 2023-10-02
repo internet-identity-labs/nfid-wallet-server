@@ -286,6 +286,7 @@ export interface _SERVICE {
     'store_accounts' : ActorMethod<[Array<Account>], BoolHttpResponse>,
     'sync_controllers' : ActorMethod<[], Array<string>>,
     'update_2fa' : ActorMethod<[boolean], AccountResponse>,
+    'get_root_by_principal': ActorMethod<[string], [[] | [string]]>,
     'update_access_point' : ActorMethod<
         [AccessPointRequest],
         HTTPAccessPointResponse

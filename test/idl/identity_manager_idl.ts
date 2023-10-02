@@ -18,7 +18,6 @@ export const idlFactory = ({ IDL }) => {
         'whitelisted_canisters' : IDL.Opt(IDL.Vec(IDL.Principal)),
         'git_branch' : IDL.Opt(IDL.Text),
         'lambda' : IDL.Opt(IDL.Principal),
-        'lambda_url' : IDL.Opt(IDL.Text),
         'token_refresh_ttl' : IDL.Opt(IDL.Nat64),
         'heartbeat' : IDL.Opt(IDL.Nat32),
         'token_ttl' : IDL.Opt(IDL.Nat64),
@@ -363,6 +362,7 @@ export const idlFactory = ({ IDL }) => {
             [IDL.Nat64, IDL.Opt(IDL.Text)],
             ['query'],
         ),
+        'get_root_by_principal': IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], []),
     });
 };
 export const init = ({ IDL }) => { return []; };
