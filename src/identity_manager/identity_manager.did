@@ -198,6 +198,12 @@ type HTTPOneAccessPointResponse = record {
     status_code: nat16;
 };
 
+type CertifiedResponse = record {
+    response: text;
+    certificate: vec nat8;
+    witness: vec nat8;
+};
+
     //---BEGIN-CUT---
 
     //  ---------------------------------------------------------
@@ -377,7 +383,7 @@ service : () -> {
     remove_access_point: (AccessPointRemoveRequest) -> (HTTPAccessPointResponse);
     read_access_points: () -> (HTTPAccessPointResponse) query;
     use_access_point: (opt text) -> (HTTPOneAccessPointResponse);
-
+    get_root_certified: () -> (CertifiedResponse) query;
     store_accounts: (vec Account) -> (BoolHttpResponse);
     restore_accounts: (text) -> (BoolHttpResponse);
     get_all_accounts_json: (nat32, nat32) -> (text) query;
