@@ -5,7 +5,7 @@ import {App} from "./constanst/app.enum";
 import {deploy, getActor, getIdentity} from "./util/deployment.util";
 import {
     AccessPointRemoveRequest,
-    AccessPointRequest, HTTPAccessPointResponse,
+    AccessPointRequest, CertifiedResponse, HTTPAccessPointResponse,
     HTTPAccountRequest,
     HTTPAccountResponse,
 } from "./idl/identity_manager";
@@ -64,6 +64,13 @@ describe("Access Point", () => {
             request
         ) )as HTTPAccessPointResponse
         expect(ap.status_code).eq(200)
+
+        let recoveryActor = await getActor(dfx.im.id, recoveryIdentity, imIdl);
+        //verify certified response for passkey
+        var certifiedResponse = (await recoveryActor.get_root_certified())as CertifiedResponse
+        expect(certifiedResponse.witness.length > 0).eq(true)
+        expect(certifiedResponse.response).eq(identity.getPrincipal().toText())
+
         var recoveryRemoveRequest: AccessPointRemoveRequest = {
             pub_key: recoveryIdentity.getPrincipal().toText(),
         };
@@ -75,7 +82,6 @@ describe("Access Point", () => {
         } catch (e) {
             expect(e.message).contains("Recovery phrase is protected")
         }
-        let recoveryActor = await getActor(dfx.im.id, recoveryIdentity, imIdl);
 
 
         let pkIdentity = Ed25519KeyIdentity.generate()
@@ -94,7 +100,10 @@ describe("Access Point", () => {
             passKeyRequest
         ) )as HTTPAccessPointResponse
         expect(ap.status_code).eq(200)
-
+        //verify certified response for recovery
+        certifiedResponse = (await recoveryActor.get_root_certified())as CertifiedResponse
+        expect(certifiedResponse.witness.length > 0).eq(true)
+        expect(certifiedResponse.response).eq(identity.getPrincipal().toText())
         //verify that recovery phrase does not affect pass keys
         let removeFromPKActor = await actor.remove_access_point(
             {
@@ -108,6 +117,14 @@ describe("Access Point", () => {
             recoveryRemoveRequest
         ) as HTTPAccessPointResponse
         expect(resp.status_code).eq(200)
+
+        //verify certified response removed for recovery
+        try{
+            await recoveryActor.get_root_certified()
+            fail("Nope")
+        }catch (e) {
+            expect(e.message).contains("No such ap")
+        }
 
         //verify that recovery principal removed from the index
         let resp2 = await recoveryActor.remove_access_point(

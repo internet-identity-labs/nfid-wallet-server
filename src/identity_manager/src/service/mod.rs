@@ -6,3 +6,4 @@ pub mod access_point_service;
 pub mod replica_service;
 pub mod security_service;
 pub mod http_outcall_service;
+pub mod certified_service;

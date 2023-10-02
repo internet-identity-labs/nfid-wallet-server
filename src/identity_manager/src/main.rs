@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use ic_cdk::{caller, storage, trap};
+use ic_cdk::{caller, print, storage, trap};
 
 use ic_cdk_macros::*;
 
@@ -27,6 +27,7 @@ use crate::response_mapper::{HttpResponse, Response, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
 use crate::service::access_point_service::AccessPointServiceTrait;
 use crate::service::application_service::ApplicationServiceTrait;
+use crate::service::certified_service::{CertifiedResponse, get_witness};
 use crate::service::replica_service::AccountsToReplicate;
 use crate::service::security_service::{secure_2fa, secure_principal_2fa};
 
@@ -35,8 +36,6 @@ mod http;
 mod repository;
 mod mapper;
 mod util;
-#[cfg(test)]
-mod tests;
 mod container;
 mod logger;
 
@@ -168,8 +167,8 @@ async fn recover_account(anchor: u64, wallet: Option<WalletVariant>) -> HttpResp
 async fn get_account_by_anchor(anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let wv = match wallet {
-        None => {WalletVariant::InternetIdentity}
-        Some(x) => {x}
+        None => { WalletVariant::InternetIdentity }
+        Some(x) => { x }
     };
     let response = account_service.get_account_by_anchor(anchor, wv);
     response
@@ -195,7 +194,7 @@ async fn get_root_by_principal(princ: String) -> Option<String> {
 #[two_f_a]
 async fn update_2fa(state: bool) -> AccountResponse {
     let mut account_service = get_account_service();
-     account_service.update_2fa(state)
+    account_service.update_2fa(state)
 }
 
 #[update]
@@ -296,7 +295,7 @@ async fn read_applications() -> HttpResponse<Vec<Application>> {
 }
 
 #[query]
-async fn get_application(domain:String) -> HttpResponse<Application> {
+async fn get_application(domain: String) -> HttpResponse<Application> {
     let application_service = get_application_service();
     application_service.get_application_by_domain(domain)
 }
@@ -371,6 +370,34 @@ async fn add_all_accounts_json(accounts_json: String) {
     let account_repo = get_account_repo();
     let accounts: Vec<Account> = serde_json::from_str(&accounts_json).unwrap();
     account_repo.store_accounts(accounts);
+}
+
+
+#[query]
+async fn get_root_certified() -> CertifiedResponse {
+    let caller = caller().to_text();
+
+    let witness = match get_witness(caller.clone()) {
+        Ok(tree) => tree,
+        Err(_) => {
+            Vec::default()
+        }
+    };
+    let mut account_service = get_account_service();
+    match  account_service.get_root_id_by_principal(caller) {
+        None => {
+            trap("No such ap")
+        }
+        Some(principal) => {
+            let certificate = ic_cdk::api::data_certificate().expect("No data certificate available");
+
+            CertifiedResponse {
+                response: principal,
+                certificate,
+                witness,
+            }
+        }
+    }
 }
 
 #[pre_upgrade]

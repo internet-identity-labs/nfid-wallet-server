@@ -8,7 +8,7 @@ import { register } from "./util/internet_identity.util";
 import {
     AccessPointRequest,
     AccountResponse,
-    BoolHttpResponse,
+    BoolHttpResponse, CertifiedResponse,
     HTTPAccessPointResponse,
     HTTPAccountRequest,
     HTTPAccountResponse,
@@ -151,6 +151,9 @@ describe("Account", () => {
             expect(response.access_points.length).eq(1);
             expect(response.personas.length).eq(0);
             expect(response.email[0]).contains("test@test.test");
+            var certifiedResponse = (await actor.get_root_certified())as CertifiedResponse
+            expect(certifiedResponse.witness.length > 0).eq(true)
+            expect(certifiedResponse.response).eq(identity.getPrincipal().toText())
         });
 
         it("should throw error due to not authentificated principal on creating account.", async function () {
