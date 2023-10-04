@@ -22,6 +22,24 @@ describe("ECDSA signer test", () => {
         after(() => {
             DFX.STOP();
         });
+        it("verify controllers", async function () {
+            try {
+                await dfx.eth_signer.actor.get_kp_certified(dfx.user.identity.getPrincipal().toText());
+                fail("Should unauthorised")
+            } catch (e) {
+                expect(e.message).contains("Unauthorised")
+            }
+            try {
+                await dfx.eth_signer.actor.get_all_json(0, 10)
+                fail("Should unauthorised")
+            } catch (e) {
+                expect(e.message).contains("Unauthorised")
+                DFX.USE_TEST_ADMIN();
+                DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "signer_eth");
+                DFX.ADD_CONTROLLER(dfx.eth_signer.id, "signer_eth");
+            }
+            await dfx.eth_signer.actor.sync_controllers()
+        })
 
         it("should return key pair", async function () {
             let kp: KeyPair = {
@@ -56,16 +74,7 @@ describe("ECDSA signer test", () => {
         });
 
         it("should backup", async function () {
-            try {
-                await dfx.eth_signer.actor.get_all_json(0, 10)
-                fail("Should unauthorised")
-            } catch (e) {
-                expect(e.message).contains("Unauthorised")
-                DFX.USE_TEST_ADMIN();
-                DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "signer_eth");
-                DFX.ADD_CONTROLLER(dfx.eth_signer.id, "signer_eth");
-            }
-            await dfx.eth_signer.actor.sync_controllers()
+
             let count = await dfx.eth_signer.actor.count()
             expect(count).eq(1n)
             let json = await dfx.eth_signer.actor.get_all_json(0, 10)

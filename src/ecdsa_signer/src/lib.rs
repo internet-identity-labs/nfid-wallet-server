@@ -63,6 +63,7 @@ thread_local! {
 
 #[query]
 async fn get_kp_certified(key: String) -> CertifiedKeyPairResponse {
+    trap_if_not_authenticated_admin();
     let witness = match get_count_witness(key.clone()) {
         Ok(tree) => tree,
         Err(_) => {
