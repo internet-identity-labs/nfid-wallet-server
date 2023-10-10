@@ -376,7 +376,7 @@ async fn add_all_accounts_json(accounts_json: String) {
 #[query]
 async fn get_root_certified() -> CertifiedResponse {
     let caller = caller().to_text();
-
+    secure_principal_2fa(&caller);
     let witness = match get_witness(caller.clone()) {
         Ok(tree) => tree,
         Err(_) => {
