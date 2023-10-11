@@ -66,6 +66,7 @@ export interface InternetIdentityStats {
 export type KeyType = { 'platform' : null } |
   { 'seed_phrase' : null } |
   { 'cross_platform' : null } |
+  { 'browser_storage_key' : null } |
   { 'unknown' : null };
 export type PublicKey = Array<number>;
 export type Purpose = { 'authentication' : null } |

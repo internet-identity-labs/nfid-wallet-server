@@ -35,7 +35,9 @@ pub enum KeyType {
     #[serde(rename = "cross_platform")]
     CrossPlatform,
     #[serde(rename = "seed_phrase")]
-    SeedPhrase,
+    SeedPhrase,    
+    #[serde(rename = "browser_storage_key")]
+    BrowserStorageKey,
 }
 
 #[derive(Serialize, Deserialize, CandidType, Clone, PartialEq, Eq, Debug)]
