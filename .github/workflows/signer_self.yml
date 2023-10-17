@@ -8,6 +8,7 @@ on:
         type: choice
         options: 
           - dev
+          - stage
           # - ic
       canister_name:
         description: 'Choose applicable canister'
@@ -68,7 +69,7 @@ jobs:
             /home/ubuntu/.cargo/git/db/
             /home/ubuntu/.cargo/cargo_target/
             target/
-          key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: PRE-BUILD => Populate env vars.
         run: |
@@ -82,7 +83,7 @@ jobs:
 
           ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
 
-          if [ "${NETWORK_NAME}" == 'dev' ]; then
+          if [[ "${NETWORK_NAME}" =~ ^(dev|stage)$ ]]; then
             ID_NAME="dev_admin"
             IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
           elif [ "${NETWORK_NAME}" == 'ic' ]; then

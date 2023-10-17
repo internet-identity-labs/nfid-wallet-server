@@ -8,6 +8,7 @@ on:
         type: choice
         options: 
           - dev
+          - stage
           - ic
       source_canister_name:
         description: 'Choose canister which will be used as a source'
@@ -23,6 +24,7 @@ on:
         type: choice
         options: 
           - dev
+          - stage
           - ic
       destination_canister_name:
         description: 'Choose canister which will be used as a destination'
@@ -116,7 +118,7 @@ jobs:
           if [ "${SOURCE_NETWORK_NAME}" == 'ic' ];then
             ID_NAME="prod_admin"
             IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
-          elif [ "${SOURCE_NETWORK_NAME}" == 'dev' ]; then
+          elif [[ "${SOURCE_NETWORK_NAME}" =~ ^(dev|stage)$ ]]; then
             ID_NAME="dev_admin"
             IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
           fi
