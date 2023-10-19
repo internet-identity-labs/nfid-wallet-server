@@ -56,7 +56,7 @@ jobs:
           if [ "${NETWORK_NAME}" == 'ic' ];then
             ID_NAME="prod_admin"
             IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
-          elif [ "${NETWORK_NAME}" == 'dev' ]; then
+          elif [[ "${NETWORK_NAME}" =~ ^(dev|stage)$ ]]; then
             ID_NAME="dev_admin"
             IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
           fi

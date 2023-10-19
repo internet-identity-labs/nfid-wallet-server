@@ -8,6 +8,7 @@ on:
         type: choice
         options: 
           - dev
+          - stage
           - ic
       canister_name:
         description: 'Choose applicable canister'
@@ -68,7 +69,7 @@ jobs:
             /home/ubuntu/.cargo/git/db/
             /home/ubuntu/.cargo/cargo_target/
             target/
-          key: ${{ runner.os }}-cargo-${{ github.event.inputs.network_name }}-${{ github.event.inputs.canister_name }}-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: PRE-BUILD => Populate env vars.
         run: |
@@ -82,7 +83,7 @@ jobs:
 
           ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
 
-          if [ "${NETWORK_NAME}" == 'dev' ]; then
+          if [[ "${NETWORK_NAME}" =~ ^(dev|stage)$ ]]; then
             ID_NAME="dev_admin"
             IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
           elif [ "${NETWORK_NAME}" == 'ic' ]; then
@@ -340,6 +341,7 @@ jobs:
             )
 
       - name: TEST => Get Account from the canister.
+        if: ${{ github.event.inputs.network_name != 'stage' }}
         run: |
           source ./ci_libs/CI_LIBS.sh
 
@@ -366,59 +368,3 @@ jobs:
         with:
           name: ${{ env.CANISTER_WASM }}
           path: ${{ github.workspace }}/${{ env.CANISTER_WASM }}
-
-      - name: Frontend => Checkout repo.
-        uses: actions/checkout@v3
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
-        with:
-          token: ${{ secrets.PAT }}
-          repository: internet-identity-labs/nfid-frontend
-          ref: main
-          path: frontend
-
-      - name: Frontend => Update did files. 
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-
-          ci_echo_info "Updating DID file." >&2
-          ci_echo_debug "Cleaning destination files" >&2
-          rm -fv "./frontend/src/integration/_ic_api/${CANISTER_NAME}.did.d.ts" "./frontend/src/integration/_ic_api/${CANISTER_NAME}_idl.js"
-
-          ci_echo_debug "Cutting text..." >&2
-          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.d.ts" "./frontend/src/integration/_ic_api/${CANISTER_NAME}.did.d.ts"
-          ci_cut_text "${START_PLACEHOLDER}" "${STOP_PLACEHOLDER}" "./.dfx/${NETWORK_NAME}/canisters/${CANISTER_NAME}/${CANISTER_NAME}.did.js" "./frontend/src/integration/_ic_api/${CANISTER_NAME}_idl.js"
-        env:
-          START_PLACEHOLDER: '\/\/---BEGIN-CUT---'
-          STOP_PLACEHOLDER: '\/\/---END-CUT---'
-
-      - name: Frontend => Format did files.
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-          ci_echo_debug "Add PSYCHEDELIC_GH_NPM_REGISTRY" >&2
-          cat > ~/.npmrc << EOF
-          @psychedelic:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${PSYCHEDELIC_GH_NPM_REGISTRY}
-          EOF
-
-          sudo npm install --global yarn
-          cd ./frontend
-
-          yarn
-          yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}.did.d.ts
-          yarn prettier --write ./src/integration/_ic_api/${CANISTER_NAME}_idl.js
-          git diff
-        env:
-          PSYCHEDELIC_GH_NPM_REGISTRY: ${{secrets.PSYCHEDELIC_GH_NPM_REGISTRY}}
-
-      - name: Frontend => Create a pull request.
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name != 'ic') }}
-        uses: peter-evans/create-pull-request@v4
-        with:
-          token: ${{ secrets.PAT }}
-          commit-message: "ci: update ${{ env.NETWORK_NAME }} - ${{ env.CANISTER_NAME }} did files"
-          title: "ci: update ${{ env.NETWORK_NAME }} - ${{ env.CANISTER_NAME }} did files"
-          branch: update-did-files
-          path: frontend
-          reviewers: plitzenberger

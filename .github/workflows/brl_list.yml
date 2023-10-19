@@ -8,6 +8,7 @@ on:
         type: choice
         options: 
           - dev
+          - stage
           - ic
       canister_name:
         description: 'Choose applicable canister'
