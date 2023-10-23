@@ -9,7 +9,7 @@ on:
         options: 
           - dev
           - stage
-          # - ic
+          - ic
       canister_name:
         description: 'Choose applicable canister'
         required: true
@@ -166,20 +166,6 @@ jobs:
           else
             ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
           fi
-
-        env:
-          CANISTER_CONFIG_DATA: >-
-            (
-              record {
-                im_canister = opt "74gpt-tiaaa-aaaak-aacaa-cai"
-              }
-            )
-          CANISTER_CONFIG_PROD_DATA: >-
-            (
-              record {
-                im_canister = opt "";
-              }
-            )
 
       - name: Save artifact
         uses: actions/upload-artifact@v3
