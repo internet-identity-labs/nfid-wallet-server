@@ -286,6 +286,26 @@ jobs:
           else
             CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_DATA"
           fi
+
+          CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_DATA"
+
+          if [ "${CANISTER_NAME}" == 'identity_manager' ]; then
+            case ${NETWORK_NAME} in
+              ic )
+                ci_echo_warn "Performing PROD config Update" >&2
+                CI_DEBUG="true"
+                CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_PROD_DATA"
+                ;;
+              stage)
+                ci_echo_warn "Performing STAGE config Update" >&2
+                CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_STAGE_DATA"
+                ;;
+              *)
+                ci_echo_info "Performing DEV config Update" >&2
+                CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_DATA"
+                ;;
+            esac
+          fi
           
           # Sync command
           ci_echo_info "Synching controllers for the canister." >&2
@@ -326,6 +346,17 @@ jobs:
                 whitelisted_canisters = opt vec { principal "gzqxf-kqaaa-aaaak-qakba-cai" };
               }
             )
+          CANISTER_CONFIG_STAGE_DATA: >-
+              (
+                record {
+                  lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/staging";
+                  ii_canister_id = opt principal "nprnb-waaaa-aaaaj-qax4a-cai";
+                  lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
+                  git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
+                  commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
+                  whitelisted_canisters = opt vec { principal "gzqxf-kqaaa-aaaak-qakba-cai" };
+                }
+              )
           CANISTER_CONFIG_PROD_DATA: >-
             (
               record {
