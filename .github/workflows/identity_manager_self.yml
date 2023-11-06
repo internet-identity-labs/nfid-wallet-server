@@ -350,7 +350,7 @@ jobs:
               (
                 record {
                   lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/staging";
-                  ii_canister_id = opt principal "nprnb-waaaa-aaaaj-qax4a-cai";
+                  ii_canister_id = opt principal "rdmx6-jaaaa-aaaaa-aaadq-cai";
                   lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
                   git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                   commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
