@@ -216,7 +216,6 @@ pub fn post_upgrade() {
             email: u.email,
         });
 
-        storage::get_mut::<PrincipalIndex>().insert(princ.clone(), princ.clone());
         let s = u.access_points.clone();
         TREE.with(|k| {
             let mut keys = k.borrow_mut();
