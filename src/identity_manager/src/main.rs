@@ -17,7 +17,7 @@ use crate::http::response_mapper;
 use crate::ic_service::get_caller;
 use crate::persona_service::{PersonaService, PersonaServiceTrait};
 use crate::replica_service::HearthCount;
-use crate::repository::account_repo::{Account, AccountRepo, AccountRepoTrait};
+use crate::repository::account_repo::{Account, AccountRepo, AccountRepoTrait, PrincipalIndex};
 use crate::repository::application_repo::{Application, ApplicationRepo};
 use crate::repository::persona_repo::PersonaRepo;
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo};
@@ -370,6 +370,16 @@ async fn add_all_accounts_json(accounts_json: String) {
     let account_repo = get_account_repo();
     let accounts: Vec<Account> = serde_json::from_str(&accounts_json).unwrap();
     account_repo.store_accounts(accounts);
+}
+
+#[update]
+#[admin]
+async fn rebuild_index() {
+    let all_accs = get_account_service().get_all_accounts();
+    let mut princ =  storage::get_mut::<PrincipalIndex>();
+    for acc in all_accs {
+        princ.insert(acc.principal_id.clone(), acc.principal_id.clone());
+    }
 }
 
 
