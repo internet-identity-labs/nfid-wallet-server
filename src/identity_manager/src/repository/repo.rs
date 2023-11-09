@@ -215,19 +215,19 @@ pub fn post_upgrade() {
             },
             email: u.email,
         });
-
-        let s = u.access_points.clone();
-        TREE.with(|k| {
-            let mut keys = k.borrow_mut();
-            let b = hex::decode(sha256::digest(princ.clone())).unwrap();
-            for x in s.into_iter() {
-                storage::get_mut::<PrincipalIndex>().insert(x.principal_id.clone(), princ.clone());
-                keys.insert(x.principal_id.clone(), b.clone());
-            }
-            set_certified_data(&keys.root_hash());
-        });
-
+        for x in u.access_points.into_iter() {
+            storage::get_mut::<PrincipalIndex>().insert(x.principal_id, princ.clone());
+        }
     }
+    let prc_i = storage::get_mut::<PrincipalIndex>();
+    TREE.with(|k| {
+        let mut keys = k.borrow_mut();
+        for princ in prc_i {
+            let b = hex::decode(sha256::digest(princ.1.clone())).unwrap();
+            keys.insert(princ.0.clone(), b.clone());
+        }
+        set_certified_data(&keys.root_hash());
+    });
     storage::get_mut::<Option<Principal>>().replace(admin);
     match applications {
         None => {}
