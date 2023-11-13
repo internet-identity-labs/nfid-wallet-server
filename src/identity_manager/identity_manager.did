@@ -397,4 +397,5 @@ service : () -> {
     collectCanisterMetrics: () -> ();
     //---END-CUT---
     validate_signature: (opt text) -> (nat64, opt text) query;
+    add_email_and_principal_for_create_account_validation: (text, text, nat64) -> (BoolHttpResponse);
 }

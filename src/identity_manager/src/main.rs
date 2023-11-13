@@ -1,11 +1,12 @@
 use std::time::Duration;
 
-use ic_cdk::{caller, print, storage, trap};
+use http::response_mapper::DataResponse;
+use ic_cdk::{caller, storage, trap};
 
 use ic_cdk_macros::*;
 
 use canister_api_macros::{admin, two_f_a, admin_or_lambda, replicate_account};
-use service::{account_service, persona_service};
+use service::{account_service, persona_service, email_validation_service};
 
 use crate::account_service::{AccountService, AccountServiceTrait};
 use crate::application_service::ApplicationService;
@@ -38,6 +39,7 @@ mod mapper;
 mod util;
 mod container;
 mod logger;
+mod structure;
 
 #[init]
 async fn init() -> () {
@@ -172,6 +174,13 @@ async fn get_account_by_anchor(anchor: u64, wallet: Option<WalletVariant>) -> Ht
     };
     let response = account_service.get_account_by_anchor(anchor, wv);
     response
+}
+
+#[update]
+#[admin_or_lambda]
+async fn add_email_and_principal_for_create_account_validation(email: String, principal: String, timestamp: u64) -> HttpResponse<bool> {
+    email_validation_service::insert(email, principal, timestamp);
+    HttpResponse::data(200, true)
 }
 
 #[query]

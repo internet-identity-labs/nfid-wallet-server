@@ -105,7 +105,10 @@ describe("Account", () => {
             DFX.STOP();
         });
 
-        it("should error empty device data on NFID account", async function () {
+        it("should return an error empty device data on NFID account", async function () {
+            let response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("testdefault@test.test", dfx.user.principal, 25) as BoolHttpResponse;
+            expect(response.status_code).eq(200);
+
             var accountRequest: HTTPAccountRequest = {
                 access_point: [],
                 wallet: [{ NFID: null }],
@@ -121,12 +124,36 @@ describe("Account", () => {
             }
         });
 
+        it("should return an error by adding new email with bigger timestamp due to self cleaning of the service", async function () {
+            let response1 = await dfx.im.actor.add_email_and_principal_for_create_account_validation("testdefault@test.test", dfx.user.principal, 900000) as BoolHttpResponse;
+            expect(response1.status_code).eq(200);
+            
+            let response2 = await dfx.im.actor.add_email_and_principal_for_create_account_validation("1@test.test", dfx.user.principal, 900000 * 2 + 1) as BoolHttpResponse;
+            expect(response2.status_code).eq(200);
+
+            var accountRequest: HTTPAccountRequest = {
+                access_point: [],
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: ["testdefault@test.test"],
+            };
+
+            try {
+                await dfx.im.actor.create_account(accountRequest);
+                fail("Have to fail");
+            } catch (e) {
+                console.log({e})
+                expect(e.message).contains("Email and principal are not valid");
+            }
+        });
+
         it("should create NFID account", async function () {
             const identity = getIdentity("87654321876543218765432187654311");
+            const principal = identity.getPrincipal().toText();
             const dd: AccessPointRequest = {
                 icon: "Icon",
                 device: "Global",
-                pub_key: identity.getPrincipal().toText(),
+                pub_key: principal,
                 browser: "Browser",
                 device_type: {
                     Email: null,
@@ -140,6 +167,9 @@ describe("Account", () => {
                 email: ["test@test.test"],
             };
             const actor = await getActor(dfx.im.id, identity, imIdl);
+
+            let email_response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25) as BoolHttpResponse;
+            expect(email_response.status_code).eq(200);
 
             const accResponse: HTTPAccountResponse = (await actor.create_account(
                 accountRequest
@@ -166,7 +196,6 @@ describe("Account", () => {
             try {
                 await dfx.im.actor.create_account(accountRequest);
             } catch (e) {
-                console.log("Error:", e)
                 expect(e.message).contains("could not be authenticated");
             }
         });
@@ -211,7 +240,7 @@ describe("Account", () => {
             try {
                 await dfx.im.actor.create_account(accountRequest);
             } catch (e) {
-                expect(e.message).contains("unreachable");
+                expect(e.message).contains("Email and principal are not valid");
             }
         });
 
@@ -380,6 +409,11 @@ describe("Account", () => {
                 email: ["test2@test.test"],
             };
             const actor = await getActor(dfx.im.id, identity, imIdl);
+
+            const principal = identity.getPrincipal().toString();
+            let email_response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test2@test.test", principal, 25) as BoolHttpResponse;
+            expect(email_response.status_code).eq(200);
+
             await actor.create_account(accountRequest);
             const identityDevice = getIdentity("87654321876543218765432187654123");
             const deviceData2: AccessPointRequest = {

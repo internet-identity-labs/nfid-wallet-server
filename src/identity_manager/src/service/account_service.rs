@@ -20,6 +20,8 @@ use crate::service::security_service::secure_2fa;
 use crate::util::validation_util::validate_name;
 use serde::{Deserialize, Serialize};
 
+use super::email_validation_service;
+
 #[async_trait(? Send)]
 pub trait AccountServiceTrait {
     fn get_account_response(&mut self) -> HttpResponse<AccountResponse>;
@@ -82,7 +84,7 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
         let mut devices: Vec<DeviceData> = Vec::default();
         let mut acc = account_request_to_account(account_request.clone());
         if account_request.email.is_some() {
-            if !Self::validate_email_and_principal(account_request.email.clone().unwrap().as_str(), &princ).await {
+            if !email_validation_service::contains(account_request.email.clone().unwrap().to_string(), princ) {
                 trap("Email and principal are not valid.")
             }
         }
