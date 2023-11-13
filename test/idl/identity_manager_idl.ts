@@ -363,6 +363,11 @@ export const idlFactory = ({ IDL }) => {
             ['query'],
         ),
         'get_root_by_principal': IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], []),
+        'add_email_and_principal_for_create_account_validation' : IDL.Func(
+          [IDL.Text, IDL.Text, IDL.Nat64],
+          [BoolHttpResponse],
+          [],
+        ),
     });
 };
 export const init = ({ IDL }) => { return []; };

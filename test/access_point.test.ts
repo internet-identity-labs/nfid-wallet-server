@@ -5,7 +5,7 @@ import {App} from "./constanst/app.enum";
 import {deploy, getActor, getIdentity} from "./util/deployment.util";
 import {
     AccessPointRemoveRequest,
-    AccessPointRequest, CertifiedResponse, HTTPAccessPointResponse,
+    AccessPointRequest, BoolHttpResponse, CertifiedResponse, HTTPAccessPointResponse,
     HTTPAccountRequest,
     HTTPAccountResponse,
 } from "./idl/identity_manager";
@@ -28,10 +28,11 @@ describe("Access Point", () => {
 
     it("should protect recovery phrase", async function () {
         const identity = getIdentity("87654321876543218765432187654311");
+        const principal = identity.getPrincipal().toText();
         const passKeyEmailRequest: AccessPointRequest = {
             icon: "Icon",
             device: "Global",
-            pub_key: identity.getPrincipal().toText(),
+            pub_key: principal,
             browser: "Browser",
             device_type: {
                 Email: null
@@ -44,6 +45,10 @@ describe("Access Point", () => {
             anchor: 0n,
             email: ["test@test.test"]
         };
+
+        let response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25) as BoolHttpResponse;
+        expect(response.status_code).eq(200);
+
         const actor = await getActor(dfx.im.id, identity, imIdl);
         const acc = (await actor.create_account(
             accountRequest
