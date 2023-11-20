@@ -3,6 +3,7 @@ import {expect} from "chai";
 import {
     Application,
     BoolHttpResponse,
+    HTTPAccountRequest,
     HTTPAccountResponse,
     HTTPApplicationResponse,
     HTTPAppResponse,
@@ -124,9 +125,11 @@ describe("Application", () => {
     });
 
     it("should respond with over the limit response.", async function () {
-        const accountRequest = {
+        const accountRequest: HTTPAccountRequest = {
             anchor: 10000n,
-            access_point: [], wallet: [], email: []
+            access_point: [], 
+            wallet: [], 
+            email: []
         };
         const persona1: PersonaRequest = {
             domain: domain3,
