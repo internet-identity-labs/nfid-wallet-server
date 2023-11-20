@@ -368,6 +368,11 @@ export const idlFactory = ({ IDL }) => {
           [BoolHttpResponse],
           [],
         ),
+        'recover_google_device' : IDL.Func(
+            [IDL.Vec(IDL.Text)],
+            [IDL.Vec(IDL.Text)],
+            [],
+        ),
     });
 };
 export const init = ({ IDL }) => { return []; };

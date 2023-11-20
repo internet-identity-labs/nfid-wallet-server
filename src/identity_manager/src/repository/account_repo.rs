@@ -35,6 +35,7 @@ pub struct Account {
 pub trait AccountRepoTrait {
     fn get_account(&self) -> Option<Account>;
     fn get_account_by_principal(&self, princ: String) -> Option<Account>;
+    fn get_account_by_principal_force(&self, principal: String) -> Option<Account>;
     fn get_account_by_anchor(&self, anchor: u64, wallet: WalletVariant) -> Option<Account>;
     fn create_account(&self, account: Account) -> Option<Account>;
     fn store_account(&self, account: Account) -> Option<Account>;
@@ -83,6 +84,16 @@ impl AccountRepoTrait for AccountRepo {
                         Option::from(acc.to_owned())
                     }
                 }
+            }
+        }
+    }
+
+    fn get_account_by_principal_force(&self, principal: String) -> Option<Account> {
+        let accounts = storage::get_mut::<Accounts>();
+        match accounts.get(&principal) {
+            None => { None }
+            Some(acc) => {
+                Option::from(acc.to_owned())
             }
         }
     }

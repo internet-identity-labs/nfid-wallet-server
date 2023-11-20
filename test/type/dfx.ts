@@ -1,5 +1,7 @@
 import {ActorMethod, Identity} from "@dfinity/agent";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
+import * as Agent from "@dfinity/agent"
+import {_SERVICE as IdentityManager} from "../idl/identity_manager";
 
 export interface Dfx {
     root: string;
@@ -9,7 +11,7 @@ export interface Dfx {
     }
     im?: {
         id: string;
-        actor: Record<string, ActorMethod>;
+        actor: Agent.ActorSubclass<IdentityManager>;
     }
     imr?: {
         id: string;

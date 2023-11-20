@@ -34,6 +34,7 @@ pub trait AccountServiceTrait {
     fn store_accounts(&mut self, accounts: Vec<Account>) -> HttpResponse<bool>;
     fn get_account_by_anchor(&mut self, anchor: u64, wallet: WalletVariant) -> HttpResponse<AccountResponse>;
     fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse>;
+    fn get_account_by_principal_force(&mut self, principal: String) -> Option<Account>;
     fn get_root_id_by_principal(&mut self, princ: String) -> Option<String>;
     async fn recover_account(&mut self, anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse>;
     fn get_all_accounts(&mut self) -> Vec<Account>;
@@ -202,6 +203,10 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
                 to_success_response(account_to_account_response(acc))
             }
         }
+    }
+
+    fn get_account_by_principal_force(&mut self, principal: String) -> Option<Account> {
+        self.account_repo.get_account_by_principal_force(principal)
     }
 
     fn get_root_id_by_principal(&mut self, princ: String) -> Option<String> {

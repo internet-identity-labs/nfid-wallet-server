@@ -307,4 +307,5 @@ export interface _SERVICE {
     [string, string, number],
     BoolHttpResponse
     >,
+    'recover_google_device' : ActorMethod<[Array<string>], Array<string>>,
 }
