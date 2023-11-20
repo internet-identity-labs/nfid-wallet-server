@@ -4,7 +4,7 @@ use ic_cdk::export::Principal;
 use ic_cdk::{caller, trap};
 
 use crate::{AccessPointRemoveRequest, Account, AccountServiceTrait, get_account_service, ic_service};
-use crate::http::requests::{DeviceType, WalletVariant, self};
+use crate::http::requests::{DeviceType, WalletVariant};
 use crate::ic_service::DeviceData;
 use crate::mapper::access_point_mapper::{access_point_request_to_access_point, access_point_to_access_point_response, recovery_device_data_to_access_point};
 use crate::repository::access_point_repo::{AccessPoint, AccessPointRepoTrait};
@@ -117,7 +117,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
             device: "Google".to_string(),
             pub_key: principal.to_string(),
             browser: "".to_string(),
-            device_type: requests::DeviceType::Unknown,
+            device_type: DeviceType::Unknown,
             credential_id: None
         };
         let new_access_point = access_point_request_to_access_point(access_point_request.clone());
