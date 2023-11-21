@@ -12,6 +12,8 @@ import {App} from "../constanst/app.enum";
 import {IDL} from "@dfinity/candid";
 import {DFX} from "../constanst/dfx.const";
 import {execute} from "./call.util";
+import * as Agent from "@dfinity/agent"
+import { _SERVICE as IdentityManagerType } from "../idl/identity_manager"
 
 const localhost: string = "http://127.0.0.1:8000";
 
@@ -107,7 +109,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             dfx.im.id = DFX.GET_CANISTER_ID("identity_manager");
             console.debug(">> ", dfx.im.id);
 
-            dfx.im.actor = await getActor(dfx.im.id, dfx.user.identity, imIdl);
+            dfx.im.actor = await getTypedActor<IdentityManagerType>(dfx.im.id, dfx.user.identity, imIdl);
 
             DFX.ADD_CONTROLLER(dfx.im.id, "identity_manager");
             DFX.ADD_CONTROLLER(dfx.user.principal, "identity_manager");
@@ -199,4 +201,14 @@ export const getActor = async (
     const agent: HttpAgent = new HttpAgent({ host: localhost, identity: identity });
     await agent.fetchRootKey();
     return await Actor.createActor(idl, { agent, canisterId: imCanisterId });
+};
+
+export async function getTypedActor<T> (
+    imCanisterId: string,
+    identity: Identity,
+    idl: IDL.InterfaceFactory
+): Promise<Agent.ActorSubclass<T>> {
+    const agent: HttpAgent = new HttpAgent({ host: localhost, identity: identity });
+    await agent.fetchRootKey();
+    return Actor.createActor(idl, { agent, canisterId: imCanisterId });
 };

@@ -389,7 +389,7 @@ service : () -> {
     get_all_accounts_json: (nat32, nat32) -> (text) query;
     add_all_accounts_json: (text) -> ();
     count_anchors: () -> (nat64) query;
-
+    recover_google_device: (vec text) -> (vec text);
     certify_phone_number_sha2: (text, text) -> (StringHttpResponse) query;
     //---BEGIN-CUT---
     getCanisterMetrics: (GetMetricsParameters) -> (opt CanisterMetrics) query;

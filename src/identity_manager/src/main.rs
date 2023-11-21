@@ -383,6 +383,24 @@ async fn add_all_accounts_json(accounts_json: String) {
 
 #[update]
 #[admin]
+async fn recover_google_device(principals: Vec<String>) -> Vec<String> {
+    let mut result_vector: Vec<String> = Vec::new(); 
+
+    for principal in principals {
+        let access_point_service = get_access_point_service();
+        let result = access_point_service.recover_root_access_point(principal.to_string());
+
+        match result {
+            Ok(result) => result_vector.push(principal.clone() + ":Ok:" + result),
+            Err(error) => result_vector.push(principal.clone() + ":Err:" + error)
+        }
+    }
+
+    result_vector
+}
+
+#[update]
+#[admin]
 async fn rebuild_index() {
     let all_accs = get_account_service().get_all_accounts();
     let mut princ =  storage::get_mut::<PrincipalIndex>();
@@ -390,7 +408,6 @@ async fn rebuild_index() {
         princ.insert(acc.principal_id.clone(), acc.principal_id.clone());
     }
 }
-
 
 #[query]
 async fn get_root_certified() -> CertifiedResponse {
