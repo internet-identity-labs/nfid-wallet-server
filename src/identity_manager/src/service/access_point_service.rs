@@ -117,7 +117,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
             device: "Google".to_string(),
             pub_key: principal.to_string(),
             browser: "".to_string(),
-            device_type: DeviceType::Unknown,
+            device_type: DeviceType::Email,
             credential_id: None
         };
         let new_access_point = access_point_request_to_access_point(access_point_request.clone());

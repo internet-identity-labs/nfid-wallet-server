@@ -190,6 +190,9 @@ describe("Access Point", () => {
 
         const accountRecovered = await actor.get_account()
         expect(accountRecovered.status_code).eq(200)
+        expect(accountRecovered.data[0].access_points[0].icon).eq('google')
+        expect(accountRecovered.data[0].access_points[0].device).eq('Google')
+        expect(accountRecovered.data[0].access_points[0].device_type).to.deep.eq({Email: null})
     })
 
     it("should recover name of google device", async function () {
