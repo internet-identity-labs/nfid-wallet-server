@@ -39,6 +39,7 @@ pub trait AccountServiceTrait {
     async fn recover_account(&mut self, anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse>;
     fn get_all_accounts(&mut self) -> Vec<Account>;
     async fn validate_email_and_principal(email: &str, principal: &str) -> bool;
+    fn update_account_with_email_force(&self, principal: String, email: String) -> Result<&str, &str>;
 }
 
 #[derive(Default)]
@@ -157,6 +158,17 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             }
             None => to_error_response("Unable to find Account.")
         }
+    }
+
+    fn update_account_with_email_force(&self, principal: String, email: String) -> Result<&str, &str> {
+        let account = match self.account_repo.get_account_by_principal_force(principal) {
+            Some(account) => account,
+            None => return Err("The account does not exist."),
+        };
+        let mut new_account = account.clone();
+        new_account.email = Some(email);
+        self.account_repo.store_account(new_account.clone());
+        Ok("EmailSet.")
     }
 
     fn remove_account(&mut self) -> HttpResponse<bool> {

@@ -88,6 +88,10 @@ export interface CertifiedResponse {
     'witness' : Uint8Array | number[],
     'response' : string,
 }
+export interface PrincipalEmailRequest {
+    'email' : string,
+    'principal_id' : string,
+}
 export interface ConfigurationRequest {
     'env' : [] | [string],
     'whitelisted_phone_numbers' : [] | [Array<string>],
@@ -308,4 +312,5 @@ export interface _SERVICE {
     BoolHttpResponse
     >,
     'recover_google_device' : ActorMethod<[Array<string>], Array<string>>,
+    'recover_email' : ActorMethod<[Array<PrincipalEmailRequest>], Array<string>>,
 }
