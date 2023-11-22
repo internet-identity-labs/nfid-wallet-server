@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use http::requests::PrincipalEmailRequest;
 use http::response_mapper::DataResponse;
 use ic_cdk::{caller, storage, trap};
 
@@ -394,6 +395,24 @@ async fn recover_google_device(principals: Vec<String>) -> Vec<String> {
             Ok(result) => result_vector.push(principal.clone() + ":Ok:" + result),
             Err(error) => result_vector.push(principal.clone() + ":Err:" + error)
         }
+    }
+
+    result_vector
+}
+
+#[update]
+#[admin]
+fn recover_email(principal_email_vec: Vec<PrincipalEmailRequest>) -> Vec<String> {
+    let mut result_vector: Vec<String> = Vec::new(); 
+
+    for principal_email in principal_email_vec {
+        let account_service = get_account_service();
+        let result = account_service.update_account_with_email_force(principal_email.principal_id.clone(), principal_email.email.clone());
+        let response = match result {
+            Ok(result) => format!("{}:{}:{}:{}", principal_email.principal_id, principal_email.email, "Ok", result),
+            Err(error) => format!("{}:{}:{}:{}", principal_email.principal_id, principal_email.email, "Err", error)
+        };
+        result_vector.push(response);
     }
 
     result_vector

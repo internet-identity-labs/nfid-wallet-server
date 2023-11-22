@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { sleep } from "./util/call.util";
 import { Dfx } from "./type/dfx";
 import { App } from "./constanst/app.enum";
-import { deploy, getActor, getIdentity } from "./util/deployment.util";
+import { deploy, getActor, getIdentity, getTypedActor } from "./util/deployment.util";
 import { register } from "./util/internet_identity.util";
 import {
     AccessPointRequest,
@@ -20,6 +20,7 @@ import { Expected } from "./constanst/expected.const";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { DeviceData } from "./idl/internet_identity_test";
 import { fail } from "assert";
+import { _SERVICE as IdentityManagerType } from "./idl/identity_manager"
 
 const PHONE = "123456";
 const PHONE_SHA2 = "123456_SHA2";
@@ -448,6 +449,46 @@ describe("Account", () => {
             }
             let updated2fa = (await actorDevice.update_2fa(false)) as AccountResponse;
             expect(updated2fa.is2fa_enabled).eq(false);
+        });
+
+        it("should recover email for principal", async function () {
+            const identity = getIdentity("87654321876543218765432187654317");
+            const principal = identity.getPrincipal().toText();
+
+            const validationResponse = await dfx.im.actor.add_email_and_principal_for_create_account_validation("a@test.test", principal, 25);
+            expect(validationResponse.status_code).eq(200);
+
+            const accessPointRequest: AccessPointRequest = {
+                icon: "google",
+                device: "Google",
+                pub_key: principal,
+                browser: "",
+                device_type: {
+                    Email: null
+                },
+                credential_id: []
+            }
+
+            var accountRequest: HTTPAccountRequest = {
+                access_point: [accessPointRequest],
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: ["a@test.test"],
+            };
+
+            const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
+            const accountResponse = await actor.create_account(accountRequest);
+            expect(accountResponse.status_code).eq(200);
+
+            const newEmail = "b@test.test"
+            const request = [{principal_id: principal, email: newEmail }];
+
+            const recoveryResponse = await dfx.im.actor.recover_email(request)
+            expect(recoveryResponse[0]).eq(`${principal}:${newEmail}:Ok:EmailSet.`)
+
+            const accountEmailRecoveredResponse = await actor.get_account();
+            expect(accountEmailRecoveredResponse.status_code).eq(200);
+            expect(accountEmailRecoveredResponse.data[0].email[0]).eq(newEmail);
         });
     });
 });

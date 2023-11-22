@@ -185,6 +185,10 @@ export const idlFactory = ({ IDL }) => {
         'hourly' : IDL.Vec(HourlyMetricsData),
         'daily' : IDL.Vec(DailyMetricsData),
     });
+    const PrincipalEmailRequest = IDL.Record({
+        'email' : IDL.Text,
+        'principal_id' : IDL.Text,
+    });
     const CanisterMetrics = IDL.Record({ 'data' : CanisterMetricsData });
     const HTTPAppResponse = IDL.Record({
         'data' : IDL.Opt(Application),
@@ -370,6 +374,11 @@ export const idlFactory = ({ IDL }) => {
         ),
         'recover_google_device' : IDL.Func(
             [IDL.Vec(IDL.Text)],
+            [IDL.Vec(IDL.Text)],
+            [],
+        ),
+        'recover_email' : IDL.Func(
+            [IDL.Vec(PrincipalEmailRequest)],
             [IDL.Vec(IDL.Text)],
             [],
         ),
