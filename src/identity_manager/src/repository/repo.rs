@@ -1,20 +1,18 @@
 use std::collections::{BTreeSet, HashSet};
-use std::hash::{Hash};
+use std::hash::Hash;
 use std::time::Duration;
-use ic_cdk::api::set_certified_data;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::export::Principal;
 use ic_cdk::storage;
-use ic_certified_map::AsHashTree;
-use crate::{ic_service};
+use crate::ic_service;
 use crate::logger::logger::Logs;
 use crate::repository::account_repo::{Account, Accounts, PrincipalIndex};
 use crate::repository::application_repo::Application;
-use serde::{Serialize};
+use crate::service::device_index_service;
+use serde::Serialize;
 use crate::http::requests::{DeviceType, WalletVariant};
 use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::persona_repo::Persona;
-use crate::service::certified_service::{TREE, update_certify_keys};
 
 
 #[derive(Debug, Deserialize, CandidType, Clone)]
@@ -218,17 +216,8 @@ pub fn post_upgrade() {
         for x in u.access_points.into_iter() {
             storage::get_mut::<PrincipalIndex>().insert(x.principal_id, princ.clone());
         }
+        storage::get_mut::<Option<Principal>>().replace(admin);
     }
-    let prc_i = storage::get_mut::<PrincipalIndex>();
-    TREE.with(|k| {
-        let mut keys = k.borrow_mut();
-        for princ in prc_i {
-            let b = hex::decode(sha256::digest(princ.1.clone())).unwrap();
-            keys.insert(princ.0.clone(), b.clone());
-        }
-        set_certified_data(&keys.root_hash());
-    });
-    storage::get_mut::<Option<Principal>>().replace(admin);
     match applications {
         None => {}
         Some(applications) => {

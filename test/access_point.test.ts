@@ -14,6 +14,7 @@ import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {Ed25519KeyIdentity} from "@dfinity/identity";
 import {fail} from "assert";
 import { _SERVICE as IdentityManagerType } from "./idl/identity_manager"
+import { verifyCertifiedResponse } from "./util/cert_verification";
 
 describe("Access Point", () => {
 
@@ -275,4 +276,99 @@ describe("Access Point", () => {
         expect(accountRecovered.data[0].access_points[0].device_type).to.deep.eq({Email: null})
     });
 
+    it("should have device principal in certified map after app restarts.", async function () {
+        const identity = getIdentity("87654321876543218765432187654377");
+        const principal = identity.getPrincipal().toText();
+        const email = "test@test.test";
+
+        const validationResponse = await dfx.im.actor.add_email_and_principal_for_create_account_validation(email, principal, 25);
+        expect(validationResponse.status_code).eq(200);
+
+        const accessPointRequest: AccessPointRequest = {
+            icon: "google",
+            device: "Google",
+            pub_key: principal,
+            browser: "",
+            device_type: {
+                Email: null
+            },
+            credential_id: []
+        }
+
+        var accountRequest: HTTPAccountRequest = {
+            access_point: [accessPointRequest],
+            wallet: [{ NFID: null }],
+            anchor: 0n,
+            email: [email],
+        };
+
+        const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
+        const accountResponse = await actor.create_account(accountRequest);
+        expect(accountResponse.status_code).eq(200);
+
+        var rootCertifiedResponse = await actor.get_root_certified();
+        expect(rootCertifiedResponse.witness.length > 0).eq(true);
+        expect(rootCertifiedResponse.response).eq(principal);
+
+        // Add recovery device.
+
+        const recoveryIdentity = Ed25519KeyIdentity.generate();
+        const recoveryPrincipal = recoveryIdentity.getPrincipal().toText();
+        var request: AccessPointRequest = {
+            icon: "",
+            device: "",
+            pub_key: recoveryPrincipal,
+            browser: "",
+            device_type: {
+                Recovery: null
+            },
+            credential_id: []
+        };
+        let accessPointResponse = await actor.create_access_point(request);
+        expect(accessPointResponse.status_code).eq(200)
+
+        // Check existence of the device in device index.
+
+        let recoveryActor = await getTypedActor<IdentityManagerType>(dfx.im.id, recoveryIdentity, imIdl);
+        var {certificate, witness, response} = await recoveryActor.get_root_certified();
+        expect(response).eq(identity.getPrincipal().toText());
+        await verifyCertifiedResponse(certificate, witness, recoveryPrincipal, dfx.im.id, response);
+
+        // Restart the app.
+
+        dfx = await deploy({clean: false, apps: [App.IdentityManager]});
+
+        // It should have no device in device index after restart.
+        
+        var {certificate, witness, response} = await recoveryActor.get_root_certified();
+        expect(response).eq(identity.getPrincipal().toText());
+
+        try {
+            await verifyCertifiedResponse(certificate, witness, recoveryPrincipal, dfx.im.id, response);
+        } catch(e) {
+            expect(e.message).to.equal("Tree root hash did not match the certified data in the certificate.");
+        }
+
+        // It should have it restored by the methods.
+
+        const successStackResponse = await dfx.im.actor.save_temp_stack_to_rebuild_device_index();
+        expect(successStackResponse).to.equal("The stack has been filled with data.");
+
+        const errorStackResponse = await dfx.im.actor.save_temp_stack_to_rebuild_device_index();
+        expect(errorStackResponse).to.equal("The stack is not empty. No action required.");
+
+        const nonZeroRemainingAmount = await dfx.im.actor.get_remaining_size_after_rebuild_device_index_slice_from_temp_stack([1n]);
+        expect(Number(nonZeroRemainingAmount)).to.be.gt(0);
+
+        const zeroRemainingAmount = await dfx.im.actor.get_remaining_size_after_rebuild_device_index_slice_from_temp_stack([10000n]);
+        expect(Number(zeroRemainingAmount)).to.equal(0);
+
+        const zeroRemainingAmount2 = await dfx.im.actor.get_remaining_size_after_rebuild_device_index_slice_from_temp_stack([]);
+        expect(Number(zeroRemainingAmount2)).to.equal(0);
+
+        var {certificate, witness, response} = await recoveryActor.get_root_certified();
+        expect(response).eq(identity.getPrincipal().toText());
+        await verifyCertifiedResponse(certificate, witness, recoveryPrincipal, dfx.im.id, response);
+    });
+    
 });

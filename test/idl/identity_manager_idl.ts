@@ -382,6 +382,12 @@ export const idlFactory = ({ IDL }) => {
             [IDL.Vec(IDL.Text)],
             [],
         ),
+        'save_temp_stack_to_rebuild_device_index' : IDL.Func([], [IDL.Text], []),
+        'get_remaining_size_after_rebuild_device_index_slice_from_temp_stack' : IDL.Func(
+          [IDL.Opt(IDL.Nat64)],
+          [IDL.Nat64],
+          [],
+        ),
     });
 };
 export const init = ({ IDL }) => { return []; };

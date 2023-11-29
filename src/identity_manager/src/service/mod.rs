@@ -8,3 +8,4 @@ pub mod security_service;
 pub mod http_outcall_service;
 pub mod certified_service;
 pub mod email_validation_service;
+pub mod device_index_service;

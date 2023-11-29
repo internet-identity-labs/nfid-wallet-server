@@ -313,4 +313,9 @@ export interface _SERVICE {
     >,
     'recover_google_device' : ActorMethod<[Array<string>], Array<string>>,
     'recover_email' : ActorMethod<[Array<PrincipalEmailRequest>], Array<string>>,
+    'save_temp_stack_to_rebuild_device_index' : ActorMethod<[], string>,
+    'get_remaining_size_after_rebuild_device_index_slice_from_temp_stack' : ActorMethod<
+    [[] | [bigint]],
+    bigint
+    >,
 }
