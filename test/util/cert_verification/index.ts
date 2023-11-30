@@ -4,10 +4,13 @@ import {
   HashTree,
   reconstruct,
   compare,
+  HttpAgent,
+  lookup_path,
 } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { PipeArrayBuffer, lebDecode } from '@dfinity/candid';
 import { CertificateTimeError, CertificateVerificationError } from './error';
+import * as crypto from "crypto";
 
 export interface VerifyCertificationParams {
   canisterId: Principal;
@@ -15,6 +18,28 @@ export interface VerifyCertificationParams {
   encodedTree: ArrayBuffer;
   rootKey: ArrayBuffer;
   maxCertificateTimeOffsetMs: number;
+}
+
+export async function verifyCertifiedResponse(certificate: Uint8Array | number[], witness: Uint8Array | number[], principal: string, canisterId: string, newOwnedString: string) {
+  const agent = new HttpAgent({host: "http://127.0.0.1:8000"});
+  await agent.fetchRootKey();
+  const tree = await verifyCertification({
+      canisterId: Principal.fromText(canisterId),
+      encodedCertificate: new Uint8Array(certificate).buffer,
+      encodedTree: new Uint8Array(witness).buffer,
+      rootKey: agent.rootKey,
+      maxCertificateTimeOffsetMs: 50000,
+  });
+
+  const treeHash = lookup_path([principal], tree);
+  if (!treeHash) {
+      throw new Error('Response not found in tree');
+  }
+  const sha256Result = crypto.createHash('sha256').update(newOwnedString).digest();
+  const byteArray = new Uint8Array(sha256Result);
+  if (!equal(byteArray, treeHash)) {
+      throw new Error('Response hash does not match');
+  }
 }
 
 export async function verifyCertification({

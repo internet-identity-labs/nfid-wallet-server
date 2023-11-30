@@ -99,7 +99,11 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         }
 
         if (apps.includes(App.IdentityManager)) {
-            DFX.DEPLOY("identity_manager");
+            if (clean) {
+                DFX.DEPLOY("identity_manager");
+            } else {
+                DFX.UPGRADE_FORCE("identity_manager");
+            }
             var response = DFX.CONFIGURE();
 
             if (response !== "()") {

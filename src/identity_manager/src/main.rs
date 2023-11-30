@@ -1,13 +1,13 @@
+use std::convert::TryInto;
 use std::time::Duration;
 
-use http::requests::PrincipalEmailRequest;
-use http::response_mapper::DataResponse;
 use ic_cdk::{caller, storage, trap};
-
 use ic_cdk_macros::*;
 
-use canister_api_macros::{admin, two_f_a, admin_or_lambda, replicate_account};
-use service::{account_service, persona_service, email_validation_service};
+use canister_api_macros::{admin, admin_or_lambda, replicate_account, two_f_a};
+use http::requests::PrincipalEmailRequest;
+use http::response_mapper::DataResponse;
+use service::{account_service, email_validation_service, persona_service, device_index_service};
 
 use crate::account_service::{AccountService, AccountServiceTrait};
 use crate::application_service::ApplicationService;
@@ -25,11 +25,11 @@ use crate::repository::persona_repo::PersonaRepo;
 use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo};
 use crate::requests::{AccessPointRemoveRequest, AccessPointRequest, AccessPointResponse, AccountRequest, ConfigurationRequest, ConfigurationResponse, CredentialVariant, PersonaRequest, PersonaResponse, TokenRequest, ValidatePhoneRequest};
 use crate::requests::AccountUpdateRequest;
-use crate::response_mapper::{HttpResponse, Response, to_success_response};
+use crate::response_mapper::{HttpResponse, to_success_response};
 use crate::service::{application_service, ic_service, replica_service};
 use crate::service::access_point_service::AccessPointServiceTrait;
 use crate::service::application_service::ApplicationServiceTrait;
-use crate::service::certified_service::{CertifiedResponse, get_witness};
+use crate::service::certified_service::{CertifiedResponse, get_witness, TREE};
 use crate::service::replica_service::AccountsToReplicate;
 use crate::service::security_service::{secure_2fa, secure_principal_2fa};
 
@@ -385,7 +385,7 @@ async fn add_all_accounts_json(accounts_json: String) {
 #[update]
 #[admin]
 async fn recover_google_device(principals: Vec<String>) -> Vec<String> {
-    let mut result_vector: Vec<String> = Vec::new(); 
+    let mut result_vector: Vec<String> = Vec::new();
 
     for principal in principals {
         let access_point_service = get_access_point_service();
@@ -403,7 +403,7 @@ async fn recover_google_device(principals: Vec<String>) -> Vec<String> {
 #[update]
 #[admin]
 fn recover_email(principal_email_vec: Vec<PrincipalEmailRequest>) -> Vec<String> {
-    let mut result_vector: Vec<String> = Vec::new(); 
+    let mut result_vector: Vec<String> = Vec::new();
 
     for principal_email in principal_email_vec {
         let account_service = get_account_service();
@@ -422,10 +422,22 @@ fn recover_email(principal_email_vec: Vec<PrincipalEmailRequest>) -> Vec<String>
 #[admin]
 async fn rebuild_index() {
     let all_accs = get_account_service().get_all_accounts();
-    let mut princ =  storage::get_mut::<PrincipalIndex>();
+    let mut princ = storage::get_mut::<PrincipalIndex>();
     for acc in all_accs {
         princ.insert(acc.principal_id.clone(), acc.principal_id.clone());
     }
+}
+
+#[update]
+#[admin]
+async fn get_remaining_size_after_rebuild_device_index_slice_from_temp_stack(size: Option<u64>) -> u64 {
+    device_index_service::get_remaining_size_after_rebuild_index_slice_from_temp_stack(size)
+}
+
+#[update]
+#[admin]
+async fn save_temp_stack_to_rebuild_device_index() -> String {
+    device_index_service::save_temp_stack()
 }
 
 #[query]
@@ -439,7 +451,7 @@ async fn get_root_certified() -> CertifiedResponse {
         }
     };
     let mut account_service = get_account_service();
-    match  account_service.get_root_id_by_principal(caller) {
+    match account_service.get_root_id_by_principal(caller) {
         None => {
             trap("No such ap")
         }

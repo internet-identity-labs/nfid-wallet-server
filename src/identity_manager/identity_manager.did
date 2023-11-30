@@ -404,4 +404,6 @@ service : () -> {
     validate_signature: (opt text) -> (nat64, opt text) query;
     add_email_and_principal_for_create_account_validation: (text, text, nat64) -> (BoolHttpResponse);
     recover_email: (vec PrincipalEmailRequest) -> (vec text);
+    get_remaining_size_after_rebuild_device_index_slice_from_temp_stack: (opt nat64) -> (nat64);
+    save_temp_stack_to_rebuild_device_index: () -> (text);
 }
