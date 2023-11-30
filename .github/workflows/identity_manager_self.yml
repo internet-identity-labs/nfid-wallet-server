@@ -334,6 +334,36 @@ jobs:
           else
             ci_echo_success "${result}" >&2
           fi
+
+          # Rebuild device index command
+          ci_echo_info "Rebuild device index." >&2
+
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' save_temp_stack_to_rebuild_device_index" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" save_temp_stack_to_rebuild_device_index); then
+            ci_echo_warn "The operation of saving device index data to temp stack has been failed: ${result}" >&2
+          else
+            ci_echo_success "${result}" >&2
+          fi
+
+          while true; do
+            result=$(dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_remaining_size_after_rebuild_device_index_slice_from_temp_stack)
+            if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" save_temp_stack_to_rebuild_device_index); then
+              ci_echo_warn "The operation of rebuilding device index slice has been failed: ${result}" >&2
+            else
+              ci_echo_success "${result}" >&2
+            fi
+
+            cleaned_string=$(echo "$result" | sed 's/nat64//g; s/[^0-9]//g'); 
+            remaining_amount=$((cleaned_string)); 
+
+            if [ "$remaining_amount" -le 0 ]; then
+                echo "Index rebuild has been completed. Done."
+                break
+            else
+                echo "Index rebuild is in progress, amount of remaining entries: $remaining_amount"
+            fi
+          done
+
         env:
           CANISTER_CONFIG_DATA: >-
             (
