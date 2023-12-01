@@ -132,6 +132,5 @@ jobs:
           if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
             ci_echo_error "${result}" >&2
             exit 1
-          else
-            ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
           fi
+          ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2

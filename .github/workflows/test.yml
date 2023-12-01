@@ -33,7 +33,7 @@ jobs:
             src/eth_secret_storage/target/
             src/identity_manager/target/
             src/bitcoin/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
 
       - name: BE Unit Test
         run: |
@@ -63,9 +63,8 @@ jobs:
           ci_echo_info "Stopping 'icx-proxy'..." >&2
           if ! kill -9 $(pgrep icx-proxy) > /dev/null 2>&1; then
             ci_echo_info "Can't stop 'icx-proxy' or it not found ..." >&2
-          else
-            ci_echo_warn "'icx-proxy' was stopped ..." >&2
           fi
+          ci_echo_warn "'icx-proxy' was stopped ..." >&2
           
           mvn test --no-transfer-progress
 
