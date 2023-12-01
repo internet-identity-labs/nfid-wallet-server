@@ -391,7 +391,7 @@ jobs:
           cycles_limit=180
           cycle=1
           while [ ${remaining_amount} -gt 0 ] && [ ${cycle} -lt ${cycles_limit} ]; do
-            ci_echo_info "Cycle '${cycle}' of  '${cycles_limit}'',  Sleep for '${sleep}' seconds ..." >&2
+            ci_echo_info "Cycle '${cycle}' of  '${cycles_limit}'" >&2
             
             ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_remaining_size_after_rebuild_device_index_slice_from_temp_stack" >&2
             if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_remaining_size_after_rebuild_device_index_slice_from_temp_stack); then
