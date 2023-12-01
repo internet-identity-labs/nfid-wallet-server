@@ -1,8 +1,10 @@
 import { ActorMethod } from "@dfinity/agent";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { Challenge, ChallengeResult, DeviceData, UserNumber } from "../idl/internet_identity_test";
+import * as Agent from "@dfinity/agent"
+import {_SERVICE as InternetIdentityTest} from "../idl/internet_identity_test";
 
-export const register = async (actor: Record<string, ActorMethod>, identity: Ed25519KeyIdentity): Promise<bigint> => {
+export const register = async (actor: Agent.ActorSubclass<InternetIdentityTest>, identity: Ed25519KeyIdentity): Promise<bigint> => {
     var challenge: Challenge = await actor.create_challenge() as Challenge;
     var challenageResult: ChallengeResult = {
         key: challenge.challenge_key,

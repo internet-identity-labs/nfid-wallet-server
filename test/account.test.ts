@@ -16,11 +16,13 @@ import {
 } from "./idl/identity_manager";
 import { DFX } from "./constanst/dfx.const";
 import { idlFactory as imIdl } from "./idl/identity_manager_idl";
+import {idlFactory as iitIdl} from "./idl/internet_identity_test_idl";
 import { Expected } from "./constanst/expected.const";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { DeviceData } from "./idl/internet_identity_test";
 import { fail } from "assert";
 import { _SERVICE as IdentityManagerType } from "./idl/identity_manager"
+import { _SERVICE as InternetIdentityTest } from "./idl/internet_identity_test"
 
 const PHONE = "123456";
 const PHONE_SHA2 = "123456_SHA2";
@@ -489,6 +491,63 @@ describe("Account", () => {
             const accountEmailRecoveredResponse = await actor.get_account();
             expect(accountEmailRecoveredResponse.status_code).eq(200);
             expect(accountEmailRecoveredResponse.data[0].email[0]).eq(newEmail);
+        });
+
+        it("should sync recovery phrase from Internat Identity", async function () {
+            const identity = getIdentity("87654321876543218765432187654917");
+            const principal = identity.getPrincipal().toText();
+            const actorII = await getTypedActor<InternetIdentityTest>(dfx.iit.id, identity, iitIdl);
+            const anchor = await register(actorII, identity);
+
+            const accessPointRequest: AccessPointRequest = {
+                icon: "ii",
+                device: "II",
+                pub_key: principal,
+                browser: "",
+                device_type: {
+                    Unknown: null
+                },
+                credential_id: []
+            }
+
+            var accountRequest: HTTPAccountRequest = {
+                access_point: [accessPointRequest],
+                wallet: [{ II: null }],
+                anchor,
+                email: [],
+            };
+
+            const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
+            const accountResponse = await actor.create_account(accountRequest);
+            expect(accountResponse.status_code).eq(200);
+
+            const recoveryPhraseIdentity = getIdentity("17654321876543218765432187654917");
+            var deviceData: DeviceData = {
+                alias: "Device",
+                protection: {
+                    unprotected: null
+                },
+                pubkey: Array.from(new Uint8Array(recoveryPhraseIdentity.getPublicKey().toDer())),
+                key_type: {
+                    seed_phrase: null
+                },
+                purpose: {
+                    recovery: null
+                },
+                credential_id: []
+            };
+
+            await actorII.add(accountResponse.data[0].anchor, deviceData);
+
+            const recoveryPhraseActor = await getTypedActor<IdentityManagerType>(dfx.im.id, recoveryPhraseIdentity, imIdl);
+            const getAccountResponseNotFound = await recoveryPhraseActor.get_account();
+            expect(getAccountResponseNotFound.status_code).to.eq(404);
+
+            const recoveryPhraseResponse = await recoveryPhraseActor.sync_recovery_phrase_from_internet_identity(accountResponse.data[0].anchor);
+            expect(recoveryPhraseResponse.status_code).eq(200);
+
+            const getAccountResponseFound = await recoveryPhraseActor.get_account();
+            expect(getAccountResponseFound.status_code).to.eq(200);
         });
     });
 });
