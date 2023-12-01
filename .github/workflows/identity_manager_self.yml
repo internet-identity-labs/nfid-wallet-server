@@ -386,7 +386,6 @@ jobs:
           fi
 
           while true; do
-            result=$(dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_remaining_size_after_rebuild_device_index_slice_from_temp_stack)
             if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" save_temp_stack_to_rebuild_device_index); then
               ci_echo_warn "The operation of rebuilding device index slice has been failed: ${result}" >&2
             else
