@@ -373,6 +373,8 @@ jobs:
 
       - name: DEPLOY => Rebuild device index.
         run: |
+          source ./ci_libs/CI_LIBS.sh
+
           dfx identity use "${ID_NAME}"
 
           # Rebuild device index command
@@ -385,24 +387,34 @@ jobs:
             ci_echo_success "${result}" >&2
           fi
 
-          while true; do
+          remaining_amount=1
+          cycles_limit=180
+          cycle=1
+          sleep=10
+          while [ ${remaining_amount} -gt 0 ] && [ ${cycle} -lt ${cycles_limit} ]; do
+            ci_echo_info "Cycle '${cycle}' of  '${cycles_limit}'',  Sleep for '${sleep}' seconds ..." >&2
+            sleep ${sleep}
+            
+            ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' save_temp_stack_to_rebuild_device_index" >&2
             if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" save_temp_stack_to_rebuild_device_index); then
               ci_echo_warn "The operation of rebuilding device index slice has been failed: ${result}" >&2
             else
               ci_echo_success "${result}" >&2
             fi
 
-            cleaned_string=$(echo "$result" | sed 's/nat64//g; s/[^0-9]//g'); 
-            remaining_amount=$((cleaned_string)); 
+            cleaned_string=$(echo "$result" | sed 's/nat64//g; s/[^0-9]//g')
+            remaining_amount=$((cleaned_string))
 
-            if [ "$remaining_amount" -le 0 ]; then
-                echo "Index rebuild has been completed. Done."
-                break
-            else
-                echo "Index rebuild is in progress, amount of remaining entries: $remaining_amount"
-            fi
+            ci_echo_info "Index rebuild is in progress, amount of remaining entries: '${remaining_amount}'" >&2
+            cycle=$((cycle + 1))
           done
 
+          if [ ${remaining_amount} -gt 0 ]; then
+            ci_echo_error "Index rebuild is not finished, amount of remaining entries: '${remaining_amount}'" >&2
+            exit 1
+          else
+            ci_echo_success "Index rebuild has been completed." >&2
+          fi
 
       - name: Save artifact
         uses: actions/upload-artifact@v3
