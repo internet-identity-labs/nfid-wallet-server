@@ -41,6 +41,9 @@ jobs:
             /home/ubuntu/.cargo/registry/cache/
             /home/ubuntu/.cargo/git/db/
             /home/ubuntu/.cargo/cargo_target
+            src/eth_secret_storage/target/
+            src/identity_manager/target/
+            src/bitcoin/target/
             target/
           key: ${{ runner.os }}-cargo-dev-identity_manager_test-${{ hashFiles('**/Cargo.lock') }}
 
