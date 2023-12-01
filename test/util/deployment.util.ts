@@ -14,6 +14,7 @@ import {DFX} from "../constanst/dfx.const";
 import {execute} from "./call.util";
 import * as Agent from "@dfinity/agent"
 import { _SERVICE as IdentityManagerType } from "../idl/identity_manager"
+import { _SERVICE as InternetIdentityTest } from "../idl/internet_identity_test"
 
 const localhost: string = "http://127.0.0.1:8000";
 
@@ -135,7 +136,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             dfx.iit.id = DFX.GET_CANISTER_ID("internet_identity_test");
             console.debug(">> ", dfx.iit.id);
 
-            dfx.iit.actor = await getActor(dfx.iit.id, dfx.user.identity, iitIdl);
+            dfx.iit.actor = await getTypedActor<InternetIdentityTest>(dfx.iit.id, dfx.user.identity, iitIdl);
 
             imConfigurationArguments.push(`ii_canister_id = opt principal "${dfx.iit.id}"`);
         }
