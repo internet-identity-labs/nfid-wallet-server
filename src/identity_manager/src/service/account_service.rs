@@ -1,13 +1,12 @@
 use async_trait::async_trait;
-use ic_cdk::{trap};
-use itertools::Itertools;
+use ic_cdk::trap;
 
 use crate::http::response_mapper::ErrorResponse;
 use crate::repository::repo::ConfigurationRepo;
 use crate::service::http_outcall_service::{CanisterHttpRequestArgument, HttpMethod, HttpHeader, http_request, TransformContext, transorm_response_no_headers};
 use crate::{AccessPointServiceTrait, Account, get_caller, HttpResponse};
 use crate::http::requests::{AccountResponse, DeviceType, WalletVariant};
-use crate::ic_service::{KeyType};
+use crate::ic_service::KeyType;
 use crate::mapper::access_point_mapper::access_point_request_to_access_point;
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::repository::account_repo::AccountRepoTrait;
@@ -15,7 +14,7 @@ use crate::requests::{AccountRequest, AccountUpdateRequest};
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
-use crate::service::ic_service::{DeviceData};
+use crate::service::ic_service::DeviceData;
 use crate::service::security_service::secure_2fa;
 use crate::util::validation_util::validate_name;
 use serde::{Deserialize, Serialize};
@@ -40,6 +39,7 @@ pub trait AccountServiceTrait {
     fn get_all_accounts(&mut self) -> Vec<Account>;
     async fn validate_email_and_principal(email: &str, principal: &str) -> bool;
     fn update_account_with_email_force(&self, principal: String, email: String) -> Result<&str, &str>;
+    async fn sync_recovery_phrase_from_internet_identity(&self, anchor: u64) -> HttpResponse<AccountResponse>;
 }
 
 #[derive(Default)]
@@ -303,5 +303,22 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
                 trap(&message);
             }
         }
+    }
+
+    async fn sync_recovery_phrase_from_internet_identity(&self, anchor: u64) -> HttpResponse<AccountResponse> {
+        let devices = ic_service::trap_if_not_authenticated(anchor, ic_service::get_caller()).await;
+
+        let account = match self.account_repo.get_account_by_anchor(anchor, WalletVariant::InternetIdentity) {
+            None => return to_error_response("There is no Internet Identity account by the anchor in Identity Manager."),
+            Some(account) => account
+        };
+
+        let account_response = devices.iter()
+            .find(|device_data| device_data.key_type.eq(&ic_service::KeyType::SeedPhrase))
+            .map(|device_data| self.access_point_service.migrate_recovery_device(device_data.clone(), &account))
+            .map(|account| to_success_response(account_to_account_response(account)))
+            .unwrap_or_else(|| to_error_response("The user has no recovery phrase in Internet Identity."));
+
+        account_response
     }
 }

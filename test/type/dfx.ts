@@ -2,6 +2,7 @@ import {ActorMethod, Identity} from "@dfinity/agent";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import * as Agent from "@dfinity/agent"
 import {_SERVICE as IdentityManager} from "../idl/identity_manager";
+import {_SERVICE as InternetIdentityTest} from "../idl/internet_identity_test";
 
 export interface Dfx {
     root: string;
@@ -18,7 +19,7 @@ export interface Dfx {
     };
     iit?: {
         id: string;
-        actor: Record<string, ActorMethod>;
+        actor: Agent.ActorSubclass<InternetIdentityTest>;
         anchor: bigint;
     },
     vault?: {

@@ -308,14 +308,18 @@ export interface _SERVICE {
     'use_access_point' : ActorMethod<[[] | [string]], HTTPOneAccessPointResponse>,
     'validate_signature' : ActorMethod<[[] | [string]], [bigint, [] | [string]]>,
     'add_email_and_principal_for_create_account_validation' : ActorMethod<
-    [string, string, number],
-    BoolHttpResponse
+        [string, string, number],
+        BoolHttpResponse
     >,
     'recover_google_device' : ActorMethod<[Array<string>], Array<string>>,
     'recover_email' : ActorMethod<[Array<PrincipalEmailRequest>], Array<string>>,
     'save_temp_stack_to_rebuild_device_index' : ActorMethod<[], string>,
     'get_remaining_size_after_rebuild_device_index_slice_from_temp_stack' : ActorMethod<
-    [[] | [bigint]],
-    bigint
+        [[] | [bigint]],
+        bigint
+    >,
+    'sync_recovery_phrase_from_internet_identity' : ActorMethod<
+        [bigint],
+        HTTPAccountResponse
     >,
 }

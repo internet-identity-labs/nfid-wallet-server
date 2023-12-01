@@ -440,6 +440,12 @@ async fn save_temp_stack_to_rebuild_device_index() -> String {
     device_index_service::save_temp_stack()
 }
 
+#[update]
+async fn sync_recovery_phrase_from_internet_identity(anchor: u64) -> HttpResponse<AccountResponse> {
+    let account_service = get_account_service();
+    account_service.sync_recovery_phrase_from_internet_identity(anchor).await
+}
+
 #[query]
 async fn get_root_certified() -> CertifiedResponse {
     let caller = caller().to_text();
