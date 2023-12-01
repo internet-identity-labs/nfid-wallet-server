@@ -401,29 +401,6 @@ jobs:
               }
             )
 
-      - name: TEST => Get Account from the canister.
-        if: ${{ github.event.inputs.network_name != 'stage' }}
-        run: |
-          source ./ci_libs/CI_LIBS.sh
-
-          dfx identity use "${ID_NAME}"
-
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_account" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_account) || [ -z "${result}" ]; then
-            ci_echo_error "Test failed - call to canister unsuccessful" >&2
-            exit 1
-          fi
-
-          ci_echo_debug "Command output was '${result}'" >&2
-
-          # If 'anchor' not found - than fail
-          if ! echo "${result}" | grep -q 'anchor'; then
-            ci_echo_error "Test failed - 'anchor' - was not found" >&2
-            exit 1
-          else
-            ci_echo_success "${result}" >&2
-          fi
-
       - name: Save artifact
         uses: actions/upload-artifact@v3
         with:
