@@ -67,7 +67,10 @@ jobs:
             /home/ubuntu/.cargo/git/db/
             /home/ubuntu/.cargo/cargo_target/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            src/eth_secret_storage/target/
+            src/identity_manager/target/
+            src/bitcoin/target/
+          key: ${{ runner.os }}-cargo-verifier-${{ hashFiles('**/Cargo.lock') }}
 
       - name: PRE-BUILD => Populate env vars.
         run: |
@@ -161,9 +164,8 @@ jobs:
           if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
             ci_echo_error "${result}" >&2
             exit 1
-          else
-            ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
           fi
+          ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
 
       - name: DEPLOY => Send configuration to the canister.
         run: |
@@ -194,9 +196,8 @@ jobs:
           if ! echo "${result}" | grep -q '()'; then
             ci_echo_error "${result}" >&2
             exit 1
-          else
-            ci_echo_success "${result}" >&2
           fi
+          ci_echo_success "${result}" >&2
         env:
           CANISTER_CONFIG_DATA: >-
             (

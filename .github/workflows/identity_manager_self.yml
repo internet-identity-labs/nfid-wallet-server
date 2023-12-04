@@ -68,8 +68,11 @@ jobs:
             /home/ubuntu/.cargo/registry/cache/
             /home/ubuntu/.cargo/git/db/
             /home/ubuntu/.cargo/cargo_target/
+            src/eth_secret_storage/target/
+            src/identity_manager/target/
+            src/bitcoin/target/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-im-${{ hashFiles('**/Cargo.lock') }}
 
       - name: PRE-BUILD => Populate env vars.
         run: |
