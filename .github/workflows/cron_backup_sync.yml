@@ -9,14 +9,15 @@ env:
 
 jobs:
   Sync:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on:
+      group: dfx-backup
     defaults:
       run:
         shell: bash
 
     steps:
       - name: Checkout CI repo.
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }}
           repository: internet-identity-labs/ci_libs
@@ -25,7 +26,7 @@ jobs:
 
       - name: BACKUP => Sync to S3.
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
 
           CI_DEBUG=true
 

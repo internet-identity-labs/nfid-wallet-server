@@ -1,19 +1,25 @@
 name: BEItest
-on: [push, workflow_dispatch]
+on:
+  - push
+  - workflow_dispatch
 
 
 jobs:
   test:
-    runs-on: [self-hosted, Linux, X64]
+    name: Unit & Integration tests
+    runs-on: [self-hosted, Linux, X64, dfx, runner-1]
+    # runs-on:
+    #   group: dfx-runner
     defaults:
       run:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout CI repo.
+        uses: actions/checkout@v4
 
       - name: Checkout CI repo.
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }}
           repository: internet-identity-labs/ci_libs
@@ -24,20 +30,13 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            /home/ubuntu/.cargo/bin/
-            /home/ubuntu/.cargo/registry/index/
-            /home/ubuntu/.cargo/registry/cache/
-            /home/ubuntu/.cargo/git/db/
-            /home/ubuntu/.cargo/cargo_target/
+            /home/ubuntu/.cargo/registry/
+            /home/ubuntu/.cargo_target/
             target/
             src/eth_secret_storage/target/
             src/identity_manager/target/
             src/bitcoin/target/
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: BE Unit Test
-        run: |
-          cargo test -- --test-threads=1
+          key: ${{ runner.os }}-cargo-test
 
       - name: DFX version
         run: dfx --version
@@ -45,12 +44,19 @@ jobs:
       - name: NodeJs version
         run: node -v
 
+      - name: BE Unit Test
+        run: |
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+
+          ci_echo_debug "cargo test -- --test-threads=1" >&2
+          cargo test -- --test-threads=1
+
       - name: BE ITest
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
 
           if ! [ -f "/home/ubuntu/.config/dfx/identity/test_admin/identity.pem" ]; then
-            dfx identity new test_admin
+            dfx identity new test_admin --storage-mode plaintext
           fi
 
           cp -f identity-manager-itest/src/test/resources/identity/identity.pem /home/ubuntu/.config/dfx/identity/test_admin
@@ -63,10 +69,36 @@ jobs:
           ci_echo_info "Stopping 'icx-proxy'..." >&2
           if ! kill -9 $(pgrep icx-proxy) > /dev/null 2>&1; then
             ci_echo_info "Can't stop 'icx-proxy' or it not found ..." >&2
+          else
+            ci_echo_warn "'icx-proxy' was stopped ..." >&2
           fi
-          ci_echo_warn "'icx-proxy' was stopped ..." >&2
           
+          ci_echo_debug "mvn test --no-transfer-progress" >&2
           mvn test --no-transfer-progress
 
       - name: BE Integration Tests JS
-        run: npm i && npm run test
+        run: |
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+
+          if ! [ -f "/home/ubuntu/.config/dfx/identity/test_admin/identity.pem" ]; then
+            ci_echo_debug "dfx identity new test_admin --storage-mode plaintext" >&2
+            dfx identity new test_admin --storage-mode plaintext
+          fi
+
+          ci_echo_debug "cp -f identity-manager-itest/src/test/resources/identity/identity.pem /home/ubuntu/.config/dfx/identity/test_admin" >&2
+          cp -f identity-manager-itest/src/test/resources/identity/identity.pem /home/ubuntu/.config/dfx/identity/test_admin
+          
+          if ! pushd identity-manager-itest > /dev/null; then
+            ci_echo_error "Can't change directory to the 'identity-manager-itest' " >&2
+            exit 1
+          fi
+          
+          ci_echo_info "Stopping 'icx-proxy'..." >&2
+          if ! kill -9 $(pgrep icx-proxy) > /dev/null 2>&1; then
+            ci_echo_info "Can't stop 'icx-proxy' or it not found ..." >&2
+          else
+            ci_echo_warn "'icx-proxy' was stopped ..." >&2
+          fi
+
+          ci_echo_debug "npm i && npm run test" >&2
+          npm i && npm run test

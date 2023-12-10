@@ -1,1 +1,1 @@
-dfx identity new test
+dfx identity new test --storage-mode plaintext

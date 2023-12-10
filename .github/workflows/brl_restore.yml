@@ -58,7 +58,8 @@ env:
 
 jobs:
   Restore:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on:
+      group: dfx-backup
     defaults:
       run:
         shell: bash
@@ -77,31 +78,19 @@ jobs:
           exit 1
 
       - name: Checkout repo.
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Checkout CI repo.
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }}
           repository: internet-identity-labs/ci_libs
           ref: main
           path: ci_libs
 
-      # - name: Cache Cargo dependencies.
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: |
-      #       /home/ubuntu/.cargo/bin/
-      #       /home/ubuntu/.cargo/registry/index/
-      #       /home/ubuntu/.cargo/registry/cache/
-      #       /home/ubuntu/.cargo/git/db/
-      #       /home/ubuntu/.cargo/cargo_target/
-      #       target/
-      #     key: ${{ runner.os }}-cargo-${{ github.event.inputs.source_network_name }}-${{ github.event.inputs.source_canister_name }}-${{ hashFiles('**/Cargo.lock') }}
-
       - name: PRE-ACTION => Populate env vars.
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
 
           ci_echo_debug "Getting values from dfx.json" >&2
           if ! canister_data=$(cat dfx.json | jq -er ".canisters.${SOURCE_CANISTER_NAME}"); then
@@ -130,7 +119,7 @@ jobs:
 
       - name: PRE-BUILD => Print Vars.
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
           ci_echo_info "RESTORE_NAME=${RESTORE_NAME}" >&2
           ci_echo_info "SOURCE_NETWORK_NAME=${SOURCE_NETWORK_NAME}" >&2
           ci_echo_info "SOURCE_CANISTER_NAME=${SOURCE_CANISTER_NAME}" >&2
@@ -142,7 +131,7 @@ jobs:
 
       - name: PRE-BUILD => Write identity.
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
 
           mkdir -p "${ID_PATH}"
           echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
@@ -157,7 +146,7 @@ jobs:
 
       - name: RESTORE => Restore.
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
           source ./ci_libs/canister_backup_restore.sh
 
           dfx identity use "${ID_NAME}"

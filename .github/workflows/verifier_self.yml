@@ -34,7 +34,8 @@ env:
 
 jobs:
   Deploy:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on:
+      group: dfx-runner
     defaults:
       run:
         shell: bash
@@ -47,10 +48,10 @@ jobs:
           exit 1
 
       - name: Checkout repo.
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Checkout CI repo.
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }}
           repository: internet-identity-labs/ci_libs
@@ -61,20 +62,17 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            /home/ubuntu/.cargo/bin/
-            /home/ubuntu/.cargo/registry/index/
-            /home/ubuntu/.cargo/registry/cache/
-            /home/ubuntu/.cargo/git/db/
-            /home/ubuntu/.cargo/cargo_target/
+            /home/ubuntu/.cargo/registry/
+            /home/ubuntu/.cargo_target/
             target/
             src/eth_secret_storage/target/
             src/identity_manager/target/
             src/bitcoin/target/
-          key: ${{ runner.os }}-cargo-verifier-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-im
 
       - name: PRE-BUILD => Populate env vars.
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
 
           ci_echo_debug "Getting values from dfx.json" >&2
           if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
@@ -107,7 +105,7 @@ jobs:
 
       - name: PRE-BUILD => Print Vars.
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
           ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
           ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
           ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
@@ -119,7 +117,7 @@ jobs:
 
       - name: PRE-BUILD => Write identity.
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
 
           mkdir -p "${ID_PATH}"
           echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
@@ -134,7 +132,7 @@ jobs:
 
       - name: BUILD => Build the canister.
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
 
           dfx identity use "${ID_NAME}"
 
@@ -144,7 +142,7 @@ jobs:
 
       - name: DEPLOY => Upgrade the canister.
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
 
           if [ "${NETWORK_NAME}" == 'ic' ]; then
             CI_DEBUG="true"
@@ -169,7 +167,7 @@ jobs:
 
       - name: DEPLOY => Send configuration to the canister.
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
 
           dfx identity use "${ID_NAME}"
 
@@ -219,7 +217,7 @@ jobs:
           path: ${{ github.workspace }}/${{ env.CANISTER_WASM }}
 
       - name: Frontend => Checkout repo.
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         if: ${{ github.event.inputs.network_name != 'ic' }}
         with:
           token: ${{ secrets.PAT }}
@@ -230,7 +228,7 @@ jobs:
       - name: Frontend => Update did files.
         if: ${{ github.event.inputs.network_name != 'ic' }}
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
 
           ci_echo_info "Updating DID file." >&2
           ci_echo_debug "Cleaning destination files" >&2
@@ -246,7 +244,7 @@ jobs:
       - name: Frontend => Format did files.
         if: ${{ github.event.inputs.network_name != 'ic' }}
         run: |
-          source ./ci_libs/CI_LIBS.sh
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
           ci_echo_debug "Add PSYCHEDELIC_GH_NPM_REGISTRY" >&2
           cat > ~/.npmrc << EOF
           @psychedelic:registry=https://npm.pkg.github.com
