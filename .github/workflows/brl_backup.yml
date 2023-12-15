@@ -69,6 +69,12 @@ jobs:
           ref: main
           path: ci_libs
 
+      - name: Versions
+        run: |
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          
+          ci_versions
+
       - name: PRE-BACKUP => Populate env vars.
         run: |
           source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
@@ -158,10 +164,6 @@ jobs:
           DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
           PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
           PROD_VAULT_KEY: ${{secrets.PROD_VAULT_KEY}}
-
-      - name: PRE-BACKUP => DFX status.
-        run: |
-          dfx --version
 
       - name: BACKUP => Backup.
         run: |

@@ -7,9 +7,8 @@ on:
 jobs:
   test:
     name: Unit & Integration tests
-    runs-on: [self-hosted, Linux, X64, dfx, runner-1]
-    # runs-on:
-    #   group: dfx-runner
+    runs-on:
+      group: dfx-runner
     defaults:
       run:
         shell: bash
@@ -40,11 +39,9 @@ jobs:
 
       - name: Versions
         run: |
-          dfx --version
-          node -v
-          cargo -V
-          rustup -V
-          rustc -V
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          
+          ci_versions
 
       - name: BE Unit Test
         run: |

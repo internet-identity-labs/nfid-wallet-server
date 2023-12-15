@@ -57,6 +57,12 @@ jobs:
           ref: main
           path: ci_libs
 
+      - name: Versions
+        run: |
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          
+          ci_versions
+
       - name: PRE-ACTION => Populate env vars.
         run: |
           source ${{ github.workspace }}/ci_libs/CI_LIBS.sh       

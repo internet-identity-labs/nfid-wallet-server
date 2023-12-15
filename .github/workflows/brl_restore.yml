@@ -88,6 +88,12 @@ jobs:
           ref: main
           path: ci_libs
 
+      - name: Versions
+        run: |
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          
+          ci_versions
+
       - name: PRE-ACTION => Populate env vars.
         run: |
           source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
@@ -139,10 +145,6 @@ jobs:
         env:
           DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
           PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
-
-      - name: PRE-BUILD => DFX status.
-        run: |
-          dfx --version
 
       - name: RESTORE => Restore.
         run: |

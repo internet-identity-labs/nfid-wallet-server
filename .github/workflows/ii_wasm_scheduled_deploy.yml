@@ -45,6 +45,12 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-im
 
+      - name: Versions
+        run: |
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          
+          ci_versions
+
       - name: PRE-BUILD => Populate env vars.
         run: |
           source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
@@ -97,10 +103,6 @@ jobs:
         env:
           PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
           DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
-
-      - name: PRE-BUILD => DFX status.
-        run: |
-          dfx --version
 
       - name: BUILD => Build the canister.
         run: |
