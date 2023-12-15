@@ -38,11 +38,13 @@ jobs:
             src/bitcoin/target/
           key: ${{ runner.os }}-cargo-test
 
-      - name: DFX version
-        run: dfx --version
-
-      - name: NodeJs version
-        run: node -v
+      - name: Versions
+        run: |
+          dfx --version
+          node -v
+          cargo -V
+          rustup -V
+          rustc -V
 
       - name: BE Unit Test
         run: |

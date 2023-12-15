@@ -43,10 +43,10 @@ public class AccessPointITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("device/exp_read_access_points", callAndCutLastUsed("device/req_read_access_points"));
     }
 
-    // @Test(priority = 40)
-    // public void getSeveralAccessPointsExpectVectorSeveral() {
-    //     validateWithFormatIdentity("device/exp_read_access_points_2", callAndCutLastUsed("device/req_create_access_point_2"));
-    // }
+    @Test(priority = 40)
+    public void getSeveralAccessPointsExpectVectorSeveral() {
+        validateWithFormatIdentity("device/exp_read_access_points_2", "device/exp_read_access_points_2_diff_order", callAndCutLastUsed("device/req_create_access_point_2"));
+    }
 
     @Test(priority = 50)
     public void createExistentAccessPointExpectErrorResponse() {
@@ -58,16 +58,16 @@ public class AccessPointITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("device/exp_create_access_point_not_exists", call("device/req_update_not_existent_access_point"));
     }
 
-    // @Test(priority = 61)
-    // public void updateExistentAccessPointExpectVec() {
-    //     Pair<String, String> tuple = TestUtils.cutField(call("device/req_update_existent_point", ROOT_IDENTITY), "last_used");
-    //     validateWithFormatIdentity("device/exp_update_access_point", tuple.first());
-    // }
+    @Test(priority = 61)
+    public void updateExistentAccessPointExpectVec() {
+        Pair<String, String> tuple = TestUtils.cutField(call("device/req_update_existent_point", ROOT_IDENTITY), "last_used");
+        validateWithFormatIdentity("device/exp_update_access_point", "device/exp_update_access_point_diff_order", tuple.first());
+    }
 
-    // @Test(priority = 70)
-    // public void removeExistentAccessPointExpectVector() {
-    //     validateWithFormatIdentity("device/exp_remove_access_point", callAndCutLastUsed("device/req_remove_access_point", ROOT_IDENTITY));
-    // }
+    @Test(priority = 70)
+    public void removeExistentAccessPointExpectVector() {
+        validateWithFormatIdentity("device/exp_remove_access_point", callAndCutLastUsed("device/req_remove_access_point", ROOT_IDENTITY));
+    }
 
     private String callAndCutLastUsed(String doc, Object... params) {
         Pair<String, String> result = TestUtils.cutField(call(doc, params), "last_used");
