@@ -1,0 +1,24 @@
+(
+  record {
+    data = opt vec {
+      record {
+        icon = "icon2";
+        device_type = variant { Recovery };
+        device = "device2";
+        browser = "browser2";
+        principal_id = "2kqda-6wdqw-2be7y-4c5yg-ijw7q-muznw-qh3tm-55v2s-cnnyp-o2ud4-cqe";
+        credential_id = null;
+      };
+      record {
+        icon = "icon3";
+        device_type = variant { Passkey };
+        device = "device3";
+        browser = "browser3";
+        principal_id = "%s";
+        credential_id = null;
+      };
+    };
+    error = null;
+    status_code = 200 : nat16;
+  },
+)

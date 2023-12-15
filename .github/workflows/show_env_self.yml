@@ -14,6 +14,12 @@ jobs:
     if: github.event.inputs.confirmation == 'Yes'
 
     steps:
+      - name: Versions
+        run: |
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          
+          ci_versions
+
       - name: View the secrets context
         shell: bash
         run: |

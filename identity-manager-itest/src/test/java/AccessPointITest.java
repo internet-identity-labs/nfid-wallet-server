@@ -45,7 +45,7 @@ public class AccessPointITest extends BaseIdentityManagerITest {
 
     @Test(priority = 40)
     public void getSeveralAccessPointsExpectVectorSeveral() {
-        validateWithFormatIdentity("device/exp_read_access_points_2", callAndCutLastUsed("device/req_create_access_point_2"));
+        validateWithFormatIdentity("device/exp_read_access_points_2", "device/exp_read_access_points_2_diff_order", callAndCutLastUsed("device/req_create_access_point_2"));
     }
 
     @Test(priority = 50)
@@ -61,7 +61,7 @@ public class AccessPointITest extends BaseIdentityManagerITest {
     @Test(priority = 61)
     public void updateExistentAccessPointExpectVec() {
         Pair<String, String> tuple = TestUtils.cutField(call("device/req_update_existent_point", ROOT_IDENTITY), "last_used");
-        validateWithFormatIdentity("device/exp_update_access_point", tuple.first());
+        validateWithFormatIdentity("device/exp_update_access_point", "device/exp_update_access_point_diff_order", tuple.first());
     }
 
     @Test(priority = 70)

@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 public class BaseDFXITest {
     private final static String PATH = "..";
@@ -42,6 +43,22 @@ public class BaseDFXITest {
                 StandardCharsets.UTF_8
         );
         assertEquals(String.format(expected, ROOT_IDENTITY, ROOT_IDENTITY).trim(), actual.trim());
+    }
+
+    @SneakyThrows
+    public void validateWithFormatIdentity(String pathToExpected, String orPathToExpected, String actual) {
+        String expected = IOUtils.toString(
+                Objects.requireNonNull(this.getClass().getResourceAsStream(pathToExpected)),
+                StandardCharsets.UTF_8
+        );
+        String expected2 = IOUtils.toString(
+                Objects.requireNonNull(this.getClass().getResourceAsStream(orPathToExpected)),
+                StandardCharsets.UTF_8
+        );
+        var formattedExpected1 = String.format(expected, ROOT_IDENTITY, ROOT_IDENTITY).trim();
+        var formattedExpected2 = String.format(expected2, ROOT_IDENTITY, ROOT_IDENTITY).trim();
+        var formattedActual = actual.trim();
+        assertTrue(formattedExpected1.equals(formattedActual) || formattedExpected2.equals(formattedActual));
     }
 
     @SneakyThrows
