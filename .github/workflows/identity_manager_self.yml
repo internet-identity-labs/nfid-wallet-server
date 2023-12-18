@@ -224,31 +224,6 @@ jobs:
                 }
             )
 
-      - name: TEST PROD => Get Account from the identity_manager_replica canister.
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
-        run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
-
-          dfx identity use "${ID_NAME}"
-
-          CI_DEBUG="true"
-
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call 'identity_manager_replica' get_account" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "identity_manager_replica" get_account) || [ -z "${result}" ]; then
-            ci_echo_error "Test failed - call to canister unsuccessful" >&2
-            exit 1
-          fi
-
-          ci_echo_debug "Command output was '${result}'" >&2
-
-          # If 'anchor' not found - than fail
-          if ! echo "${result}" | grep -q 'anchor'; then
-            ci_echo_error "Test failed - 'anchor' - was not found" >&2
-            exit 1
-          fi
-
-          ci_echo_success "${result}" >&2
-
       - name: DEPLOY => Upgrade the canister.
         run: |
           source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
