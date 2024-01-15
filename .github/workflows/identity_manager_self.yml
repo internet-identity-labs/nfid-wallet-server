@@ -358,6 +358,13 @@ jobs:
           # Rebuild device index command
           ci_echo_info "Rebuild device index." >&2
 
+          # Rebuild Device Index based on Accounts command
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' rebuild_index" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" rebuild_index); then
+            ci_echo_error "Rebuild index failed ${result}" >&2
+            exit 1
+          fi
+
           ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' save_temp_stack_to_rebuild_device_index" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" save_temp_stack_to_rebuild_device_index); then
             ci_echo_warn "The operation of saving device index data to temp stack has been failed: ${result}" >&2
