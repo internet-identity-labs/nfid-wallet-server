@@ -365,6 +365,8 @@ jobs:
             exit 1
           fi
 
+          ci_echo_success "${result}" >&2
+
           ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' save_temp_stack_to_rebuild_device_index" >&2
           if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" save_temp_stack_to_rebuild_device_index); then
             ci_echo_warn "The operation of saving device index data to temp stack has been failed: ${result}" >&2
