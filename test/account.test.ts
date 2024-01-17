@@ -494,15 +494,15 @@ describe("Account", () => {
         });
 
         it("should sync recovery phrase from Internat Identity", async function () {
-            const identity = getIdentity("87654321876543218765432187654917");
-            const principal = identity.getPrincipal().toText();
-            const actorII = await getTypedActor<InternetIdentityTest>(dfx.iit.id, identity, iitIdl);
-            const anchor = await register(actorII, identity);
+            const rootAccessPointIdentity = getIdentity("87654321876543218765432187654917");
+            const rootAccessPointPrincipalId = rootAccessPointIdentity.getPrincipal().toText();
+            const actorII = await getTypedActor<InternetIdentityTest>(dfx.iit.id, rootAccessPointIdentity, iitIdl);
+            const anchor = await register(actorII, rootAccessPointIdentity);
 
             const accessPointRequest: AccessPointRequest = {
                 icon: "ii",
                 device: "II",
-                pub_key: principal,
+                pub_key: rootAccessPointPrincipalId,
                 browser: "",
                 device_type: {
                     Unknown: null
@@ -517,11 +517,52 @@ describe("Account", () => {
                 email: [],
             };
 
-            const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
+            const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, rootAccessPointIdentity, imIdl);
             const accountResponse = await actor.create_account(accountRequest);
             expect(accountResponse.status_code).eq(200);
 
+            await actor.create_access_point(accessPointRequest);
+            const accountWithAccessPointResponse = await actor.get_account();
+            expect(accountWithAccessPointResponse.data[0].access_points.length).eq(1);
+
+            const recoveryPhraseOldIdentityIdentity = getIdentity("27654321876543218765432187654917");
+            const recoveryPhraseOldPubkey = Array.from(new Uint8Array(recoveryPhraseOldIdentityIdentity.getPublicKey().toDer()));
+            var deviceDataOld: DeviceData = {
+                alias: "Device",
+                protection: {
+                    unprotected: null
+                },
+                pubkey: recoveryPhraseOldPubkey,
+                key_type: {
+                    seed_phrase: null
+                },
+                purpose: {
+                    recovery: null
+                },
+                credential_id: []
+            };
+            await actorII.add(accountResponse.data[0].anchor, deviceDataOld);
+
+            const recoveryPhraseOldPrincipal = recoveryPhraseOldIdentityIdentity.getPrincipal().toText();
+            const recoveryPhraseOldAccessPointRequest: AccessPointRequest = {
+                icon: "document",
+                device: "seedphrase",
+                pub_key: recoveryPhraseOldPrincipal,
+                browser: "",
+                device_type: {
+                    Recovery: null
+                },
+                credential_id: []
+            }
+            await actor.create_access_point(recoveryPhraseOldAccessPointRequest);
+
+            const accountWithAccessPointAndRecoveryPhraseResponse = await actor.get_account();
+            expect(accountWithAccessPointAndRecoveryPhraseResponse.data[0].access_points.length).eq(2);
+
+            await actorII.remove(accountResponse.data[0].anchor, recoveryPhraseOldPubkey);
+
             const recoveryPhraseIdentity = getIdentity("17654321876543218765432187654917");
+            const recoveryPhrasePrincipal = recoveryPhraseIdentity.getPrincipal().toText();
             var deviceData: DeviceData = {
                 alias: "Device",
                 protection: {
@@ -544,10 +585,16 @@ describe("Account", () => {
             expect(getAccountResponseNotFound.status_code).to.eq(404);
 
             const recoveryPhraseResponse = await recoveryPhraseActor.sync_recovery_phrase_from_internet_identity(accountResponse.data[0].anchor);
+            expect(recoveryPhraseResponse.data[0].access_points.length).eq(2);
             expect(recoveryPhraseResponse.status_code).eq(200);
 
             const getAccountResponseFound = await recoveryPhraseActor.get_account();
+            expect(getAccountResponseFound.data[0].access_points.length).eq(2);
             expect(getAccountResponseFound.status_code).to.eq(200);
+
+            const recoveryDevice = getAccountResponseFound.data[0].access_points.find(x => 'Recovery' in x.device_type);
+            expect(recoveryDevice.principal_id).to.not.eq(recoveryPhraseOldPrincipal);
+            expect(recoveryDevice.principal_id).to.eq(recoveryPhrasePrincipal);
         });
     });
 });

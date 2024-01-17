@@ -128,7 +128,8 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
     }
 
     fn migrate_recovery_device(&self, device_data: DeviceData, account: &Account) -> Account {
-        let mut devices = HashSet::new();
+        let mut devices = account.access_points.clone();
+        devices.retain(|x| !x.device_type.eq(&DeviceType::Recovery));
         let ap = recovery_device_data_to_access_point(device_data);
         let princ = ap.principal_id.clone();
         devices.insert(ap);
