@@ -596,5 +596,46 @@ describe("Account", () => {
             expect(recoveryDevice.principal_id).to.not.eq(recoveryPhraseOldPrincipal);
             expect(recoveryDevice.principal_id).to.eq(recoveryPhrasePrincipal);
         });
+
+        it("should recover root device not existing in IM", async function () {
+            const identity = getIdentity("87654321876543118765432187654111");
+            const principal = identity.getPrincipal().toText();
+            const actorII = await getTypedActor<InternetIdentityTest>(dfx.iit.id, identity, iitIdl);
+            const anchor = await register(actorII, identity);
+
+            const accessPointRequest: AccessPointRequest = {
+                icon: "ii",
+                device: "II",
+                pub_key: principal,
+                browser: "",
+                device_type: {
+                    Unknown: null
+                },
+                credential_id: []
+            }
+
+            var accountRequest: HTTPAccountRequest = {
+                access_point: [accessPointRequest],
+                wallet: [{ II: null }],
+                anchor,
+                email: [],
+            };
+
+            const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
+
+            const accountResponse = await actor.create_account(accountRequest);
+            expect(accountResponse.status_code).eq(200);
+
+            const getAccountResponseEmptyAccessPoints = await actor.get_account();
+            expect(getAccountResponseEmptyAccessPoints.status_code).eq(200);
+            expect(getAccountResponseEmptyAccessPoints.data[0].access_points.length).eq(0);
+
+            const revocerDevicesFromInternetIdentityResponse = await dfx.im.actor.recover_root_access_point([accountResponse.data[0].principal_id]);
+            expect(revocerDevicesFromInternetIdentityResponse[0]).contains(":Ok:Success")
+
+            const getAccountResponseWithAccessPoint = await actor.get_account();
+            expect(getAccountResponseWithAccessPoint.status_code).eq(200);
+            expect(getAccountResponseWithAccessPoint.data[0].access_points.length).eq(1);
+        });
     });
 });

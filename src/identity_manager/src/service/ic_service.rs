@@ -143,3 +143,12 @@ fn verify<'a>(princ: Principal, public_keys: impl Iterator<Item=&'a PublicKey>) 
     }
     ic_cdk::trap(&format!("{} could not be authenticated.", princ))
 }
+
+pub async fn get_device_data_vec(anchor: u64) -> Vec<DeviceData> {
+    let ii_canister = ConfigurationRepo::get().ii_canister_id;
+    let res: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor.clone(), 0)).await {
+        Ok((res, )) => res,
+        Err((_, err)) => trap(&format!("failed to request II: {}", err)),
+    };
+    res
+}

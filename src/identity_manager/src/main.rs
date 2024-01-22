@@ -386,10 +386,10 @@ async fn add_all_accounts_json(accounts_json: String) {
 #[admin]
 async fn recover_google_device(principals: Vec<String>) -> Vec<String> {
     let mut result_vector: Vec<String> = Vec::new();
+    let access_point_service = get_access_point_service();
 
     for principal in principals {
-        let access_point_service = get_access_point_service();
-        let result = access_point_service.recover_root_access_point(principal.to_string());
+        let result = access_point_service.recover_email_root_access_point(principal.to_string());
 
         match result {
             Ok(result) => result_vector.push(principal.clone() + ":Ok:" + result),
@@ -444,6 +444,24 @@ async fn save_temp_stack_to_rebuild_device_index() -> String {
 async fn sync_recovery_phrase_from_internet_identity(anchor: u64) -> HttpResponse<AccountResponse> {
     let account_service = get_account_service();
     account_service.sync_recovery_phrase_from_internet_identity(anchor).await
+}
+
+#[update]
+#[admin]
+async fn recover_root_access_point(principals: Vec<String>) -> Vec<String> {
+    let mut result_vector: Vec<String> = Vec::new();
+    let account_service = get_account_service();
+
+    for principal in principals {
+        let result = account_service.recover_root_access_point(principal.clone()).await;
+
+        match result {
+            Ok(result) => result_vector.push(principal.clone() + ":Ok:" + result),
+            Err(error) => result_vector.push(principal.clone() + ":Err:" + error)
+        }
+    }
+
+    result_vector
 }
 
 #[query]

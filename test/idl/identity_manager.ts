@@ -322,4 +322,5 @@ export interface _SERVICE {
         [bigint],
         HTTPAccountResponse
     >,
+    'recover_root_access_point' : ActorMethod<[Array<string>], Array<string>>,
 }

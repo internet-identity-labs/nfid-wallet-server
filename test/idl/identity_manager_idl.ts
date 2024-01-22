@@ -393,6 +393,11 @@ export const idlFactory = ({ IDL }) => {
             [HTTPAccountResponse],
             [],
         ),
+        'recover_root_access_point' : IDL.Func(
+            [IDL.Vec(IDL.Text)],
+            [IDL.Vec(IDL.Text)],
+            [],
+        ),
     });
 };
 export const init = ({ IDL }) => { return []; };

@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use ic_cdk::trap;
+use ic_types::Principal;
 
 use crate::http::response_mapper::ErrorResponse;
 use crate::repository::repo::ConfigurationRepo;
@@ -40,6 +41,7 @@ pub trait AccountServiceTrait {
     async fn validate_email_and_principal(email: &str, principal: &str) -> bool;
     fn update_account_with_email_force(&self, principal: String, email: String) -> Result<&str, &str>;
     async fn sync_recovery_phrase_from_internet_identity(&self, anchor: u64) -> HttpResponse<AccountResponse>;
+    async fn recover_root_access_point(&self, principal_id: String) -> Result<&str, &str>;
 }
 
 #[derive(Default)]
@@ -320,5 +322,36 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             .unwrap_or_else(|| to_error_response("The user has no recovery phrase in Internet Identity."));
 
         account_response
+    }
+
+    async fn recover_root_access_point(&self, principal_id: String) -> Result<&str, &str> {
+        let account = match self.account_repo.get_account_by_principal_force(principal_id) {
+            None => return Err("NotFoundInIM"),
+            Some(x) => x
+        };
+
+        if account.email.is_some() {
+            return Err("EmailIsSet");
+        }
+
+        if !account.wallet.eq(&WalletVariant::InternetIdentity) {
+            return Err("WalletIsNotII");
+        }
+
+        if !account.access_points.iter().all(|y| !y.principal_id.eq(&account.principal_id)) {
+            return Err("HasRootInAccessPoints");
+        }
+
+        let devices = ic_service::get_device_data_vec(account.anchor).await;
+        let root_device = devices.iter()
+            .find(|x| account.principal_id.eq(&Principal::self_authenticating(x.pubkey.clone()).to_text()));
+
+        match root_device {
+            Some(x) => {
+                self.access_point_service.recover_root_access_point(x.clone(), account);
+                return Ok("Success");
+            },
+            None => return Err("NotFoundInII")
+        }      
     }
 }

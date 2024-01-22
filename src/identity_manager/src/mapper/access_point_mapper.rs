@@ -45,3 +45,18 @@ pub fn recovery_device_data_to_access_point(device: DeviceData) -> AccessPoint {
     };
     access_point
 }
+
+pub fn device_data_to_access_point(device: DeviceData) -> AccessPoint {
+    let basic = BasicEntity::new();
+    let access_point = AccessPoint {
+        principal_id: Principal::self_authenticating(device.pubkey.clone()).to_text(),
+        credential_id: None,
+        icon: Some("ii".to_string()),
+        device: None,
+        browser: None,
+        last_used: Some(basic.get_created_date().clone()),
+        device_type: DeviceType::Unknown,
+        base_fields: basic,
+    };
+    access_point
+}
