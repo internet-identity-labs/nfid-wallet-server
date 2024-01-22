@@ -4,7 +4,7 @@ members = [
     "src/pub_sub_channel",
     "src/verifier",
     "src/test_canister",
-    "src/vault",
+    "src/vault" ,
     "src/libraries/canister_api_macros",
 ]
 exclude = ["src/eth_secret_storage", "src/identity_manager", "src/bitcoin"]
