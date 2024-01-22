@@ -5,7 +5,7 @@ on:
 
 
 jobs:
-  test:
+  tests:
     name: Unit & Integration tests
     runs-on:
       group: dfx-runner
