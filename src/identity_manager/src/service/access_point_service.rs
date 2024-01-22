@@ -6,7 +6,7 @@ use ic_cdk::{caller, trap};
 use crate::{AccessPointRemoveRequest, Account, AccountServiceTrait, get_account_service, ic_service};
 use crate::http::requests::{DeviceType, WalletVariant};
 use crate::ic_service::DeviceData;
-use crate::mapper::access_point_mapper::{access_point_request_to_access_point, access_point_to_access_point_response, recovery_device_data_to_access_point};
+use crate::mapper::access_point_mapper::{access_point_request_to_access_point, access_point_to_access_point_response, recovery_device_data_to_access_point, device_data_to_access_point};
 use crate::repository::access_point_repo::{AccessPoint, AccessPointRepoTrait};
 use crate::requests::{AccessPointRequest, AccessPointResponse};
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
@@ -16,10 +16,11 @@ pub trait AccessPointServiceTrait {
     fn read_access_points(&self) -> HttpResponse<Vec<AccessPointResponse>>;
     fn use_access_point(&self, browser: Option<String>) -> HttpResponse<AccessPointResponse>;
     async fn create_access_point(&self, access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>>;
-    fn recover_root_access_point(&self, principal: String) -> Result<&str, &str>;
+    fn recover_email_root_access_point(&self, principal: String) -> Result<&str, &str>;
     fn update_access_point(&self, access_point_request: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>>;
     fn remove_access_point(&self, access_point: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>>;
     fn migrate_recovery_device(&self, device_data: DeviceData, account: &Account) -> Account;
+    fn recover_root_access_point(&self, device: DeviceData, account: Account) -> Account;
 }
 
 #[derive(Default)]
@@ -83,7 +84,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
         }
     }
 
-    fn recover_root_access_point(&self, principal: String) -> Result<&str, &str> {
+    fn recover_email_root_access_point(&self, principal: String) -> Result<&str, &str> {
         let account = match get_account_service().get_account_by_principal_force(principal.clone()) {
             Some(account) => account,
             None => return Err("The account does not exist."),
@@ -188,6 +189,17 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
             }
             None => to_error_response("Unable to find Account.")
         }
+    }
+
+    fn recover_root_access_point(&self, device: DeviceData, mut account: Account) -> Account {
+        let access_point = device_data_to_access_point(device);
+        let access_point_principal_id = access_point.principal_id.clone();
+
+        account.access_points.insert(access_point);
+        let account_updated = self.access_point_repo.store_access_points_by_principal(account.access_points, account.principal_id.clone());
+
+        self.access_point_repo.update_account_index(access_point_principal_id, account.principal_id.clone());
+        account_updated.unwrap()
     }
 }
 
