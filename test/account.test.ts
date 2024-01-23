@@ -635,6 +635,7 @@ describe("Account", () => {
 
             const getAccountResponseWithAccessPoint = await actor.get_account();
             expect(getAccountResponseWithAccessPoint.status_code).eq(200);
+            expect(getAccountResponseWithAccessPoint.data[0].access_points[0].device).eq("Internet Identity Device");
             expect(getAccountResponseWithAccessPoint.data[0].access_points.length).eq(1);
         });
     });
