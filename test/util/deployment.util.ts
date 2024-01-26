@@ -1,20 +1,20 @@
+import * as Agent from "@dfinity/agent";
 import {Actor, ActorMethod, HttpAgent, Identity} from "@dfinity/agent";
 import {Ed25519KeyIdentity} from "@dfinity/identity";
 import {Dfx} from "../type/dfx";
 import {idlFactory as imIdl} from "../idl/identity_manager_idl";
 import {idlFactory as vaultIdl} from "../idl/vault_idl";
+import {idlFactory as icrc1Idl} from "../idl/icrc1_registry_idl";
 import {idlFactory as iitIdl} from "../idl/internet_identity_test_idl";
 import {idlFactory as essIdl} from "../idl/eth_secret_storage_idl";
 import {idlFactory as esdsaIdl} from "../idl/ecdsa_idl";
-import {idlFactory as btcIdl} from "../idl/bitcoin_idl";
 import {TextEncoder} from "util";
 import {App} from "../constanst/app.enum";
 import {IDL} from "@dfinity/candid";
 import {DFX} from "../constanst/dfx.const";
 import {execute} from "./call.util";
-import * as Agent from "@dfinity/agent"
-import { _SERVICE as IdentityManagerType } from "../idl/identity_manager"
-import { _SERVICE as InternetIdentityTest } from "../idl/internet_identity_test"
+import {_SERVICE as IdentityManagerType} from "../idl/identity_manager"
+import {_SERVICE as InternetIdentityTest} from "../idl/internet_identity_test"
 
 const localhost: string = "http://127.0.0.1:8000";
 
@@ -56,6 +56,10 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             member_2: null
         },
         btc: {
+            id: null,
+            actor: null,
+        },
+        icrc1: {
             id: null,
             actor: null,
         },
@@ -156,6 +160,13 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             imConfigurationArguments.push(`backup_canister_id = opt "${dfx.imr.id}"`);
         }
 
+        if (apps.includes(App.ICRC1Registry)) {
+            DFX.USE_TEST_ADMIN();
+            DFX.DEPLOY("icrc1_registry");
+            dfx.icrc1.id = DFX.GET_CANISTER_ID("icrc1_registry");
+            dfx.icrc1.actor = await getActor(dfx.icrc1.id, dfx.user.identity, icrc1Idl);
+        }
+
         if (apps.includes(App.IdentityManager)) {
             DFX.CONFIGURE_IM(imConfigurationArguments.join("; "));
         }
@@ -175,7 +186,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             return dfx;
         }
         if (apps.includes(App.ECDSASigner)) {
-           DFX.DEPLOY_ECDSA();
+            DFX.DEPLOY_ECDSA();
 
             dfx.eth_signer.id = DFX.GET_CANISTER_ID("signer_eth");
             console.log(">> ", dfx.eth_signer.id);
@@ -203,17 +214,17 @@ export const getActor = async (
     identity: Identity,
     idl: IDL.InterfaceFactory
 ): Promise<Record<string, ActorMethod>> => {
-    const agent: HttpAgent = new HttpAgent({ host: localhost, identity: identity });
+    const agent: HttpAgent = new HttpAgent({host: localhost, identity: identity});
     await agent.fetchRootKey();
-    return await Actor.createActor(idl, { agent, canisterId: imCanisterId });
+    return await Actor.createActor(idl, {agent, canisterId: imCanisterId});
 };
 
-export async function getTypedActor<T> (
+export async function getTypedActor<T>(
     imCanisterId: string,
     identity: Identity,
     idl: IDL.InterfaceFactory
 ): Promise<Agent.ActorSubclass<T>> {
-    const agent: HttpAgent = new HttpAgent({ host: localhost, identity: identity });
+    const agent: HttpAgent = new HttpAgent({host: localhost, identity: identity});
     await agent.fetchRootKey();
-    return Actor.createActor(idl, { agent, canisterId: imCanisterId });
+    return Actor.createActor(idl, {agent, canisterId: imCanisterId});
 };

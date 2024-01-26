@@ -88,6 +88,12 @@
       "wasm": "test_canister.wasm",
       "type": "custom"
     },
+    "icrc1_registry": {
+      "build": "src/icrc1_registry/build.sh",
+      "candid": "src/icrc1_registry/icrc1_registry.did",
+      "wasm": "icrc1_registry.wasm",
+      "type": "custom"
+    },
     "ledger": {
       "type": "custom",
       "candid": "ledger.public.did",
