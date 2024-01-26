@@ -1,0 +1,4 @@
+service : {
+    add_icrc1_canister : (text) -> ();
+    get_canisters : () -> (vec text) query;
+}

@@ -41,6 +41,10 @@ export interface Dfx {
     btc?: {
         id: string;
         actor: Record<string, ActorMethod>;
+    };
+    icrc1?: {
+        id: string;
+        actor: Record<string, ActorMethod>;
     }
 };
 

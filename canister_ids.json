@@ -51,5 +51,8 @@
   "test_canister": {
     "dev": "irshc-3aaaa-aaaam-absla-cai",
     "ic": "c543j-2qaaa-aaaal-ac4dq-cai"
+  },
+  "icrc1_registry": {
+    "dev": "zdi5a-faaaa-aaaak-qc5hq-cai"
   }
 }

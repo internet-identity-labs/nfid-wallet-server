@@ -4,5 +4,6 @@ export enum App {
     IdentityManagerReplica,
     EthSecretStorage,
     Vault,
-    ECDSASigner
+    ECDSASigner,
+    ICRC1Registry
 }
