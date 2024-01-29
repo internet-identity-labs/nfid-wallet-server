@@ -162,7 +162,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
 
         if (apps.includes(App.ICRC1Registry)) {
             DFX.USE_TEST_ADMIN();
-            DFX.DEPLOY("icrc1_registry");
+            DFX.DEPLOY_WITH_ARGUMENT("icrc1_registry", "(record { })");
             dfx.icrc1.id = DFX.GET_CANISTER_ID("icrc1_registry");
             dfx.icrc1.actor = await getActor(dfx.icrc1.id, dfx.user.identity, icrc1Idl);
         }

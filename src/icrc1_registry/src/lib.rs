@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use candid::{CandidType, Principal};
 use candid::export_service;
@@ -9,32 +9,45 @@ use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use ic_cdk_macros::*;
 use serde::{Deserialize, Serialize};
 
-thread_local! {
-    pub static ICRC_REGISTRY: RefCell<HashMap<Principal, Vec<String>>> = RefCell::new(HashMap::default());
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug, Hash, PartialEq)]
+pub struct Conf {
+    pub im_canister: Option<String>,
 }
 
+thread_local! {
+     static CONFIG: RefCell<Conf> = RefCell::new( Conf {
+        im_canister: None
+    });
+    pub static ICRC_REGISTRY: RefCell<HashMap<String, HashSet<String>>> = RefCell::new(HashMap::default());
+}
 #[update]
-pub async fn add_icrc1_canister(canister_id: String) {
-    let caller = caller();
+pub async fn store_icrc1_canister(canister_id: String) {
+    let caller = get_root_id().await;
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
-        let canisters = registry.entry(caller).or_insert_with(Vec::new);
-        canisters.push(canister_id);
+        let canisters = registry.entry(caller).or_insert_with(HashSet::new);
+        canisters.insert(canister_id);
     });
 }
 
+#[init]
+pub async fn init(conf: Conf) {
+    CONFIG.with(|c| c.replace(conf));
+}
+
 #[query]
-pub async fn get_canisters() -> Vec<String> {
-    let caller = caller();
+pub async fn get_canisters_by_root(root: String) -> Vec<String> {
     ICRC_REGISTRY.with(|registry| {
         let registry = registry.borrow();
-        registry.get(&caller).cloned().unwrap_or_default()
+        registry.get(&root).cloned().unwrap_or_default()
+            .into_iter().collect()
     })
 }
 
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
 struct Memory {
-    registry: HashMap<Principal, Vec<String>>,
+    registry: HashMap<String, HashSet<String>>,
+    config: Conf,
 }
 
 #[pre_upgrade]
@@ -43,8 +56,13 @@ pub fn stable_save() {
         let registry = registry.borrow();
         registry.clone()
     });
+    let config = CONFIG.with(|config| {
+        let config = config.borrow();
+        config.clone()
+    });
     let mem = Memory {
-        registry
+        registry,
+        config,
     };
     storage::stable_save((mem, )).unwrap();
 }
@@ -52,6 +70,10 @@ pub fn stable_save() {
 #[post_upgrade]
 pub fn stable_restore() {
     let (mo, ): (Memory, ) = storage::stable_restore().unwrap();
+    CONFIG.with(|config| {
+        let mut config = config.borrow_mut();
+        *config = mo.config.clone();
+    });
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
         *registry = mo.registry;
@@ -65,4 +87,21 @@ export_service!();
 #[ic_cdk_macros::query(name = "__get_candid_interface")]
 fn export_candid() -> String {
     __export_service()
+}
+
+
+async fn get_root_id() -> String {
+    match CONFIG.with(|c| c.borrow_mut().im_canister.clone()) {
+        None => caller().to_text(), // Return caller for testing purposes when im_canister is None
+        Some(canister) => {
+            let princ = caller();
+            let im_canister = Principal::from_text(canister).unwrap();
+
+            match call(im_canister, "get_root_by_principal", (princ.to_text(), 0)).await {
+                Ok((Some(root_id), )) => root_id,
+                Ok((None, )) => trap("No root found for this principal"),
+                Err((_, err)) => trap(&format!("Failed to request IM: {}", err)),
+            }
+        }
+    }
 }
