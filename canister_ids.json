@@ -53,6 +53,8 @@
     "ic": "c543j-2qaaa-aaaal-ac4dq-cai"
   },
   "icrc1_registry": {
-    "dev": "zdi5a-faaaa-aaaak-qc5hq-cai"
+    "dev": "zdi5a-faaaa-aaaak-qc5hq-cai",
+    "stage": "gi7nq-syaaa-aaaag-acltq-cai",
+    "ic": "2sdah-saaaa-aaaal-adqna-cai"
   }
 }
