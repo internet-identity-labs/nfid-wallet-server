@@ -106,7 +106,7 @@ impl ConfigurationRepo {
     }
 
     pub fn get_default_config() -> Configuration {
-        let lambda = Principal::self_authenticating("mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe");
+        let lambda = Principal::from_text("ritih-icnvs-i7b67-sc2vs-nwo2e-bvpe5-viznv-uqluj-xzcvs-6iqsp-fqe").unwrap();
         Configuration {
             lambda_url: "https://d8m9ttp390ku4.cloudfront.net/dev".to_string(),
             lambda: lambda,

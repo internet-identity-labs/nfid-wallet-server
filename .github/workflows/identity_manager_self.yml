@@ -217,7 +217,7 @@ jobs:
             (
                 record {
                     lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/prod";
-                    lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
+                    lambda = opt principal "djzd2-ixtid-3l667-7se2h-lm3ic-xqgon-cwvyf-3rus4-bl43o-eogn4-zqe";
                     whitelisted_canisters = opt vec {principal "bryxc-zqaaa-aaaal-aajga-cai"};
                     git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                     commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
@@ -318,7 +318,7 @@ jobs:
               record {
                 lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/dev";
                 ii_canister_id = opt principal "nprnb-waaaa-aaaaj-qax4a-cai";
-                lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
+                lambda = opt principal "ritih-icnvs-i7b67-sc2vs-nwo2e-bvpe5-viznv-uqluj-xzcvs-6iqsp-fqe";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                 commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
                 whitelisted_canisters = opt vec { principal "gzqxf-kqaaa-aaaak-qakba-cai" };
@@ -329,7 +329,7 @@ jobs:
                 record {
                   lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/staging";
                   ii_canister_id = opt principal "rdmx6-jaaaa-aaaaa-aaadq-cai";
-                  lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
+                  lambda = opt principal "apgzn-tlsle-xhihn-z446h-hpedm-7w4oa-t7xru-7o2f2-skvrg-ruc6r-7qe";
                   git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                   commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
                   whitelisted_canisters = opt vec { principal "gzqxf-kqaaa-aaaak-qakba-cai" };
@@ -340,7 +340,7 @@ jobs:
               record {
                 lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/prod";
                 ii_canister_id = opt principal "rdmx6-jaaaa-aaaaa-aaadq-cai";
-                lambda = opt principal "mltzx-rlg5h-qzcpp-xdp7e-56vnr-cbdjf-e6x5q-gzm2d-2soup-wtk5n-5qe";
+                lambda = opt principal "djzd2-ixtid-3l667-7se2h-lm3ic-xqgon-cwvyf-3rus4-bl43o-eogn4-zqe";
                 heartbeat = opt 900;
                 backup_canister_id = opt "bv5d4-nyaaa-aaaap-qaaba-cai";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
