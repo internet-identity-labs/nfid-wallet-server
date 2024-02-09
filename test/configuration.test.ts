@@ -25,7 +25,7 @@ describe("Configuration", () => {
         expect(result.ii_canister_id[0]?.toText()).to.be.equal("rdmx6-jaaaa-aaaaa-aaadq-cai");
         expect(result.whitelisted_canisters).to.be.an("array").that.is.empty;
         expect(result.git_branch).to.be.an("array").that.is.empty;
-        expect(result.lambda[0]?.toText()).to.be.equal("25uuv-mb7qi-uxovp-ucbzz-ddung-opxmb-ip4j2-nzrnk-sec53-jusbp-bae");
+        expect(result.lambda[0]?.toText()).to.be.equal("ritih-icnvs-i7b67-sc2vs-nwo2e-bvpe5-viznv-uqluj-xzcvs-6iqsp-fqe");
         expect(result.token_refresh_ttl[0]).to.be.equal(60n);
         expect(result.heartbeat).to.be.an("array").that.is.empty;
         expect(result.token_ttl[0]).to.be.equal(60n);
@@ -56,7 +56,7 @@ describe("Configuration", () => {
         expect(configureResponse.ii_canister_id[0]?.toText()).to.be.equal("rdmx6-jaaaa-aaaaa-aaadq-cai");
         expect(configureResponse.whitelisted_canisters).to.be.an("array").that.is.empty;
         expect(configureResponse.git_branch).to.be.an("array").that.is.empty;
-        expect(configureResponse.lambda[0]?.toText()).to.be.equal("25uuv-mb7qi-uxovp-ucbzz-ddung-opxmb-ip4j2-nzrnk-sec53-jusbp-bae");
+        expect(configureResponse.lambda[0]?.toText()).to.be.equal("ritih-icnvs-i7b67-sc2vs-nwo2e-bvpe5-viznv-uqluj-xzcvs-6iqsp-fqe");
         expect(configureResponse.token_refresh_ttl[0]).to.be.equal(60n);
         expect(configureResponse.heartbeat).to.be.an("array").that.is.empty;
         expect(configureResponse.token_ttl[0]).to.be.equal(60n);
