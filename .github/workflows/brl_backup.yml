@@ -19,7 +19,6 @@ on:
           - signer_eth
           - signer_btc
           - signer_ic
-          - vault
       compress_backup:
         description: 'Compress backup'
         type: choice
@@ -140,30 +139,10 @@ jobs:
 
           mkdir -p "${ID_PATH}"
           echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
-
-          if [ "${NETWORK_NAME}" == 'ic' ]; then 
-            ci_echo_warn "Preparing encoded key..." >&2
-            ci_echo_info "Installing base64 package..." >&2
-            sudo apt-get update && sudo apt-get install -y coreutils moreutils
-
-            # TODO https://app.shortcut.com/the-internet-portal/story/8048
-            # sc-8048
-            # Due to PROD_ADMIN_KEY is not base64 - skip such action for it
-            if [ "${IDENTITY_PEM_NAME_VAR}" != "PROD_ADMIN_KEY" ]; then
-              ci_echo_info "Decoding..." >&2
-              base64 -d "${ID_PATH}/identity.pem" | sponge "${ID_PATH}/identity.pem"
-            else
-              ci_echo_info "Remove trailing symbols in key" >&2
-              sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
-            fi
-          else
-            ci_echo_info "Remove trailing symbols in key" >&2
-            sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
-          fi
+          sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
         env:
           DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
           PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
-          PROD_VAULT_KEY: ${{secrets.PROD_VAULT_KEY}}
 
       - name: BACKUP => Backup.
         run: |

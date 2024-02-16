@@ -19,7 +19,6 @@ on:
           - signer_eth
           - signer_btc
           - signer_ic
-          - vault
       backup_name:
         description: '[optional] Name of the backup folder'
         type: string
