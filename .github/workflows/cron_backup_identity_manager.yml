@@ -1,8 +1,8 @@
 name: CRON Backup Identity Manager
 on:
   schedule:
-      # Runs "every hour at 0 minutes" (see https://crontab.guru)
-      - cron: '0 * * * *'
+      # Runs "every 2 hours at 0 minutes" (see https://crontab.guru)
+      - cron: '0 */2 * * *'
 
 env:
   NETWORK_NAME: 'ic'
