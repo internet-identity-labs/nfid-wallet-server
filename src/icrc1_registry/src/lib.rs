@@ -14,17 +14,27 @@ pub struct Conf {
     pub im_canister: Option<String>,
 }
 
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug, Hash, PartialEq, Eq)]
+pub struct ICRC1 {
+    pub index: Option<String>,
+    pub ledger: String,
+}
+
 thread_local! {
      static CONFIG: RefCell<Conf> = RefCell::new( Conf {
         im_canister: None
     });
-    pub static ICRC_REGISTRY: RefCell<HashMap<String, HashSet<String>>> = RefCell::new(HashMap::default());
+    pub static ICRC_REGISTRY: RefCell<HashMap<String, HashSet<ICRC1>>> = RefCell::new(HashMap::default());
 }
 #[update]
-pub async fn store_icrc1_canister(canister_id: String) {
+pub async fn store_icrc1_canister(ledger_id: String, index_id: Option<String>) {
     let caller = get_root_id().await;
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
+        let canister_id = ICRC1 {
+            index: index_id,
+            ledger: ledger_id,
+        };
         let canisters = registry.entry(caller).or_insert_with(HashSet::new);
         canisters.insert(canister_id);
     });
@@ -36,7 +46,7 @@ pub async fn init(conf: Conf) {
 }
 
 #[query]
-pub async fn get_canisters_by_root(root: String) -> Vec<String> {
+pub async fn get_canisters_by_root(root: String) -> Vec<ICRC1> {
     ICRC_REGISTRY.with(|registry| {
         let registry = registry.borrow();
         registry.get(&root).cloned().unwrap_or_default()
@@ -46,7 +56,7 @@ pub async fn get_canisters_by_root(root: String) -> Vec<String> {
 
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
 struct Memory {
-    registry: HashMap<String, HashSet<String>>,
+    registry: HashMap<String, HashSet<ICRC1>>,
     config: Conf,
 }
 

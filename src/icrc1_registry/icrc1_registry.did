@@ -1,8 +1,13 @@
 type Conf = record {
-    im_canister : opt text;
+    im_canister : opt text
+};
+
+type ICRC1 = record {
+    ledger : text;
+    index : opt text
 };
 
 service : (Conf) -> {
-    store_icrc1_canister : (text) -> ();
-    get_canisters_by_root : (text) -> (vec text) query;
+    get_canisters_by_root : (text) -> (vec ICRC1) query;
+    store_icrc1_canister : (text, opt text) -> ();
 }

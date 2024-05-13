@@ -28,6 +28,6 @@ cargo build "${cargo_build_args[@]}"
 
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_DIR/../../target/}"
 
-ic-cdk-optimizer \
+ic-wasm\
   "$CARGO_TARGET_DIR/$TARGET/release/verifier.wasm" \
-  -o "$REPO_DIR/../../verifier.wasm"
+  -o "$REPO_DIR/../../verifier.wasm" shrink
