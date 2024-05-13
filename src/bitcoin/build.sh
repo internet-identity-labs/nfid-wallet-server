@@ -28,8 +28,8 @@ fi
 
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_DIR/../../target/}"
 
-ic-cdk-optimizer \
+ic-wasm\
   "$CARGO_TARGET_DIR/$TARGET/release/bitcoin.wasm" \
-  -o "$REPO_DIR/../../bitcoin.wasm"
+  -o "$REPO_DIR/../../bitcoin.wasm" shrink
 popd
 
