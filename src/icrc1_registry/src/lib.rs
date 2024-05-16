@@ -26,6 +26,7 @@ thread_local! {
     });
     pub static ICRC_REGISTRY: RefCell<HashMap<String, HashSet<ICRC1>>> = RefCell::new(HashMap::default());
 }
+
 #[update]
 pub async fn store_icrc1_canister(ledger_id: String, index_id: Option<String>) {
     let caller = get_root_id().await;
@@ -37,6 +38,17 @@ pub async fn store_icrc1_canister(ledger_id: String, index_id: Option<String>) {
         };
         let canisters = registry.entry(caller).or_insert_with(HashSet::new);
         canisters.insert(canister_id);
+    });
+}
+
+#[update]
+pub async fn remove_icrc1_canister(ledger_id: String) {
+    let caller = get_root_id().await;
+    ICRC_REGISTRY.with(|registry| {
+        let mut registry = registry.borrow_mut();
+        if let Some(canisters) = registry.get_mut(&caller) {
+            canisters.retain(|canister| canister.ledger != ledger_id);
+        }
     });
 }
 
