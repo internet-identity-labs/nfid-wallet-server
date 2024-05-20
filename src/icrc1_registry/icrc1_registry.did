@@ -10,4 +10,5 @@ type ICRC1 = record {
 service : (Conf) -> {
     get_canisters_by_root : (text) -> (vec ICRC1) query;
     store_icrc1_canister : (text, opt text) -> ();
+    remove_icrc1_canister : (text) -> ();
 }
