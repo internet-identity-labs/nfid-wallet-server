@@ -8,6 +8,7 @@ import {idlFactory as icrc1Idl} from "../idl/icrc1_registry_idl";
 import {idlFactory as iitIdl} from "../idl/internet_identity_test_idl";
 import {idlFactory as essIdl} from "../idl/eth_secret_storage_idl";
 import {idlFactory as esdsaIdl} from "../idl/ecdsa_idl";
+import {idlFactory as delegationFactoryIDL} from "../idl/delegation_factory_idl";
 import {TextEncoder} from "util";
 import {App} from "../constanst/app.enum";
 import {IDL} from "@dfinity/candid";
@@ -60,6 +61,10 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             actor: null,
         },
         icrc1: {
+            id: null,
+            actor: null,
+        },
+        delegation_factory: {
             id: null,
             actor: null,
         },
@@ -192,6 +197,15 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             console.log(">> ", dfx.eth_signer.id);
 
             dfx.eth_signer.actor = await getActor(dfx.eth_signer.id, dfx.user.identity, esdsaIdl);
+            return dfx;
+        }
+        if (apps.includes(App.DelegationFactory)) {
+            execute(`dfx deploy delegation_factory`)
+
+            dfx.delegation_factory.id = DFX.GET_CANISTER_ID("delegation_factory");
+            console.log(">> ", dfx.delegation_factory.id);
+
+            dfx.delegation_factory.actor = await getActor(dfx.delegation_factory.id, dfx.user.identity, delegationFactoryIDL);
             return dfx;
         }
 

@@ -5,5 +5,6 @@ export enum App {
     EthSecretStorage,
     Vault,
     ECDSASigner,
-    ICRC1Registry
+    ICRC1Registry,
+    DelegationFactory
 }

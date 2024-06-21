@@ -1,5 +1,11 @@
 {
   "canisters": {
+    "delegation_factory": {
+      "type": "custom",
+      "candid": "src/delegation_factory/delegation_factory.did",
+      "wasm": "delegation_factory.wasm",
+      "build": "src/delegation_factory/build.sh"
+    },
     "identity_manager": {
       "build": "src/identity_manager/build.sh",
       "candid": "src/identity_manager/identity_manager.did",
