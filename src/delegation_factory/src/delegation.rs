@@ -1,16 +1,16 @@
 use std::collections::HashMap;
 
 use candid::Principal;
+use canister_sig_util::CanisterSigPublicKey;
+use canister_sig_util::signature_map::SignatureMap;
 use ic_cdk::{id, print, trap};
 use ic_cdk::api::time;
 use ic_certification::Hash;
+use internet_identity_interface::internet_identity::types::*;
 use serde_bytes::ByteBuf;
 
-use canister_sig_util::CanisterSigPublicKey;
-use canister_sig_util::signature_map::SignatureMap;
-use internet_identity_interface::internet_identity::types::*;
-
 use crate::{DAY_NS, hash, MINUTE_NS, state, update_root_hash};
+use crate::state::get_salt;
 
 // The expiration used for delegations if none is specified
 // (calculated as now() + this)
@@ -25,9 +25,9 @@ pub async fn prepare_delegation(
     frontend: FrontendHostname,
     session_key: SessionKey,
     max_time_to_live: Option<u64>,
+    targets: Option<Vec<Principal>>,
 ) -> (UserKey, Timestamp) {
-    //TODO SALT
-    // state::ensure_salt_set().await;
+    state::ensure_salt_set().await;
     check_frontend_length(&frontend);
 
     let session_duration_ns = u64::min(
@@ -37,7 +37,7 @@ pub async fn prepare_delegation(
     let expiration = time().saturating_add(session_duration_ns);
     let seed = calculate_seed(anchor_number, &frontend);
     state::signature_map_mut(|sigs| {
-        add_delegation_signature(sigs, session_key, seed.as_ref(), expiration);
+        add_delegation_signature(sigs, session_key, seed.as_ref(), expiration, targets);
     });
 
     update_root_hash();
@@ -54,6 +54,7 @@ pub fn get_delegation(
     frontend: FrontendHostname,
     session_key: SessionKey,
     expiration: Timestamp,
+    targets: Option<Vec<Principal>>,
 ) -> GetDelegationResponse {
     check_frontend_length(&frontend);
 
@@ -61,7 +62,7 @@ pub fn get_delegation(
         let message_hash = delegation_signature_msg_hash(&Delegation {
             pubkey: session_key.clone(),
             expiration,
-            targets: None,
+            targets: targets.clone(),
         });
         match sigs.get_signature_as_cbor(
             &calculate_seed(anchor_number, &frontend),
@@ -72,7 +73,7 @@ pub fn get_delegation(
                 delegation: Delegation {
                     pubkey: session_key,
                     expiration,
-                    targets: None,
+                    targets,
                 },
                 signature: ByteBuf::from(signature),
             }),
@@ -90,9 +91,7 @@ pub fn get_principal(anchor_number: AnchorNumber, frontend: FrontendHostname) ->
 }
 
 fn calculate_seed(anchor_number: AnchorNumber, frontend: &FrontendHostname) -> Hash {
-    //TODO SALT
-    let salt = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-    print("SAAAALT IS SET");
+    let salt = get_salt();
     let mut blob: Vec<u8> = vec![];
     blob.push(salt.len() as u8);
     blob.extend_from_slice(&salt);
@@ -135,11 +134,12 @@ fn add_delegation_signature(
     pk: PublicKey,
     seed: &[u8],
     expiration: Timestamp,
+    targets: Option<Vec<Principal>>,
 ) {
     let msg_hash = delegation_signature_msg_hash(&Delegation {
         pubkey: pk,
         expiration,
-        targets: None,
+        targets,
     });
     sigs.add_signature(seed, msg_hash);
 }

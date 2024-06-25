@@ -1,22 +1,17 @@
-use asset_util::CertifiedAssets;
-use candid::{CandidType, Deserialize};
-use canister_sig_util::signature_map::SignatureMap;
-use ic_cdk::trap;
-use ic_stable_structures::DefaultMemoryImpl;
-use internet_identity_interface::internet_identity::types::*;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
 use std::time::Duration;
 
-/// Default value for max number of inflight captchas.
-pub const DEFAULT_MAX_INFLIGHT_CAPTCHAS: u64 = 500;
+use asset_util::CertifiedAssets;
+use candid::{CandidType};
+use serde::{Deserialize, Serialize};
+use canister_sig_util::signature_map::SignatureMap;
+use ic_cdk::{storage, trap};
+use ic_stable_structures::DefaultMemoryImpl;
+use internet_identity_interface::internet_identity::types::*;
 
-/// Default registration rate limit config.
-pub const DEFAULT_RATE_LIMIT_CONFIG: RateLimitConfig = RateLimitConfig {
-    time_per_token_ns: Duration::from_secs(10).as_nanos() as u64,
-    max_tokens: 20_000,
-};
+use crate::random_salt;
 
 pub type Salt = [u8; 32];
 
@@ -33,12 +28,20 @@ fn time() -> Timestamp {
 
 struct State {
     sigs: RefCell<SignatureMap>,
+    salt: Cell<Option<Salt>>,
+}
+
+//TODO move to stable
+#[derive(Clone, Debug, CandidType, Deserialize)]
+struct TempMemory {
+    salt: Option<Salt>,
 }
 
 impl Default for State {
     fn default() -> Self {
         Self {
             sigs: RefCell::new(SignatureMap::default()),
+            salt: Cell::new(None),
         }
     }
 }
@@ -60,6 +63,38 @@ pub fn signature_map_mut<R>(f: impl FnOnce(&mut SignatureMap) -> R) -> R {
     STATE.with(|s| f(&mut s.sigs.borrow_mut()))
 }
 
+pub async fn ensure_salt_set() {
+    if STATE.with(|s| s.salt.get()).is_none() {
+        trap("Salt not set")
+    }
+}
+pub fn get_salt() -> Salt {
+    STATE.with(|s| {
+        s.salt.get().expect("Salt not set")
+    })
+}
+
 pub async fn init_salt() {
-    //TODO
+    let salt = random_salt().await;
+    STATE.with(|s| {
+        if s.salt.get().is_some() {
+            trap("Salt already set");
+        }
+        s.salt.set(Some(salt))
+    });
+}
+
+pub async fn init_from_memory() {
+    let (mo, ): (TempMemory, ) = storage::stable_restore().unwrap();
+    STATE.with(|s| {
+        s.salt.set(mo.salt);
+    });
+}
+
+pub async fn save_to_temp_memory() {
+    let salt = STATE.with(|s| {
+        s.salt.get()
+    });
+    let mo: TempMemory = TempMemory { salt };
+    storage::stable_save((mo, )).unwrap();
 }

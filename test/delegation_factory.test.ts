@@ -6,6 +6,8 @@ import {expect} from "chai";
 import {GetDelegationResponse} from "./idl/delegation_factory";
 import {Delegation, DelegationChain, DelegationIdentity} from "@dfinity/identity";
 import {DerEncodedPublicKey, Signature} from "@dfinity/agent";
+import {Principal} from "@dfinity/principal";
+import {fail} from "assert";
 
 describe("Delegation Factory test", () => {
     var dfx: Dfx;
@@ -19,31 +21,51 @@ describe("Delegation Factory test", () => {
     });
 
     it("Get delegation", async function () {
+        const targets = [[Principal.fromText("74gpt-tiaaa-aaaak-aacaa-cai")]];
         const sessionPair = getIdentity("87654321876543218765432187654311")
         const pk = new Uint8Array(
             sessionPair.getPublicKey().toDer(),
         )
-        const prepareDelegationResponse = await dfx.delegation_factory.actor.prepare_delegation(
-            BigInt(10001),
-            "nfid.one",
-            pk,
-            []
-        )
+        let prepareDelegationResponse
+        try {
+            prepareDelegationResponse = await dfx.delegation_factory.actor.prepare_delegation(
+                BigInt(10002),
+                "nfid.one",
+                pk,
+                [],
+                targets
+            )
+            fail("Salt is set")
+        } catch (e) {
+            expect(e.message).contains("Salt not set")
+            await dfx.delegation_factory.actor.init_salt();
+            prepareDelegationResponse = await dfx.delegation_factory.actor.prepare_delegation(
+                BigInt(10002),
+                "nfid.one",
+                pk,
+                [],
+                targets
+            )
+        }
+
         expect(prepareDelegationResponse[0]).not.undefined
         expect(prepareDelegationResponse[1]).not.undefined
 
         const getDelegationResponse = await dfx.delegation_factory.actor.get_delegation(
-            BigInt(10001),
+            BigInt(10002),
             "nfid.one",
             pk,
-            prepareDelegationResponse[1]
+            prepareDelegationResponse[1],
+            targets
         ).then((r: GetDelegationResponse) => {
             if ("signed_delegation" in r) {
+                expect(r.signed_delegation.delegation.targets[0].length).eq(1)
+                expect(r.signed_delegation.delegation.targets[0][0].toText()).eq("74gpt-tiaaa-aaaak-aacaa-cai")
                 return {
                     delegation: {
                         expiration: r.signed_delegation.delegation.expiration,
                         pubkey: r.signed_delegation.delegation.pubkey,
-                        targets: [],
+                        targets: r.signed_delegation.delegation.targets,
                     },
                     signature: r.signed_delegation.signature,
                 }
@@ -58,7 +80,8 @@ describe("Delegation Factory test", () => {
                     delegation: new Delegation(
                         new Uint8Array(getDelegationResponse.delegation.pubkey).buffer,
                         getDelegationResponse.delegation.expiration,
-                        getDelegationResponse.delegation.targets,
+                        getDelegationResponse.delegation.targets
+                            .map((t) => t.map((p) => p.toText())),
                     ),
                     signature: new Uint8Array(getDelegationResponse.signature)
                         .buffer as Signature,
