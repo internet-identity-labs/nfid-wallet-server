@@ -3,10 +3,9 @@ use ic_cdk::api::set_certified_data;
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
 
 use canister_sig_util::signature_map::LABEL_SIG;
+use ic_cdk::{call, trap};
 use internet_identity_interface::internet_identity::types::*;
-
-// use storage::{Salt, Storage};
-
+use crate::state::{init_from_memory, Salt, save_to_temp_memory};
 
 /// Type conversions between internal and external types.
 mod delegation;
@@ -27,7 +26,6 @@ const DAY_NS: u64 = 24 * HOUR_NS;
 #[update]
 #[candid_method]
 async fn init_salt() {
-    //TODO
     state::init_salt().await;
 }
 
@@ -44,12 +42,14 @@ async fn prepare_delegation(
     frontend: FrontendHostname,
     session_key: SessionKey,
     max_time_to_live: Option<u64>,
+    targets: Option<Vec<Principal>>,
 ) -> (UserKey, Timestamp) {
     delegation::prepare_delegation(
         anchor_number,
         frontend,
         session_key,
         max_time_to_live,
+        targets
     )
         .await
 }
@@ -61,32 +61,32 @@ fn get_delegation(
     frontend: FrontendHostname,
     session_key: SessionKey,
     expiration: Timestamp,
+    targets: Option<Vec<Principal>>,
 ) -> GetDelegationResponse {
-    delegation::get_delegation(anchor_number, frontend, session_key, expiration)
+    delegation::get_delegation(anchor_number, frontend, session_key, expiration, targets)
 }
 
 #[init]
 #[candid_method(init)]
 fn init(maybe_arg: Option<InternetIdentityInit>) {
-    // state::init_new();
     initialize(maybe_arg);
 }
 
 #[post_upgrade]
-fn post_upgrade(maybe_arg: Option<InternetIdentityInit>) {
-    // state::init_from_stable_memory();
-    // load the persistent state after initializing storage as it manages the respective stable cell
-
+async fn post_upgrade(maybe_arg: Option<InternetIdentityInit>) {
+    init_from_memory().await;
     initialize(maybe_arg);
+}
+
+#[pre_upgrade]
+async fn save_persistent_state() {
+    save_to_temp_memory().await;
 }
 
 fn initialize(maybe_arg: Option<InternetIdentityInit>) {
     update_root_hash();
 }
 
-
-#[pre_upgrade]
-fn save_persistent_state() {}
 
 fn update_root_hash() {
     use ic_certification::{fork_hash, labeled_hash};
@@ -100,20 +100,19 @@ fn update_root_hash() {
     })
 }
 
-// TODO
-// async fn random_salt() -> Salt {
-//     let res: Vec<u8> = match call(Principal::management_canister(), "raw_rand", ()).await {
-//         Ok((res, )) => res,
-//         Err((_, err)) => trap(&format!("failed to get salt: {err}")),
-//     };
-//     let salt: Salt = res[..].try_into().unwrap_or_else(|_| {
-//         trap(&format!(
-//             "expected raw randomness to be of length 32, got {}",
-//             res.len()
-//         ));
-//     });
-//     salt
-// }
+async fn random_salt() -> Salt {
+    let res: Vec<u8> = match call(Principal::management_canister(), "raw_rand", ()).await {
+        Ok((res, )) => res,
+        Err((_, err)) => trap(&format!("failed to get salt: {err}")),
+    };
+    let salt: Salt = res[..].try_into().unwrap_or_else(|_| {
+        trap(&format!(
+            "expected raw randomness to be of length 32, got {}",
+            res.len()
+        ));
+    });
+    salt
+}
 
 fn main() {}
 
