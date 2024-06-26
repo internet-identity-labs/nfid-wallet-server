@@ -27,7 +27,7 @@ pub async fn prepare_delegation(
     max_time_to_live: Option<u64>,
     targets: Option<Vec<Principal>>,
 ) -> (UserKey, Timestamp) {
-    state::ensure_salt_set().await;
+    state::ensure_settings_set().await;
     check_frontend_length(&frontend);
 
     let session_duration_ns = u64::min(
