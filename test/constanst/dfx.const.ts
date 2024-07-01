@@ -9,6 +9,7 @@ export const DFX = {
     GET_PRINCIPAL: () => call(`dfx identity get-principal`),
     INIT: () => execute(`dfx start --clean --background`),
     DEPLOY: (x: string) => execute(`dfx deploy ${x} --no-wallet`),
+    DEPLOY_SPECIFIED: (x: string, y: string) => execute(`dfx deploy ${x} --no-wallet --specified-id ${y}`),
     UPGRADE_FORCE: (x: string) => execute(`dfx canister install --mode upgrade --upgrade-unchanged ${x} `),
     GET_CANISTER_ID: (x: string) => call(`dfx canister id ${x}`),
     ADD_CONTROLLER: (x: string, y: string) => execute(`dfx canister update-settings --add-controller "${x}" ${y}`),

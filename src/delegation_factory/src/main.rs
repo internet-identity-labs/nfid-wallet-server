@@ -1,11 +1,13 @@
 use candid::{candid_method, Principal};
+use candid::CandidType;
+use canister_sig_util::signature_map::LABEL_SIG;
+use ic_cdk::{call, print, trap};
 use ic_cdk::api::set_certified_data;
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
-
-use canister_sig_util::signature_map::LABEL_SIG;
-use ic_cdk::{call, trap};
 use internet_identity_interface::internet_identity::types::*;
-use crate::state::{init_from_memory, Salt, save_to_temp_memory};
+use serde::{Deserialize, Serialize};
+
+use crate::state::{get_im_canister, init_from_memory, init_im_canister, Salt, save_to_temp_memory};
 
 /// Type conversions between internal and external types.
 mod delegation;
@@ -22,6 +24,10 @@ const MINUTE_NS: u64 = secs_to_nanos(60);
 const HOUR_NS: u64 = 60 * MINUTE_NS;
 const DAY_NS: u64 = 24 * HOUR_NS;
 
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct InitArgs {
+    pub im_canister: Principal,
+}
 
 #[update]
 #[candid_method]
@@ -49,31 +55,43 @@ async fn prepare_delegation(
         frontend,
         session_key,
         max_time_to_live,
-        targets
+        targets,
     )
         .await
 }
 
-#[query]
+#[query(composite = true)]
 #[candid_method(query)]
-fn get_delegation(
+async fn get_delegation(
     anchor_number: AnchorNumber,
     frontend: FrontendHostname,
     session_key: SessionKey,
     expiration: Timestamp,
     targets: Option<Vec<Principal>>,
 ) -> GetDelegationResponse {
-    delegation::get_delegation(anchor_number, frontend, session_key, expiration, targets)
+    let delegation = delegation::get_delegation(anchor_number, frontend, session_key, expiration, targets);
+    let caller: Principal = ic_cdk::caller();
+    let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
+        .await.unwrap();
+    if option_root.is_none() || option_root.unwrap() != anchor_number {
+        trap("Unauthorised");
+    }
+    delegation
+}
+
+#[query]
+async fn get_im_canister_setting() -> Principal {
+    state::get_im_canister()
 }
 
 #[init]
 #[candid_method(init)]
-fn init(maybe_arg: Option<InternetIdentityInit>) {
+fn init(maybe_arg: Option<InitArgs>) {
     initialize(maybe_arg);
 }
 
 #[post_upgrade]
-async fn post_upgrade(maybe_arg: Option<InternetIdentityInit>) {
+async fn post_upgrade(maybe_arg: Option<InitArgs>) {
     init_from_memory().await;
     initialize(maybe_arg);
 }
@@ -83,8 +101,11 @@ async fn save_persistent_state() {
     save_to_temp_memory().await;
 }
 
-fn initialize(maybe_arg: Option<InternetIdentityInit>) {
+fn initialize(maybe_arg: Option<InitArgs>) {
     update_root_hash();
+    if let Some(args) = maybe_arg {
+        init_im_canister(args.im_canister);
+    }
 }
 
 

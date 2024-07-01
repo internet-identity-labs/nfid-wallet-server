@@ -110,7 +110,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
 
         if (apps.includes(App.IdentityManager)) {
             if (clean) {
-                DFX.DEPLOY("identity_manager");
+                DFX.DEPLOY_SPECIFIED("identity_manager", "74gpt-tiaaa-aaaak-aacaa-cai" );
             } else {
                 DFX.UPGRADE_FORCE("identity_manager");
             }
@@ -200,7 +200,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             return dfx;
         }
         if (apps.includes(App.DelegationFactory)) {
-            execute(`dfx deploy delegation_factory`)
+            execute(`dfx deploy delegation_factory  --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
 
             dfx.delegation_factory.id = DFX.GET_CANISTER_ID("delegation_factory");
             console.log(">> ", dfx.delegation_factory.id);

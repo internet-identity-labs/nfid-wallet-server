@@ -25,6 +25,7 @@ type GetDelegationResponse = variant {
 };
 
 type InitArgs = record {
+    im_canister: principal
 };
 
 
