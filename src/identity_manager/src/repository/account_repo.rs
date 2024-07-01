@@ -216,7 +216,12 @@ impl AccountRepoTrait for AccountRepo {
         match acc {
             None => { 100_000_000 }
             Some(x) => {
-                x.anchor + 1 + 100_000_000
+                //new flow of delegation creation
+                if x.anchor < 200_000_000 {
+                    200_000_000
+                } else {
+                    x.anchor + 1
+                }
             }
         }
     }
