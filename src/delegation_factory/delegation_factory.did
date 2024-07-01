@@ -1,0 +1,38 @@
+type UserNumber = nat64;
+type PublicKey = blob;
+type UserKey = PublicKey;
+type SessionKey = PublicKey;
+type FrontendHostname = text;
+type Timestamp = nat64;
+
+type Delegation = record {
+    pubkey: PublicKey;
+    expiration: Timestamp;
+    targets: opt vec principal;
+};
+
+type SignedDelegation = record {
+    delegation: Delegation;
+    signature: blob;
+};
+
+type GetDelegationResponse = variant {
+    // The signed delegation was successfully retrieved.
+    signed_delegation: SignedDelegation;
+
+    // The signature is not ready. Maybe retry by calling `prepare_delegation`
+    no_such_delegation
+};
+
+type InitArgs = record {
+    im_canister: principal
+};
+
+
+service : (opt InitArgs) -> {
+    init_salt: () -> ();
+    get_principal : (UserNumber, FrontendHostname) -> (principal) query;
+    prepare_delegation : (UserNumber, FrontendHostname, SessionKey, maxTimeToLive : opt nat64, opt vec principal) -> (UserKey, Timestamp);
+    get_delegation: (UserNumber, FrontendHostname, SessionKey, Timestamp, opt vec principal) -> (GetDelegationResponse) query;
+
+}

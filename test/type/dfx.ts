@@ -45,7 +45,11 @@ export interface Dfx {
     icrc1?: {
         id: string;
         actor: Record<string, ActorMethod>;
-    }
+    };
+    delegation_factory?: {
+        id: string;
+        actor: Record<string, ActorMethod>;
+    };
 };
 
 export interface Configuration {

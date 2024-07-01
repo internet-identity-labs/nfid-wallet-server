@@ -36,6 +36,7 @@ pub trait AccountServiceTrait {
     fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse>;
     fn get_account_by_principal_force(&mut self, principal: String) -> Option<Account>;
     fn get_root_id_by_principal(&mut self, princ: String) -> Option<String>;
+    fn get_anchor_by_principal(&mut self, princ: String) -> Option<u64>;
     async fn recover_account(&mut self, anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse>;
     fn get_all_accounts(&mut self) -> Vec<Account>;
     async fn validate_email_and_principal(email: &str, principal: &str) -> bool;
@@ -230,6 +231,17 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             }
             Some(acc) => {
                 Some(acc.principal_id)
+            }
+        }
+    }
+
+    fn get_anchor_by_principal(&mut self, princ: String) -> Option<u64> {
+        match { self.account_repo.get_account_by_principal(princ) } {
+            None => {
+                None
+            }
+            Some(acc) => {
+                Some(acc.anchor)
             }
         }
     }

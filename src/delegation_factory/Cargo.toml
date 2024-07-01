@@ -1,0 +1,71 @@
+[package]
+name = "delegation_factory"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+
+
+# local dependencies
+asset_util = { git = "https://github.com/dfinity/internet-identity", rev = "0558bdf66e4c3b08db3d044dcec88a9e2b9e7d89" }
+canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "0558bdf66e4c3b08db3d044dcec88a9e2b9e7d89" }
+internet_identity_interface = { git = "https://github.com/dfinity/internet-identity", rev = "0558bdf66e4c3b08db3d044dcec88a9e2b9e7d89" }
+
+# ic dependencies
+candid = "0.10"
+candid_parser = "0.1.2"
+ic-cdk = "0.13"
+ic-cdk-macros = "0.13"
+ic-cdk-timers = "0.7"
+ic-certification = "2.2"
+ic-http-certification = "2.2"
+ic-metrics-encoder = "1"
+ic-representation-independent-hash = "2.2"
+ic-response-verification = "2.2"
+ic-stable-structures = "0.6"
+ic-test-state-machine-client = "3"
+ic-crypto-standalone-sig-verifier = { git = "https://github.com/dfinity/ic", rev = "e69bcc7b319cbb3ebc22ec55af35287741244db6" }
+ic-types = { git = "https://github.com/dfinity/ic", rev = "e69bcc7b319cbb3ebc22ec55af35287741244db6" }
+
+# other dependencies
+assert_matches = "1.5.0"
+base64 = "0.21"
+hex = "0.4"
+include_dir = "0.7"
+lazy_static = "1.4"
+regex = "1.9"
+serde = "1"
+serde_bytes = "0.11"
+serde_cbor = "0.11"
+sha2 = "0.10"
+
+
+# Captcha deps
+lodepng = "*"
+
+rand = { version = "*", default-features = false }
+
+rand_core = { version = "*", default-features = false }
+rand_chacha = { version = "*", default-features = false }
+captcha = { git = "https://github.com/dfinity/captcha", rev = "9c0d2dd9bf519e255eaa239d9f4e9fdc83f65391" }
+
+
+[target.'cfg(all(target_arch = "wasm32", target_vendor = "unknown", target_os = "unknown"))'.dependencies]
+getrandom = { version = "0.2", features = ["custom"] }
+
+[dev-dependencies]
+hex-literal = "0.4"
+identity_jose = { git = "https://github.com/dfinity/identity.rs.git", rev = "63d3683cf6b6e48136ffb6812125dd8addfbbe75", default-features = false }
+
+
+[features]
+# the dummy_captcha feature which ensures the captcha string is always "a"
+# (needed for tests)
+dummy_captcha = []
+# The dev_csp feature weakens the CSP in oder to facilitate development with a locally deployed II instance.
+# In particular, this allows
+# * accessing II using http instead of https
+# * II to connect to localhost both on http and https, which is useful when developint a vc issuer
+dev_csp = []

@@ -2,6 +2,7 @@ use std::convert::TryInto;
 use std::time::Duration;
 
 use ic_cdk::{caller, storage, trap};
+use ic_cdk::export::Principal;
 use ic_cdk_macros::*;
 
 use canister_api_macros::{admin, admin_or_lambda, replicate_account, two_f_a};
@@ -197,6 +198,13 @@ async fn get_root_by_principal(princ: String) -> Option<String> {
     let mut account_service = get_account_service();
     secure_principal_2fa(&princ);
     account_service.get_root_id_by_principal(princ)
+}
+
+#[query]
+async fn get_anchor_by_principal(princ: String) -> Option<u64> {
+    let mut account_service = get_account_service();
+    secure_principal_2fa(&princ);
+    account_service.get_anchor_by_principal(princ)
 }
 
 
