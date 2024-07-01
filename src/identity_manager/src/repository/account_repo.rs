@@ -214,7 +214,7 @@ impl AccountRepoTrait for AccountRepo {
             .last();
 
         match acc {
-            None => { 100_000_000 }
+            None => { 200_000_000 }
             Some(x) => {
                 x.anchor + 1
             }
