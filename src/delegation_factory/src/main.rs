@@ -35,9 +35,15 @@ async fn init_salt() {
     state::init_salt().await;
 }
 
-#[query]
+#[query(composite = true)]
 #[candid_method(query)]
-fn get_principal(anchor_number: AnchorNumber, frontend: FrontendHostname) -> Principal {
+async fn get_principal(anchor_number: AnchorNumber, frontend: FrontendHostname) -> Principal {
+    let caller: Principal = ic_cdk::caller();
+    let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
+        .await.unwrap();
+    if option_root.is_none() || option_root.unwrap() != anchor_number {
+        trap("Unauthorised");
+    }
     delegation::get_principal(anchor_number, frontend)
 }
 

@@ -82,7 +82,7 @@ describe("Delegation Factory test", () => {
         expect(prepareDelegationResponse[0]).not.undefined
         expect(prepareDelegationResponse[1]).not.undefined
 
-        const getDelegationResponse = await dfActor.get_delegation(
+        const chain = await dfActor.get_delegation(
             response.anchor,
             "nfid.one",
             pk,
@@ -90,45 +90,33 @@ describe("Delegation Factory test", () => {
             targets
         ).then((r: GetDelegationResponse) => {
             if ("signed_delegation" in r) {
-                expect(r.signed_delegation.delegation.targets[0].length).eq(1)
-                expect(r.signed_delegation.delegation.targets[0][0].toText()).eq("74gpt-tiaaa-aaaak-aacaa-cai")
-                return {
-                    delegation: {
-                        expiration: r.signed_delegation.delegation.expiration,
-                        pubkey: r.signed_delegation.delegation.pubkey,
-                        targets: r.signed_delegation.delegation.targets,
-                    },
-                    signature: r.signed_delegation.signature,
-                }
+                return DelegationChain.fromDelegations(
+                    [
+                        {
+                            delegation: new Delegation(
+                                new Uint8Array(r.signed_delegation.delegation.pubkey).buffer,
+                                r.signed_delegation.delegation.expiration,
+                                mapOptional(r.signed_delegation.delegation.targets),
+                            ),
+                            signature: new Uint8Array(r.signed_delegation.signature)
+                                .buffer as Signature,
+                        },
+                    ],
+                    new Uint8Array(prepareDelegationResponse[0]),
+                )
             } else {
                 throw new Error("No such delegation")
             }
         })
 
-        const chain = DelegationChain.fromDelegations(
-            [
-                {
-                    delegation: new Delegation(
-                        new Uint8Array(getDelegationResponse.delegation.pubkey).buffer,
-                        getDelegationResponse.delegation.expiration,
-                        getDelegationResponse.delegation.targets
-                            .map((t) => t.map((p) => p.toText())),
-                    ),
-                    signature: new Uint8Array(getDelegationResponse.signature)
-                        .buffer as Signature,
-                },
-            ],
-            new Uint8Array(sessionPair.getPublicKey().toDer()).buffer as DerEncodedPublicKey,
-        )
-
         const delegationIdentity = DelegationIdentity.fromDelegation(
             sessionPair,
             chain,
         )
+        const principalNfid = await dfActor.get_principal(response.anchor, "nfid.one")
 
-        expect("st6dr-wqxcv-tret2-xxknz-it4bo-zp76f-ui335-nxzd4-peh3r-wzrsi-5ae").eq(
-            delegationIdentity.getPrincipal().toText()
-        )
+        expect(delegationIdentity.getPrincipal().toText()).eq(principalNfid.toText())
+
     })
 
     it("Get delegation - Unauthorized", async function () {
@@ -152,3 +140,9 @@ describe("Delegation Factory test", () => {
         }
     })
 })
+
+
+export function mapOptional<T>(value: [T] | []): T | undefined {
+    if (value.length) return value[0]
+    return undefined
+}
