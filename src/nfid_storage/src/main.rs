@@ -1,10 +1,12 @@
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
+
 use candid::{candid_method, Principal};
+use candid::CandidType;
 use ic_cdk::{call, storage, trap};
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
 use serde::{Deserialize, Serialize};
-use candid::CandidType;
+
 thread_local! {
     static STATE: State = State::default();
     static PASSKEYS: RefCell<HashMap<u64, String>> = RefCell::new(HashMap::new());
@@ -21,7 +23,6 @@ struct State {
 }
 
 
-
 impl Default for State {
     fn default() -> Self {
         Self {
@@ -33,7 +34,7 @@ impl Default for State {
 #[init]
 #[candid_method(init)]
 fn init(maybe_arg: Option<InitArgs>) {
-    if maybe_arg.is_some(){
+    if maybe_arg.is_some() {
         init_im_canister(maybe_arg.unwrap().im_canister);
     }
 }
@@ -84,7 +85,6 @@ async fn save_persistent_state() {
 }
 
 
-
 pub fn init_im_canister(im_canister: Principal) {
     STATE.with(|s| {
         s.im_canister.set(Some(im_canister))
@@ -99,7 +99,7 @@ candid::export_service!();
 #[derive(Clone, Debug, CandidType, Deserialize)]
 struct TempMemory {
     im_canister: Option<Principal>,
-    passkeys: Option<HashMap<u64, String>>
+    passkeys: Option<HashMap<u64, String>>,
 }
 
 
@@ -127,7 +127,6 @@ pub async fn save_to_temp_memory() {
     let passkeys = PASSKEYS.with(|passkeys| {
         passkeys.borrow().clone()
     });
-
 
     let mo: TempMemory = TempMemory { im_canister, passkeys: Some(passkeys) };
     storage::stable_save((mo, )).unwrap();
