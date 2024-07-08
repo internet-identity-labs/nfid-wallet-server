@@ -1,0 +1,9 @@
+type InitArgs = record {
+    im_canister: principal
+};
+
+
+service : (opt InitArgs) -> {
+    get_passkey : () -> (text);
+    store_passkey : (text) -> (nat64);
+}

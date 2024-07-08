@@ -9,6 +9,7 @@ import {idlFactory as iitIdl} from "../idl/internet_identity_test_idl";
 import {idlFactory as essIdl} from "../idl/eth_secret_storage_idl";
 import {idlFactory as esdsaIdl} from "../idl/ecdsa_idl";
 import {idlFactory as delegationFactoryIDL} from "../idl/delegation_factory_idl";
+import {idlFactory as nfidStorageIDL} from "../idl/nfid_storage_idl";
 import {TextEncoder} from "util";
 import {App} from "../constanst/app.enum";
 import {IDL} from "@dfinity/candid";
@@ -65,6 +66,10 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             actor: null,
         },
         delegation_factory: {
+            id: null,
+            actor: null,
+        },
+        nfid_storage: {
             id: null,
             actor: null,
         },
@@ -206,6 +211,15 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             console.log(">> ", dfx.delegation_factory.id);
 
             dfx.delegation_factory.actor = await getActor(dfx.delegation_factory.id, dfx.user.identity, delegationFactoryIDL);
+            return dfx;
+        }
+        if (apps.includes(App.NFIDStorage)) {
+            execute(`dfx deploy nfid_storage  --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
+
+            dfx.nfid_storage.id = DFX.GET_CANISTER_ID("nfid_storage");
+            console.log(">> ", dfx.nfid_storage.id);
+
+            dfx.nfid_storage.actor = await getActor(dfx.nfid_storage.id, dfx.user.identity, nfidStorageIDL);
             return dfx;
         }
 

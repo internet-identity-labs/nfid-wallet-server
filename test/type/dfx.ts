@@ -50,6 +50,10 @@ export interface Dfx {
         id: string;
         actor: Record<string, ActorMethod>;
     };
+    nfid_storage?: {
+        id: string;
+        actor: Record<string, ActorMethod>;
+    };
 };
 
 export interface Configuration {

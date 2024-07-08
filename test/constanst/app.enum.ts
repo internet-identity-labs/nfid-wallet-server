@@ -6,5 +6,6 @@ export enum App {
     Vault,
     ECDSASigner,
     ICRC1Registry,
-    DelegationFactory
+    DelegationFactory,
+    NFIDStorage
 }
