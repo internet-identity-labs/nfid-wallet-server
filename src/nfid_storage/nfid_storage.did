@@ -4,6 +4,6 @@ type InitArgs = record {
 
 
 service : (opt InitArgs) -> {
-    get_passkey : () -> (opt text);
+    get_passkey : () -> (text);
     store_passkey : (text) -> (nat64);
 }
