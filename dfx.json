@@ -6,6 +6,12 @@
       "wasm": "delegation_factory.wasm",
       "build": "src/delegation_factory/build.sh"
     },
+    "nfid_storage": {
+      "type": "custom",
+      "candid": "src/nfid_storage/nfid_storage.did",
+      "wasm": "nfid_storage.wasm",
+      "build": "src/nfid_storage/build.sh"
+    },
     "identity_manager": {
       "build": "src/identity_manager/build.sh",
       "candid": "src/identity_manager/identity_manager.did",

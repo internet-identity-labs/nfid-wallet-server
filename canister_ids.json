@@ -59,5 +59,8 @@
   },
   "delegation_factory" : {
     "dev": "wklas-pyaaa-aaaak-akv3a-cai"
+  },
+  "nfid_storage" : {
+    "dev": "dy546-gqaaa-aaaak-akwiq-cai"
   }
 }
