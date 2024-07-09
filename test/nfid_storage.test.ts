@@ -55,12 +55,12 @@ describe("NFID Storage test", () => {
 
         let passkey = await storageActor.get_passkey()
 
-        expect(passkey).eq("SOME+TEST_STRING")
+        expect(passkey[0]).eq("SOME+TEST_STRING")
 
         execute(`dfx deploy nfid_storage  --argument '(opt record { im_canister = principal "${dfx.im.id}" })' --upgrade-unchanged`)
 
         passkey = await storageActor.get_passkey()
 
-        expect(passkey).eq("SOME+TEST_STRING")
+        expect(passkey[0]).eq("SOME+TEST_STRING")
     })
 })

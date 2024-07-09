@@ -41,7 +41,7 @@ fn init(maybe_arg: Option<InitArgs>) {
 
 #[query(composite = true)]
 #[candid_method(query)]
-async fn get_passkey() -> String {
+async fn get_passkey() -> Option<String> {
     let caller: Principal = ic_cdk::caller();
     let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
         .await.unwrap();
@@ -51,8 +51,8 @@ async fn get_passkey() -> String {
 
     PASSKEYS.with(|passkeys| {
         match passkeys.borrow().get(&option_root.unwrap()) {
-            Some(value) => value.clone(),
-            None => trap("No passkey found"),
+            Some(value) => Some(value.clone()),
+            None => None,
         }
     })
 }
