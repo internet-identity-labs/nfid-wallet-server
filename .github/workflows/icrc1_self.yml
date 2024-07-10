@@ -1,14 +1,37 @@
-name: CRON Internet Identity Test
-on:
+name: SH - ICRC1
+on: 
   workflow_dispatch:
-  schedule:
-    # Runs "01:05 every day" (see https://crontab.guru)
-    - cron: '05 1 * * *'
+    inputs:
+      network_name:
+        description: 'Choose applicable network'
+        required: true
+        type: choice
+        options: 
+          - dev
+          - stage
+          - ic
+      canister_name:
+        description: 'Choose applicable network'
+        required: true
+        type: choice
+        options: 
+          - icrc1_registry
+          - delegation_factory
+          - nfid_storage
+      debug_messages:
+        description: 'Show debug messages'
+        type: choice
+        options: 
+          - 'false'
+          - 'true'
+      confirmation:
+        description: 'For the ic deployment - confirm your choice by typing "Yes"'
+        type: string
 
 env:
-  NETWORK_NAME: 'dev'
-  CANISTER_NAME: 'internet_identity_test'
-  CI_DEBUG: 'true'
+  NETWORK_NAME: ${{ github.event.inputs.network_name }}
+  CANISTER_NAME: ${{ github.event.inputs.canister_name }}
+  CI_DEBUG: ${{ github.event.inputs.debug_messages }}
 
 
 jobs:
@@ -19,9 +42,13 @@ jobs:
       run:
         shell: bash
 
-    if: ${{ github.ref == 'refs/heads/master' }}
-
     steps:
+      - name: INPUT => Checks.
+        if: ${{ (github.event.inputs.network_name == 'ic') && (github.event.inputs.confirmation != 'Yes') }}
+        run: |
+          echo "[ERROR] You have try release to network 'ic' without or with wrong confirmation phrase" >&2
+          exit 1
+
       - name: Checkout repo.
         uses: actions/checkout@v4
 
@@ -38,7 +65,7 @@ jobs:
         with:
           path: |
             /home/ubuntu/.cargo/registry/
-            /home/ubuntu/.cargo_target
+            /home/ubuntu/.cargo_target/
             src/eth_secret_storage/target/
             src/identity_manager/target/
             src/bitcoin/target/
@@ -55,38 +82,39 @@ jobs:
       - name: PRE-BUILD => Populate env vars.
         run: |
           source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
-          
+
           ci_echo_debug "Getting values from dfx.json" >&2
           if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
             ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
             exit 1
           fi
-          
+
           ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
-          if [ "${NETWORK_NAME}" == 'ic' ];then
-            ID_NAME="prod_admin"
-            IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
-          elif [ "${NETWORK_NAME}" == 'dev' ]; then
+
+          if [[ "${NETWORK_NAME}" =~ ^(dev|stage)$ ]]; then
             ID_NAME="dev_admin"
             IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
+          elif [ "${NETWORK_NAME}" == 'ic' ]; then
+            ID_NAME="prod_admin"
+            IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
           fi
           ID_PATH="/home/ubuntu/.config/dfx/identity/${ID_NAME}"
-          
+
+          ci_echo_debug "Populating env variables" >&2
           CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
           CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
           CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
-          
+            
           echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
           echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
           echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
           echo "ID_NAME=${ID_NAME}" >> $GITHUB_ENV
           echo "ID_PATH=${ID_PATH}" >> $GITHUB_ENV
           echo "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >> $GITHUB_ENV
-
+          
       - name: PRE-BUILD => Print Vars.
         run: |
           source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
-          
           ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
           ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
           ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
@@ -98,40 +126,53 @@ jobs:
 
       - name: PRE-BUILD => Write identity.
         run: |
+          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+
           mkdir -p "${ID_PATH}"
           echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
           sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
         env:
-          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
           DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
+          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
 
       - name: BUILD => Build the canister.
         run: |
           source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
-          
+
           dfx identity use "${ID_NAME}"
-          
+
           rm -rf .dfx;
           ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
-      - name: DEPLOY => Upgrade the canister.
+      - name: DEPLOY => Deploy the canister.
         run: |
           source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
-          
+
+          if [ "${NETWORK_NAME}" == 'ic' ]; then
+            CI_DEBUG="true"
+          fi
+
           dfx identity use "${ID_NAME}"
-          
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "${CANISTER_NAME}"); then
+
+          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' deploy '${CANISTER_NAME}'" >&2
+          if ! result=$(dfx canister --network "${NETWORK_NAME}" deploy "${CANISTER_NAME}"); then
             ci_echo_error "Upgrade failed ${result}" >&2
             exit 1
           fi
-          
+
           ci_echo_debug "Command output was '${result}'" >&2
-          
+
           # If hash the same - than fail deploy
           if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
             ci_echo_error "${result}" >&2
             exit 1
           fi
           ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
+
+      - name: Save artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.CANISTER_WASM }}
+          path: ${{ github.workspace }}/${{ env.CANISTER_WASM }}
+    
