@@ -64,10 +64,11 @@ jobs:
           path: |
             /home/ubuntu/.cargo/registry/
             /home/ubuntu/.cargo_target/
-            target/
             src/eth_secret_storage/target/
             src/identity_manager/target/
             src/bitcoin/target/
+            src/icrc1_registry/target/
+            target/
           key: ${{ runner.os }}-cargo-im
 
       - name: Versions
