@@ -9,13 +9,20 @@ use serde::{Deserialize, Serialize};
 
 thread_local! {
     static STATE: State = State::default();
-    static PASSKEYS: RefCell<HashMap<u64, String>> = RefCell::new(HashMap::new());
+    static PASSKEYS: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
 }
 
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
     pub im_canister: Principal,
+}
+
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct PasskeyData {
+    pub key: String,
+    pub data: String,
 }
 
 struct State {
@@ -39,38 +46,34 @@ fn init(maybe_arg: Option<InitArgs>) {
     }
 }
 
-#[query(composite = true)]
+#[query]
 #[candid_method(query)]
-async fn get_passkey() -> Option<String> {
-    let caller: Principal = ic_cdk::caller();
-    let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
-        .await.unwrap();
-    if option_root.is_none() {
-        trap("Unauthorised");
-    }
-
+async fn get_passkey(keys: Vec<String>) -> Vec<PasskeyData> {
+    let mut response: Vec<PasskeyData> = Vec::new();
     PASSKEYS.with(|passkeys| {
-        match passkeys.borrow().get(&option_root.unwrap()) {
-            Some(value) => Some(value.clone()),
-            None => None,
+        for key in keys {
+            if let Some(value) = passkeys.borrow().get(&key) {
+                response.push(PasskeyData { key, data: value.clone() });
+            }
         }
-    })
+    });
+    response
 }
+
 
 #[update]
 #[candid_method(update)]
-async fn store_passkey(data: String) -> u64 {
+async fn store_passkey(key: String, data: String) -> u64 {
     let caller: Principal = ic_cdk::caller();
-    let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
+    let (mut option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
         .await.unwrap();
     if option_root.is_none() {
         trap("Unauthorised");
     }
     PASSKEYS.with(|passkeys| {
         let mut passkeys = passkeys.borrow_mut();
-        let root = option_root.unwrap();
-        passkeys.insert(root.clone(), data.clone());
-        root
+        passkeys.insert(key.clone(), data.clone());
+        option_root.unwrap()
     })
 }
 
@@ -99,7 +102,7 @@ candid::export_service!();
 #[derive(Clone, Debug, CandidType, Deserialize)]
 struct TempMemory {
     im_canister: Option<Principal>,
-    passkeys: Option<HashMap<u64, String>>,
+    passkeys: Option<HashMap<String, String>>,
 }
 
 

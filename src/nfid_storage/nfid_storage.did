@@ -2,8 +2,12 @@ type InitArgs = record {
     im_canister: principal
 };
 
+type PassKeyData = record {
+    key: text;
+    data: text;
+}
 
 service : (opt InitArgs) -> {
-    get_passkey : () -> (opt text);
-    store_passkey : (text) -> (nat64);
+    get_passkey : (vec text) -> (vec PassKeyData) query;
+    store_passkey : (text, text) -> (nat64);
 }

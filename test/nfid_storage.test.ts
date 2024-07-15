@@ -7,6 +7,7 @@ import {AccessPointRequest, HTTPAccountRequest, HTTPAccountResponse} from "./idl
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {idlFactory as nfidSIDL} from "./idl/nfid_storage_idl";
 import {execute} from "./util/call.util";
+import {PassKeyData} from "./idl/nfid_storage";
 
 describe("NFID Storage test", () => {
     var dfx: Dfx;
@@ -49,18 +50,18 @@ describe("NFID Storage test", () => {
 
         storageActor = await getActor(dfx.nfid_storage.id, identity, nfidSIDL);
 
-        let anchor = await storageActor.store_passkey("SOME+TEST_STRING")
+        let anchor = await storageActor.store_passkey("PASSKEY_ID", "SOME+TEST_STRING")
 
         expect(anchor).eq(100000000n)
 
-        let passkey = await storageActor.get_passkey()
+        let passkey = await storageActor.get_passkey(["PASSKEY_ID"]) as PassKeyData
 
-        expect(passkey[0]).eq("SOME+TEST_STRING")
+        expect(passkey[0].data).eq("SOME+TEST_STRING")
 
         execute(`dfx deploy nfid_storage  --argument '(opt record { im_canister = principal "${dfx.im.id}" })' --upgrade-unchanged`)
 
-        passkey = await storageActor.get_passkey()
+        passkey = await storageActor.get_passkey(["PASSKEY_ID"])
 
-        expect(passkey[0]).eq("SOME+TEST_STRING")
+        expect(passkey[0].data).eq("SOME+TEST_STRING")
     })
 })
