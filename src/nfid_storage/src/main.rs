@@ -65,7 +65,7 @@ async fn get_passkey(keys: Vec<String>) -> Vec<PasskeyData> {
 #[candid_method(update)]
 async fn store_passkey(key: String, data: String) -> u64 {
     let caller: Principal = ic_cdk::caller();
-    let (mut option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
+    let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
         .await.unwrap();
     if option_root.is_none() {
         trap("Unauthorised");
