@@ -5,6 +5,7 @@ import {Dfx} from "../type/dfx";
 import {idlFactory as imIdl} from "../idl/identity_manager_idl";
 import {idlFactory as vaultIdl} from "../idl/vault_idl";
 import {idlFactory as icrc1Idl} from "../idl/icrc1_registry_idl";
+import {idlFactory as icrcOracle1Idl} from "../idl/icrc1_oracle_idl";
 import {idlFactory as iitIdl} from "../idl/internet_identity_test_idl";
 import {idlFactory as essIdl} from "../idl/eth_secret_storage_idl";
 import {idlFactory as esdsaIdl} from "../idl/ecdsa_idl";
@@ -62,6 +63,10 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             actor: null,
         },
         icrc1: {
+            id: null,
+            actor: null,
+        },
+        icrc1_oracle: {
             id: null,
             actor: null,
         },
@@ -175,6 +180,14 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             DFX.DEPLOY_WITH_ARGUMENT("icrc1_registry", "(record { })");
             dfx.icrc1.id = DFX.GET_CANISTER_ID("icrc1_registry");
             dfx.icrc1.actor = await getActor(dfx.icrc1.id, dfx.user.identity, icrc1Idl);
+        }
+
+        if (apps.includes(App.ICRC1Oracle)) {
+            DFX.USE_TEST_ADMIN();
+            DFX.DEPLOY_WITH_ARGUMENT("icrc1_oracle", "(opt record { })");
+            dfx.icrc1_oracle.id = DFX.GET_CANISTER_ID("icrc1_oracle");
+            dfx.icrc1_oracle.actor = await getActor(dfx.icrc1_oracle.id, dfx.user.identity, icrcOracle1Idl);
+            DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "icrc1_oracle");
         }
 
         if (apps.includes(App.IdentityManager)) {

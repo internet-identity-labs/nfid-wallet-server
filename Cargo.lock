@@ -781,6 +781,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1762deb6f7c8d8c2bdee4b6c5a47b60195b74e9b5280faa5ba29692f8e17429c"
 
 [[package]]
+name = "icrc1_oracle"
+version = "0.1.0"
+dependencies = [
+ "candid 0.9.11",
+ "ic-cdk 0.11.3",
+ "ic-cdk-macros 0.8.1",
+ "ic-ledger-types 0.8.0",
+ "ic-stable-structures 0.6.4",
+ "serde",
+]
+
+[[package]]
 name = "icrc1_registry"
 version = "0.1.0"
 dependencies = [

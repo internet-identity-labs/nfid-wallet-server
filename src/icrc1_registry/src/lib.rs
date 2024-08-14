@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 
 use candid::{CandidType, Principal};
 use candid::export_service;
@@ -15,9 +16,27 @@ pub struct Conf {
 }
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, Hash, PartialEq, Eq)]
+pub enum ICRC1State {
+    Active,
+    Inactive,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug, Eq)]
 pub struct ICRC1 {
-    pub index: Option<String>,
+    pub state: ICRC1State,
     pub ledger: String,
+}
+
+impl Hash for ICRC1 {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.ledger.hash(state);
+    }
+}
+
+impl PartialEq for ICRC1 {
+    fn eq(&self, other: &Self) -> bool {
+        self.ledger == other.ledger
+    }
 }
 
 thread_local! {
@@ -28,15 +47,16 @@ thread_local! {
 }
 
 #[update]
-pub async fn store_icrc1_canister(ledger_id: String, index_id: Option<String>) {
+pub async fn store_icrc1_canister(ledger_id: String, state: ICRC1State) {
     let caller = get_root_id().await;
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
         let canister_id = ICRC1 {
-            index: index_id,
-            ledger: ledger_id,
+            state,
+            ledger: ledger_id.clone(),
         };
         let canisters = registry.entry(caller).or_insert_with(HashSet::new);
+        canisters.retain(|existing_canister| existing_canister.ledger != ledger_id);
         canisters.insert(canister_id);
     });
 }
@@ -92,11 +112,11 @@ pub fn stable_save() {
 #[post_upgrade]
 pub fn stable_restore() {
     let (mo, ): (Memory, ) = storage::stable_restore().unwrap();
-    CONFIG.with(|config| {
+    CONFIG.with(|mut config| {
         let mut config = config.borrow_mut();
         *config = mo.config.clone();
     });
-    ICRC_REGISTRY.with(|registry| {
+    ICRC_REGISTRY.with(|mut registry| {
         let mut registry = registry.borrow_mut();
         *registry = mo.registry;
     });
