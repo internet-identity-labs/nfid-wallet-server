@@ -141,6 +141,7 @@ type WalletRegisterRequest = record {
     get_policies : (nat64) -> (vec Policy) query;
     get_transactions : () -> (vec Transaction) query;
     get_vaults : () -> (vec Vault) query;
+    get_vaults_by_address : (text) -> (vec Vault) query;
     get_wallets : (nat64) -> (vec Wallet) query;
     register_policy : (PolicyRegisterRequest) -> (Policy);
     register_transaction : (TransactionRegisterRequest) -> (Transaction);

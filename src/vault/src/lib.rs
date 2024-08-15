@@ -79,6 +79,13 @@ async fn get_vaults() -> Vec<Vault> {
     vault_service::get(vault_ids)
 }
 
+#[query]
+#[candid_method(query)]
+async fn get_vaults_by_address(address: String) -> Vec<Vault> {
+    let vault_ids = user_service::get_or_new_by_address(address).vaults;
+    vault_service::get(vault_ids)
+}
+
 #[update]
 #[candid_method(update)]
 async fn store_member(request: VaultMemberRequest) -> Vault {
