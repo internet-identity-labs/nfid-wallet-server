@@ -1,0 +1,34 @@
+type Category = variant {
+    Sns;
+    Known;
+    Unknown;
+    ChainFusionTestnet;
+    ChainFusion;
+    Community;
+};
+
+type Conf = record {
+    controllers : opt vec principal;
+    im_canister : opt principal;
+};
+
+type ICRC1 = record {
+    logo : opt text;
+    name : text;
+    ledger : text;
+    category : Category;
+    index : opt text;
+    symbol : text;
+};
+
+type ICRC1Request = record {
+    logo : opt text;
+    name : text;
+    ledger : text;
+    index : opt text;
+    symbol : text;
+};service : (opt Conf) -> {
+    get_all_icrc1_canisters : () -> (vec ICRC1) query;
+    save_all_icrc1_canisters : (vec ICRC1) -> (vec ICRC1);
+    store_icrc1_canister : (ICRC1Request) -> ();
+}

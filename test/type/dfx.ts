@@ -46,6 +46,10 @@ export interface Dfx {
         id: string;
         actor: Record<string, ActorMethod>;
     };
+    icrc1_oracle?: {
+        id: string;
+        actor: Record<string, ActorMethod>;
+    };
     delegation_factory?: {
         id: string;
         actor: Record<string, ActorMethod>;

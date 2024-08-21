@@ -3,12 +3,17 @@ type Conf = record {
 };
 
 type ICRC1 = record {
-    ledger : text;
-    index : opt text
+    state : ICRC1State;
+    ledger : text
+};
+
+type ICRC1State = variant {
+    Inactive;
+    Active
 };
 
 service : (Conf) -> {
     get_canisters_by_root : (text) -> (vec ICRC1) query;
-    store_icrc1_canister : (text, opt text) -> ();
     remove_icrc1_canister : (text) -> ();
+    store_icrc1_canister : (text, opt ICRC1State) -> ();
 }

@@ -106,6 +106,12 @@
       "wasm": "icrc1_registry.wasm",
       "type": "custom"
     },
+    "icrc1_oracle": {
+      "build": "src/icrc1_oracle/build.sh",
+      "candid": "src/icrc1_oracle/icrc1_oracle.did",
+      "wasm": "icrc1_oracle.wasm",
+      "type": "custom"
+    },
     "ledger": {
       "type": "custom",
       "candid": "ledger.public.did",

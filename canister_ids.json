@@ -57,6 +57,9 @@
     "stage": "gi7nq-syaaa-aaaag-acltq-cai",
     "ic": "2sdah-saaaa-aaaal-adqna-cai"
   },
+  "icrc1_oracle": {
+    "dev": "ys266-uyaaa-aaaal-ajs4q-cai"
+  },
   "delegation_factory" : {
     "dev": "wklas-pyaaa-aaaak-akv3a-cai",
     "stage": "y76ws-vaaaa-aaaao-a3pgq-cai",
