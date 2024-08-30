@@ -5,6 +5,7 @@ type Category = variant {
     ChainFusionTestnet;
     ChainFusion;
     Community;
+    Native;
 };
 
 type Conf = record {
@@ -29,6 +30,7 @@ type ICRC1Request = record {
     symbol : text;
 };service : (opt Conf) -> {
     get_all_icrc1_canisters : () -> (vec ICRC1) query;
-    save_all_icrc1_canisters : (vec ICRC1) -> (vec ICRC1);
+    replace_icrc1_canisters : (vec ICRC1) -> (vec ICRC1);
+    store_new_icrc1_canisters : (vec ICRC1) -> (vec ICRC1);
     store_icrc1_canister : (ICRC1Request) -> ();
 }

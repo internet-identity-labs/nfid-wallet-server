@@ -10,6 +10,7 @@ export const idlFactory = ({ IDL }) => {
         'ChainFusionTestnet' : IDL.Null,
         'ChainFusion' : IDL.Null,
         'Community' : IDL.Null,
+        'Native' : IDL.Null,
     });
     const ICRC1 = IDL.Record({
         'logo' : IDL.Opt(IDL.Text),
@@ -28,7 +29,12 @@ export const idlFactory = ({ IDL }) => {
     });
     return IDL.Service({
         'get_all_icrc1_canisters' : IDL.Func([], [IDL.Vec(ICRC1)], ['query']),
-        'save_all_icrc1_canisters' : IDL.Func(
+        'replace_icrc1_canisters' : IDL.Func(
+            [IDL.Vec(ICRC1)],
+            [IDL.Vec(ICRC1)],
+            [],
+        ),
+        'store_new_icrc1_canisters' : IDL.Func(
             [IDL.Vec(ICRC1)],
             [IDL.Vec(ICRC1)],
             [],

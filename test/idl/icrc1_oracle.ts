@@ -7,7 +7,8 @@ export type Category = { 'Sns' : null } |
     { 'Unknown' : null } |
     { 'ChainFusionTestnet' : null } |
     { 'ChainFusion' : null } |
-    { 'Community' : null };
+    { 'Community' : null } |
+    { 'Native' : null };
 export interface Conf {
     'controllers' : [] | [Array<Principal>],
     'im_canister' : [] | [Principal],
@@ -29,7 +30,8 @@ export interface ICRC1Request {
 }
 export interface _SERVICE {
     'get_all_icrc1_canisters' : ActorMethod<[], Array<ICRC1>>,
-    'save_all_icrc1_canisters' : ActorMethod<[Array<ICRC1>], Array<ICRC1>>,
+    'replace_icrc1_canisters' : ActorMethod<[Array<ICRC1>], Array<ICRC1>>,
+    'store_new_icrc1_canisters' : ActorMethod<[Array<ICRC1>], Array<ICRC1>>,
     'store_icrc1_canister' : ActorMethod<[ICRC1Request], undefined>,
     'sync_controllers' : ActorMethod<[], Array<string>>,
 }

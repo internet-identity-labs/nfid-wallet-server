@@ -8,11 +8,13 @@ use ic_cdk::api::call::CallResult;
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use ic_cdk_macros::*;
 use serde::{Deserialize, Serialize};
+use core::hash::Hash;
 
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq, Eq, Serialize)]
 pub enum Category {
     Unknown,
     Known,
+    Native,
     ChainFusion,
     ChainFusionTestnet,
     Community,
@@ -27,7 +29,7 @@ pub struct Conf {
 }
 
 
-#[derive(CandidType, Deserialize, Clone, Serialize, Debug, Hash, PartialEq, Eq)]
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug, Eq)]
 pub struct ICRC1 {
     pub index: Option<String>,
     pub ledger: String,
@@ -37,6 +39,17 @@ pub struct ICRC1 {
     pub category: Category,
 }
 
+impl Hash for ICRC1 {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.ledger.hash(state);
+    }
+}
+
+impl PartialEq for ICRC1 {
+    fn eq(&self, other: &Self) -> bool {
+        self.ledger == other.ledger
+    }
+}
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, Hash, PartialEq, Eq)]
 pub struct ICRC1Request {
@@ -116,13 +129,23 @@ pub async fn get_all_icrc1_canisters() -> HashSet<ICRC1> {
     })
 }
 
-
 #[update]
-pub async fn save_all_icrc1_canisters(icrc1: Vec<ICRC1>) -> HashSet<ICRC1> {
+pub async fn replace_icrc1_canisters(icrc1: Vec<ICRC1>) -> HashSet<ICRC1> {
     trap_if_not_authenticated_admin();
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
-        registry.clear();
+        for canister in icrc1 {
+            registry.replace(canister);
+        }
+        registry.clone()
+    })
+}
+
+#[update]
+pub async fn store_new_icrc1_canisters(icrc1: Vec<ICRC1>) -> HashSet<ICRC1> {
+    trap_if_not_authenticated_admin();
+    ICRC_REGISTRY.with(|registry| {
+        let mut registry = registry.borrow_mut();
         for canister in icrc1 {
             registry.insert(canister);
         }

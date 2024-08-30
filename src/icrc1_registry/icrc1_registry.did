@@ -15,5 +15,5 @@ type ICRC1State = variant {
 service : (Conf) -> {
     get_canisters_by_root : (text) -> (vec ICRC1) query;
     remove_icrc1_canister : (text) -> ();
-    store_icrc1_canister : (text, opt ICRC1State) -> ();
+    store_icrc1_canister : (text, ICRC1State) -> ();
 }
