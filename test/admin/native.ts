@@ -1,4 +1,5 @@
 import {ICRC1} from "../idl/icrc1_oracle";
+import {ICP_LOGO} from "./constants";
 
 export class NativeParser {
 
@@ -6,7 +7,7 @@ export class NativeParser {
         return [
             {
                 name: "Internet Computer",
-                logo: [],
+                logo: [ICP_LOGO],
                 ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai",
                 index: ["qhbym-qaaaa-aaaaa-aaafq-cai"],
                 symbol: "ICP",
