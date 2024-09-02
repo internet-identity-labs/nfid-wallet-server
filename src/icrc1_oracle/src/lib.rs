@@ -1,18 +1,18 @@
+use core::hash::Hash;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 
-use candid::{CandidType, Principal};
+use candid::{CandidType, Nat, Principal};
 use candid::{candid_method, export_service};
 use ic_cdk::{call, caller, id, storage, trap};
 use ic_cdk::api::call::CallResult;
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use ic_cdk_macros::*;
 use serde::{Deserialize, Serialize};
-use core::hash::Hash;
 
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq, Eq, Serialize)]
 pub enum Category {
-    Unknown,
+    Spam,
     Known,
     Native,
     ChainFusion,
@@ -37,6 +37,8 @@ pub struct ICRC1 {
     pub logo: Option<String>,
     pub symbol: String,
     pub category: Category,
+    pub decimals: u8,
+    pub fee: Nat,
 }
 
 impl Hash for ICRC1 {
@@ -58,6 +60,8 @@ pub struct ICRC1Request {
     pub name: String,
     pub logo: Option<String>,
     pub symbol: String,
+    pub decimals: u8,
+    pub fee: Nat,
 }
 
 thread_local! {
@@ -95,6 +99,14 @@ async fn sync_controllers() -> Vec<String> {
 #[update]
 pub async fn store_icrc1_canister(request: ICRC1Request) {
     get_root_id().await;
+    Principal::from_text(request.ledger.clone()).unwrap_or_else(|_| {
+        trap("Invalid ledger principal");
+    });
+    if request.index.is_some() {
+       Principal::from_text(request.index.clone().unwrap()).unwrap_or_else(|_| {
+            trap("Invalid index principal");
+        });
+    }
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
         let canister_id = ICRC1 {
@@ -103,7 +115,9 @@ pub async fn store_icrc1_canister(request: ICRC1Request) {
             name: request.name,
             logo: request.logo,
             symbol: request.symbol,
-            category: Category::Unknown,
+            category: Category::Community,
+            decimals: request.decimals,
+            fee: request.fee,
         };
         registry.insert(canister_id);
     });

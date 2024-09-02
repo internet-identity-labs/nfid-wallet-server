@@ -18,7 +18,9 @@ export class ChainFusionParser {
                 ledger: c.ledger_canister_id,
                 index: [],
                 symbol: c.icrc1_metadata.icrc1_symbol,
-                category: {ChainFusion: null}
+                category: {ChainFusion: null},
+                fee: BigInt(c.icrc1_metadata.icrc1_fee),
+                decimals: parseInt(c.icrc1_metadata.icrc1_decimals)
             }
         });
         return canisters;

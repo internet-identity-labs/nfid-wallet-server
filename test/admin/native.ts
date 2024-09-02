@@ -11,7 +11,9 @@ export class NativeParser {
                 ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai",
                 index: ["qhbym-qaaaa-aaaaa-aaafq-cai"],
                 symbol: "ICP",
-                category: {Native: null}
+                category: {Native: null},
+                fee: BigInt(10000),
+                decimals: 8
             }
         ];
     }
