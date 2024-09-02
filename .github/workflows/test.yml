@@ -7,8 +7,7 @@ on:
 jobs:
   test:
     name: Unit & Integration tests
-    runs-on:
-      group: dfx-runner
+    runs-on: [self-hosted, runner-1]
     defaults:
       run:
         shell: bash
