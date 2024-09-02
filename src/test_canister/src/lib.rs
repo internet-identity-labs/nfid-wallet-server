@@ -17,6 +17,11 @@ struct CertifiedResponse {
     witness: Vec<u8>,
 }
 
+#[derive(CandidType)]
+struct ICRC28Response {
+    trusted_origins: Vec<String>,
+}
+
 thread_local! {
     static ORIGIN_STORAGE_CERTIFIED: RefCell<Vec<String>> = RefCell::new(Default::default());
     static ORIGIN_STORAGE_RAW: RefCell<Vec<String>> = RefCell::new(Default::default());
@@ -30,6 +35,18 @@ async fn get_trusted_origins() -> Vec<String> {
     ORIGIN_STORAGE_RAW.with(|storage| {
         storage.borrow().clone()
     })
+}
+
+
+#[update]
+#[candid_method(update)]
+async fn icrc28_trusted_origins() -> ICRC28Response {
+    let a: Vec<String> = ORIGIN_STORAGE_RAW.with(|storage| {
+        storage.borrow().clone()
+    });
+    return ICRC28Response {
+        trusted_origins: a,
+    };
 }
 
 #[query]

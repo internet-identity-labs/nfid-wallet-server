@@ -42,10 +42,19 @@ describe("ICRC1 canister Oracle", () => {
             symbol: "symbol2",
             category: {Unknown: null}
         }
+        const third: ICRC1 = {
+            logo: ["logo3"],
+            name: "name3",
+            ledger: "ledger3",
+            index: ["index3"],
+            symbol: "symbol3",
+            category: {Unknown: null}
+        }
         const firstCanister: ICRC1 = allCanisters[0]
         firstCanister.category = {Known: null}
-        await dfx.icrc1_oracle.actor.save_all_icrc1_canisters([firstCanister, secondCanister]);
+        await dfx.icrc1_oracle.actor.replace_icrc1_canisters([firstCanister, secondCanister, third]);
         allCanisters = await dfx.icrc1_oracle.actor.get_all_icrc1_canisters() as Array<ICRC1>;
-        expect(allCanisters.length).eq(2);
+        expect(allCanisters.length).eq(3);
+        expect(allCanisters.find((k) => k.ledger === firstCanister.ledger).category).deep.eq({Known: null});
     })
 })

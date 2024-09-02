@@ -1,5 +1,8 @@
 service : () -> {
     get_trusted_origins: () -> (vec text);
+    icrc28_trusted_origins: () -> (vec record {
+        trusted_origins: vec text;
+    });
     get_trusted_origins_certified: () -> (record {
         response: vec text;
         certificate: vec nat8;
