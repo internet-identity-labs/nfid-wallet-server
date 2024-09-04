@@ -171,8 +171,9 @@ jobs:
           ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
 
       - name: Save artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CANISTER_WASM }}
+          include-hidden-files: true
           path: ${{ github.workspace }}/${{ env.CANISTER_WASM }}
     

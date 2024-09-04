@@ -214,9 +214,10 @@ jobs:
             )
 
       - name: Save artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CANISTER_WASM }}
+          include-hidden-files: true
           path: ${{ github.workspace }}/${{ env.CANISTER_WASM }}
 
       - name: Frontend => Checkout repo.
