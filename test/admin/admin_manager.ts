@@ -36,7 +36,7 @@ export class AdminManager {
 
     async addToCSV() {
         const canisters_from_oracle = await this.actor.get_all_icrc1_canisters() as ICRC1[];
-        const fields = ['name', 'symbol', 'ledger', 'index', 'category', 'logo'];
+        const fields = ['name', 'symbol', 'ledger', 'index', 'category', 'logo', 'fee', 'decimals'];
         const opts = {fields};
         try {
             const csv = parse(canisters_from_oracle
@@ -47,7 +47,9 @@ export class AdminManager {
                             category: mapCategory(c.category).toString(),
                             index: c.index.length > 0 ? c.index[0] : undefined,
                             symbol: c.symbol,
-                            logo: c.logo.length > 0 ? c.logo[0] : undefined
+                            logo: c.logo.length > 0 ? c.logo[0] : undefined,
+                            fee: c.fee.toString(),
+                            decimals: c.decimals.toString()
                         }
                     })
                 , opts);
@@ -72,7 +74,9 @@ export class AdminManager {
                     category: mapCategoryCSVToCategory(record.category),
                     index: record.index === undefined ? [] : [record.index],
                     symbol: record.symbol,
-                    logo: record.logo === undefined ? [] : [record.logo]
+                    logo: record.logo === undefined ? [] : [record.logo],
+                    fee: BigInt(record.fee),
+                    decimals: Number(record.decimals)
                 }
             });
         await this.actor.replace_icrc1_canisters(asd);

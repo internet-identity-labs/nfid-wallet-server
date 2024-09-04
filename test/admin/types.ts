@@ -6,13 +6,15 @@ export interface ICRC1CsvData {
     category: string
     index: string | undefined
     symbol: string
+    fee: string
+    decimals: string
 }
 
 export enum CategoryCSV {
     Sns = "Sns",
     Known = "Known",
     Native = "Native",
-    Unknown = "Unknown",
+    Spam = "Spam",
     ChainFusionTestnet = "ChainFusionTestnet",
     ChainFusion = "ChainFusion",
     Community = "Community",

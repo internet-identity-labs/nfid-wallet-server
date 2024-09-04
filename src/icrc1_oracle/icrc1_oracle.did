@@ -1,7 +1,7 @@
 type Category = variant {
     Sns;
     Known;
-    Unknown;
+    Spam;
     ChainFusionTestnet;
     ChainFusion;
     Community;
@@ -20,6 +20,8 @@ type ICRC1 = record {
     category : Category;
     index : opt text;
     symbol : text;
+    decimals : nat8;
+    fee : nat;
 };
 
 type ICRC1Request = record {
@@ -28,9 +30,12 @@ type ICRC1Request = record {
     ledger : text;
     index : opt text;
     symbol : text;
+    decimals : nat8;
+    fee : nat;
 };service : (opt Conf) -> {
     get_all_icrc1_canisters : () -> (vec ICRC1) query;
     replace_icrc1_canisters : (vec ICRC1) -> (vec ICRC1);
     store_new_icrc1_canisters : (vec ICRC1) -> (vec ICRC1);
     store_icrc1_canister : (ICRC1Request) -> ();
+    sync_controllers: () -> (vec text);
 }

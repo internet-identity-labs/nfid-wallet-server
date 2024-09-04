@@ -19,7 +19,9 @@ export class SnsParser {
                 ledger: c.ledger_canister_id,
                 index: [],
                 symbol: c.icrc1_metadata.icrc1_symbol,
-                category: {Sns: null}
+                category: {Sns: null},
+                fee: BigInt(c.icrc1_metadata.icrc1_fee),
+                decimals: parseInt(c.icrc1_metadata.icrc1_decimals)
             }
         });
         return canisters;

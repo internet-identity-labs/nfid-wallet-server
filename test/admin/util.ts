@@ -11,8 +11,8 @@ export function mapCategory(category: Category): CategoryCSV {
     if (hasOwnProperty(category, "Known")) {
         return CategoryCSV.Known
     }
-    if (hasOwnProperty(category, "Unknown")) {
-        return CategoryCSV.Unknown
+    if (hasOwnProperty(category, "Spam")) {
+        return CategoryCSV.Spam
     }
     if (hasOwnProperty(category, "ChainFusionTestnet")) {
         return CategoryCSV.ChainFusionTestnet
@@ -37,8 +37,8 @@ export function mapCategoryCSVToCategory(categoryCSV: string): Category {
             return {Known: null};
         case CategoryCSV.Native:
             return {Native: null};
-        case CategoryCSV.Unknown:
-            return {Unknown: null};
+        case CategoryCSV.Spam:
+            return {Spam: null};
         case CategoryCSV.ChainFusionTestnet:
             return {ChainFusionTestnet: null};
         case CategoryCSV.ChainFusion:
