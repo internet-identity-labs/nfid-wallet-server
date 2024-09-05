@@ -112,8 +112,6 @@ export class AdminManager {
             console.log(batch)
 
             await this.actor.replace_icrc1_canisters(batch);
-
-            // await sleep(3);
         }
     }
 }
