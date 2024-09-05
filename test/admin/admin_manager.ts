@@ -41,7 +41,7 @@ export class AdminManager {
             return chunks;
         };
 
-        const batches = chunkArray(all, 1);
+        const batches = chunkArray(all, 999);
 
         for (const batch of batches) {
             console.log("Перезаписываю SNS");
@@ -105,7 +105,7 @@ export class AdminManager {
             return chunks;
         };
 
-        const batches = chunkArray(asd, 20);
+        const batches = chunkArray(asd, 999);
 
         for (const batch of batches) {
             console.log("Выгружаю CSV");

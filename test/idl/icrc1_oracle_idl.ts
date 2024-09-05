@@ -41,7 +41,7 @@ export const idlFactory = ({ IDL }) => {
         'store_icrc1_canister' : IDL.Func([ICRC1Request], [], []),
         'store_new_icrc1_canisters' : IDL.Func(
             [IDL.Vec(ICRC1)],
-            [IDL.Vec(ICRC1)],
+            [],
             [],
         ),
         'sync_controllers' : IDL.Func([], [IDL.Vec(IDL.Text)], []),
