@@ -8,7 +8,7 @@ async function run() {
 
     switch (method) {
         case 'formCSV':
-            await adminManager.addICTokens();
+            // await adminManager.addICTokens();
             await adminManager.addToCSV();
             console.log('Тёма, CSV готов!!!');
             break;

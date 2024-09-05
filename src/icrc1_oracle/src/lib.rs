@@ -144,26 +144,24 @@ pub async fn get_all_icrc1_canisters() -> HashSet<ICRC1> {
 }
 
 #[update]
-pub async fn replace_icrc1_canisters(icrc1: Vec<ICRC1>) -> HashSet<ICRC1> {
+pub async fn replace_icrc1_canisters(icrc1: Vec<ICRC1>) {
     trap_if_not_authenticated_admin();
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
         for canister in icrc1 {
             registry.replace(canister);
         }
-        registry.clone()
     })
 }
 
 #[update]
-pub async fn store_new_icrc1_canisters(icrc1: Vec<ICRC1>) -> HashSet<ICRC1> {
+pub async fn store_new_icrc1_canisters(icrc1: Vec<ICRC1>) {
     trap_if_not_authenticated_admin();
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
         for canister in icrc1 {
             registry.insert(canister);
         }
-        registry.clone()
     })
 }
 
