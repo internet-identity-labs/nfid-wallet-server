@@ -31,7 +31,23 @@ export class AdminManager {
             .concat(chainFusion)
             .concat(chainFusionTestnet)
             .concat(sns);
-        await this.actor.store_new_icrc1_canisters(all);
+
+        const chunkArray = (arr: ICRC1[], chunkSize: number): ICRC1[][] => {
+            const chunks: ICRC1[][] = [];
+            for (let i = 0; i < arr.length; i += chunkSize) {
+                chunks.push(arr.slice(i, i + chunkSize));
+            }
+            return chunks;
+        };
+
+        const batches = chunkArray(all, 10);
+
+        for (const batch of batches) {
+            console.log("Перезаписываю SNS");
+            console.log(batch);
+            await this.actor.store_new_icrc1_canisters(batch);
+
+        }
     }
 
     async addToCSV() {
@@ -79,6 +95,21 @@ export class AdminManager {
                     decimals: Number(record.decimals)
                 }
             });
-        await this.actor.replace_icrc1_canisters(asd);
+
+        const chunkArray = (arr: ICRC1[], chunkSize: number): ICRC1[][] => {
+            const chunks: ICRC1[][] = [];
+            for (let i = 0; i < arr.length; i += chunkSize) {
+                chunks.push(arr.slice(i, i + chunkSize));
+            }
+            return chunks;
+        };
+
+        const batches = chunkArray(asd, 10);
+
+        for (const batch of batches) {
+            console.log("Выгружаю CSV");
+            console.log(batch)
+            await this.actor.replace_icrc1_canisters(batch);
+        }
     }
 }
