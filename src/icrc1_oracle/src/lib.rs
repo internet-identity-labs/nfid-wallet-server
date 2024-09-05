@@ -119,7 +119,7 @@ pub async fn store_icrc1_canister(request: ICRC1Request) {
             decimals: request.decimals,
             fee: request.fee,
         };
-        registry.insert(canister_id);
+        registry.replace(canister_id);
     });
 }
 
