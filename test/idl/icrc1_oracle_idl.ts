@@ -35,7 +35,7 @@ export const idlFactory = ({ IDL }) => {
         'get_all_icrc1_canisters' : IDL.Func([], [IDL.Vec(ICRC1)], ['query']),
         'replace_icrc1_canisters' : IDL.Func(
             [IDL.Vec(ICRC1)],
-            [IDL.Vec(ICRC1)],
+            [],
             [],
         ),
         'store_icrc1_canister' : IDL.Func([ICRC1Request], [], []),

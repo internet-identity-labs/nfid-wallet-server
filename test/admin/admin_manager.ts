@@ -12,6 +12,7 @@ import {ICRC1CsvData} from "./types";
 import {getActor, mapCategory, mapCategoryCSVToCategory} from "./util";
 import {ChainFusionTestnetParser} from "./chain_fusion_testnet";
 import {CANISTER_ID, FILE_PATH, KEY_PAIR} from "./constants";
+import {sleep} from "../util/call.util";
 
 export class AdminManager {
 
@@ -40,7 +41,7 @@ export class AdminManager {
             return chunks;
         };
 
-        const batches = chunkArray(all, 10);
+        const batches = chunkArray(all, 1);
 
         for (const batch of batches) {
             console.log("Перезаписываю SNS");
@@ -104,11 +105,12 @@ export class AdminManager {
             return chunks;
         };
 
-        const batches = chunkArray(asd, 10);
+        const batches = chunkArray(asd, 20);
 
         for (const batch of batches) {
             console.log("Выгружаю CSV");
             console.log(batch)
+
             await this.actor.replace_icrc1_canisters(batch);
         }
     }

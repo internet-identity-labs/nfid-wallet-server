@@ -34,8 +34,8 @@ type ICRC1Request = record {
     fee : nat;
 };service : (opt Conf) -> {
     get_all_icrc1_canisters : () -> (vec ICRC1) query;
-    replace_icrc1_canisters : (vec ICRC1) -> (vec ICRC1);
-    store_new_icrc1_canisters : (vec ICRC1) -> (vec ICRC1);
+    replace_icrc1_canisters : (vec ICRC1) -> ();
+    store_new_icrc1_canisters : (vec ICRC1) -> ();
     store_icrc1_canister : (ICRC1Request) -> ();
     sync_controllers: () -> (vec text);
 }
