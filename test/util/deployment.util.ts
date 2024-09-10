@@ -46,7 +46,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             id: null,
             actor: null,
         },
-        eth_signer: {
+        ic_signer: {
             id: null,
             actor: null,
         },
@@ -211,10 +211,10 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         if (apps.includes(App.ECDSASigner)) {
             DFX.DEPLOY_ECDSA();
 
-            dfx.eth_signer.id = DFX.GET_CANISTER_ID("signer_eth");
-            console.log(">> ", dfx.eth_signer.id);
+            dfx.ic_signer.id = DFX.GET_CANISTER_ID("signer_ic");
+            console.log(">> ", dfx.ic_signer.id);
 
-            dfx.eth_signer.actor = await getActor(dfx.eth_signer.id, dfx.user.identity, esdsaIdl);
+            dfx.ic_signer.actor = await getActor(dfx.ic_signer.id, dfx.user.identity, esdsaIdl);
             return dfx;
         }
         if (apps.includes(App.DelegationFactory)) {

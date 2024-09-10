@@ -24,44 +24,44 @@ describe("ECDSA signer test", () => {
         });
         it("verify controllers", async function () {
             try {
-                await dfx.eth_signer.actor.get_kp_certified(dfx.user.identity.getPrincipal().toText());
+                await dfx.ic_signer.actor.get_kp_certified(dfx.user.identity.getPrincipal().toText());
                 fail("Should unauthorised")
             } catch (e) {
                 expect(e.message).contains("Unauthorised")
             }
             try {
-                await dfx.eth_signer.actor.get_all_json(0, 10)
+                await dfx.ic_signer.actor.get_all_json(0, 10)
                 fail("Should unauthorised")
             } catch (e) {
                 expect(e.message).contains("Unauthorised")
                 DFX.USE_TEST_ADMIN();
-                DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "signer_eth");
-                DFX.ADD_CONTROLLER(dfx.eth_signer.id, "signer_eth");
+                DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "signer_ic");
+                DFX.ADD_CONTROLLER(dfx.ic_signer.id, "signer_ic");
             }
-            await dfx.eth_signer.actor.sync_controllers()
+            await dfx.ic_signer.actor.sync_controllers()
         })
 
         it("should return key pair", async function () {
             let kp: KeyPair = {
                 private_key_encrypted: "test_private", public_key: "test_public"
             }
-            let emptyResponse = await dfx.eth_signer.actor.get_kp() as KeyPairResponse;
+            let emptyResponse = await dfx.ic_signer.actor.get_kp() as KeyPairResponse;
             expect(emptyResponse.key_pair.length).eq(0)
-            await dfx.eth_signer.actor.add_kp(kp);
+            await dfx.ic_signer.actor.add_kp(kp);
             try {
-                await dfx.eth_signer.actor.add_kp(kp);
+                await dfx.ic_signer.actor.add_kp(kp);
             } catch (e) {
                 expect(e.message.includes("Already registered"))
             }
-            let response = await dfx.eth_signer.actor.get_kp() as KeyPairResponse;
+            let response = await dfx.ic_signer.actor.get_kp() as KeyPairResponse;
             expect(response.key_pair[0].public_key).eq("test_public")
             expect(response.key_pair[0].private_key_encrypted).eq("test_private")
             expect(response.princ).eq(dfx.user.identity.getPrincipal().toText())
-            let certifiedResponse = await dfx.eth_signer.actor.get_kp_certified(dfx.user.identity.getPrincipal().toText()) as CertifiedKeyPairResponse
+            let certifiedResponse = await dfx.ic_signer.actor.get_kp_certified(dfx.user.identity.getPrincipal().toText()) as CertifiedKeyPairResponse
             await verifyCertifiedResponse(certifiedResponse, dfx)
             DFX.UPGRADE_FORCE('signer_eth')
-            response = await dfx.eth_signer.actor.get_kp() as KeyPairResponse;
-            let certifiedResponseAfterAll = await dfx.eth_signer.actor.get_kp_certified(dfx.user.identity.getPrincipal().toText()) as CertifiedKeyPairResponse
+            response = await dfx.ic_signer.actor.get_kp() as KeyPairResponse;
+            let certifiedResponseAfterAll = await dfx.ic_signer.actor.get_kp_certified(dfx.user.identity.getPrincipal().toText()) as CertifiedKeyPairResponse
             expect(certifiedResponse.response.princ).eq(certifiedResponseAfterAll.response.princ)
             await verifyCertifiedResponse(certifiedResponseAfterAll, dfx)
             expect(response.key_pair[0].public_key).eq("test_public")
@@ -69,15 +69,15 @@ describe("ECDSA signer test", () => {
         });
 
         it("should return public key", async function () {
-            let response = await dfx.eth_signer.actor.get_public_key(dfx.user.principal) as string[];
+            let response = await dfx.ic_signer.actor.get_public_key(dfx.user.principal) as string[];
             expect(response[0]).eq("test_public")
         });
 
         it("should backup", async function () {
 
-            let count = await dfx.eth_signer.actor.count()
+            let count = await dfx.ic_signer.actor.count()
             expect(count).eq(1n)
-            let json = await dfx.eth_signer.actor.get_all_json(0, 10)
+            let json = await dfx.ic_signer.actor.get_all_json(0, 10)
             expect(json).contains("public_key")
             expect(json).contains("test_public")
             expect(json).contains("private_key")
@@ -92,7 +92,7 @@ async function verifyCertifiedResponse(certifiedResponse: CertifiedKeyPairRespon
     const agent = new HttpAgent({host: "http://127.0.0.1:8000"});
     await agent.fetchRootKey();
     const tree = await verifyCertification({
-        canisterId: Principal.fromText(dfx.eth_signer.id),
+        canisterId: Principal.fromText(dfx.ic_signer.id),
         encodedCertificate: new Uint8Array(certifiedResponse.certificate).buffer,
         encodedTree: new Uint8Array(certifiedResponse.witness).buffer,
         rootKey: agent.rootKey,

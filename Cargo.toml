@@ -1,12 +1,10 @@
 [workspace]
 members = [
     "src/ecdsa_signer",
-    "src/pub_sub_channel",
-    "src/verifier",
     "src/icrc1_registry",
     "src/icrc1_oracle",
     "src/test_canister",
     "src/vault",
     "src/libraries/canister_api_macros",
 ]
-exclude = ["src/eth_secret_storage", "src/identity_manager", "src/delegation_factory", "src/nfid_storage", "src/bitcoin"]
+exclude = ["src/identity_manager", "src/delegation_factory", "src/nfid_storage"]

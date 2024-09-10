@@ -20,6 +20,7 @@ export class AdminManager {
 
     constructor() {
         const adminEd = Ed25519KeyIdentity.fromParsedJson(KEY_PAIR);
+        console.log("123 " + adminEd.getPrincipal().toText())
         this.actor = getActor(CANISTER_ID, adminEd, icrcOracle1Idl);
     }
 
@@ -105,11 +106,11 @@ export class AdminManager {
             return chunks;
         };
 
-        const batches = chunkArray(asd, 999);
+        const batches = chunkArray(asd, 10);
 
         for (const batch of batches) {
             console.log("Выгружаю CSV");
-            console.log(batch)
+            // console.log(batch)
 
             await this.actor.replace_icrc1_canisters(batch);
         }
