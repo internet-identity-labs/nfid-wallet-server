@@ -34,7 +34,7 @@ export interface Dfx {
         id: string;
         actor: Record<string, ActorMethod>;
     };
-    eth_signer?: {
+    ic_signer?: {
         id: string;
         actor: Record<string, ActorMethod>;
     };

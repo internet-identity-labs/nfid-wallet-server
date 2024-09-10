@@ -19,12 +19,6 @@
   "identity_manager_test_replica": {
     "dev": "vwali-piaaa-aaaal-qatfq-cai"
   },
-  "pub_sub_channel": {
-    "ic": "iyvpb-uqaaa-aaaag-qabxa-cai"
-  },
-  "verifier": {
-    "ic": "sgk26-7yaaa-aaaan-qaovq-cai"
-  },
   "vault": {
     "dev": "ymvb6-7qaaa-aaaan-qbgga-cai",
     "ic": "lsdm3-pyaaa-aaaap-qavoa-cai"
@@ -33,20 +27,10 @@
     "dev": "25nnx-kyaaa-aaaao-ab43a-cai",
     "ic": "ckqrk-4yaaa-aaaak-adxsa-cai"
   },
-  "signer_eth": {
-    "dev": "txkre-oyaaa-aaaap-qa3za-cai",
-    "stage": "wmxhg-4iaaa-aaaam-aanzq-cai",
-    "ic": "qsemi-gqaaa-aaaao-agwfa-cai"
-  },
   "signer_ic": {
     "dev": "nux62-yqaaa-aaaak-ae2pq-cai",
     "stage": "gzqxf-kqaaa-aaaak-qakba-cai",
     "ic": "us7ed-qyaaa-aaaam-abpoa-cai"
-  },
-  "signer_btc": {
-    "dev": "7b5jg-paaaa-aaaap-aa32q-cai",
-    "ic": "7d6fq-liaaa-aaaag-absuq-cai",
-    "stage": "qt7cv-eyaaa-aaaap-qapga-cai"
   },
   "test_canister": {
     "dev": "irshc-3aaaa-aaaam-absla-cai",

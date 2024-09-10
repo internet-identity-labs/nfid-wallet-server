@@ -1,1 +1,0 @@
-(record { body = null; error = null; status_code = 200 : nat16 })

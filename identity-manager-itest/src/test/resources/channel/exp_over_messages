@@ -1,7 +1,0 @@
-(
-  record {
-    body = null;
-    error = opt "More than 30 messages in channel";
-    status_code = 400 : nat16;
-  },
-)

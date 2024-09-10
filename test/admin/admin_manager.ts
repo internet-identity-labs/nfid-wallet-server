@@ -105,12 +105,10 @@ export class AdminManager {
             return chunks;
         };
 
-        const batches = chunkArray(asd, 999);
+        const batches = chunkArray(asd, 10);
 
         for (const batch of batches) {
             console.log("Выгружаю CSV");
-            console.log(batch)
-
             await this.actor.replace_icrc1_canisters(batch);
         }
     }

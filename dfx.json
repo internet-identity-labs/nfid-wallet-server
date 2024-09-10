@@ -36,34 +36,10 @@
       "wasm": "identity_manager.wasm",
       "type": "custom"
     },
-    "pub_sub_channel": {
-      "build": "src/pub_sub_channel/build.sh",
-      "candid": "src/pub_sub_channel/pub_sub_channel.did",
-      "wasm": "pub_sub_channel.wasm",
-      "type": "custom"
-    },
-    "verifier": {
-      "build": "src/verifier/build.sh",
-      "candid": "src/verifier/verifier.did",
-      "wasm": "verifier.wasm",
-      "type": "custom"
-    },
-    "eth_secret_storage": {
-      "build": "src/eth_secret_storage/build.sh",
-      "candid": "src/eth_secret_storage/eth_secret_storage.did",
-      "wasm": "eth_secret_storage.wasm",
-      "type": "custom"
-    },
     "internet_identity_test": {
       "type": "custom",
       "candid": "src/internet_identity_test/internet_identity.did",
       "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2023-09-29/internet_identity_test.wasm.gz"
-    },
-    "bitcoin": {
-      "type": "custom",
-      "candid": "src/bitcoin/bitcoin.did",
-      "wasm": "bitcoin.wasm",
-      "build": "src/bitcoin/build.sh"
     },
     "test_ledger": {
       "type": "custom",
@@ -74,18 +50,6 @@
       "build": "src/vault/build.sh",
       "candid": "src/vault/vault.did",
       "wasm": "vault.wasm",
-      "type": "custom"
-    },
-    "signer_eth": {
-      "build": "src/ecdsa_signer/build.sh",
-      "candid": "src/ecdsa_signer/ecdsa_signer.did",
-      "wasm": "ecdsa_signer.wasm",
-      "type": "custom"
-    },
-    "signer_btc": {
-      "build": "src/ecdsa_signer/build.sh",
-      "candid": "src/ecdsa_signer/ecdsa_signer.did",
-      "wasm": "ecdsa_signer.wasm",
       "type": "custom"
     },
     "signer_ic": {

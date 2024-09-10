@@ -7,7 +7,6 @@ import {idlFactory as vaultIdl} from "../idl/vault_idl";
 import {idlFactory as icrc1Idl} from "../idl/icrc1_registry_idl";
 import {idlFactory as icrcOracle1Idl} from "../idl/icrc1_oracle_idl";
 import {idlFactory as iitIdl} from "../idl/internet_identity_test_idl";
-import {idlFactory as essIdl} from "../idl/eth_secret_storage_idl";
 import {idlFactory as esdsaIdl} from "../idl/ecdsa_idl";
 import {idlFactory as delegationFactoryIDL} from "../idl/delegation_factory_idl";
 import {idlFactory as nfidStorageIDL} from "../idl/nfid_storage_idl";
@@ -42,11 +41,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             actor: null,
             anchor: null,
         },
-        ess: {
-            id: null,
-            actor: null,
-        },
-        eth_signer: {
+        ic_signer: {
             id: null,
             actor: null,
         },
@@ -57,10 +52,6 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             actor_member_2: null,
             member_1: null,
             member_2: null
-        },
-        btc: {
-            id: null,
-            actor: null,
         },
         icrc1: {
             id: null,
@@ -95,27 +86,6 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
 
         if (clean) {
             DFX.INIT();
-        }
-
-        if (apps.includes(App.EthSecretStorage)) {
-            if (clean) {
-                DFX.DEPLOY("eth_secret_storage");
-            } else {
-                DFX.UPGRADE_FORCE("eth_secret_storage");
-            }
-
-            var response = DFX.INIT_ESS();
-            console.debug(">> ", response);
-
-            if (response !== "()") {
-                continue;
-            }
-
-            dfx.ess.id = DFX.GET_CANISTER_ID("eth_secret_storage");
-            console.debug(">> ", dfx.ess.id);
-
-            dfx.ess.actor = await getActor(dfx.ess.id, dfx.user.identity, essIdl);
-            return dfx;
         }
 
         if (apps.includes(App.IdentityManager)) {
@@ -211,10 +181,10 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         if (apps.includes(App.ECDSASigner)) {
             DFX.DEPLOY_ECDSA();
 
-            dfx.eth_signer.id = DFX.GET_CANISTER_ID("signer_eth");
-            console.log(">> ", dfx.eth_signer.id);
+            dfx.ic_signer.id = DFX.GET_CANISTER_ID("signer_ic");
+            console.log(">> ", dfx.ic_signer.id);
 
-            dfx.eth_signer.actor = await getActor(dfx.eth_signer.id, dfx.user.identity, esdsaIdl);
+            dfx.ic_signer.actor = await getActor(dfx.ic_signer.id, dfx.user.identity, esdsaIdl);
             return dfx;
         }
         if (apps.includes(App.DelegationFactory)) {

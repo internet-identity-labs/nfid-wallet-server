@@ -1,1 +1,0 @@
-dfx canister call pub_sub_channel get_messages '("asd")'

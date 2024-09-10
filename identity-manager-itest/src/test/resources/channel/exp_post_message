@@ -1,7 +1,0 @@
-(
-  record {
-    body = opt vec { "asd"; "dsa"; "asda"; "qwe"; "qoqo"; "ppp"; "yui"; "qweqwe"; "asd"; "dsa"; "asda"; "qwe"; "qoqo"; "ppp"; "yui"; "qweqwe"; "pojmk";};
-    error = null;
-    status_code = 200 : nat16;
-  },
-)
