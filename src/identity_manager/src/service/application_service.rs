@@ -4,6 +4,7 @@ use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::application_repo::{Application, ApplicationRepoTrait};
 use crate::response_mapper::{to_error_response, to_success_response};
 
+#[deprecated()]
 pub trait ApplicationServiceTrait {
     fn read_applications(&self) -> HttpResponse<Vec<Application>>;
     fn get_application_by_domain(&self, domain: String) -> HttpResponse<Application>;

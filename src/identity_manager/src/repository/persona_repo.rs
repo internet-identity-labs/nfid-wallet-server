@@ -6,7 +6,7 @@ use ic_cdk::export::candid::{CandidType, Deserialize};
 use mockers_derive::mocked;
 use serde::{Serialize};
 
-
+#[deprecated()]
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct Persona {
     pub domain: String,

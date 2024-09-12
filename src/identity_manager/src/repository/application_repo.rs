@@ -5,6 +5,7 @@ use ic_cdk::{storage};
 use crate::repository::repo::Applications;
 use ic_cdk::export::candid::{CandidType, Deserialize};
 
+#[deprecated()]
 #[derive(Clone, Debug, CandidType, Deserialize, Eq)]
 pub struct Application {
     pub domain: String,

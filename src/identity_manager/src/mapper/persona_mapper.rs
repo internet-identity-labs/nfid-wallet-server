@@ -2,6 +2,7 @@ use crate::repository::persona_repo::Persona;
 use crate::repository::repo::BasicEntity;
 use crate::requests::{PersonaRequest, PersonaResponse};
 
+#[deprecated()]
 pub fn persona_to_persona_response(persona: Persona) -> PersonaResponse {
     PersonaResponse {
         domain: persona.domain,
@@ -10,6 +11,7 @@ pub fn persona_to_persona_response(persona: Persona) -> PersonaResponse {
     }
 }
 
+#[deprecated()]
 pub fn persona_request_to_persona(persona_request: PersonaRequest) -> Persona {
     Persona {
         domain: persona_request.domain,

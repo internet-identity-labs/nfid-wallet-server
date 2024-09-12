@@ -11,7 +11,7 @@ use crate::response_mapper::{to_error_response};
 pub type AccountsToReplicate = HashSet<String>;
 pub type HearthCount = u32;
 
-
+#[deprecated()]
 pub async fn flush() -> HttpResponse<bool> {
     let raw_keys = storage::get_mut::<AccountsToReplicate>();
     let keys = raw_keys
@@ -30,6 +30,7 @@ pub async fn flush() -> HttpResponse<bool> {
     resp
 }
 
+#[deprecated()]
 pub async fn restore_and_flush(canister_id: String) -> HttpResponse<bool> {
     let account_repo = get_account_repo();
     let accounts = account_repo.get_all_accounts();

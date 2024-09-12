@@ -7,6 +7,7 @@ use crate::requests::{PersonaRequest, PersonaResponse};
 use crate::response_mapper::{HttpResponse, to_error_response, to_success_response};
 use crate::util::validation_util::validate_frontend_length;
 
+#[deprecated()]
 pub trait PersonaServiceTrait {
     fn create_persona(&self, persona_r: PersonaRequest) -> HttpResponse<AccountResponse>;
     fn read_personas(&self) -> HttpResponse<Vec<PersonaResponse>>;

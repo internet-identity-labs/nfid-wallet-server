@@ -20,9 +20,13 @@ pub type PrincipalIndex = BTreeMap<String, String>;
 pub struct Account {
     pub anchor: u64,
     pub principal_id: String,
+    #[deprecated()]
     pub name: Option<String>,
+    #[deprecated()]
     pub phone_number: Option<String>,
+    #[deprecated()]
     pub phone_number_sha2: Option<String>,
+    #[deprecated()]
     pub personas: Vec<Persona>,
     pub access_points: HashSet<AccessPoint>,
     pub base_fields: BasicEntity,
