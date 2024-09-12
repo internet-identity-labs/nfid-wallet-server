@@ -96,6 +96,8 @@ async fn get_config() -> ConfigurationResponse {
     }
 }
 
+
+#[deprecated()]
 #[query]
 #[admin]
 async fn anchors() -> HttpResponse<Vec<u64>> {
@@ -231,6 +233,7 @@ async fn get_account() -> HttpResponse<AccountResponse> {
 
 #[update]
 #[two_f_a]
+#[deprecated()]
 async fn remove_account() -> HttpResponse<bool> {
     let mut account_service = get_account_service();
     account_service.remove_account()
@@ -243,6 +246,9 @@ async fn remove_account_by_principal(princ: String) -> HttpResponse<bool> {
     account_service.remove_account_by_principal(princ)
 }
 
+
+
+#[deprecated()]
 #[update]
 #[replicate_account]
 #[two_f_a]
@@ -251,6 +257,7 @@ async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse
     persona_service.create_persona(persona)
 }
 
+#[deprecated()]
 #[update]
 #[replicate_account]
 #[two_f_a]
@@ -259,6 +266,7 @@ async fn update_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse
     persona_service.update_persona(persona)
 }
 
+#[deprecated()]
 #[query]
 async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
     let persona_service = get_persona_service();
@@ -278,6 +286,7 @@ async fn validate_signature(payload: Option<String>) -> (u64, Option<String>) {
     }
 }
 
+#[deprecated()]
 #[update]
 #[admin]
 async fn create_application(app: Application) -> HttpResponse<Vec<Application>> {
@@ -285,6 +294,7 @@ async fn create_application(app: Application) -> HttpResponse<Vec<Application>> 
     application_service.create_application(app)
 }
 
+#[deprecated()]
 #[update]
 #[admin]
 async fn create_application_all(app: Vec<Application>) -> HttpResponse<Vec<Application>> {
@@ -292,6 +302,7 @@ async fn create_application_all(app: Vec<Application>) -> HttpResponse<Vec<Appli
     application_service.create_application_all(app)
 }
 
+#[deprecated()]
 #[update]
 #[admin]
 async fn update_application(app: Application) -> HttpResponse<Vec<Application>> {
@@ -299,6 +310,7 @@ async fn update_application(app: Application) -> HttpResponse<Vec<Application>> 
     application_service.update_application(app)
 }
 
+#[deprecated()]
 #[update]
 #[admin]
 async fn delete_application(app: String) -> HttpResponse<bool> {
@@ -306,24 +318,28 @@ async fn delete_application(app: String) -> HttpResponse<bool> {
     application_service.delete_application(app)
 }
 
+#[deprecated()]
 #[query]
 async fn read_applications() -> HttpResponse<Vec<Application>> {
     let application_service = get_application_service();
     application_service.read_applications()
 }
 
+#[deprecated()]
 #[query]
 async fn get_application(domain: String) -> HttpResponse<Application> {
     let application_service = get_application_service();
     application_service.get_application_by_domain(domain)
 }
 
+#[deprecated()]
 #[update]
 async fn update_application_alias(domain: String, new_alias: String, new_name: Option<String>) -> HttpResponse<bool> {
     let application_service = get_application_service();
     application_service.update_application_alias(domain, new_alias, new_name)
 }
 
+#[deprecated()]
 #[query]
 async fn is_over_the_application_limit(domain: String) -> HttpResponse<bool> {
     let application_service = get_application_service();
@@ -341,11 +357,13 @@ async fn heartbeat_function() {
     }
 }
 
+#[deprecated()]
 #[update]
 async fn flush_account() -> HttpResponse<bool> {
     replica_service::flush().await
 }
 
+#[deprecated()]
 #[update]
 #[admin]
 async fn store_accounts(accounts: Vec<Account>) -> HttpResponse<bool> {
@@ -354,6 +372,7 @@ async fn store_accounts(accounts: Vec<Account>) -> HttpResponse<bool> {
     to_success_response(true)
 }
 
+#[deprecated()]
 #[update]
 #[admin]
 async fn restore_accounts(canister_id: String) -> HttpResponse<bool> {
