@@ -15,8 +15,6 @@ on:
         required: true
         type: choice
         options:
-          - signer_eth
-          - signer_btc
           - signer_ic
       debug_messages:
         description: 'Show debug messages'
