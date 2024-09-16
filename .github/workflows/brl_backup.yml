@@ -16,8 +16,6 @@ on:
         type: choice
         options:
           - identity_manager
-          - signer_eth
-          - signer_btc
           - signer_ic
       compress_backup:
         description: 'Compress backup'
@@ -92,7 +90,7 @@ jobs:
           elif [ "${NETWORK_NAME}" == 'ic' ]; then
             case ${CANISTER_NAME} in
 
-              identity_manager | signer_btc | signer_eth | signer_ic )
+              identity_manager | signer_ic )
                 ID_NAME="prod_admin"
                 IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
                 ;;
