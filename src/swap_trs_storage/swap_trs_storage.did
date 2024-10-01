@@ -1,0 +1,31 @@
+type InitArgs = record {
+    im_canister : principal
+};
+
+type SwapStage = variant {
+    Withdraw;
+    Error;
+    Deposit;
+    Swap;
+    Transfer;
+    Completed;
+};
+
+type SwapTransaction = record {
+    withdraw : nat64;
+    swap : nat64;
+    deposit : nat64;
+    end_time : nat64;
+    transfer_id : nat64;
+    target_ledger : text;
+    error : opt text;
+    stage : SwapStage;
+    start_time : nat64;
+    source_ledger : text;
+    transfer_nfid_id : nat64;
+    target_amount : nat64;
+    source_amount : nat64;
+};service : (opt InitArgs) -> {
+    get_transactions : (caller: text) -> (vec SwapTransaction) query;
+    store_transaction : (SwapTransaction) -> ();
+}
