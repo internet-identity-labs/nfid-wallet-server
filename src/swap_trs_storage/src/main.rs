@@ -1,5 +1,6 @@
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 
 use candid::{candid_method, Principal};
 use candid::CandidType;
@@ -9,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 thread_local! {
     static STATE: State = State::default();
-    static TRANSACTIONS: RefCell<HashMap<String, Vec<SwapTransaction>>> = RefCell::new(HashMap::new());
+    static TRANSACTIONS: RefCell<HashMap<String, HashSet<SwapTransaction>>> = RefCell::new(HashMap::new());
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -18,32 +19,44 @@ pub struct InitArgs {
 }
 
 
-
-#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize, Eq)]
 pub struct SwapTransaction {
     pub start_time: u64,
-    pub end_time: u64,
-    pub transfer_id: u64,
-    pub transfer_nfid_id: u64,
-    pub deposit: u64,
-    pub swap: u64,
-    pub withdraw: u64,
+    pub end_time: Option<u64>,
+    pub transfer_id: Option<u64>,
+    pub transfer_nfid_id: Option<u64>,
+    pub deposit: Option<u64>,
+    pub swap: Option<u64>,
+    pub withdraw: Option<u64>,
     pub error: Option<String>,
     pub stage: SwapStage,
     pub source_ledger: String,
     pub target_ledger: String,
     pub source_amount: u64,
-    pub target_amount: u64
+    pub target_amount: u64,
+    pub uid: String,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
+impl Hash for SwapTransaction {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.uid.hash(state);
+    }
+}
+
+impl PartialEq for SwapTransaction {
+    fn eq(&self, other: &Self) -> bool {
+        self.uid == other.uid
+    }
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize, PartialEq, Eq)]
 pub enum SwapStage {
-    Transfer,
+    TransferNFID,
+    TransferSwap,
     Deposit,
     Swap,
     Withdraw,
     Completed,
-    Error,
 }
 
 
@@ -69,13 +82,13 @@ fn init(maybe_arg: Option<InitArgs>) {
 
 #[query]
 #[candid_method(query)]
-async fn get_transactions(caller: String) -> Vec<SwapTransaction> {
+async fn get_transactions(caller: String) -> HashSet<SwapTransaction> {
     TRANSACTIONS.with(|trss| {
-            if let Some(transactions) = trss.borrow().get(&caller) {
-                transactions.clone()
-            } else {
-                Vec::new()
-            }
+        if let Some(transactions) = trss.borrow().get(&caller) {
+            transactions.clone()
+        } else {
+            HashSet::new()
+        }
     })
 }
 
@@ -86,7 +99,7 @@ async fn store_transaction(data: SwapTransaction) {
     let caller = caller().to_text();
     TRANSACTIONS.with(|trss| {
         let mut transactions = trss.borrow_mut();
-        transactions.entry(caller).or_insert_with(Vec::new).push(data.clone());
+        transactions.entry(caller).or_insert(HashSet::new()).replace(data.clone());
     })
 }
 
@@ -115,7 +128,7 @@ candid::export_service!();
 #[derive(Clone, Debug, CandidType, Deserialize)]
 struct TempMemory {
     im_canister: Option<Principal>,
-    transactions: Option<HashMap<String, Vec<SwapTransaction>>>,
+    transactions: Option<HashMap<String, HashSet<SwapTransaction>>>,
 }
 
 

@@ -4,28 +4,29 @@ type InitArgs = record {
 
 type SwapStage = variant {
     Withdraw;
-    Error;
     Deposit;
     Swap;
-    Transfer;
     Completed;
+    TransferNFID;
+    TransferSwap;
 };
 
 type SwapTransaction = record {
-    withdraw : nat64;
-    swap : nat64;
-    deposit : nat64;
-    end_time : nat64;
-    transfer_id : nat64;
+    uid : text;
+    withdraw : opt nat64;
+    swap : opt nat64;
+    deposit : opt nat64;
+    end_time : opt nat64;
+    transfer_id : opt nat64;
     target_ledger : text;
     error : opt text;
     stage : SwapStage;
     start_time : nat64;
     source_ledger : text;
-    transfer_nfid_id : nat64;
+    transfer_nfid_id : opt nat64;
     target_amount : nat64;
     source_amount : nat64;
 };service : (opt InitArgs) -> {
-    get_transactions : (caller: text) -> (vec SwapTransaction) query;
+    get_transactions : (text) -> (vec SwapTransaction) query;
     store_transaction : (SwapTransaction) -> ();
 }

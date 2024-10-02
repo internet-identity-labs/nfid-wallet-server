@@ -54,11 +54,12 @@ describe("Swap Trs Storage test", () => {
         storageActor = await getTypedActor<_SERVICE>(dfx.swap_trs_storage.id, identity, swapStorageIDL);
 
         const trs: SwapTransaction = {
-            withdraw: 0n,
-            swap: 0n,
-            deposit: 0n,
-            end_time: 0n,
-            transfer_id: 0n,
+            uid: "123",
+            withdraw: [1n],
+            swap: [2n],
+            deposit: [3n],
+            end_time: [4n],
+            transfer_id: [5n],
             target_ledger: "Ledger",
             error: [],
             stage: {
@@ -66,7 +67,7 @@ describe("Swap Trs Storage test", () => {
             },
             start_time: 0n,
             source_ledger: "Source",
-            transfer_nfid_id: 0n,
+            transfer_nfid_id: [0n],
             target_amount: 0n,
             source_amount: 0n
         }
