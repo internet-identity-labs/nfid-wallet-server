@@ -12,6 +12,12 @@
       "wasm": "nfid_storage.wasm",
       "build": "src/nfid_storage/build.sh"
     },
+    "swap_trs_storage": {
+      "type": "custom",
+      "candid": "src/swap_trs_storage/swap_trs_storage.did",
+      "wasm": "swap_trs_storage.wasm",
+      "build": "src/swap_trs_storage/build.sh"
+    },
     "identity_manager": {
       "build": "src/identity_manager/build.sh",
       "candid": "src/identity_manager/identity_manager.did",

@@ -10,6 +10,7 @@ import {idlFactory as iitIdl} from "../idl/internet_identity_test_idl";
 import {idlFactory as esdsaIdl} from "../idl/ecdsa_idl";
 import {idlFactory as delegationFactoryIDL} from "../idl/delegation_factory_idl";
 import {idlFactory as nfidStorageIDL} from "../idl/nfid_storage_idl";
+import {idlFactory as swapTrsStorageIDL} from "../idl/swap_trs_storage_idl";
 import {TextEncoder} from "util";
 import {App} from "../constanst/app.enum";
 import {IDL} from "@dfinity/candid";
@@ -66,6 +67,10 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             actor: null,
         },
         nfid_storage: {
+            id: null,
+            actor: null,
+        },
+        swap_trs_storage: {
             id: null,
             actor: null,
         },
@@ -203,6 +208,15 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             console.log(">> ", dfx.nfid_storage.id);
 
             dfx.nfid_storage.actor = await getActor(dfx.nfid_storage.id, dfx.user.identity, nfidStorageIDL);
+            return dfx;
+        }
+        if (apps.includes(App.SwapTrsStorage)) {
+            execute(`dfx deploy swap_trs_storage  --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
+
+            dfx.swap_trs_storage.id = DFX.GET_CANISTER_ID("swap_trs_storage");
+            console.log(">> ", dfx.swap_trs_storage.id);
+
+            dfx.swap_trs_storage.actor = await getActor(dfx.swap_trs_storage.id, dfx.user.identity, swapTrsStorageIDL);
             return dfx;
         }
 

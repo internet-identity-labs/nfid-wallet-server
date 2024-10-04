@@ -58,6 +58,10 @@ export interface Dfx {
         id: string;
         actor: Record<string, ActorMethod>;
     };
+    swap_trs_storage?: {
+        id: string;
+        actor: Record<string, ActorMethod>;
+    };
 };
 
 export interface Configuration {

@@ -7,4 +7,4 @@ members = [
     "src/vault",
     "src/libraries/canister_api_macros",
 ]
-exclude = ["src/identity_manager", "src/delegation_factory", "src/nfid_storage"]
+exclude = ["src/identity_manager", "src/delegation_factory", "src/nfid_storage", "src/swap_trs_storage"]

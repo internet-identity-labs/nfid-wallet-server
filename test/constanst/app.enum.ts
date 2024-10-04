@@ -7,5 +7,6 @@ export enum App {
     ICRC1Registry,
     ICRC1Oracle,
     DelegationFactory,
-    NFIDStorage
+    NFIDStorage,
+    SwapTrsStorage
 }
