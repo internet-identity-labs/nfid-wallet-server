@@ -1,23 +1,56 @@
-# identity_manager
+# NFID Wallet Server
 
-Welcome!
+#### Prerequisites
 
-## Running the project locally
+Ensure that the required items are installed prior to setting up the development environment:
+- Rustup ^v1.27.1
+- DFX ^v0.22.0
 
-If you want to test project locally, you can use the following commands:
+#### Launch local DFX
 
 ```bash
-dfx start --background --clean --emulator
-
-dfx deploy identity_manager --no-wallet
-
-dfx canister call identity_manager configure '(record {lambda = principal "sculj-2sjuf-dxqlm-dcv5y-hin5x-zfyvr-tzngf-bt5b5-dwhcc-zbsqf-rae"; token_ttl = 60;  token_refresh_ttl = 60; env = opt "test"})'
+dfx start --background --clean
 ```
-where lambda is principal_id of user who will mimique CLI calls as SMS-SENDER-SERVERLESS
 
-
-# pub_sub_channel
+#### Deploy Identity Manger
 
 ```bash
-dfx deploy pub_sub_channel --no-wallet
+dfx deploy identity_manager --no-wallet --specified-id "74gpt-tiaaa-aaaak-aacaa-cai"
+```
+
+#### Configure it for the test envrionemnt
+
+```bash
+dfx canister call identity_manager configure '(record {env = opt "test"})'
+```
+
+#### Synchronize its controllers
+
+```bash
+dfx canister call identity_manager sync_controllers
+```
+
+#### Run satellite apps
+
+```bash
+dfx deploy icrc1_registry  --argument '( record { im_canister = opt "74gpt-tiaaa-aaaak-aacaa-cai" })'
+dfx deploy icrc1_oracle  --argument '(opt record { im_canister = opt principal "74gpt-tiaaa-aaaak-aacaa-cai" })'
+dfx deploy signer_ic  --argument '(opt record { im_canister = principal "74gpt-tiaaa-aaaak-aacaa-cai" })'
+dfx deploy delegation_factory  --argument '(opt record { im_canister = principal "74gpt-tiaaa-aaaak-aacaa-cai" })'
+dfx deploy nfid_storage  --argument '(opt record { im_canister = principal "74gpt-tiaaa-aaaak-aacaa-cai" })'
+dfx deploy swap_trs_storage  --argument '(opt record { im_canister = principal "74gpt-tiaaa-aaaak-aacaa-cai" })'
+```
+
+## Integration tests
+
+#### Prerequisites
+
+Make sure the following are installed before setting up the development environment:
+- NodeJS ^v20.16.0
+- Yarn ^v1.22.22
+
+#### Run integration tests
+
+```bash
+npm i && npm run test
 ```
