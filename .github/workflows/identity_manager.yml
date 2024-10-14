@@ -16,7 +16,6 @@ on:
         type: choice
         options:
           - identity_manager_replica
-          - identity_manager_test_replica
           - identity_manager
           - test_im
       confirmation:
