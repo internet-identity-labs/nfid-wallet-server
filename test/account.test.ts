@@ -150,6 +150,18 @@ describe("Account", () => {
             }
         });
 
+        it("should return an error when adding an email address exceeding 320 characters", async function () {
+            let too_long_email_address = `${"a".repeat(321)}@test.test`;
+
+            try {
+                await dfx.im.actor.add_email_and_principal_for_create_account_validation(too_long_email_address, dfx.user.principal, 25) as BoolHttpResponse;
+                fail("It has to fail.");
+            } catch (e) {
+                console.log({ e })
+                expect(e.message).contains("Incorrect email address size: it's more than 320 characters.");
+            }
+        });
+
         it("should create NFID account", async function () {
             const identity = getIdentity("87654321876543218765432187654311");
             const principal = identity.getPrincipal().toText();
