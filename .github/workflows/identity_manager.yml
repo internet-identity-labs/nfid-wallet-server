@@ -1,5 +1,5 @@
 name: SH - Identity Manager
-on: 
+on:
   workflow_dispatch:
     inputs:
       network_name:
@@ -19,12 +19,6 @@ on:
           - identity_manager_test_replica
           - identity_manager
           - test_im
-      debug_messages:
-        description: 'Show debug messages'
-        type: choice
-        options: 
-          - 'false'
-          - 'true'
       confirmation:
         description: 'For the ic deployment - confirm your choice by typing "Yes"'
         type: string
@@ -32,11 +26,14 @@ on:
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   CANISTER_NAME: ${{ github.event.inputs.canister_name }}
-  CI_DEBUG: ${{ github.event.inputs.debug_messages }}
+  CI_DEBUG: 'true'
+  RELEASE_TAG_REGEX: '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
 
 
 jobs:
-  Deploy:
+  build-deploy:
+    name: Build and Deploy
+    environment: ${{ github.event.inputs.network_name }}
     runs-on:
       group: dfx-runner
     defaults:
@@ -44,12 +41,6 @@ jobs:
         shell: bash
 
     steps:
-      - name: INPUT => Checks.
-        if: ${{ (github.event.inputs.network_name == 'ic') && (github.event.inputs.confirmation != 'Yes') }}
-        run: |
-          echo "[ERROR] You have try release to network 'ic' without or with wrong confirmation phrase" >&2
-          exit 1
-
       - name: Checkout repo.
         uses: actions/checkout@v4
 
@@ -61,106 +52,119 @@ jobs:
           ref: main
           path: ci_libs
 
+      - name: INPUT => Checks branch and network_name
+        if: ${{ env.NETWORK_NAME == 'ic' }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
+            ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
+            exit 1
+          fi
+
+          if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
+            ci_echo_error "Releasing to IC not from tag not allowed." >&2
+            exit 1
+          fi
+  
+          # https://semver.org/
+          if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
+            ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
+            exit 1
+          fi
+
+          ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
+
       - name: Cache Cargo dependencies.
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
-            /home/ubuntu/.cargo/registry/
-            /home/ubuntu/.cargo_target/
-            src/eth_secret_storage/target/
-            src/identity_manager/target/
-            src/bitcoin/target/
-            src/icrc1_registry/target/
+            ${HOME}/.cargo/registry/
+            ${HOME}/.cargo_target/
+            src/**/target/
             target/
-          key: ${{ runner.os }}-cargo-im
+          key: cargo-im
 
       - name: Versions
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
           
           ci_versions
 
       - name: PRE-BUILD => Populate env vars.
+        env:
+          DFX_ID_NAME: ${{ vars.DFX_ID_NAME }}
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
           ci_echo_debug "Getting values from dfx.json" >&2
-          if ! canister_data=$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}"); then
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.\"${CANISTER_NAME}\""); then
             ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
             exit 1
           fi
-
-          ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
-
-          if [[ "${NETWORK_NAME}" =~ ^(dev|stage)$ ]]; then
-            ID_NAME="dev_admin"
-            IDENTITY_PEM_NAME_VAR="DEV_ADMIN_KEY"
-          elif [ "${NETWORK_NAME}" == 'ic' ]; then
-            ID_NAME="prod_admin"
-            IDENTITY_PEM_NAME_VAR="PROD_ADMIN_KEY"
-          fi
-          ID_PATH="/home/ubuntu/.config/dfx/identity/${ID_NAME}"
 
           ci_echo_debug "Populating env variables" >&2
           CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
           CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
           CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
-            
+
+          ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
+          DFX_ID_PATH="${HOME}/.config/dfx/identity/${DFX_ID_NAME}"
+
+          echo "DFX_ID_NAME=${DFX_ID_NAME}" >> $GITHUB_ENV
+          echo "DFX_ID_PATH=${DFX_ID_PATH}" >> $GITHUB_ENV
+
           echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
           echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
           echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
-          echo "ID_NAME=${ID_NAME}" >> $GITHUB_ENV
-          echo "ID_PATH=${ID_PATH}" >> $GITHUB_ENV
-          echo "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >> $GITHUB_ENV
 
       - name: PRE-BUILD => Print Vars.
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
           ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
           ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
           ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
           ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
           ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
-          ci_echo_info "ID_NAME=${ID_NAME}" >&2
-          ci_echo_info "ID_PATH=${ID_PATH}" >&2
-          ci_echo_info "IDENTITY_PEM_NAME_VAR=${IDENTITY_PEM_NAME_VAR}" >&2
+          ci_echo_info "DFX_ID_NAME=${DFX_ID_NAME}" >&2
+          ci_echo_info "DFX_ID_PATH=${DFX_ID_PATH}" >&2
 
       - name: PRE-BUILD => Write identity.
-        run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
-
-          mkdir -p "${ID_PATH}"
-          echo "${!IDENTITY_PEM_NAME_VAR}" > "${ID_PATH}/identity.pem"
-          sed -i 's/\\r\\n/\r\n/g' "${ID_PATH}/identity.pem"
         env:
-          DEV_ADMIN_KEY: ${{secrets.DEV_ADMIN_KEY}}
-          PROD_ADMIN_KEY: ${{secrets.PROD_ADMIN_KEY}}
+          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          mkdir -p "${DFX_ID_PATH}"
+
+          ci_echo_warn "Preparing encoded key..." >&2
+          echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
 
       - name: BUILD => Show current configuration.
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          dfx identity use "${ID_NAME}"
+          dfx identity use "${DFX_ID_NAME}"
 
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_config" >&2
-          dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_config
+          ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' get_config" >&2
+          dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" get_config
 
       - name: BUILD => Build the canister.
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          dfx identity use "${ID_NAME}"
+          dfx identity use "${DFX_ID_NAME}"
 
           rm -rf .dfx;
           ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
       - name: DEPLOY PROD => Upgrade the identity_manager_replica canister.
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
+        if: ${{ (env.CANISTER_NAME == 'identity_manager') && ( env.NETWORK_NAME== 'ic' ) }}
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          dfx identity use "${ID_NAME}"
+          dfx identity use "${DFX_ID_NAME}"
 
           CI_DEBUG="true"
 
@@ -170,8 +174,8 @@ jobs:
             exit 1
           fi
 
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade 'identity_manager_replica'" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "identity_manager_replica"); then
+          ci_echo_debug "dfx canister install --network '${NETWORK_NAME}' --mode upgrade 'identity_manager_replica'" >&2
+          if ! result=$(dfx canister install --network "${NETWORK_NAME}" --mode upgrade "identity_manager_replica"); then
             ci_echo_error "Upgrade failed ${result}" >&2
             exit 1
           fi
@@ -187,11 +191,11 @@ jobs:
           ci_echo_success "Canister 'identity_manager_replica' was upgraded" >&2
 
       - name: DEPLOY PROD => Send configuration to the identity_manager_replica canister.
-        if: ${{ (github.event.inputs.canister_name == 'identity_manager') && (github.event.inputs.network_name == 'ic') }}
+        if: ${{ (env.CANISTER_NAME == 'identity_manager') && ( env.NETWORK_NAME== 'ic' ) }}
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          dfx identity use "${ID_NAME}"
+          dfx identity use "${DFX_ID_NAME}"
 
           CI_DEBUG="true"
 
@@ -199,8 +203,8 @@ jobs:
 
           CANISTER_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${!CANISTER_DATA_NAME_VAR}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
 
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call 'identity_manager_replica' configure '${CANISTER_DATA}'" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "identity_manager_replica" configure "${CANISTER_DATA}"); then
+          ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' 'identity_manager_replica' configure '${CANISTER_DATA}'" >&2
+          if ! result=$(dfx canister call --network "${NETWORK_NAME}" "identity_manager_replica" configure "${CANISTER_DATA}"); then
             ci_echo_error "Configure failed ${result}" >&2
             exit 1
           fi
@@ -228,17 +232,17 @@ jobs:
 
       - name: DEPLOY => Upgrade the canister.
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          dfx identity use "${ID_NAME}"
+          dfx identity use "${DFX_ID_NAME}"
 
           if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
             ci_echo_warn "Performing PROD canister Upgrade" >&2
             CI_DEBUG="true"
           fi
 
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' install --mode upgrade '${CANISTER_NAME}'" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" install --mode upgrade "${CANISTER_NAME}"); then
+          ci_echo_debug "dfx canister install --network '${NETWORK_NAME}' --mode upgrade '${CANISTER_NAME}'" >&2
+          if ! result=$(dfx canister install --network "${NETWORK_NAME}" --mode upgrade "${CANISTER_NAME}"); then
             ci_echo_error "Upgrade failed ${result}" >&2
             exit 1
           fi
@@ -255,9 +259,9 @@ jobs:
 
       - name: DEPLOY => Send configuration to the canister.
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          dfx identity use "${ID_NAME}"
+          dfx identity use "${DFX_ID_NAME}"
 
           if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
             ci_echo_warn "Performing PROD config Update" >&2
@@ -289,8 +293,8 @@ jobs:
           
           # Sync command
           ci_echo_info "Synching controllers for the canister." >&2
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' sync_controllers" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" sync_controllers); then
+          ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' sync_controllers" >&2
+          if ! result=$(dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" sync_controllers); then
             ci_echo_warn "Synching controllers failed ${result}" >&2
           fi
 
@@ -299,8 +303,8 @@ jobs:
           CANISTER_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${!CANISTER_DATA_NAME_VAR}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
 
           # Configure command
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' configure '${CANISTER_DATA}'" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" configure "${CANISTER_DATA}"); then
+          ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' configure '${CANISTER_DATA}'" >&2
+          if ! result=$(dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" configure "${CANISTER_DATA}"); then
             ci_echo_error "Configure failed ${result}" >&2
             exit 1
           fi
@@ -353,24 +357,24 @@ jobs:
 
       - name: DEPLOY => Rebuild device index.
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          dfx identity use "${ID_NAME}"
+          dfx identity use "${DFX_ID_NAME}"
 
           # Rebuild device index command
           ci_echo_info "Rebuild device index." >&2
 
           # Rebuild Device Index based on Accounts command
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' rebuild_index" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" rebuild_index); then
+          ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' rebuild_index" >&2
+          if ! result=$(dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" rebuild_index); then
             ci_echo_error "Rebuild index failed ${result}" >&2
             exit 1
           fi
 
           ci_echo_success "${result}" >&2
 
-          ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' save_temp_stack_to_rebuild_device_index" >&2
-          if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" save_temp_stack_to_rebuild_device_index); then
+          ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' save_temp_stack_to_rebuild_device_index" >&2
+          if ! result=$(dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" save_temp_stack_to_rebuild_device_index); then
             ci_echo_warn "The operation of saving device index data to temp stack has been failed: ${result}" >&2
           fi
 
@@ -384,8 +388,8 @@ jobs:
             
             result=''
 
-            ci_echo_debug "dfx canister --network '${NETWORK_NAME}' call '${CANISTER_NAME}' get_remaining_size_after_rebuild_device_index_slice_from_temp_stack" >&2
-            if ! result=$(dfx canister --network "${NETWORK_NAME}" call "${CANISTER_NAME}" get_remaining_size_after_rebuild_device_index_slice_from_temp_stack) || [ -z "${result}" ]; then
+            ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' get_remaining_size_after_rebuild_device_index_slice_from_temp_stack" >&2
+            if ! result=$(dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" get_remaining_size_after_rebuild_device_index_slice_from_temp_stack) || [ -z "${result}" ]; then
               ci_echo_warn "The operation of rebuilding device index slice has been failed: ${result}" >&2
               break
             fi

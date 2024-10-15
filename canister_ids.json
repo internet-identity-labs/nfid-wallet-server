@@ -23,10 +23,6 @@
     "dev": "ymvb6-7qaaa-aaaan-qbgga-cai",
     "ic": "lsdm3-pyaaa-aaaap-qavoa-cai"
   },
-  "eth_secret_storage": {
-    "dev": "25nnx-kyaaa-aaaao-ab43a-cai",
-    "ic": "ckqrk-4yaaa-aaaak-adxsa-cai"
-  },
   "signer_ic": {
     "dev": "nux62-yqaaa-aaaak-ae2pq-cai",
     "stage": "gzqxf-kqaaa-aaaak-qakba-cai",
@@ -57,6 +53,8 @@
     "ic": "yvnmi-7aaaa-aaaal-ajnzq-cai"
   },
   "swap_trs_storage": {
-    "dev": "qt7cv-eyaaa-aaaap-qapga-cai"
+    "dev": "qt7cv-eyaaa-aaaap-qapga-cai",
+    "stage": "ckqrk-4yaaa-aaaak-adxsa-cai",
+    "ic": "25nnx-kyaaa-aaaao-ab43a-cai"
   }
 }

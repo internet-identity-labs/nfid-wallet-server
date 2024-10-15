@@ -28,36 +28,34 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            /home/ubuntu/.cargo/registry/
-            /home/ubuntu/.cargo_target/
+            ${HOME}/.cargo/registry/
+            ${HOME}/.cargo_target/
+            src/**/target/
             target/
-            src/eth_secret_storage/target/
-            src/identity_manager/target/
-            src/bitcoin/target/
-          key: ${{ runner.os }}-cargo-test
+          key: cargo-test
 
       - name: Versions
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
           
           ci_versions
 
       - name: BE Unit Test
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
           ci_echo_debug "cargo test -- --test-threads=1" >&2
           cargo test -- --test-threads=1
 
       - name: BE ITest
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          if ! [ -f "/home/ubuntu/.config/dfx/identity/test_admin/identity.pem" ]; then
+          if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
             dfx identity new test_admin --storage-mode plaintext
           fi
 
-          cp -f identity-manager-itest/src/test/resources/identity/identity.pem /home/ubuntu/.config/dfx/identity/test_admin
+          cp -f identity-manager-itest/src/test/resources/identity/identity.pem ${HOME}/.config/dfx/identity/test_admin
           
           if ! pushd identity-manager-itest > /dev/null; then
             ci_echo_error "Can't change directory to the 'identity-manager-itest' " >&2
@@ -76,15 +74,15 @@ jobs:
 
       - name: BE Integration Tests JS
         run: |
-          source ${{ github.workspace }}/ci_libs/CI_LIBS.sh
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          if ! [ -f "/home/ubuntu/.config/dfx/identity/test_admin/identity.pem" ]; then
+          if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
             ci_echo_debug "dfx identity new test_admin --storage-mode plaintext" >&2
             dfx identity new test_admin --storage-mode plaintext
           fi
 
-          ci_echo_debug "cp -f identity-manager-itest/src/test/resources/identity/identity.pem /home/ubuntu/.config/dfx/identity/test_admin" >&2
-          cp -f identity-manager-itest/src/test/resources/identity/identity.pem /home/ubuntu/.config/dfx/identity/test_admin
+          ci_echo_debug "cp -f identity-manager-itest/src/test/resources/identity/identity.pem ${HOME}/.config/dfx/identity/test_admin" >&2
+          cp -f identity-manager-itest/src/test/resources/identity/identity.pem ${HOME}/.config/dfx/identity/test_admin
           
           if ! pushd identity-manager-itest > /dev/null; then
             ci_echo_error "Can't change directory to the 'identity-manager-itest' " >&2
