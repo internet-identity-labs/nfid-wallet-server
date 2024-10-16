@@ -30,12 +30,6 @@
       "wasm": "identity_manager.wasm",
       "type": "custom"
     },
-    "identity_manager_test_replica": {
-      "build": "src/identity_manager/build.sh",
-      "candid": "src/identity_manager/identity_manager.did",
-      "wasm": "identity_manager.wasm",
-      "type": "custom"
-    },
     "test_im": {
       "build": "src/identity_manager/build.sh",
       "candid": "src/identity_manager/identity_manager.did",
@@ -140,5 +134,10 @@
       "type": "ephemeral"
     }
   },
-  "version": 1
+  "version": 1,
+  "metadata": [
+    {
+      "name": "candid:service"
+    }
+  ]
 }
