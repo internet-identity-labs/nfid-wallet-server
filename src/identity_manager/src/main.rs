@@ -159,7 +159,7 @@ async fn get_account_by_anchor(anchor: u64, wallet: Option<WalletVariant>) -> Ht
 }
 
 #[update]
-#[operator]
+#[lambda]
 async fn add_email_and_principal_for_create_account_validation(email: String, principal: String, timestamp: u64) -> HttpResponse<bool> {
     email_validation_service::insert(email, principal, timestamp);
     HttpResponse::data(200, true)

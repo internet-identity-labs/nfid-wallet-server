@@ -100,6 +100,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
                 DFX.UPGRADE_FORCE("identity_manager");
             }
             imConfigurationArguments.push(`operator = opt principal "${dfx.user.principal}"`);
+            imConfigurationArguments.push(`lambda = opt principal "${dfx.user.principal}"`);
             var response = DFX.CONFIGURE();
 
             if (response !== "()") {
