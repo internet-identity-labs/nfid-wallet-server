@@ -4,20 +4,15 @@
     "dev": "a4gq6-oaaaa-aaaab-qaa4q-cai"
   },
   "identity_manager": {
-    "test": "u7lmm-5aaaa-aaaal-qcbqa-cai",
     "dev": "74gpt-tiaaa-aaaak-aacaa-cai",
     "ic": "bryxc-zqaaa-aaaal-aajga-cai",
     "stage": "jiept-kaaaa-aaaao-aajsa-cai"
   },
   "internet_identity_test": {
-    "dev-old": "wookt-ayaaa-aaaaj-addwq-cai",
     "dev": "nprnb-waaaa-aaaaj-qax4a-cai"
   },
   "identity_manager_replica": {
     "ic": "bv5d4-nyaaa-aaaap-qaaba-cai"
-  },
-  "identity_manager_test_replica": {
-    "dev": "vwali-piaaa-aaaal-qatfq-cai"
   },
   "vault": {
     "dev": "ymvb6-7qaaa-aaaan-qbgga-cai",
