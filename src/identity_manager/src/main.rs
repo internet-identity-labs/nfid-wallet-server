@@ -93,7 +93,7 @@ async fn get_config() -> ConfigurationResponse {
         env: config.env,
         git_branch: config.git_branch,
         commit_hash: config.commit_hash,
-        operator: config.operator,
+        operator: Some(config.operator),
     }
 }
 

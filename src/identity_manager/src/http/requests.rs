@@ -1,6 +1,5 @@
 use candid::Principal;
 use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk::export::Principal;
 use ic_cdk::export::serde::Serialize;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
