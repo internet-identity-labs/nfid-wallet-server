@@ -146,12 +146,31 @@ async fn recover_account(anchor: u64, wallet: Option<WalletVariant>) -> HttpResp
     account_service.recover_account(anchor, wallet).await
 }
 
+#[query]
+#[operator]
+async fn get_account_by_anchor(anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse> {
+    let mut account_service = get_account_service();
+    let wv = match wallet {
+        None => { WalletVariant::InternetIdentity }
+        Some(x) => { x }
+    };
+    let response = account_service.get_account_by_anchor(anchor, wv);
+    response
+}
 
 #[update]
-#[lambda]
+#[operator]
 async fn add_email_and_principal_for_create_account_validation(email: String, principal: String, timestamp: u64) -> HttpResponse<bool> {
     email_validation_service::insert(email, principal, timestamp);
     HttpResponse::data(200, true)
+}
+
+#[query]
+#[operator]
+async fn get_account_by_principal(princ: String) -> HttpResponse<AccountResponse> {
+    let mut account_service = get_account_service();
+    let response = account_service.get_account_by_principal(princ);
+    response
 }
 
 #[query]

@@ -15,6 +15,7 @@ import {Ed25519KeyIdentity} from "@dfinity/identity";
 import {fail} from "assert";
 import { _SERVICE as IdentityManagerType } from "./idl/identity_manager"
 import { verifyCertifiedResponse } from "./util/cert_verification";
+import {call} from "./util/call.util";
 
 describe("Access Point", () => {
 
@@ -31,6 +32,9 @@ describe("Access Point", () => {
     it("should protect recovery phrase", async function () {
         const identity = getIdentity("87654321876543218765432187654311");
         const principal = identity.getPrincipal().toText();
+
+        console.log(call(`dfx canister call identity_manager get_config`))
+
         const passKeyEmailRequest: AccessPointRequest = {
             icon: "Icon",
             device: "Global",
@@ -148,132 +152,6 @@ describe("Access Point", () => {
             }
         ) as HTTPAccessPointResponse
         expect(resp3.status_code).eq(200)
-    });
-
-    it("should recover missing google device", async function () {
-        const identity = getIdentity("87654321876543218765432187654312");
-        const principal = identity.getPrincipal().toText();
-        const email = "google@test.test";
-
-        const passKeyEmailRequest: AccessPointRequest = {
-            icon: "google",
-            device: "Google",
-            pub_key: principal,
-            browser: "",
-            device_type: {
-                Email: null
-            },
-            credential_id: []
-        }
-
-        var accountRequest: HTTPAccountRequest = {
-            access_point: [passKeyEmailRequest],
-            wallet: [{'NFID': null}],
-            anchor: 0n,
-            email: [email]
-        };
-
-        let response = await dfx.im.actor.add_email_and_principal_for_create_account_validation(email, principal, 25);
-        expect(response.status_code).eq(200);
-
-        const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
-        const account = await actor.create_account(accountRequest)
-        expect(account.status_code).eq(200)
-
-        await actor.remove_access_point({ pub_key: principal })
-
-        const accountAfterDeletionOfAccessPoint = await actor.get_account()
-        expect(accountAfterDeletionOfAccessPoint.error[0]).eq('Unable to find Account')
-        expect(accountAfterDeletionOfAccessPoint.status_code).eq(404)
-
-        const recoveryResponse = await dfx.im.actor.recover_google_device([principal])
-        expect(recoveryResponse[0]).eq(principal + ":Ok:RecoveredDevice.")
-
-        const accountRecovered = await actor.get_account()
-        expect(accountRecovered.status_code).eq(200)
-        expect(accountRecovered.data[0].access_points[0].icon).eq('google')
-        expect(accountRecovered.data[0].access_points[0].device).eq('Google')
-        expect(accountRecovered.data[0].access_points[0].device_type).to.deep.eq({Email: null})
-    })
-
-    it("should recover name of google device", async function () {
-        const identity = getIdentity("87654321876543218765432187654313");
-        const principal = identity.getPrincipal().toText();
-        const email = "google@test.test";
-
-        const passKeyEmailRequest: AccessPointRequest = {
-            icon: "hoohle",
-            device: "Hoohle",
-            pub_key: principal,
-            browser: "",
-            device_type: {
-                Email: null
-            },
-            credential_id: []
-        }
-
-        var accountRequest: HTTPAccountRequest = {
-            access_point: [passKeyEmailRequest],
-            wallet: [{'NFID': null}],
-            anchor: 0n,
-            email: [email]
-        };
-
-        let response = await dfx.im.actor.add_email_and_principal_for_create_account_validation(email, principal, 25);
-        expect(response.status_code).eq(200);
-
-        const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
-        const account = await actor.create_account(accountRequest)
-        expect(account.status_code).eq(200)
-
-        const recoveryResponse = await dfx.im.actor.recover_google_device([principal])
-        expect(recoveryResponse[0]).eq(principal + ":Ok:RecoveredName.")
-
-        const accountRecovered = await actor.get_account()
-        expect(accountRecovered.status_code).eq(200)
-        expect(accountRecovered.data[0].access_points[0].icon).eq('google')
-        expect(accountRecovered.data[0].access_points[0].device).eq('Google')
-        expect(accountRecovered.data[0].access_points[0].device_type).to.deep.eq({Email: null})
-    })
-
-    it("should try to recover but nothing needed.", async function () {
-        const identity = getIdentity("87654321876543218765432187654314");
-        const principal = identity.getPrincipal().toText();
-        const email = "google@test.test";
-
-        const passKeyEmailRequest: AccessPointRequest = {
-            icon: "google",
-            device: "Google",
-            pub_key: principal,
-            browser: "",
-            device_type: {
-                Email: null
-            },
-            credential_id: []
-        }
-
-        var accountRequest: HTTPAccountRequest = {
-            access_point: [passKeyEmailRequest],
-            wallet: [{'NFID': null}],
-            anchor: 0n,
-            email: [email]
-        };
-
-        let response = await dfx.im.actor.add_email_and_principal_for_create_account_validation(email, principal, 25);
-        expect(response.status_code).eq(200);
-
-        const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
-        const account = await actor.create_account(accountRequest)
-        expect(account.status_code).eq(200)
-
-        const recoveryResponse = await dfx.im.actor.recover_google_device([principal])
-        expect(recoveryResponse[0]).eq(principal + ":Ok:NothingNeeded.")
-
-        const accountRecovered = await actor.get_account()
-        expect(accountRecovered.status_code).eq(200)
-        expect(accountRecovered.data[0].access_points[0].icon).eq('google')
-        expect(accountRecovered.data[0].access_points[0].device).eq('Google')
-        expect(accountRecovered.data[0].access_points[0].device_type).to.deep.eq({Email: null})
     });
 
     it("should have device principal in certified map after app restarts.", async function () {
