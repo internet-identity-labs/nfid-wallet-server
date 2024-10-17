@@ -185,11 +185,14 @@ pub fn pre_upgrade() {
     let admin = storage::get_mut::<Option<Principal>>().unwrap();
     let logs = storage::get_mut::<Logs>(); //todo remove somehow
     let applications = storage::get_mut::<Applications>();
-    match storage::stable_save((accounts, admin, logs, Some(applications))) { _ => () }; //todo migrate to object
+    let configuration = ConfigurationRepo::get().clone();
+    match storage::stable_save((accounts, admin, logs, Some(applications), Some(configuration))) { _ => () }; //todo migrate to object
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin, _logs, applications): (Vec<AccountMemoryModel>, Principal, Logs, Option<Applications>) = storage::stable_restore().unwrap();
+    let (old_accs, admin, _logs, applications, configuration_maybe): (Vec<AccountMemoryModel>, Principal, Logs, Option<Applications>, Option<Configuration>) = storage::stable_restore().unwrap();
+    let configuration = configuration_maybe.unwrap_or(ConfigurationRepo::get_default_config());
+    ConfigurationRepo::save(configuration);
     storage::get_mut::<Option<Principal>>().replace(admin);
     for u in old_accs {
         let princ = u.principal_id.clone();

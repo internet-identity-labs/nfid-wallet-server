@@ -62,5 +62,28 @@ describe("Configuration", () => {
         expect(configureResponse.token_ttl[0]).to.be.equal(60n);
         expect(configureResponse.commit_hash).to.be.an("array").that.is.empty;
     });
-    
+
+    it("should keep configuration in stable memory between redeployments", async function () {
+        const request = {
+            'env': ["dev2"],
+            'whitelisted_phone_numbers': [],
+            'backup_canister_id': [],
+            'ii_canister_id': [],
+            'whitelisted_canisters': [],
+            'git_branch': [],
+            'lambda': [],
+            'token_refresh_ttl': [],
+            'heartbeat': [],
+            'token_ttl': [],
+            'commit_hash': []
+        } as ConfigurationRequest;
+        const configureResult = await dfx.im.actor.configure(request);
+        expect(configureResult).to.be.undefined;
+
+        DFX.UPGRADE_FORCE("identity_manager")
+
+        const configureResponse: ConfigurationResponse = (await dfx.im.actor.get_config()) as ConfigurationResponse;
+        expect(configureResponse.env[0]).to.be.eq("dev2");
+    });
+
 });
