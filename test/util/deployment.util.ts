@@ -99,6 +99,8 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             } else {
                 DFX.UPGRADE_FORCE("identity_manager");
             }
+            imConfigurationArguments.push(`operator = opt principal "${dfx.user.principal}"`);
+            imConfigurationArguments.push(`lambda = opt principal "${dfx.user.principal}"`);
             var response = DFX.CONFIGURE();
 
             if (response !== "()") {
@@ -133,21 +135,6 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             dfx.iit.actor = await getTypedActor<InternetIdentityTest>(dfx.iit.id, dfx.user.identity, iitIdl);
 
             imConfigurationArguments.push(`ii_canister_id = opt principal "${dfx.iit.id}"`);
-        }
-
-        if (apps.includes(App.IdentityManagerReplica)) {
-            DFX.DEPLOY("identity_manager_replica");
-            var response = DFX.CONFIGURE_REPLICA(dfx.im.id);
-
-            if (response !== "()") {
-                continue;
-            }
-
-            dfx.imr.id = DFX.GET_CANISTER_ID("identity_manager_replica");
-            console.debug(">> ", dfx.imr.id);
-
-            imConfigurationArguments.push(`heartbeat = opt 1`);
-            imConfigurationArguments.push(`backup_canister_id = opt "${dfx.imr.id}"`);
         }
 
         if (apps.includes(App.ICRC1Registry)) {

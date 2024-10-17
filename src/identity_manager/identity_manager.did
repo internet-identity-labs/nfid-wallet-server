@@ -15,6 +15,7 @@ type ConfigurationRequest = record {
     env: opt text;
     git_branch: opt text;
     commit_hash: opt text;
+    operator: opt principal;
 };
 
 type ConfigurationResponse = record {
@@ -30,6 +31,7 @@ type ConfigurationResponse = record {
     env: opt text;
     git_branch: opt text;
     commit_hash: opt text;
+    operator: opt principal;
 };
 
     //---END-CUT---

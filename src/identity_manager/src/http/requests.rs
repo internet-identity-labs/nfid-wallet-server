@@ -1,5 +1,5 @@
+use candid::Principal;
 use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk::export::Principal;
 use ic_cdk::export::serde::Serialize;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -109,6 +109,7 @@ pub struct ConfigurationRequest {
     pub env: Option<String>,
     pub git_branch: Option<String>,
     pub commit_hash: Option<String>,
+    pub operator: Option<Principal>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -125,6 +126,7 @@ pub struct ConfigurationResponse {
     pub env: Option<String>,
     pub git_branch: Option<String>,
     pub commit_hash: Option<String>,
+    pub operator: Option<Principal>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

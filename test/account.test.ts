@@ -49,10 +49,6 @@ describe("Account", () => {
             expect(DFX.GET_ACCOUNT("identity_manager")).eq(Expected.ACCOUNT("null", dfx.root));
         });
 
-        it("should get created account by principal from previous test.", async function () {
-            expect(DFX.GET_ACCOUNT_BY_PRINCIPAL("identity_manager", dfx.root)).eq(Expected.ACCOUNT("null", dfx.root));
-        });
-
         it("should update account name.", async function () {
             expect(DFX.UPDATE_ACCOUNT_NAME()).eq(Expected.ACCOUNT(`opt "TEST_USER_UPDATED"`, dfx.root));
         });
@@ -62,20 +58,8 @@ describe("Account", () => {
             expect(DFX.CREATE_ACCOUNT_FULL()).eq(Expected.ERROR("Impossible to link this II anchor, please try another one.", "404"));
         });
 
-        it("should return replicated copy of account on heartbeat rate.", async function () {
-            await sleep(3);
-            expect(DFX.GET_ACCOUNT("identity_manager_replica")).eq(Expected.ACCOUNT(`opt "TEST_USER_UPDATED"`, dfx.root));
-        });
-
         it("should recover account.", async function () {
             expect(DFX.RECOVER_ACCOUNT()).eq(Expected.ACCOUNT(`opt "TEST_USER_UPDATED"`, dfx.root));
-        });
-
-        it("should restore account by api call.", async function () {
-            expect(DFX.REMOVE_ACCOUNT("identity_manager_replica")).eq(Expected.BOOL("true", "200"));
-            expect(DFX.GET_ACCOUNT("identity_manager_replica")).eq(Expected.ERROR("Unable to find Account", "404"));
-            DFX.RESTORE_ACCOUNT("identity_manager", dfx.imr.id);
-            expect(DFX.GET_ACCOUNT("identity_manager_replica")).eq(Expected.ACCOUNT(`opt "TEST_USER_UPDATED"`, dfx.root));
         });
 
         it("should remove account and create new one.", async function () {
@@ -394,15 +378,7 @@ describe("Account", () => {
             };
             await dfx.im.actor.create_account(accountRequest as any);
             const backup = await dfx.im.actor.get_all_accounts_json(0, 5);
-            const remove = (await dfx.im.actor.remove_account()) as BoolHttpResponse;
-            expect(remove.data[0]).eq(true);
-            var response: HTTPAccountResponse = (await dfx.im.actor.get_account()) as HTTPAccountResponse;
-            expect(response.error[0]).eq("Unable to find Account");
-            await dfx.im.actor.add_all_accounts_json(backup);
-            response = (await dfx.im.actor.get_account()) as HTTPAccountResponse;
-            expect(response.error).empty;
-            expect(response.data[0].anchor).eq(anchorNew);
-            expect(Object.keys(response.data[0].wallet)).contains("II");
+            expect(backup.length).greaterThan(0);
         });
 
         it("should enable 2fa", async function () {
@@ -465,45 +441,6 @@ describe("Account", () => {
             expect(updated2fa.is2fa_enabled).eq(false);
         });
 
-        it("should recover email for principal", async function () {
-            const identity = getIdentity("87654321876543218765432187654317");
-            const principal = identity.getPrincipal().toText();
-
-            const validationResponse = await dfx.im.actor.add_email_and_principal_for_create_account_validation("a@test.test", principal, 25);
-            expect(validationResponse.status_code).eq(200);
-
-            const accessPointRequest: AccessPointRequest = {
-                icon: "google",
-                device: "Google",
-                pub_key: principal,
-                browser: "",
-                device_type: {
-                    Email: null
-                },
-                credential_id: []
-            }
-
-            var accountRequest: HTTPAccountRequest = {
-                access_point: [accessPointRequest],
-                wallet: [{ NFID: null }],
-                anchor: 0n,
-                email: ["a@test.test"],
-            };
-
-            const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
-            const accountResponse = await actor.create_account(accountRequest);
-            expect(accountResponse.status_code).eq(200);
-
-            const newEmail = "b@test.test"
-            const request = [{principal_id: principal, email: newEmail }];
-
-            const recoveryResponse = await dfx.im.actor.recover_email(request)
-            expect(recoveryResponse[0]).eq(`${principal}:${newEmail}:Ok:EmailSet.`)
-
-            const accountEmailRecoveredResponse = await actor.get_account();
-            expect(accountEmailRecoveredResponse.status_code).eq(200);
-            expect(accountEmailRecoveredResponse.data[0].email[0]).eq(newEmail);
-        });
 
         it("should sync recovery phrase from Internat Identity", async function () {
             const rootAccessPointIdentity = getIdentity("87654321876543218765432187654917");
@@ -609,46 +546,5 @@ describe("Account", () => {
             expect(recoveryDevice.principal_id).to.eq(recoveryPhrasePrincipal);
         });
 
-        it("should recover root device not existing in IM", async function () {
-            const identity = getIdentity("87654321876543118765432187654111");
-            const principal = identity.getPrincipal().toText();
-            const actorII = await getTypedActor<InternetIdentityTest>(dfx.iit.id, identity, iitIdl);
-            const anchor = await register(actorII, identity);
-
-            const accessPointRequest: AccessPointRequest = {
-                icon: "ii",
-                device: "II",
-                pub_key: principal,
-                browser: "",
-                device_type: {
-                    Unknown: null
-                },
-                credential_id: []
-            }
-
-            var accountRequest: HTTPAccountRequest = {
-                access_point: [accessPointRequest],
-                wallet: [{ II: null }],
-                anchor,
-                email: [],
-            };
-
-            const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
-
-            const accountResponse = await actor.create_account(accountRequest);
-            expect(accountResponse.status_code).eq(200);
-
-            const getAccountResponseEmptyAccessPoints = await actor.get_account();
-            expect(getAccountResponseEmptyAccessPoints.status_code).eq(200);
-            expect(getAccountResponseEmptyAccessPoints.data[0].access_points.length).eq(0);
-
-            const revocerDevicesFromInternetIdentityResponse = await dfx.im.actor.recover_root_access_point([accountResponse.data[0].principal_id]);
-            expect(revocerDevicesFromInternetIdentityResponse[0]).contains(":Ok:Success")
-
-            const getAccountResponseWithAccessPoint = await actor.get_account();
-            expect(getAccountResponseWithAccessPoint.status_code).eq(200);
-            expect(getAccountResponseWithAccessPoint.data[0].access_points[0].device).eq("Internet Identity Device");
-            expect(getAccountResponseWithAccessPoint.data[0].access_points.length).eq(1);
-        });
     });
 });

@@ -5,7 +5,7 @@ use ic_cdk::{caller, storage, trap};
 use ic_cdk::export::Principal;
 use ic_cdk_macros::*;
 
-use canister_api_macros::{admin, admin_or_lambda, replicate_account, two_f_a};
+use canister_api_macros::{admin, lambda, operator, two_f_a};
 use http::requests::PrincipalEmailRequest;
 use http::response_mapper::DataResponse;
 use service::{account_service, email_validation_service, persona_service, device_index_service};
@@ -72,12 +72,12 @@ async fn configure(request: ConfigurationRequest) -> () {
         env: if request.env.is_some() { request.env } else { default.env },
         git_branch: if request.git_branch.is_some() { request.git_branch } else { default.git_branch },
         commit_hash: if request.commit_hash.is_some() { request.commit_hash } else { default.commit_hash },
+        operator: if request.operator.is_some() { request.operator.unwrap() } else { default.operator },
     };
     ConfigurationRepo::save(configuration);
 }
 
 #[query]
-#[admin]
 async fn get_config() -> ConfigurationResponse {
     let config = ConfigurationRepo::get().clone();
     ConfigurationResponse {
@@ -93,27 +93,10 @@ async fn get_config() -> ConfigurationResponse {
         env: config.env,
         git_branch: config.git_branch,
         commit_hash: config.commit_hash,
+        operator: Some(config.operator),
     }
 }
 
-
-#[deprecated()]
-#[query]
-#[admin]
-async fn anchors() -> HttpResponse<Vec<u64>> {
-    let mut account_service = get_account_service();
-
-    let anchors = account_service.get_all_accounts()
-        .iter()
-        .map(|a| a.anchor)
-        .collect();
-
-    HttpResponse {
-        data: Some(anchors),
-        error: None,
-        status_code: 200,
-    }
-}
 
 #[query]
 async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
@@ -122,7 +105,6 @@ async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
 }
 
 #[update]
-#[replicate_account]
 #[two_f_a]
 async fn use_access_point(browser: Option<String>) -> HttpResponse<AccessPointResponse> {
     let access_point_service = get_access_point_service();
@@ -130,7 +112,6 @@ async fn use_access_point(browser: Option<String>) -> HttpResponse<AccessPointRe
 }
 
 #[update]
-#[replicate_account]
 #[two_f_a]
 async fn create_access_point(access_point_request: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
@@ -139,7 +120,6 @@ async fn create_access_point(access_point_request: AccessPointRequest) -> HttpRe
 }
 
 #[update]
-#[replicate_account]
 #[two_f_a]
 async fn update_access_point(access_point: AccessPointRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
@@ -147,7 +127,6 @@ async fn update_access_point(access_point: AccessPointRequest) -> HttpResponse<V
 }
 
 #[update]
-#[replicate_account]
 #[two_f_a]
 async fn remove_access_point(access_point: AccessPointRemoveRequest) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
@@ -155,7 +134,6 @@ async fn remove_access_point(access_point: AccessPointRemoveRequest) -> HttpResp
 }
 
 #[update]
-#[replicate_account]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let response = account_service.create_account(account_request).await;
@@ -169,7 +147,7 @@ async fn recover_account(anchor: u64, wallet: Option<WalletVariant>) -> HttpResp
 }
 
 #[query]
-#[admin_or_lambda]
+#[operator]
 async fn get_account_by_anchor(anchor: u64, wallet: Option<WalletVariant>) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let wv = match wallet {
@@ -181,14 +159,14 @@ async fn get_account_by_anchor(anchor: u64, wallet: Option<WalletVariant>) -> Ht
 }
 
 #[update]
-#[admin_or_lambda]
+#[lambda]
 async fn add_email_and_principal_for_create_account_validation(email: String, principal: String, timestamp: u64) -> HttpResponse<bool> {
     email_validation_service::insert(email, principal, timestamp);
     HttpResponse::data(200, true)
 }
 
 #[query]
-#[admin_or_lambda]
+#[operator]
 async fn get_account_by_principal(princ: String) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let response = account_service.get_account_by_principal(princ);
@@ -218,7 +196,6 @@ async fn update_2fa(state: bool) -> AccountResponse {
 }
 
 #[update]
-#[replicate_account]
 #[two_f_a]
 async fn update_account(account_request: AccountUpdateRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
@@ -239,18 +216,8 @@ async fn remove_account() -> HttpResponse<bool> {
     account_service.remove_account()
 }
 
-#[update]
-#[admin]
-async fn remove_account_by_principal(princ: String) -> HttpResponse<bool> {
-    let mut account_service = get_account_service();
-    account_service.remove_account_by_principal(princ)
-}
-
-
-
 #[deprecated()]
 #[update]
-#[replicate_account]
 #[two_f_a]
 async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
     let persona_service = get_persona_service();
@@ -259,7 +226,6 @@ async fn create_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse
 
 #[deprecated()]
 #[update]
-#[replicate_account]
 #[two_f_a]
 async fn update_persona(persona: PersonaRequest) -> HttpResponse<AccountResponse> {
     let persona_service = get_persona_service();
@@ -284,38 +250,6 @@ async fn validate_signature(payload: Option<String>) -> (u64, Option<String>) {
             (account.anchor, payload)
         }
     }
-}
-
-#[deprecated()]
-#[update]
-#[admin]
-async fn create_application(app: Application) -> HttpResponse<Vec<Application>> {
-    let application_service = get_application_service();
-    application_service.create_application(app)
-}
-
-#[deprecated()]
-#[update]
-#[admin]
-async fn create_application_all(app: Vec<Application>) -> HttpResponse<Vec<Application>> {
-    let application_service = get_application_service();
-    application_service.create_application_all(app)
-}
-
-#[deprecated()]
-#[update]
-#[admin]
-async fn update_application(app: Application) -> HttpResponse<Vec<Application>> {
-    let application_service = get_application_service();
-    application_service.update_application(app)
-}
-
-#[deprecated()]
-#[update]
-#[admin]
-async fn delete_application(app: String) -> HttpResponse<bool> {
-    let application_service = get_application_service();
-    application_service.delete_application(app)
 }
 
 #[deprecated()]
@@ -346,41 +280,10 @@ async fn is_over_the_application_limit(domain: String) -> HttpResponse<bool> {
     application_service.is_over_the_application_limit(&domain)
 }
 
-#[heartbeat]
-async fn heartbeat_function() {
-    if ConfigurationRepo::exists() && ConfigurationRepo::get().heartbeat.is_some() {
-        let i = storage::get_mut::<HearthCount>();
-        if (*i % ConfigurationRepo::get().heartbeat.unwrap()) == 0 && !storage::get_mut::<AccountsToReplicate>().is_empty() {
-            flush_account().await;
-        }
-        *i += 1;
-    }
-}
 
-#[deprecated()]
-#[update]
-async fn flush_account() -> HttpResponse<bool> {
-    replica_service::flush().await
-}
-
-#[deprecated()]
-#[update]
-#[admin]
-async fn store_accounts(accounts: Vec<Account>) -> HttpResponse<bool> {
-    let mut account_service = get_account_service();
-    account_service.store_accounts(accounts);
-    to_success_response(true)
-}
-
-#[deprecated()]
-#[update]
-#[admin]
-async fn restore_accounts(canister_id: String) -> HttpResponse<bool> {
-    replica_service::restore_and_flush(canister_id).await
-}
-
+//backup
 #[query]
-#[admin]
+#[operator]
 async fn get_all_accounts_json(from: u32, mut to: u32) -> String {
     let account_repo = get_account_repo();
     let mut accounts: Vec<Account> = account_repo.get_all_accounts();
@@ -394,7 +297,7 @@ async fn get_all_accounts_json(from: u32, mut to: u32) -> String {
 }
 
 #[query]
-#[admin]
+#[operator]
 async fn count_anchors() -> u64 {
     let account_repo = get_account_repo();
     let accounts = account_repo.get_all_accounts().len();
@@ -402,51 +305,7 @@ async fn count_anchors() -> u64 {
 }
 
 #[update]
-#[admin]
-async fn add_all_accounts_json(accounts_json: String) {
-    let account_repo = get_account_repo();
-    let accounts: Vec<Account> = serde_json::from_str(&accounts_json).unwrap();
-    account_repo.store_accounts(accounts);
-}
-
-#[update]
-#[admin]
-async fn recover_google_device(principals: Vec<String>) -> Vec<String> {
-    let mut result_vector: Vec<String> = Vec::new();
-    let access_point_service = get_access_point_service();
-
-    for principal in principals {
-        let result = access_point_service.recover_email_root_access_point(principal.to_string());
-
-        match result {
-            Ok(result) => result_vector.push(principal.clone() + ":Ok:" + result),
-            Err(error) => result_vector.push(principal.clone() + ":Err:" + error)
-        }
-    }
-
-    result_vector
-}
-
-#[update]
-#[admin]
-fn recover_email(principal_email_vec: Vec<PrincipalEmailRequest>) -> Vec<String> {
-    let mut result_vector: Vec<String> = Vec::new();
-
-    for principal_email in principal_email_vec {
-        let account_service = get_account_service();
-        let result = account_service.update_account_with_email_force(principal_email.principal_id.clone(), principal_email.email.clone());
-        let response = match result {
-            Ok(result) => format!("{}:{}:{}:{}", principal_email.principal_id, principal_email.email, "Ok", result),
-            Err(error) => format!("{}:{}:{}:{}", principal_email.principal_id, principal_email.email, "Err", error)
-        };
-        result_vector.push(response);
-    }
-
-    result_vector
-}
-
-#[update]
-#[admin]
+#[operator]
 async fn rebuild_index() {
     let all_accs = get_account_service().get_all_accounts();
     let mut princ = storage::get_mut::<PrincipalIndex>();
@@ -456,13 +315,13 @@ async fn rebuild_index() {
 }
 
 #[update]
-#[admin]
+#[operator]
 async fn get_remaining_size_after_rebuild_device_index_slice_from_temp_stack(size: Option<u64>) -> u64 {
     device_index_service::get_remaining_size_after_rebuild_index_slice_from_temp_stack(size)
 }
 
 #[update]
-#[admin]
+#[operator]
 async fn save_temp_stack_to_rebuild_device_index() -> String {
     device_index_service::save_temp_stack()
 }
@@ -471,24 +330,6 @@ async fn save_temp_stack_to_rebuild_device_index() -> String {
 async fn sync_recovery_phrase_from_internet_identity(anchor: u64) -> HttpResponse<AccountResponse> {
     let account_service = get_account_service();
     account_service.sync_recovery_phrase_from_internet_identity(anchor).await
-}
-
-#[update]
-#[admin]
-async fn recover_root_access_point(principals: Vec<String>) -> Vec<String> {
-    let mut result_vector: Vec<String> = Vec::new();
-    let account_service = get_account_service();
-
-    for principal in principals {
-        let result = account_service.recover_root_access_point(principal.clone()).await;
-
-        match result {
-            Ok(result) => result_vector.push(principal.clone() + ":Ok:" + result),
-            Err(error) => result_vector.push(principal.clone() + ":Err:" + error)
-        }
-    }
-
-    result_vector
 }
 
 #[query]

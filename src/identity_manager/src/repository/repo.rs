@@ -29,6 +29,7 @@ pub struct Configuration {
     pub env: Option<String>,
     pub git_branch: Option<String>,
     pub commit_hash: Option<String>,
+    pub operator: Principal,
 }
 
 //todo rethink visibility
@@ -120,6 +121,7 @@ impl ConfigurationRepo {
             env: None,
             git_branch: None,
             commit_hash: None,
+            operator: lambda,
         }
     }
 }

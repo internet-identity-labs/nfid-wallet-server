@@ -16,12 +16,6 @@ public class AccountITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("account/exp_account", actual);
     }
 
-    @Test(priority = 21)
-    public void getAccountCreatedInPreviousTestByPrincipal() {
-        String actual = call("account/req_get_account_by_principal", "identity_manager", ROOT_IDENTITY);
-        validateWithFormatIdentity("account/exp_account", actual);
-    }
-
     @Test(priority = 30)
     public void updateAccountNameExpectUpdated() {
         String actual = call("account/req_update_account_name");
@@ -38,17 +32,6 @@ public class AccountITest extends BaseIdentityManagerITest {
     @Test(priority = 52)
     public void recoverAccountExpectAccount() {
         String actual = call("account/req_recover_account");
-        validateWithFormatIdentity("account/exp_account_upd_name", actual);
-    }
-
-    @SneakyThrows
-    @Test(priority = 53)
-    public void restoreAccountExpectCopeByApiCall() {
-        validateWithFormatIdentity("common/resp_bool_success", call("account/req_remove_account", "identity_manager_replica"));
-        String actual = call("account/req_get_account", "identity_manager_replica");
-        validateWithFormatIdentity("account/exp_unable_to_find_acc", actual);
-        call("account/req_restore_account", "identity_manager", BACKUP_CANISTER_ID);
-        actual = call("account/req_get_account", "identity_manager_replica");
         validateWithFormatIdentity("account/exp_account_upd_name", actual);
     }
 

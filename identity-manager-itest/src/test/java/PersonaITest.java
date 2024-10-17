@@ -31,13 +31,6 @@ public class PersonaITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("persona/exp_invalid_persona", call("persona/req_create_invalid_persona"));
     }
 
-    @Test(priority = 40)
-    public void addOverDomainLimitExpectError() {
-        call("persona/req_create_application");
-        validateWithFormatIdentity("persona/exp_over_limit_for_app_bool", call("application/req_is_over_limit"));
-        validateWithFormatIdentity("persona/exp_create_persona_over_limit_domain", call("persona/req_create_persona_over_limit_domain"));
-    }
-
     @Test(priority = 50)
     public void updatePersona() {
         validateWithFormatIdentity("persona/exp_update_persona", call("persona/req_update_persona"));
