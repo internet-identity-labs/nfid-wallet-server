@@ -25,7 +25,7 @@ describe("Configuration", () => {
         expect(result.ii_canister_id[0]?.toText()).to.be.equal("rdmx6-jaaaa-aaaaa-aaadq-cai");
         expect(result.whitelisted_canisters).to.be.an("array").that.is.empty;
         expect(result.git_branch).to.be.an("array").that.is.empty;
-        expect(result.lambda[0]?.toText()).to.be.equal("ritih-icnvs-i7b67-sc2vs-nwo2e-bvpe5-viznv-uqluj-xzcvs-6iqsp-fqe");
+        expect(result.lambda[0]?.toText()).to.be.equal("3ekng-5nqql-esu4u-64sla-pcm5o-hjatn-hwjo7-vk7ya-ianug-zqqyy-iae");
         expect(result.token_refresh_ttl[0]).to.be.equal(60n);
         expect(result.heartbeat).to.be.an("array").that.is.empty;
         expect(result.token_ttl[0]).to.be.equal(60n);
