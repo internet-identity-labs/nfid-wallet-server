@@ -7,8 +7,6 @@ use crate::service::certified_service::{remove_certify_keys, update_certify_keys
 use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::storage;
 use itertools::Itertools;
-#[cfg(test)]
-use mockers_derive::mocked;
 use serde::Serialize;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};

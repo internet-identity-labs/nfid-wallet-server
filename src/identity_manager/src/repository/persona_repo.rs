@@ -2,8 +2,6 @@ use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::repo::BasicEntity;
 use crate::AccountRepo;
 use candid::{CandidType, Deserialize};
-#[cfg(test)]
-use mockers_derive::mocked;
 use serde::Serialize;
 
 #[deprecated()]
