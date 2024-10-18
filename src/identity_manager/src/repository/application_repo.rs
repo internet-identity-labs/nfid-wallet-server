@@ -1,9 +1,8 @@
+use candid::{CandidType, Deserialize};
 use std::cmp::Ordering;
 use std::collections::HashSet;
-use ic_cdk::{storage};
 
-use crate::repository::repo::Applications;
-use ic_cdk::export::candid::{CandidType, Deserialize};
+use crate::repository::repo::APPLICATIONS;
 
 #[deprecated()]
 #[derive(Clone, Debug, CandidType, Deserialize, Eq)]
@@ -37,57 +36,17 @@ impl PartialOrd<Self> for Application {
 }
 
 pub trait ApplicationRepoTrait {
-    fn create_application(&self, application: Application) -> Vec<Application>;
     fn read_applications(&self) -> Vec<Application>;
-    fn update_application(&self, app: Application) -> bool;
-    fn delete_application(&self, domain: String) -> bool;
-    fn is_application_exists(&self, application: &Application) -> bool;
-    fn get_application(&self, domain: &String) -> Option<&Application>;
 }
 
 #[derive(Default)]
 pub struct ApplicationRepo {}
 
 impl ApplicationRepoTrait for ApplicationRepo {
-    fn create_application(&self, application: Application) -> Vec<Application> {
-        let applications = storage::get_mut::<Applications>();
-        applications.insert(application.clone());
-        applications.iter()
-            .map(|p| p.clone())
-            .collect()
-    }
-
     fn read_applications(&self) -> Vec<Application> {
-        storage::get_mut::<Applications>().iter()
-            .map(|p| p.clone())
-            .collect()
-    }
-
-    fn update_application(&self, app: Application) -> bool {
-        storage::get_mut::<Applications>().replace(app).is_some()
-    }
-
-    fn delete_application(&self, domain: String) -> bool {
-        let app_to_remove = storage::get_mut::<Applications>().iter()
-            .find(|a| a.domain.eq(&domain));
-        match app_to_remove {
-            None => { false }
-            Some(app) => {
-                storage::get_mut::<Applications>()
-                    .remove(app)
-            }
-        }
-    }
-
-    fn is_application_exists(&self, application: &Application) -> bool {
-        let applications = storage::get_mut::<Applications>();
-        applications.iter()
-            .any(|a| a.domain.eq(&application.domain))
-    }
-
-    fn get_application(&self, domain: &String) -> Option<&Application> {
-        let applications = storage::get_mut::<Applications>();
-        applications.iter()
-            .find(|a| a.domain.eq(domain))
+        APPLICATIONS.with(|apps| {
+            let applications = apps.borrow();
+            applications.iter().map(|p| p.clone()).collect()
+        })
     }
 }

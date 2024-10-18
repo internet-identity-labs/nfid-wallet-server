@@ -1,4 +1,4 @@
-use ic_cdk::export::candid::{CandidType, Deserialize};
+use candid::{CandidType, Deserialize};
 
 type Error = String;
 
@@ -53,7 +53,7 @@ pub fn to_success_response<T>(x: T) -> HttpResponse<T> {
     }
 }
 
-impl <T> ErrorResponse<T> for HttpResponse<T> {
+impl<T> ErrorResponse<T> for HttpResponse<T> {
     fn error(status_code: u16, text: &str) -> HttpResponse<T> {
         HttpResponse {
             data: None,
@@ -63,7 +63,7 @@ impl <T> ErrorResponse<T> for HttpResponse<T> {
     }
 }
 
-impl <T> DataResponse<T> for HttpResponse<T> {
+impl<T> DataResponse<T> for HttpResponse<T> {
     fn data(status_code: u16, data: T) -> HttpResponse<T> {
         HttpResponse {
             data: Some(data),
@@ -72,4 +72,3 @@ impl <T> DataResponse<T> for HttpResponse<T> {
         }
     }
 }
-

@@ -1,10 +1,10 @@
-use crate::AccountRepo;
 use crate::repository::account_repo::{Account, AccountRepoTrait};
 use crate::repository::repo::BasicEntity;
-use ic_cdk::export::candid::{CandidType, Deserialize};
+use crate::AccountRepo;
+use candid::{CandidType, Deserialize};
 #[cfg(test)]
 use mockers_derive::mocked;
-use serde::{Serialize};
+use serde::Serialize;
 
 #[deprecated()]
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
@@ -25,8 +25,7 @@ pub trait PersonaRepoTrait {
 
 impl PartialEq for Persona {
     fn eq(&self, other: &Self) -> bool {
-        self.persona_id == other.persona_id
-        && self.domain == other.domain
+        self.persona_id == other.persona_id && self.domain == other.domain
     }
 }
 #[derive(Default)]
@@ -36,13 +35,14 @@ pub struct PersonaRepo {
 
 impl PersonaRepoTrait for PersonaRepo {
     fn get_personas(&self) -> Option<Vec<Persona>> {
-        self.account_repo.get_account()
-            .map(|x| x.personas)
+        self.account_repo.get_account().map(|x| x.personas)
     }
 
     fn store_persona(&self, persona: Persona) -> Option<Account> {
         let acc = self.account_repo.get_account();
-        if acc.is_none() { return None; }
+        if acc.is_none() {
+            return None;
+        }
         let mut account = acc.unwrap().clone();
         account.personas.push(persona);
         self.account_repo.store_account(account)
@@ -50,7 +50,9 @@ impl PersonaRepoTrait for PersonaRepo {
 
     fn store_personas(&self, personas: Vec<Persona>) -> Option<Account> {
         let acc = self.account_repo.get_account();
-        if acc.is_none() { return None; }
+        if acc.is_none() {
+            return None;
+        }
         let mut account = acc.unwrap().clone();
         account.personas = personas;
         self.account_repo.store_account(account)

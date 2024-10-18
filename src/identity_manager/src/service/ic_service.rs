@@ -1,7 +1,7 @@
 use crate::ConfigurationRepo;
+use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_cdk::api::call::CallResult;
-use ic_cdk::export::candid::{CandidType, Deserialize, Nat, Principal};
-use ic_cdk::{call, trap, id};
+use ic_cdk::{call, id, trap};
 use serde::Serialize;
 use serde_bytes::ByteBuf;
 
@@ -35,7 +35,7 @@ pub enum KeyType {
     #[serde(rename = "cross_platform")]
     CrossPlatform,
     #[serde(rename = "seed_phrase")]
-    SeedPhrase,    
+    SeedPhrase,
     #[serde(rename = "browser_storage_key")]
     BrowserStorageKey,
 }
@@ -108,9 +108,7 @@ pub async fn get_controllers() -> Vec<Principal> {
     let res: CallResult<(CanisterStatusResponse,)> = call(
         Principal::management_canister(),
         "canister_status",
-        (CanisterIdRequest {
-            canister_id: id(),
-        },),
+        (CanisterIdRequest { canister_id: id() },),
     )
     .await;
 
@@ -118,8 +116,13 @@ pub async fn get_controllers() -> Vec<Principal> {
 }
 
 pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) -> Vec<DeviceData> {
-    if ConfigurationRepo::get().env.as_ref().is_some()
-        && ConfigurationRepo::get().env.as_ref().unwrap().eq(&"test".to_string()) {
+    if ConfigurationRepo::get().env.is_some()
+        && ConfigurationRepo::get()
+            .env
+            .as_ref()
+            .unwrap()
+            .eq(&"test".to_string())
+    {
         return Vec::default();
     }
 
@@ -127,7 +130,7 @@ pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) -> Vec
 
     //TODO update when possible to query call
     let res: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor.clone(), 0)).await {
-        Ok((res, )) => res,
+        Ok((res,)) => res,
         Err((_, err)) => trap(&format!("failed to request II: {}", err)),
     };
 
@@ -135,7 +138,7 @@ pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) -> Vec
     res
 }
 
-fn verify<'a>(princ: Principal, public_keys: impl Iterator<Item=&'a PublicKey>) {
+fn verify<'a>(princ: Principal, public_keys: impl Iterator<Item = &'a PublicKey>) {
     for pk in public_keys {
         if princ.clone() == Principal::self_authenticating(pk) {
             return;
@@ -147,7 +150,7 @@ fn verify<'a>(princ: Principal, public_keys: impl Iterator<Item=&'a PublicKey>) 
 pub async fn get_device_data_vec(anchor: u64) -> Vec<DeviceData> {
     let ii_canister = ConfigurationRepo::get().ii_canister_id;
     let res: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor.clone(), 0)).await {
-        Ok((res, )) => res,
+        Ok((res,)) => res,
         Err((_, err)) => trap(&format!("failed to request II: {}", err)),
     };
     res

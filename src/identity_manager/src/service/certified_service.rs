@@ -1,15 +1,12 @@
+use candid::CandidType;
 use ic_cdk::api::set_certified_data;
 use ic_certified_map::{AsHashTree, RbTree};
-use std::cell::RefCell;
-use ic_cdk::export::{
-    candid::CandidType,
-};
 use serde::Serialize;
+use std::cell::RefCell;
 
 thread_local! {
   pub static TREE: RefCell<RbTree<String, Vec<u8>>> = RefCell::new(RbTree::new());
 }
-
 
 #[derive(CandidType)]
 pub struct CertifiedResponse {

@@ -1,20 +1,22 @@
-use std::collections::{BTreeMap, HashSet};
+use crate::http::requests::WalletVariant;
+use crate::ic_service;
+use crate::repository::access_point_repo::AccessPoint;
+use crate::repository::persona_repo::Persona;
+use crate::repository::repo::{is_anchor_exists, BasicEntity};
+use crate::service::certified_service::{remove_certify_keys, update_certify_keys};
+use candid::{CandidType, Deserialize, Principal};
+use ic_cdk::storage;
+use itertools::Itertools;
 #[cfg(test)]
 use mockers_derive::mocked;
-use crate::repository::persona_repo::Persona;
-use crate::repository::repo::{BasicEntity, is_anchor_exists};
-use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk::export::Principal;
-use ic_cdk::{storage};
-use itertools::Itertools;
-use crate::{ic_service};
-use crate::repository::access_point_repo::AccessPoint;
-use serde::{Serialize};
-use crate::http::requests::{WalletVariant};
-use crate::service::certified_service::{remove_certify_keys, update_certify_keys};
+use serde::Serialize;
+use std::cell::RefCell;
+use std::collections::{BTreeMap, HashSet};
 
-pub type Accounts = BTreeMap<String, Account>;
-pub type PrincipalIndex = BTreeMap<String, String>;
+thread_local! {
+  pub static ACCOUNTS: RefCell<BTreeMap<String, Account>> = RefCell::new(BTreeMap::new());
+  pub static PRINCIPAL_INDEX: RefCell<BTreeMap<String, String>> = RefCell::new(BTreeMap::new());
+}
 
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct Account {
@@ -39,21 +41,16 @@ pub struct Account {
 pub trait AccountRepoTrait {
     fn get_account(&self) -> Option<Account>;
     fn get_account_by_principal(&self, princ: String) -> Option<Account>;
-    fn get_account_by_principal_force(&self, principal: String) -> Option<Account>;
     fn get_account_by_anchor(&self, anchor: u64, wallet: WalletVariant) -> Option<Account>;
     fn create_account(&self, account: Account) -> Option<Account>;
     fn store_account(&self, account: Account) -> Option<Account>;
     fn remove_account(&self) -> Option<Account>;
-    fn remove_account_by_principal(&self, princ: String) -> Option<Account>;
     fn exists(&self, principal: &Principal) -> bool;
     fn update_account_index_with_pub_key(&self, additional_key: String, princ: String);
     fn update_account_index(&self, additional_principal_id: String);
     fn remove_account_index(&self, additional_principal_id: String);
-    fn get_accounts(&self, ids: Vec<String>) -> Vec<Account>;
     fn get_all_accounts(&self) -> Vec<Account>;
     fn find_next_nfid_anchor(&self) -> u64;
-    fn store_accounts(&self, accounts: Vec<Account>);
-    fn get_account_by_id(&self, princ: String) -> Option<Account>;
 }
 
 #[derive(Default, Clone, Copy)]
@@ -62,193 +59,144 @@ pub struct AccountRepo {}
 impl AccountRepoTrait for AccountRepo {
     fn get_account(&self) -> Option<Account> {
         let princ = ic_service::get_caller().to_text();
-        let index = storage::get_mut::<PrincipalIndex>();
-        let accounts = storage::get_mut::<Accounts>();
-        match index.get_mut(&princ) {
-            None => { None }
-            Some(key) => {
-                match accounts.get(key) {
-                    None => { None }
-                    Some(acc) => { Option::from(acc.to_owned()) }
-                }
-            }
-        }
+        PRINCIPAL_INDEX.with(|index| {
+            ACCOUNTS.with(|accounts| match index.borrow().get(&princ) {
+                None => None,
+                Some(key) => match accounts.borrow().get(key) {
+                    None => None,
+                    Some(acc) => Option::from(acc.to_owned()),
+                },
+            })
+        })
     }
 
     fn get_account_by_principal(&self, princ: String) -> Option<Account> {
-        let index = storage::get_mut::<PrincipalIndex>();
-        let accounts = storage::get_mut::<Accounts>();
-        match index.get_mut(&princ) {
-            None => { None }
-            Some(key) => {
-                match accounts.get(key) {
-                    None => { None }
-                    Some(acc) => {
-                        // verify_2fa(acc, princ);
-                        Option::from(acc.to_owned())
-                    }
-                }
-            }
-        }
-    }
-
-    fn get_account_by_principal_force(&self, principal: String) -> Option<Account> {
-        let accounts = storage::get_mut::<Accounts>();
-        match accounts.get(&principal) {
-            None => { None }
-            Some(acc) => {
-                Option::from(acc.to_owned())
-            }
-        }
+        PRINCIPAL_INDEX.with(|index| {
+            ACCOUNTS.with(|accounts| match index.borrow().get(&princ) {
+                None => None,
+                Some(key) => match accounts.borrow().get(key) {
+                    None => None,
+                    Some(acc) => Option::from(acc.to_owned()),
+                },
+            })
+        })
     }
 
     fn get_account_by_anchor(&self, anchor: u64, wallet: WalletVariant) -> Option<Account> {
-        let accounts = storage::get_mut::<Accounts>();
-        match accounts.iter()
-            .find(|l| l.1.anchor == anchor && l.1.wallet == wallet) {
-            None => { None }
-            Some(pair) => {
-                Some(pair.1.to_owned())
+        ACCOUNTS.with(|accounts| {
+            match accounts
+                .borrow()
+                .iter()
+                .find(|l| l.1.anchor == anchor && l.1.wallet == wallet)
+            {
+                None => None,
+                Some(pair) => Some(pair.1.to_owned()),
             }
-        }
+        })
     }
 
     fn create_account(&self, account: Account) -> Option<Account> {
-        let accounts = storage::get_mut::<Accounts>();
-        let index = storage::get_mut::<PrincipalIndex>();
-        if index.contains_key(&account.principal_id) {
-            return None;
-        }
-        if is_anchor_exists(account.anchor, account.wallet.clone()) {
-            return None;
-        } else {
-            index.insert(account.principal_id.clone(), account.principal_id.clone());
-            update_certify_keys(account.principal_id.clone(), account.principal_id.clone());
-            accounts.insert(account.principal_id.clone(), account.clone());
-            Some(account)
-        }
+        ACCOUNTS.with(|accounts| {
+            PRINCIPAL_INDEX.with(|index| {
+                if index.borrow().contains_key(&account.principal_id) {
+                    return None;
+                }
+                if is_anchor_exists(account.anchor, account.wallet.clone()) {
+                    return None;
+                } else {
+                    index
+                        .borrow_mut()
+                        .insert(account.principal_id.clone(), account.principal_id.clone());
+                    update_certify_keys(account.principal_id.clone(), account.principal_id.clone());
+                    accounts
+                        .borrow_mut()
+                        .insert(account.principal_id.clone(), account.clone());
+                    Some(account)
+                }
+            })
+        })
     }
 
     fn store_account(&self, account: Account) -> Option<Account> {
-        let accounts = storage::get_mut::<Accounts>();
-        accounts.insert(account.principal_id.clone(), account.clone());
-        Some(account)
+        ACCOUNTS.with(|accounts| {
+            accounts
+                .borrow_mut()
+                .insert(account.principal_id.clone(), account.clone());
+            Some(account)
+        })
     }
 
-    fn remove_account(&self) -> Option<Account> { //todo not properly tested, used for e2e tests
+    fn remove_account(&self) -> Option<Account> {
+        //todo not properly tested, used for e2e tests
         self.get_account(); //security call
         let princ = ic_service::get_caller().to_text();
-        let accounts = storage::get_mut::<Accounts>();
-        let index = storage::get_mut::<PrincipalIndex>();
-        match accounts.remove(&princ) {
-            None => { None }
-            Some(acc) => {
-                (&acc.access_points).into_iter()
-                    .for_each(|ap| { index.remove(&ap.principal_id); });
-                index.remove(&acc.principal_id.clone());
-                remove_certify_keys(acc.principal_id.clone());
-                Option::from(acc.to_owned())
-            }
-        }
-    }
-
-    fn remove_account_by_principal(&self, princ: String) -> Option<Account> {
-        let accounts = storage::get_mut::<Accounts>();
-        let index = storage::get_mut::<PrincipalIndex>();
-        match accounts.remove(&princ) {
-            None => { None }
-            Some(acc) => {
-                (&acc.access_points).into_iter()
-                    .for_each(|ap| { index.remove(&ap.principal_id); });
-                index.remove(&acc.principal_id.clone());
-                Option::from(acc.to_owned())
-            }
-        }
+        PRINCIPAL_INDEX.with(|index| {
+            ACCOUNTS.with(|accounts| match accounts.borrow_mut().remove(&princ) {
+                None => None,
+                Some(acc) => {
+                    (&acc.access_points).into_iter().for_each(|ap| {
+                        index.borrow_mut().remove(&ap.principal_id);
+                    });
+                    index.borrow_mut().remove(&acc.principal_id.clone());
+                    remove_certify_keys(acc.principal_id.clone());
+                    Option::from(acc.to_owned())
+                }
+            })
+        })
     }
 
     fn exists(&self, principal: &Principal) -> bool {
-        storage::get_mut::<PrincipalIndex>().contains_key(&principal.to_text())
+        PRINCIPAL_INDEX.with(|index| index.borrow().contains_key(&principal.to_text()))
     }
 
     fn update_account_index_with_pub_key(&self, additional_principal_id: String, princ: String) {
-        let index = storage::get_mut::<PrincipalIndex>();
-        update_certify_keys(additional_principal_id.clone(), princ.clone());
-        index.insert(additional_principal_id, princ);
+        PRINCIPAL_INDEX.with(|index| {
+            update_certify_keys(additional_principal_id.clone(), princ.clone());
+            index
+                .borrow_mut()
+                .insert(additional_principal_id.clone(), princ.clone());
+        })
     }
 
     fn update_account_index(&self, additional_principal_id: String) {
-        let index = storage::get_mut::<PrincipalIndex>();
-        update_certify_keys(additional_principal_id.clone(), additional_principal_id.clone());
-        index.insert(additional_principal_id.clone(), additional_principal_id);
+        PRINCIPAL_INDEX.with(|index| {
+            update_certify_keys(
+                additional_principal_id.clone(),
+                additional_principal_id.clone(),
+            );
+            index.borrow_mut().insert(
+                additional_principal_id.clone(),
+                additional_principal_id.clone(),
+            );
+        })
     }
 
     fn remove_account_index(&self, additional_principal_id: String) {
-        let index = storage::get_mut::<PrincipalIndex>();
-        remove_certify_keys(additional_principal_id.clone());
-        index.remove( &additional_principal_id);
-    }
-
-    fn get_accounts(&self, ids: Vec<String>) -> Vec<Account> {
-        let index = storage::get_mut::<PrincipalIndex>();
-        let accounts = storage::get_mut::<Accounts>();
-        ids.into_iter()
-            .map(|i| index.get(&i))
-            .filter(|l| l.is_some())
-            .map(|i| i.unwrap())
-            .map(|i| accounts.get(i))
-            .filter(|l| l.is_some())
-            .map(|i| i.unwrap().to_owned())
-            .unique_by(|p| p.to_owned().principal_id)
-            .map(|l| l.to_owned())
-            .collect::<Vec<_>>()
+        PRINCIPAL_INDEX.with(|index| {
+            remove_certify_keys(additional_principal_id.clone());
+            index.borrow_mut().remove(&additional_principal_id);
+        })
     }
 
     fn get_all_accounts(&self) -> Vec<Account> {
-        storage::get_mut::<Accounts>()
-            .values()
-            .map(|l| l.to_owned())
-            .collect()
+        ACCOUNTS.with(|accounts| accounts.borrow().values().map(|l| l.to_owned()).collect())
     }
 
     fn find_next_nfid_anchor(&self) -> u64 {
-        let acc = self.get_all_accounts()
-            .into_iter()
-            .filter(|a| a.wallet.eq(&WalletVariant::NFID))
-            .sorted_by(|a, b| Ord::cmp(&a.anchor, &b.anchor))
-            .last();
-
-        match acc {
-            None => { 100_000_000 }
-            Some(x) => {
-                //new flow of delegation creation
-                if x.anchor < 200_000_000 {
-                    200_000_000
-                } else {
-                    x.anchor + 1
-                }
-            }
-        }
-    }
-
-    fn store_accounts(&self, accounts: Vec<Account>) {
-        let accounts_stored = storage::get_mut::<Accounts>();
-        for account in accounts {
-            accounts_stored.insert(account.principal_id.clone(), account.clone());
-            self.update_account_index(account.principal_id.clone());
-        }
-    }
-
-    fn get_account_by_id(&self, princ: String) -> Option<Account> {
-        let index = storage::get_mut::<PrincipalIndex>();
-        let accounts = storage::get_mut::<Accounts>();
-        match index.get_mut(&princ) {
-            None => { None }
-            Some(key) => {
-                match accounts.get(key) {
-                    None => { None }
-                    Some(acc) => { Option::from(acc.to_owned()) }
-                }
-            }
-        }
+        ACCOUNTS.with(|accounts| {
+            accounts
+                .borrow()
+                .values()
+                .filter(|a| a.wallet.eq(&WalletVariant::NFID))
+                .sorted_by(|a, b| Ord::cmp(&a.anchor, &b.anchor))
+                .last()
+                .map_or(100_000_000, |x| {
+                    if x.anchor < 200_000_000 {
+                        200_000_000
+                    } else {
+                        x.anchor + 1
+                    }
+                })
+        })
     }
 }
