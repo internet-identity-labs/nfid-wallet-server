@@ -16,7 +16,6 @@ pub struct Persona {
     pub domain_certified: Option<u64>,
 }
 
-#[cfg_attr(test, mocked)]
 pub trait PersonaRepoTrait {
     fn get_personas(&self) -> Option<Vec<Persona>>;
     fn store_persona(&self, persona: Persona) -> Option<Account>;

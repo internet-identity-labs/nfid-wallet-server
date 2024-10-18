@@ -37,7 +37,6 @@ pub struct Account {
     pub email: Option<String>,
 }
 
-#[cfg_attr(test, mocked)]
 pub trait AccountRepoTrait {
     fn get_account(&self) -> Option<Account>;
     fn get_account_by_principal(&self, princ: String) -> Option<Account>;

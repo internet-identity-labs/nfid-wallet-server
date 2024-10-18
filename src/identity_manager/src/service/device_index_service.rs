@@ -11,6 +11,12 @@ thread_local! {
 }
 
 pub fn save_temp_stack() -> String {
+    let is_empty = DEVICE_INDEX_STACK.with(|index_ref| index_ref.borrow().is_empty());
+
+    if !is_empty {
+        return String::from("The stack is not empty. No action required.");
+    }
+
     let device_index_iterator: Vec<(String, Vec<u8>)> = PRINCIPAL_INDEX.with(|index| {
         index
             .borrow()
