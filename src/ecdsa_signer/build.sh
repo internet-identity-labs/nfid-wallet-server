@@ -12,12 +12,21 @@ cargo_build_args=(
   -j1
 )
 
+
 echo Running cargo build "${cargo_build_args[@]}"
+
 
 cargo build "${cargo_build_args[@]}"
 
-CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_DIR/../../target/}"
+
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_DIR/target/}"
+
+echo Started
+
+echo ${CARGO_TARGET_DIR}
 
 ic-wasm\
   "$CARGO_TARGET_DIR/$TARGET/release/ecdsa_signer.wasm" \
   -o "$REPO_DIR/../../ecdsa_signer.wasm" shrink
+
+

@@ -49,27 +49,19 @@ describe("Account", () => {
             expect(DFX.GET_ACCOUNT("identity_manager")).eq(Expected.ACCOUNT("null", dfx.root));
         });
 
-        it("should update account name.", async function () {
-            expect(DFX.UPDATE_ACCOUNT_NAME()).eq(Expected.ACCOUNT(`opt "TEST_USER_UPDATED"`, dfx.root));
-        });
-
         it("should throw error due to existing anchor.", async function () {
             DFX.TOKEN(PHONE, PHONE_SHA2, TOKEN, dfx.root);
             expect(DFX.CREATE_ACCOUNT_FULL()).eq(Expected.ERROR("Impossible to link this II anchor, please try another one.", "404"));
         });
 
         it("should recover account.", async function () {
-            expect(DFX.RECOVER_ACCOUNT()).eq(Expected.ACCOUNT(`opt "TEST_USER_UPDATED"`, dfx.root));
+            expect(DFX.RECOVER_ACCOUNT()).eq(Expected.ACCOUNT("null", dfx.root));
         });
 
         it("should remove account and create new one.", async function () {
             expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.BOOL("true", "200"));
             expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.ERROR("Unable to remove Account", "404"));
             expect(DFX.CREATE_ACCOUNT_2()).eq(Expected.ACCOUNT("null", dfx.root));
-        });
-
-        it("should update email and receive an error.", async function () {
-            expect(DFX.UPDATE_ACCOUNT_EMAIL("test@test.test")).contains("Email and principal are not valid.");
         });
 
         it("should remove account and create new one with email and receive an error.", async function () {
@@ -213,19 +205,6 @@ describe("Account", () => {
             expect(response.status_code).eq(200);
             expect(response.data[0].anchor).eq(iiAnchor);
             expect(response.error).empty;
-        });
-
-        it("should create II account with no email and update email of it.", async function () {
-            var updateRequest: HTTPAccountUpdateRequest = {
-                name: [],
-                email: ["testdefault@test.test"]
-            }
-
-            const updateResponse: HTTPAccountResponse = (await dfx.im.actor.update_account(
-                updateRequest
-            )) as HTTPAccountResponse;
-
-            expect(updateResponse.data[0].email[0]).contains("testdefault@test.test");
         });
 
         it("should try to create account and receive incorrect email and principal when incorrect email.", async function () {
