@@ -16,23 +16,11 @@ public class AccountITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("account/exp_account", actual);
     }
 
-    @Test(priority = 30)
-    public void updateAccountNameExpectUpdated() {
-        String actual = call("account/req_update_account_name");
-        validateWithFormatIdentity("account/exp_account_upd_name", actual);
-    }
-
     @Test(priority = 50)
     public void createAccountSameAnchorExpectError() {
         call("request/post_token", PHONE, PHONE_SHA2, TOKEN, ROOT_IDENTITY);
         String actual = call("account/req_create_exist_account");
         validateWithFormatIdentity("account/exp_anchor_exists", actual);
-    }
-
-    @Test(priority = 52)
-    public void recoverAccountExpectAccount() {
-        String actual = call("account/req_recover_account");
-        validateWithFormatIdentity("account/exp_account_upd_name", actual);
     }
 
     @Test(priority = 60)

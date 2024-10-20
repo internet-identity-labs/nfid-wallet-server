@@ -199,7 +199,7 @@ pub fn pre_upgrade() {
     let admin = AdminRepo::get();
     let logs: Vec<Logs> = Vec::default(); //todo remove somehow
     let applications = APPLICATIONS.with(|apps| apps.borrow().clone());
-    let configuration = ConfigurationRepo::get();
+    let configuration = CONFIGURATION.with(|config| config.borrow().clone());
     match storage::stable_save((
         accounts,
         admin,
@@ -219,9 +219,13 @@ pub fn post_upgrade() {
         Option<Applications>,
         Option<Configuration>,
     ) = storage::stable_restore().unwrap();
-    let configuration = configuration_maybe.unwrap_or(ConfigurationRepo::get_default_config());
-    ConfigurationRepo::save(configuration);
-    AdminRepo::save(admin);
+    CONFIGURATION.with(|config| {
+        let configuration = configuration_maybe.unwrap_or(ConfigurationRepo::get_default_config());
+        config.replace(configuration);
+    });
+    ADMINS.with(|admins| {
+        admins.borrow_mut().insert(admin);
+    });
     for u in old_accs {
         let princ = u.principal_id.clone();
 

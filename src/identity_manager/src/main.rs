@@ -21,7 +21,9 @@ use crate::repository::account_repo::{
 };
 use crate::repository::application_repo::{Application, ApplicationRepo};
 use crate::repository::persona_repo::PersonaRepo;
-use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo};
+use crate::repository::repo::{
+    AdminRepo, Configuration, ConfigurationRepo, ControllersRepo, CONFIGURATION,
+};
 use crate::requests::{
     AccessPointRemoveRequest, AccessPointRequest, AccessPointResponse, AccountRequest,
     ConfigurationRequest, ConfigurationResponse, PersonaResponse,
@@ -119,12 +121,14 @@ async fn configure(request: ConfigurationRequest) -> () {
             default.operator
         },
     };
-    ConfigurationRepo::save(configuration);
+    CONFIGURATION.with(|config| {
+        config.replace(configuration);
+    });
 }
 
 #[query]
 async fn get_config() -> ConfigurationResponse {
-    let config = ConfigurationRepo::get();
+    let config = CONFIGURATION.with(|config| config.borrow().clone());
     ConfigurationResponse {
         lambda_url: Some(config.lambda_url),
         lambda: Some(config.lambda),
@@ -323,11 +327,6 @@ async fn count_anchors() -> u64 {
 #[update]
 #[operator]
 async fn rebuild_index() {
-    // let all_accs = get_account_service().get_all_accounts();
-    // let mut princ = storage::get_mut::<PrincipalIndex>();
-    // for acc in all_accs {
-    //     princ.insert(acc.principal_id.clone(), acc.principal_id.clone());
-    // }
     PRINCIPAL_INDEX.with(|index| {
         ACCOUNTS.with(|accounts| {
             let mut index = index.borrow_mut();
