@@ -24,6 +24,10 @@ cargo build "${cargo_build_args[@]}"
 
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_DIR/../../target/}"
 
+echo Target dir "${CARGO_TARGET_DIR}"
+
 ic-wasm\
   "$CARGO_TARGET_DIR/$TARGET/release/identity_manager.wasm" \
   -o "$REPO_DIR/../../identity_manager.wasm" shrink
+
+echo DONE
