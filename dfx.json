@@ -24,18 +24,6 @@
       "wasm": "identity_manager.wasm",
       "type": "custom"
     },
-    "identity_manager_replica": {
-      "build": "src/identity_manager/build.sh",
-      "candid": "src/identity_manager/identity_manager.did",
-      "wasm": "identity_manager.wasm",
-      "type": "custom"
-    },
-    "test_im": {
-      "build": "src/identity_manager/build.sh",
-      "candid": "src/identity_manager/identity_manager.did",
-      "wasm": "identity_manager.wasm",
-      "type": "custom"
-    },
     "internet_identity_test": {
       "type": "custom",
       "candid": "src/internet_identity_test/internet_identity.did",

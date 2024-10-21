@@ -1,19 +1,17 @@
+use crate::http::requests::{DeviceType, WalletVariant};
+use crate::ic_service;
+use crate::logger::logger::{Log, Logs};
+use crate::repository::access_point_repo::AccessPoint;
+use crate::repository::account_repo::{Account, ACCOUNTS, PRINCIPAL_INDEX};
+use crate::repository::application_repo::Application;
+use crate::repository::persona_repo::Persona;
+use candid::{CandidType, Deserialize, Principal};
+use ic_cdk::storage;
+use serde::Serialize;
+use std::cell::RefCell;
 use std::collections::{BTreeSet, HashSet};
 use std::hash::Hash;
 use std::time::Duration;
-use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk::export::Principal;
-use ic_cdk::storage;
-use crate::ic_service;
-use crate::logger::logger::Logs;
-use crate::repository::account_repo::{Account, Accounts, PrincipalIndex};
-use crate::repository::application_repo::Application;
-use crate::service::device_index_service;
-use serde::Serialize;
-use crate::http::requests::{DeviceType, WalletVariant};
-use crate::repository::access_point_repo::AccessPoint;
-use crate::repository::persona_repo::Persona;
-
 
 #[derive(Debug, Deserialize, CandidType, Clone)]
 pub struct Configuration {
@@ -34,6 +32,13 @@ pub struct Configuration {
 
 //todo rethink visibility
 pub type Applications = BTreeSet<Application>;
+
+thread_local! {
+  pub static APPLICATIONS: RefCell<BTreeSet<Application>> = RefCell::new(BTreeSet::new());
+    pub static ADMINS: RefCell<HashSet<Principal>> = RefCell::new(HashSet::new());
+    pub static CONTROLLERS: RefCell<HashSet<Principal>> = RefCell::new(HashSet::new());
+    pub static CONFIGURATION: RefCell<Configuration> = RefCell::new(ConfigurationRepo::get_default_config());
+}
 
 pub struct AdminRepo {}
 
@@ -59,55 +64,59 @@ impl BasicEntity {
         self.modified_date
     }
     pub fn new() -> BasicEntity {
-        BasicEntity { created_date: ic_service::get_time(), modified_date: ic_service::get_time() }
+        BasicEntity {
+            created_date: ic_service::get_time(),
+            modified_date: ic_service::get_time(),
+        }
     }
 }
 
 impl AdminRepo {
     pub fn get() -> Principal {
-        storage::get_mut::<Option<Principal>>().unwrap()
+        ADMINS.with(|admins| admins.borrow().iter().next().unwrap().clone())
     }
 
     pub fn save(principal: Principal) -> () {
-        storage::get_mut::<Option<Principal>>().replace(principal);
+        ADMINS.with(|admins| {
+            admins.borrow_mut().insert(principal);
+        });
     }
 }
 
 impl ControllersRepo {
     pub fn get() -> Vec<Principal> {
-        storage::get_mut::<Vec<Principal>>().to_vec()
+        CONTROLLERS.with(|controllers| controllers.borrow().iter().map(|p| p.clone()).collect())
     }
 
     pub fn save(principals: Vec<Principal>) -> () {
-        let vec = storage::get_mut::<Vec<Principal>>();
-        vec.clear();
-        vec.extend(principals);
+        CONTROLLERS.with(|controllers| {
+            for p in principals {
+                controllers.borrow_mut().insert(p);
+            }
+        });
     }
 
     pub fn contains(principal: &Principal) -> bool {
-        storage::get_mut::<Vec<Principal>>().to_vec().contains(principal)
+        CONTROLLERS.with(|controllers| controllers.borrow().contains(principal))
     }
 }
 
 impl ConfigurationRepo {
     //todo fix Principle not implement default!
-    pub fn get() -> &'static Configuration {
-        if (storage::get::<Option<Configuration>>()).is_none() {
-            ConfigurationRepo::save(ConfigurationRepo::get_default_config());
-        }
-        storage::get::<Option<Configuration>>().as_ref().unwrap()
-    }
-
-    pub fn exists() -> bool {
-        storage::get::<Option<Configuration>>().is_some()
+    pub fn get() -> Configuration {
+        CONFIGURATION.with(|config| config.borrow().clone())
     }
 
     pub fn save(configuration: Configuration) -> () {
-        storage::get_mut::<Option<Configuration>>().replace(configuration);
+        CONFIGURATION.with(|config| {
+            config.replace(configuration);
+        });
     }
 
     pub fn get_default_config() -> Configuration {
-        let lambda = Principal::from_text("ritih-icnvs-i7b67-sc2vs-nwo2e-bvpe5-viznv-uqluj-xzcvs-6iqsp-fqe").unwrap();
+        let lambda =
+            Principal::from_text("ritih-icnvs-i7b67-sc2vs-nwo2e-bvpe5-viznv-uqluj-xzcvs-6iqsp-fqe")
+                .unwrap();
         Configuration {
             lambda_url: "https://d8m9ttp390ku4.cloudfront.net/dev".to_string(),
             lambda: lambda,
@@ -127,10 +136,12 @@ impl ConfigurationRepo {
 }
 
 pub fn is_anchor_exists(anchor: u64, wallet: WalletVariant) -> bool {
-    let accounts = storage::get_mut::<Accounts>();
-    accounts.into_iter()
-        .map(|l| l.1)
-        .any(|x| x.anchor == anchor && x.wallet.eq(&wallet))
+    ACCOUNTS.with(|accounts| {
+        accounts
+            .borrow()
+            .iter()
+            .any(|x| x.1.anchor == anchor && x.1.wallet.eq(&wallet))
+    })
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
@@ -148,8 +159,7 @@ pub struct AccountMemoryModel {
     pub email: Option<String>,
 }
 
-
-#[derive(Clone, Debug, CandidType, Deserialize,PartialEq ,Eq, Serialize, Hash)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq, Serialize, Hash)]
 pub struct AccessPointMemoryModel {
     pub principal_id: String,
     pub credential_id: Option<String>,
@@ -161,76 +171,108 @@ pub struct AccessPointMemoryModel {
     pub base_fields: BasicEntity,
 }
 
-
 pub fn pre_upgrade() {
     let mut accounts = Vec::new();
-    for p in storage::get_mut::<Accounts>().iter() {
-        accounts.push(
-            AccountMemoryModel {
+    ACCOUNTS.with(|accounts_struct| {
+        for p in accounts_struct.borrow().iter() {
+            accounts.push(AccountMemoryModel {
                 anchor: p.1.anchor.clone(),
                 principal_id: p.1.principal_id.to_string(),
                 name: p.1.name.clone(),
                 personas: p.1.personas.clone(),
                 phone_number: p.1.phone_number.clone(),
                 phone_number_sha2: p.1.phone_number_sha2.clone(),
-                access_points: p.1.access_points.clone()
-                    .into_iter().map(|ap|access_point_to_memory_model(ap))
+                access_points: p
+                    .1
+                    .access_points
+                    .clone()
+                    .into_iter()
+                    .map(|ap| access_point_to_memory_model(ap))
                     .collect(),
                 base_fields: p.1.base_fields.clone(),
                 wallet: Some(p.1.wallet.clone()),
                 is2fa_enabled: Some(p.1.is2fa_enabled),
                 email: p.1.email.clone(),
-        })
-    }
-    let admin = storage::get_mut::<Option<Principal>>().unwrap();
-    let logs = storage::get_mut::<Logs>(); //todo remove somehow
-    let applications = storage::get_mut::<Applications>();
-    let configuration = ConfigurationRepo::get().clone();
-    match storage::stable_save((accounts, admin, logs, Some(applications), Some(configuration))) { _ => () }; //todo migrate to object
+            })
+        }
+    });
+    let admin = AdminRepo::get();
+    let logs: Vec<Logs> = Vec::default(); //todo remove somehow
+    let applications = APPLICATIONS.with(|apps| apps.borrow().clone());
+    let configuration = CONFIGURATION.with(|config| config.borrow().clone());
+    match storage::stable_save((
+        accounts,
+        admin,
+        logs,
+        Some(applications),
+        Some(configuration),
+    )) {
+        _ => (),
+    }; //todo migrate to object
 }
 
 pub fn post_upgrade() {
-    let (old_accs, admin, _logs, applications, configuration_maybe): (Vec<AccountMemoryModel>, Principal, Logs, Option<Applications>, Option<Configuration>) = storage::stable_restore().unwrap();
-    let configuration = configuration_maybe.unwrap_or(ConfigurationRepo::get_default_config());
-    ConfigurationRepo::save(configuration);
-    storage::get_mut::<Option<Principal>>().replace(admin);
+    let (old_accs, admin, _logs, applications, configuration_maybe): (
+        Vec<AccountMemoryModel>,
+        Principal,
+        Logs,
+        Option<Applications>,
+        Option<Configuration>,
+    ) = storage::stable_restore().unwrap();
+    CONFIGURATION.with(|config| {
+        let configuration = configuration_maybe.unwrap_or(ConfigurationRepo::get_default_config());
+        config.replace(configuration);
+    });
+    ADMINS.with(|admins| {
+        admins.borrow_mut().insert(admin);
+    });
     for u in old_accs {
         let princ = u.principal_id.clone();
-        storage::get_mut::<Accounts>().insert(princ.clone(), Account {
-            anchor: u.anchor,
-            principal_id: u.principal_id.to_string(),
-            name: u.name,
-            phone_number: u.phone_number,
-            phone_number_sha2: u.phone_number_sha2,
-            personas: u.personas,
-            access_points: u.access_points.clone()
-                .into_iter()
-                .map(|ap| access_point_mm_to_ap(ap))
-                .collect(),
-            base_fields: u.base_fields,
-            wallet: match u.wallet {
-                None => { WalletVariant::InternetIdentity }
-                Some(x) => { x }
-            },
-            is2fa_enabled: match u.is2fa_enabled {
-                None => { false }
-                Some(x) => { x }
-            },
-            email: u.email,
+
+        PRINCIPAL_INDEX.with(|index| {
+            for x in u.access_points.clone().into_iter() {
+                index
+                    .borrow_mut()
+                    .insert(x.principal_id.clone(), princ.clone());
+            }
         });
-        for x in u.access_points.into_iter() {
-            storage::get_mut::<PrincipalIndex>().insert(x.principal_id, princ.clone());
-        }
-        storage::get_mut::<Option<Principal>>().replace(admin);
+        ACCOUNTS.with(|accounts| {
+            accounts.borrow_mut().insert(
+                princ.clone(),
+                Account {
+                    anchor: u.anchor,
+                    principal_id: u.principal_id.to_string(),
+                    name: u.name,
+                    phone_number: None,
+                    phone_number_sha2: None,
+                    personas: u.personas,
+                    access_points: u
+                        .access_points
+                        .clone()
+                        .into_iter()
+                        .map(|ap| access_point_mm_to_ap(ap))
+                        .collect(),
+                    base_fields: u.base_fields,
+                    wallet: match u.wallet {
+                        None => WalletVariant::InternetIdentity,
+                        Some(x) => x,
+                    },
+                    is2fa_enabled: match u.is2fa_enabled {
+                        None => false,
+                        Some(x) => x,
+                    },
+                    email: u.email,
+                },
+            );
+        });
     }
     match applications {
         None => {}
-        Some(applications) => {
-            let apps = storage::get_mut::<Applications>();
+        Some(applications) => APPLICATIONS.with(|apps| {
             applications.iter().for_each(|a| {
-                apps.insert(a.to_owned());
+                apps.borrow_mut().insert(a.to_owned());
             })
-        }
+        }),
     }
 }
 
@@ -256,8 +298,8 @@ fn access_point_mm_to_ap(ap: AccessPointMemoryModel) -> AccessPoint {
         browser: ap.browser,
         last_used: ap.last_used,
         device_type: match ap.device_type {
-            None => { DeviceType::Unknown }
-            Some(x) => { x }
+            None => DeviceType::Unknown,
+            Some(x) => x,
         },
         base_fields: ap.base_fields,
     };

@@ -1,10 +1,14 @@
 [workspace]
+resolver = "2"
+
 members = [
-    "src/ecdsa_signer",
+    "src/identity_manager",
     "src/icrc1_registry",
     "src/icrc1_oracle",
-    "src/test_canister",
+    "src/delegation_factory",
+    "src/nfid_storage",
+    "src/swap_trs_storage",
     "src/vault",
     "src/libraries/canister_api_macros",
 ]
-exclude = ["src/identity_manager", "src/delegation_factory", "src/nfid_storage", "src/swap_trs_storage"]
+exclude = ["src/test_canister", "src/ecdsa_signer"]

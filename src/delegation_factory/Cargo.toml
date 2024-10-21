@@ -16,9 +16,9 @@ internet_identity_interface = { git = "https://github.com/dfinity/internet-ident
 # ic dependencies
 candid = "0.10"
 candid_parser = "0.1.2"
-ic-cdk = "0.13"
-ic-cdk-macros = "0.13"
-ic-cdk-timers = "0.7"
+ic-cdk = "0.16.0"
+ic-cdk-macros = "0.16.0"
+ic-cdk-timers = "0.10.0"
 ic-certification = "2.2"
 ic-http-certification = "2.2"
 ic-metrics-encoder = "1"

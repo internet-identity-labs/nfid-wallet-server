@@ -6,7 +6,6 @@ use candid::{CandidType, Nat, Principal};
 use candid::{candid_method, export_service};
 use ic_cdk::{call, caller, id, storage, trap};
 use ic_cdk::api::call::CallResult;
-use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use ic_cdk_macros::*;
 use serde::{Deserialize, Serialize};
 
@@ -22,12 +21,47 @@ pub enum Category {
 }
 
 
+
+#[derive(CandidType, Debug, Clone, Deserialize)]
+pub struct CanisterIdRequest {
+    #[serde(rename = "canister_id")]
+    pub canister_id: Principal,
+}
+
+
+#[derive(Serialize, Deserialize, CandidType, Clone, PartialEq, Eq, Debug)]
+pub enum CanisterStatus {
+    #[serde(rename = "running")]
+    running,
+    #[serde(rename = "stopping")]
+    stopping,
+    #[serde(rename = "stopped")]
+    stopped,
+}
+
+#[derive(Deserialize, CandidType, Clone, PartialEq, Eq, Debug)]
+pub struct DefiniteCanisterSettings {
+    controllers: Vec<Principal>,
+    compute_allocation: Nat,
+    memory_allocation: Nat,
+    freezing_threshold: Nat,
+}
+
+#[derive(Deserialize, CandidType, Clone, PartialEq, Eq, Debug)]
+pub struct CanisterStatusResponse {
+    status: CanisterStatus,
+    settings: DefiniteCanisterSettings,
+    module_hash: Option<Vec<u8>>,
+    memory_size: Nat,
+    cycles: Nat,
+    freezing_threshold: Nat,
+}
+
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, Serialize, PartialEq)]
 pub struct Conf {
     pub im_canister: Option<Principal>,
     pub controllers: Option<Vec<Principal>>,
 }
-
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, Eq)]
 pub struct ICRC1 {
@@ -70,13 +104,6 @@ thread_local! {
         im_canister: None
     });
     pub static ICRC_REGISTRY: RefCell<HashSet<ICRC1>> = RefCell::new(HashSet::default());
-}
-
-
-#[derive(CandidType, Debug, Clone, Deserialize)]
-pub struct CanisterIdRequest {
-    #[serde(rename = "canister_id")]
-    pub canister_id: Principal,
 }
 
 

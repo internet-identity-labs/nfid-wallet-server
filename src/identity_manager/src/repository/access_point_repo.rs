@@ -1,13 +1,12 @@
+use crate::http::requests::{DeviceType, WalletVariant};
+use crate::repository::account_repo::{Account, AccountRepoTrait};
+use crate::repository::repo::BasicEntity;
+use crate::service::certified_service::update_certify_keys;
+use crate::AccountRepo;
+use candid::{CandidType, Deserialize};
+use serde::Serialize;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
-use crate::{AccountRepo};
-use crate::repository::account_repo::{Account, AccountRepoTrait};
-use ic_cdk::export::candid::{CandidType, Deserialize};
-use crate::repository::repo::BasicEntity;
-use serde::{Serialize};
-use crate::http::requests::{DeviceType, WalletVariant};
-use crate::service::certified_service::update_certify_keys;
-
 
 #[derive(Clone, Debug, CandidType, Deserialize, Eq, Serialize)]
 pub struct AccessPoint {
@@ -37,10 +36,19 @@ pub trait AccessPointRepoTrait {
     fn get_access_points(&self) -> Option<HashSet<AccessPoint>>;
     fn get_wallet(&self) -> WalletVariant;
     fn get_access_points_by_principal(&self, princ: String) -> Option<HashSet<AccessPoint>>;
-    fn use_access_point(&self, ap_principal: String, time: u64, browser: Option<String>) -> Option<AccessPoint>;
+    fn use_access_point(
+        &self,
+        ap_principal: String,
+        time: u64,
+        browser: Option<String>,
+    ) -> Option<AccessPoint>;
     fn store_access_points(&self, access_points: HashSet<AccessPoint>) -> Option<Account>;
     fn remove_ap_index(&self, access_point: String);
-    fn store_access_points_by_principal(&self, access_points: HashSet<AccessPoint>, root_princ: String) -> Option<Account>;
+    fn store_access_points_by_principal(
+        &self,
+        access_points: HashSet<AccessPoint>,
+        root_princ: String,
+    ) -> Option<Account>;
     fn update_account_index(&self, additional_principal_id: String, root_princ: String);
 }
 
@@ -51,27 +59,34 @@ pub struct AccessPointRepo {
 
 impl AccessPointRepoTrait for AccessPointRepo {
     fn get_access_points(&self) -> Option<HashSet<AccessPoint>> {
-        self.account_repo.get_account()
+        self.account_repo
+            .get_account()
             .map(|x| x.access_points.clone()) //todo &
     }
 
     fn get_wallet(&self) -> WalletVariant {
-        self.account_repo.get_account()
-            .unwrap().wallet
+        self.account_repo.get_account().unwrap().wallet
     }
 
     fn get_access_points_by_principal(&self, princ: String) -> Option<HashSet<AccessPoint>> {
-        self.account_repo.get_account_by_principal(princ)
+        self.account_repo
+            .get_account_by_principal(princ)
             .map(|x| x.access_points.clone()) //todo &
     }
 
-    fn use_access_point(&self, ap_principal: String, time: u64, browser: Option<String>) -> Option<AccessPoint> {
+    fn use_access_point(
+        &self,
+        ap_principal: String,
+        time: u64,
+        browser: Option<String>,
+    ) -> Option<AccessPoint> {
         let mut points = self.get_access_points().unwrap();
-        let updated = points.clone()
+        let updated = points
+            .clone()
             .into_iter()
             .find(|l| l.principal_id == ap_principal);
         match updated {
-            None => { None }
+            None => None,
             Some(mut ap) => {
                 ap.last_used = Some(time);
                 ap.browser = browser.or(ap.browser);
@@ -83,20 +98,26 @@ impl AccessPointRepoTrait for AccessPointRepo {
     }
 
     fn store_access_points(&self, access_points: HashSet<AccessPoint>) -> Option<Account> {
-        let mut acc = self.account_repo.get_account()
-            .unwrap().clone();
+        let mut acc = self.account_repo.get_account().unwrap().clone();
         acc.access_points = access_points.clone();
         let resp = self.account_repo.store_account(acc);
         resp
     }
 
-    fn remove_ap_index(&self, access_point: String){
-       self.account_repo.remove_account_index(access_point);
+    fn remove_ap_index(&self, access_point: String) {
+        self.account_repo.remove_account_index(access_point);
     }
 
-    fn store_access_points_by_principal(&self, access_points: HashSet<AccessPoint>, root_princ: String) -> Option<Account> {
-        let mut acc = self.account_repo.get_account_by_principal(root_princ)
-            .unwrap().clone();
+    fn store_access_points_by_principal(
+        &self,
+        access_points: HashSet<AccessPoint>,
+        root_princ: String,
+    ) -> Option<Account> {
+        let mut acc = self
+            .account_repo
+            .get_account_by_principal(root_princ)
+            .unwrap()
+            .clone();
         acc.access_points = access_points.clone();
         let resp = self.account_repo.store_account(acc);
         resp
@@ -104,6 +125,7 @@ impl AccessPointRepoTrait for AccessPointRepo {
 
     fn update_account_index(&self, additional_principal_id: String, root_princ: String) {
         update_certify_keys(additional_principal_id.clone(), root_princ.clone());
-        self.account_repo.update_account_index_with_pub_key(additional_principal_id, root_princ);
+        self.account_repo
+            .update_account_index_with_pub_key(additional_principal_id, root_princ);
     }
 }

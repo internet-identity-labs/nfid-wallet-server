@@ -20,6 +20,8 @@ echo Running cargo build "${cargo_build_args[@]}"
 
 cargo build "${cargo_build_args[@]}"
 
+echo Repo dir ${REPO_DIR}
+
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_DIR/../../target/}"
 
 ic-wasm\

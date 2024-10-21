@@ -1,6 +1,5 @@
-use candid::Principal;
-use ic_cdk::export::candid::{CandidType, Deserialize};
-use ic_cdk::export::serde::Serialize;
+use candid::{CandidType, Deserialize, Principal};
+use serde::Serialize;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct PrincipalEmailRequest {
@@ -27,13 +26,13 @@ pub struct TokenRequest {
     pub phone_number_encrypted: String,
     pub phone_number_hash: String,
     pub token: String,
-    pub principal_id: String
+    pub principal_id: String,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct ValidatePhoneRequest {
     pub phone_number_hash: String,
-    pub principal_id: String
+    pub principal_id: String,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -54,7 +53,6 @@ pub enum CredentialVariant {
     #[serde(rename = "phone_number")]
     PhoneNumber(PhoneNumberCredential),
 }
-
 
 #[derive(Clone, Copy, Debug, CandidType, Deserialize, PartialEq, Serialize)]
 pub enum WalletVariant {
@@ -137,7 +135,7 @@ pub struct AccessPointResponse {
     pub device: String,
     pub browser: String,
     pub last_used: u64,
-    pub device_type: DeviceType
+    pub device_type: DeviceType,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -147,7 +145,7 @@ pub struct AccessPointRequest {
     pub device: String,
     pub browser: String,
     pub device_type: DeviceType,
-    pub credential_id: Option<String>
+    pub credential_id: Option<String>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

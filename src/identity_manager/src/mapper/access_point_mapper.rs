@@ -1,4 +1,4 @@
-use ic_cdk::export::Principal;
+use candid::Principal;
 use crate::http::requests::DeviceType;
 use crate::ic_service::{DeviceData};
 use crate::repository::repo::{BasicEntity};

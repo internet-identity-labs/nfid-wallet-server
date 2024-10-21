@@ -1,4 +1,4 @@
-use ic_cdk::export::candid::{CandidType, Deserialize};
+use candid::{CandidType, Deserialize};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Log {
