@@ -76,7 +76,7 @@ impl Default for State {
 #[candid_method(init)]
 fn init(maybe_arg: Option<InitArgs>) {
     if maybe_arg.is_some() {
-        init_im_canister(maybe_arg..expect("The maybe_arg failed after existence check.").im_canister);
+        init_im_canister(maybe_arg.expect("The maybe_arg failed after existence check.").im_canister);
     }
 }
 
