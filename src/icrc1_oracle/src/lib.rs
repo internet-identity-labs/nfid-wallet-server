@@ -118,13 +118,6 @@ async fn sync_controllers() -> Vec<String> {
         }, ),
     ).await;
 
-    match res {
-        Ok(_) => {}
-        Err(e) => {
-            trap(&format!("Failed to request IM: {}", e.1));
-        }
-    }
-
     let controllers = res.unwrap().0.settings.controllers;
     CONFIG.with(|c| c.borrow_mut().controllers.replace(controllers.clone()));
     controllers.iter().map(|x| x.to_text()).collect()
