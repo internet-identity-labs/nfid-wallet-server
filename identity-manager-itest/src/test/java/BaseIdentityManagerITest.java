@@ -17,18 +17,14 @@ public class BaseIdentityManagerITest extends BaseDFXITest {
             call("common/init_dfx_project");
             var command = String.format(getScript("common/deploy_project").trim(), "identity_manager");
             callDfxCommand(command);
-            var command2 = String.format(getScript("common/deploy_project").trim(), "identity_manager_replica");
-            callDfxCommand(command2);//TODO split
-            BACKUP_CANISTER_ID = call("common/get_canister_id", "identity_manager_replica").trim();
             String im = call("common/get_canister_id", "identity_manager").trim();
-            identity_manager = call("common/configure_dfx_project", "identity_manager", ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, getHeartBeatPeriod(), BACKUP_CANISTER_ID, im);
-            identity_manager_replica = call("common/configure_dfx_project", "identity_manager_replica", ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS, DISABLED_HEARTBEAT, BACKUP_CANISTER_ID, im);
+            identity_manager = call("common/configure_dfx_project", "identity_manager", ROOT_IDENTITY, ROOT_IDENTITY, TTL, TTL_REFRESH, WHITELISTED_PHONE_NUMBERS,  im);
             if (++i >= DEFAULT_TRIES) {
                 call("common/dfx_stop");
                 System.exit(1);
             }
 
-        } while (identity_manager.isEmpty() || identity_manager_replica.isEmpty());
+        } while (identity_manager.isEmpty());
         call("request/post_token", PHONE, PHONE_SHA2, TOKEN, ROOT_IDENTITY);
     }
 

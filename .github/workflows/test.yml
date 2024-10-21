@@ -40,38 +40,6 @@ jobs:
           
           ci_versions
 
-#      - name: BE Unit Test
-#        run: |
-#          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-#
-#          ci_echo_debug "cargo test -- --test-threads=1" >&2
-#          cargo test -- --test-threads=1
-#
-##      - name: BE ITest
-##        run: |
-##          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-##
-##          if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
-##            dfx identity new test_admin --storage-mode plaintext
-##          fi
-##
-##          cp -f identity-manager-itest/src/test/resources/identity/identity.pem ${HOME}/.config/dfx/identity/test_admin
-##
-##          if ! pushd identity-manager-itest > /dev/null; then
-##            ci_echo_error "Can't change directory to the 'identity-manager-itest' " >&2
-##            exit 1
-##          fi
-##
-##          ci_echo_info "Stopping 'icx-proxy'..." >&2
-##          if ! kill -9 $(pgrep icx-proxy) > /dev/null 2>&1; then
-##            ci_echo_info "Can't stop 'icx-proxy' or it not found ..." >&2
-##          else
-##            ci_echo_warn "'icx-proxy' was stopped ..." >&2
-##          fi
-##
-##          ci_echo_debug "mvn test --no-transfer-progress" >&2
-##          mvn test --no-transfer-progress
-
       - name: BE Integration Tests JS
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
@@ -98,3 +66,28 @@ jobs:
 
           ci_echo_debug "npm i && npm run test" >&2
           npm i && npm run test
+
+      - name: BE ITest
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
+            dfx identity new test_admin --storage-mode plaintext
+          fi
+
+          cp -f identity-manager-itest/src/test/resources/identity/identity.pem ${HOME}/.config/dfx/identity/test_admin
+
+          if ! pushd identity-manager-itest > /dev/null; then
+            ci_echo_error "Can't change directory to the 'identity-manager-itest' " >&2
+            exit 1
+          fi
+
+          ci_echo_info "Stopping 'icx-proxy'..." >&2
+          if ! kill -9 $(pgrep icx-proxy) > /dev/null 2>&1; then
+            ci_echo_info "Can't stop 'icx-proxy' or it not found ..." >&2
+          else
+            ci_echo_warn "'icx-proxy' was stopped ..." >&2
+          fi
+
+          ci_echo_debug "mvn test --no-transfer-progress" >&2
+          mvn test --no-transfer-progress

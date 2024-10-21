@@ -76,6 +76,7 @@ public class BaseDFXITest {
                 Objects.requireNonNull(this.getClass().getResourceAsStream(path)),
                 StandardCharsets.UTF_8
         );
+        System.out.println(dfxCommand);
         String[] bashScript = new String[]{"/bin/bash", "-c",
                 String.format("cd $0 && %s", dfxCommand), getPath(null)};
         return execute(bashScript);
@@ -91,6 +92,7 @@ public class BaseDFXITest {
 
     @SneakyThrows
     public String callDfxCommand(String dfxCommand) {
+        System.out.printf(dfxCommand.toString());
         String[] bashScript = new String[]{
                 "/bin/bash",
                 "-c",
