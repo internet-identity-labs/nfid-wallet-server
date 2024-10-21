@@ -103,7 +103,8 @@ pub fn init_im_canister(im_canister: Principal) {
 }
 
 pub async fn init_from_memory() {
-    let (mo, ): (TempMemory, ) = storage::stable_restore().unwrap();
+    let (mo, ): (TempMemory, ) = storage::stable_restore()
+        .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     STATE.with(|s| {
         s.salt.set(mo.salt);
         s.im_canister.set(mo.im_canister);
@@ -115,5 +116,6 @@ pub async fn save_to_temp_memory() {
         (s.salt.get(), s.im_canister.get())
     });
     let mo: TempMemory = TempMemory { salt, im_canister };
-    storage::stable_save((mo, )).unwrap();
+    storage::stable_save((mo, ))
+        .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }

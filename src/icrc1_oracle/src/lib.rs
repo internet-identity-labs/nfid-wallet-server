@@ -118,7 +118,9 @@ async fn sync_controllers() -> Vec<String> {
         }, ),
     ).await;
 
-    let controllers = res.unwrap().0.settings.controllers;
+    let controllers = res
+        .expect("Sync controller function exited unexpectedly: inter-canister call to management canister for canister_status returned an empty result.")
+        .0.settings.controllers;
     CONFIG.with(|c| c.borrow_mut().controllers.replace(controllers.clone()));
     controllers.iter().map(|x| x.to_text()).collect()
 }
@@ -130,7 +132,7 @@ pub async fn store_icrc1_canister(request: ICRC1Request) {
         trap("Invalid ledger principal");
     });
     if request.index.is_some() {
-       Principal::from_text(request.index.clone().unwrap()).unwrap_or_else(|_| {
+       Principal::from_text(request.index.clone().expect("The request.index failed after existence check.")).unwrap_or_else(|_| {
             trap("Invalid index principal");
         });
     }
@@ -212,12 +214,14 @@ pub fn stable_save() {
         registry,
         config,
     };
-    storage::stable_save((mem, )).unwrap();
+    storage::stable_save((mem, ))
+        .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
 
 #[post_upgrade]
 pub fn stable_restore() {
-    let (mo, ): (Memory, ) = storage::stable_restore().unwrap();
+    let (mo, ): (Memory, ) = storage::stable_restore()
+        .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     CONFIG.with(|mut config| {
         let mut config = config.borrow_mut();
         *config = mo.config.clone();

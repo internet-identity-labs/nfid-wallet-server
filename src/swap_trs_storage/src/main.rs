@@ -76,7 +76,7 @@ impl Default for State {
 #[candid_method(init)]
 fn init(maybe_arg: Option<InitArgs>) {
     if maybe_arg.is_some() {
-        init_im_canister(maybe_arg.unwrap().im_canister);
+        init_im_canister(maybe_arg..expect("The maybe_arg failed after existence check.").im_canister);
     }
 }
 
@@ -139,7 +139,8 @@ pub fn get_im_canister() -> Principal {
 }
 
 pub async fn init_from_memory() {
-    let (mo, ): (TempMemory, ) = storage::stable_restore().unwrap();
+    let (mo, ): (TempMemory, ) = storage::stable_restore()
+        .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     STATE.with(|s| {
         s.im_canister.set(mo.im_canister);
     });
@@ -158,7 +159,8 @@ pub async fn save_to_temp_memory() {
     });
 
     let mo: TempMemory = TempMemory { im_canister, transactions: Some(trss) };
-    storage::stable_save((mo, )).unwrap();
+    storage::stable_save((mo, ))
+        .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
 
 
