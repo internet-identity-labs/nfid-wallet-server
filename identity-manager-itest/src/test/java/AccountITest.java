@@ -1,4 +1,3 @@
-import lombok.SneakyThrows;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
@@ -23,11 +22,9 @@ public class AccountITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("account/exp_anchor_exists", actual);
     }
 
-    @Test(priority = 60)
-    public void removeAccountExpectSuccess() {
-        validateWithFormatIdentity("common/resp_bool_success", call("account/req_remove_account", "identity_manager"));
-        validateWithFormatIdentity("account/exp_unable_to_remove_account", call("account/req_remove_account", "identity_manager"));
-        String actual = call("account/req_create_account");
+    @Test(priority = 52)
+    public void recoverAccountExpectAccount() {
+        String actual = call("account/req_recover_account");
         validateWithFormatIdentity("account/exp_account", actual);
     }
 
