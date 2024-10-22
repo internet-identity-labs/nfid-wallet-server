@@ -106,12 +106,14 @@ pub fn stable_save() {
         registry,
         config,
     };
-    storage::stable_save((mem, )).unwrap();
+    storage::stable_save((mem, ))
+        .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
 
 #[post_upgrade]
 pub fn stable_restore() {
-    let (mo, ): (Memory, ) = storage::stable_restore().unwrap();
+    let (mo, ): (Memory, ) = storage::stable_restore()
+        .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     CONFIG.with(|mut config| {
         let mut config = config.borrow_mut();
         *config = mo.config.clone();
@@ -137,7 +139,8 @@ async fn get_root_id() -> String {
         None => caller().to_text(), // Return caller for testing purposes when im_canister is None
         Some(canister) => {
             let princ = caller();
-            let im_canister = Principal::from_text(canister).unwrap();
+            let im_canister = Principal::from_text(canister)
+                .expect("Unable to obtain Principal from im_canister.");
 
             match call(im_canister, "get_root_by_principal", (princ.to_text(), 0)).await {
                 Ok((Some(root_id), )) => root_id,

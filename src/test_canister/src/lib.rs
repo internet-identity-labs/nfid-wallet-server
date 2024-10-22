@@ -120,7 +120,7 @@ fn get_count_witness(key: String) -> anyhow::Result<Vec<u8>> {
 
         tree.witness(key.as_bytes())
             .serialize(&mut witness_serializer)
-            .unwrap();
+            .expect("Failed to serialize the witness for the given key.");
 
         Ok(witness)
     })
@@ -132,7 +132,8 @@ fn update_certify_keys(key: String, origins: Vec<String>) -> String {
     TREE.with(|k| {
         let mut keys = k.borrow_mut();
         let concatenated_string: String = origins.join("");
-        let b = hex::decode(sha256::digest(concatenated_string)).unwrap();
+        let b = hex::decode(sha256::digest(concatenated_string))
+            .expect("Failed to decode the hex string from the SHA256 digest");
         keys.insert(key.clone(), b);
         set_certified_data(&keys.root_hash());
         key
