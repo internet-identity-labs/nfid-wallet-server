@@ -1,50 +1,103 @@
 {
+  "version": 1,
   "canisters": {
     "delegation_factory": {
       "type": "custom",
       "candid": "src/delegation_factory/delegation_factory.did",
       "wasm": "delegation_factory.wasm",
-      "build": "src/delegation_factory/build.sh"
+      "build": "src/delegation_factory/build.sh",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
     },
     "nfid_storage": {
       "type": "custom",
       "candid": "src/nfid_storage/nfid_storage.did",
       "wasm": "nfid_storage.wasm",
-      "build": "src/nfid_storage/build.sh"
+      "build": "src/nfid_storage/build.sh",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
     },
     "swap_trs_storage": {
       "type": "custom",
       "candid": "src/swap_trs_storage/swap_trs_storage.did",
       "wasm": "swap_trs_storage.wasm",
-      "build": "src/swap_trs_storage/build.sh"
+      "build": "src/swap_trs_storage/build.sh",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
     },
     "identity_manager": {
-      "build": "src/identity_manager/build.sh",
+      "type": "custom",
       "candid": "src/identity_manager/identity_manager.did",
       "wasm": "identity_manager.wasm",
-      "type": "custom"
+      "build": "src/identity_manager/build.sh",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
+    },
+    "vault": {
+      "type": "custom",
+      "candid": "src/vault/vault.did",
+      "wasm": "vault.wasm",
+      "build": "src/vault/build.sh",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
+    },
+    "signer_ic": {
+      "type": "custom",
+      "candid": "src/ecdsa_signer/ecdsa_signer.did",
+      "wasm": "ecdsa_signer.wasm",
+      "build": "src/ecdsa_signer/build.sh",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
+    },
+    "icrc1_registry": {
+      "type": "custom",
+      "candid": "src/icrc1_registry/icrc1_registry.did",
+      "wasm": "icrc1_registry.wasm",
+      "build": "src/icrc1_registry/build.sh",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
+    },
+    "icrc1_oracle": {
+      "type": "custom",
+      "candid": "src/icrc1_oracle/icrc1_oracle.did",
+      "wasm": "icrc1_oracle.wasm",
+      "build": "src/icrc1_oracle/build.sh",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
+    },
+    "ledger": {
+      "type": "custom",
+      "candid": "ledger.public.did",
+      "wasm": "ledger.wasm"
     },
     "internet_identity_test": {
       "type": "custom",
       "candid": "src/internet_identity_test/internet_identity.did",
       "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2023-09-29/internet_identity_test.wasm.gz"
-    },
-    "test_ledger": {
-      "type": "custom",
-      "wasm": "ledger.wasm",
-      "candid": "ledger.public.did"
-    },
-    "vault": {
-      "build": "src/vault/build.sh",
-      "candid": "src/vault/vault.did",
-      "wasm": "vault.wasm",
-      "type": "custom"
-    },
-    "signer_ic": {
-      "build": "src/ecdsa_signer/build.sh",
-      "candid": "src/ecdsa_signer/ecdsa_signer.did",
-      "wasm": "ecdsa_signer.wasm",
-      "type": "custom"
     },
     "test_canister": {
       "build": "src/test_canister/build.sh",
@@ -52,34 +105,15 @@
       "wasm": "test_canister.wasm",
       "type": "custom"
     },
-    "icrc1_registry": {
-      "build": "src/icrc1_registry/build.sh",
-      "candid": "src/icrc1_registry/icrc1_registry.did",
-      "wasm": "icrc1_registry.wasm",
-      "type": "custom"
-    },
-    "icrc1_oracle": {
-      "build": "src/icrc1_oracle/build.sh",
-      "candid": "src/icrc1_oracle/icrc1_oracle.did",
-      "wasm": "icrc1_oracle.wasm",
-      "type": "custom"
-    },
-    "ledger": {
+    "test_ledger": {
       "type": "custom",
-      "candid": "ledger.public.did",
-      "wasm": "ledger.wasm"
+      "wasm": "ledger.wasm",
+      "candid": "ledger.public.did"
     }
   },
   "defaults": {
     "replica": {
       "subnet_type": "system"
-    },
-    "bitcoin": {
-      "enabled": false,
-      "nodes": [
-        "127.0.0.1:18444"
-      ],
-      "log_level": "error"
     },
     "build": {
       "packtool": "",
@@ -87,19 +121,7 @@
     }
   },
   "networks": {
-    "test": {
-      "providers": [
-        "https://icp0.io"
-      ],
-      "type": "persistent"
-    },
     "dev": {
-      "providers": [
-        "https://icp0.io"
-      ],
-      "type": "persistent"
-    },
-    "fiduciary": {
       "providers": [
         "https://icp0.io"
       ],
@@ -111,7 +133,19 @@
       ],
       "type": "persistent"
     },
-    "prod": {
+    "ic": {
+      "providers": [
+        "https://icp0.io"
+      ],
+      "type": "persistent"
+    },
+    "fiduciary": {
+      "providers": [
+        "https://icp0.io"
+      ],
+      "type": "persistent"
+    },
+    "test": {
       "providers": [
         "https://icp0.io"
       ],
@@ -121,11 +155,5 @@
       "bind": "127.0.0.1:8000",
       "type": "ephemeral"
     }
-  },
-  "version": 1,
-  "metadata": [
-    {
-      "name": "candid:service"
-    }
-  ]
+  }
 }
