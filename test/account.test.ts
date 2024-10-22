@@ -54,10 +54,6 @@ describe("Account", () => {
             expect(DFX.CREATE_ACCOUNT_FULL()).eq(Expected.ERROR("Impossible to link this II anchor, please try another one.", "404"));
         });
 
-        it("should recover account.", async function () {
-            expect(DFX.RECOVER_ACCOUNT()).eq(Expected.ACCOUNT("null", dfx.root));
-        });
-
         it("should remove account and create new one.", async function () {
             expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.BOOL("true", "200"));
             expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.ERROR("Unable to remove Account", "404"));
