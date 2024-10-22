@@ -40,8 +40,9 @@ async fn init_salt() {
 async fn get_principal(anchor_number: AnchorNumber, frontend: FrontendHostname) -> Principal {
     let caller: Principal = ic_cdk::caller();
     let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
-        .await.unwrap();
-    if option_root.is_none() || option_root.unwrap() != anchor_number {
+        .await
+        .expect("Identity Manager canister returned an empty response for the get_anchor_by_principal method.");
+    if option_root.is_none() || option_root.expect("The option_root is empty for the get_anchor_by_principal method call.") != anchor_number {
         trap("Unauthorised");
     }
     delegation::get_principal(anchor_number, frontend)
@@ -78,8 +79,8 @@ async fn get_delegation(
     let delegation = delegation::get_delegation(anchor_number, frontend, session_key, expiration, targets);
     let caller: Principal = ic_cdk::caller();
     let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
-        .await.unwrap();
-    if option_root.is_none() || option_root.unwrap() != anchor_number {
+        .await.expect("Identity Manager canister returned an empty response for the get_anchor_by_principal method.");
+    if option_root.is_none() || option_root.expect("The option_root is empty for the get_anchor_by_principal method call.") != anchor_number {
         trap("Unauthorised");
     }
     delegation

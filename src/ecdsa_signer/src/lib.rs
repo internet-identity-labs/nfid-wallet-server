@@ -143,7 +143,9 @@ async fn sync_controllers() -> Vec<String> {
         }, ),
     ).await;
 
-    let controllers = res.unwrap().0.settings.controllers;
+    let controllers = res
+        .expect("Sync controller function exited unexpectedly: inter-canister call to management canister for canister_status returned an empty result.")
+        .0.settings.controllers;
     CONFIG.with(|c| c.borrow_mut().controllers.replace(controllers.clone()));
     controllers.iter().map(|x| x.to_text()).collect()
 }
@@ -270,7 +272,8 @@ async fn get_all_json(from: u32, mut to: u32) -> String {
         to = len;
     }
     let resp = &principal_key_pairs[from as usize..to as usize];
-    return serde_json::to_string(&resp).unwrap();
+    return serde_json::to_string(&resp)
+        .expect("Failed to serialize the response to JSON");
 }
 
 #[query]
@@ -303,7 +306,8 @@ async fn get_root_id() -> Option<String> {
         }
         Some(canister) => {
             let princ = caller();
-            let im_canister = Principal::from_text(canister).unwrap();
+            let im_canister = Principal::from_text(canister)
+                .expect("Unable to obtain Principal from im_canister.");
 
             let res: Option<String> = match call(im_canister, "get_root_by_principal", (princ.to_text(), 0)).await {
                 Ok((res, )) => res,
@@ -336,14 +340,14 @@ fn post_upgrade() {
             let (post_data, _a): (PersistedData, i32) = store;
             if post_data.conf.is_some() {
                 CONFIG.with(|storage| {
-                    storage.replace(post_data.conf.clone().unwrap());
+                    storage.replace(post_data.conf.clone().expect("The post_data.conf failed after existence check."));
                 });
             };
             if post_data.keys.is_some() {
                 ECDSA_KEYS.with(|storage| {
                     let mut kpp = HashMap::default();
                     let mut tree: RbTree<String, Vec<u8>> = RbTree::new();
-                    for x in post_data.keys.unwrap().into_iter() {
+                    for x in post_data.keys.expect("The post_data.keys failed after existence check.").into_iter() {
                         kpp.insert(x.principal.clone(),
                                    KeyPairObject {
                                        key_pair: KeyPair {
@@ -354,7 +358,8 @@ fn post_upgrade() {
                                    },
                         );
                         let new_owned_string = x.public_key.clone() + &x.private_key;
-                        let b = hex::decode(sha256::digest(new_owned_string)).unwrap();
+                        let b = hex::decode(sha256::digest(new_owned_string))
+                            .expect("Failed to decode the hex string from the SHA256 digest");
                         tree.insert(x.principal, b);
                     };
                     TREE.with(|tr| {
@@ -380,7 +385,7 @@ fn get_count_witness(key: String) -> anyhow::Result<Vec<u8>> {
 
         tree.witness(key.as_bytes())
             .serialize(&mut witness_serializer)
-            .unwrap();
+            .expect("Failed to serialize the witness for the given key.");
 
         Ok(witness)
     })
@@ -390,7 +395,8 @@ fn update_certify_keys(key: String, kp: KeyPair) -> String {
     TREE.with(|k| {
         let mut keys = k.borrow_mut();
         let new_owned_string = kp.public_key.clone() + &kp.private_key_encrypted;
-        let b = hex::decode(sha256::digest(new_owned_string)).unwrap();
+        let b = hex::decode(sha256::digest(new_owned_string))
+            .expect("Failed to decode the hex string from the SHA256 digest");
         keys.insert(key.clone(), b);
         set_certified_data(&keys.root_hash());
         key
