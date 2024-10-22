@@ -17,7 +17,7 @@ pub fn secure_principal_2fa(principal: &String) {
                 let requester_ap = acc.access_points.clone().iter()
                     .find(|l| l.principal_id.eq(principal))
                     .map(|l|l.device_type)
-                    .unwrap();
+                    .expect("Failed to extract the device type for the given principal.");
                 if requester_ap.eq(&DeviceType::Email) {
                     trap("Unauthorised")
                 }

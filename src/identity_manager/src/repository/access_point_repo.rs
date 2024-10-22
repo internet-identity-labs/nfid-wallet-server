@@ -65,7 +65,7 @@ impl AccessPointRepoTrait for AccessPointRepo {
     }
 
     fn get_wallet(&self) -> WalletVariant {
-        self.account_repo.get_account().unwrap().wallet
+        self.account_repo.get_account().expect("Failed to retrieve the account from the repository.").wallet
     }
 
     fn get_access_points_by_principal(&self, princ: String) -> Option<HashSet<AccessPoint>> {
@@ -80,7 +80,7 @@ impl AccessPointRepoTrait for AccessPointRepo {
         time: u64,
         browser: Option<String>,
     ) -> Option<AccessPoint> {
-        let mut points = self.get_access_points().unwrap();
+        let mut points = self.get_access_points().expect("Failed to retrieve access points.");
         let updated = points
             .clone()
             .into_iter()
@@ -98,7 +98,9 @@ impl AccessPointRepoTrait for AccessPointRepo {
     }
 
     fn store_access_points(&self, access_points: HashSet<AccessPoint>) -> Option<Account> {
-        let mut acc = self.account_repo.get_account().unwrap().clone();
+        let mut acc = self.account_repo.get_account()
+            .expect("Failed to retrieve the account from the account repository.")
+            .clone();
         acc.access_points = access_points.clone();
         let resp = self.account_repo.store_account(acc);
         resp
@@ -116,7 +118,7 @@ impl AccessPointRepoTrait for AccessPointRepo {
         let mut acc = self
             .account_repo
             .get_account_by_principal(root_princ)
-            .unwrap()
+            .expect("Failed to retrieve the account.")
             .clone();
         acc.access_points = access_points.clone();
         let resp = self.account_repo.store_account(acc);

@@ -112,7 +112,10 @@ pub async fn get_controllers() -> Vec<Principal> {
     )
     .await;
 
-    return res.unwrap().0.settings.controllers;
+
+    return res
+        .expect("Get controllers function exited unexpectedly: inter-canister call to management canister for canister_status returned an empty result.")
+        .0.settings.controllers;
 }
 
 pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) -> Vec<DeviceData> {
@@ -120,7 +123,7 @@ pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) -> Vec
         && ConfigurationRepo::get()
             .env
             .as_ref()
-            .unwrap()
+            .expect("Failed to extract the env field from configuration.")
             .eq(&"test".to_string())
     {
         return Vec::default();
