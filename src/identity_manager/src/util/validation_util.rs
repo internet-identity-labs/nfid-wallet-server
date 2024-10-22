@@ -4,7 +4,8 @@ use crate::requests::PersonaRequest;
 
 pub fn validate_name(name: &str) -> bool {
     lazy_static! {
-    static ref RE: Regex  = Regex::new(r"^[0-9a-zA-Z][0-9a-zA-Z _]{2,30}$").unwrap();
+    static ref RE: Regex  = Regex::new(r"^[0-9a-zA-Z][0-9a-zA-Z _]{2,30}$")
+        .expect("Failed to compile regular expression for name validation.");
         }
     RE.is_match(name)
 }

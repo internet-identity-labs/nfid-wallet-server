@@ -18,7 +18,8 @@ pub struct CertifiedResponse {
 pub fn update_certify_keys(key: String, principal: String) -> String {
     TREE.with(|k| {
         let mut keys = k.borrow_mut();
-        let b = hex::decode(sha256::digest(principal)).unwrap();
+        let b = hex::decode(sha256::digest(principal))
+            .expect("Failed to decode the SHA-256 digest of the principal.");
         keys.insert(key.clone(), b);
         set_certified_data(&keys.root_hash());
         key
@@ -43,7 +44,7 @@ pub fn get_witness(key: String) -> anyhow::Result<Vec<u8>> {
 
         tree.witness(key.as_bytes())
             .serialize(&mut witness_serializer)
-            .unwrap();
+            .expect("Failed to serialize the witness.");
 
         Ok(witness)
     })

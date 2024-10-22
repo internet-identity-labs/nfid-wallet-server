@@ -22,7 +22,8 @@ pub fn save_temp_stack() -> String {
             .borrow()
             .iter()
             .map(|(device, root)| {
-                let root_hex = hex::decode(sha256::digest(root.clone())).unwrap();
+                let root_hex = hex::decode(sha256::digest(root.clone()))
+                    .expect("Failed to decode the SHA-256 digest of the root.");
                 (device.clone(), root_hex)
             })
             .collect()
@@ -41,7 +42,8 @@ pub fn get_remaining_size_after_rebuild_index_slice_from_temp_stack(
     let (slice, remaining_size): (Vec<(String, Vec<u8>)>, usize) =
         DEVICE_INDEX_STACK.with(|index_ref| {
             let mut index = index_ref.borrow_mut();
-            let mut amount: usize = amount_opt.map_or_else(|| 10_000, |v| v.try_into().unwrap());
+            let mut amount: usize = amount_opt.map_or_else(|| 10_000, |v| v.try_into()
+                .expect("Failed to convert the amount to usize."));
             amount = amount.min(index.len());
             let slice = index.drain(..amount).collect();
             let index_len = index.len();
@@ -62,5 +64,5 @@ pub fn get_remaining_size_after_rebuild_index_slice_from_temp_stack(
         set_certified_data(&keys.root_hash());
     });
 
-    remaining_size.try_into().unwrap()
+    remaining_size.try_into().expect("Failed to convert remaining size to usize.")
 }

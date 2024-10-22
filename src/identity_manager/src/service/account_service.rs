@@ -90,7 +90,7 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
         let mut acc = account_request_to_account(account_request.clone());
         if account_request.email.is_some() {
             if !email_validation_service::contains(
-                account_request.email.clone().unwrap().to_string(),
+                account_request.email.clone().expect("Failed to retrieve the email from the account request.").to_string(),
                 princ,
             ) {
                 trap("Email and principal are not valid.")

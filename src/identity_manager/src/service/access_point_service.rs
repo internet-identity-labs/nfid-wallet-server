@@ -74,7 +74,8 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
         match get_account_service().get_account() {
             Some(acc) => {
                 let mut access_points = acc.access_points;
-                let princ = Principal::from_text(access_point_request.pub_key.clone()).unwrap();
+                let princ = Principal::from_text(access_point_request.pub_key.clone())
+                    .expect("Failed to parse the public key from the access point request.");
                 match acc.wallet {
                     WalletVariant::NFID => {
                         if !acc.wallet.eq(&WalletVariant::NFID) {
@@ -118,7 +119,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
             .store_access_points_by_principal(devices, account.principal_id.clone());
         self.access_point_repo
             .update_account_index(princ, account.principal_id.clone());
-        acc.unwrap()
+        acc.expect("Failed to store access points for the given principal.")
     }
 
     fn update_access_point(
@@ -196,6 +197,6 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
 
         self.access_point_repo
             .update_account_index(access_point_principal_id, account.principal_id.clone());
-        account_updated.unwrap()
+        account_updated.expect("Failed to update access points for the account.")
     }
 }
