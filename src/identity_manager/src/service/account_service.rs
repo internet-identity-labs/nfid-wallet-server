@@ -11,7 +11,6 @@ use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
 use crate::service::ic_service::DeviceData;
-use crate::service::security_service::secure_2fa;
 use crate::{get_caller, AccessPointServiceTrait, Account, HttpResponse};
 
 use super::email_validation_service;
@@ -34,11 +33,6 @@ pub trait AccountServiceTrait {
     fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse>;
     fn get_root_id_by_principal(&mut self, princ: String) -> Option<String>;
     fn get_anchor_by_principal(&mut self, princ: String) -> Option<u64>;
-    async fn recover_account(
-        &mut self,
-        anchor: u64,
-        wallet: Option<WalletVariant>,
-    ) -> HttpResponse<AccountResponse>;
     fn get_all_accounts(&mut self) -> Vec<Account>;
     async fn sync_recovery_phrase_from_internet_identity(
         &self,
@@ -179,46 +173,6 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
         match { self.account_repo.get_account_by_principal(princ) } {
             None => None,
             Some(acc) => Some(acc.anchor),
-        }
-    }
-
-    async fn recover_account(
-        &mut self,
-        anchor: u64,
-        wallet: Option<WalletVariant>,
-    ) -> HttpResponse<AccountResponse> {
-        let vw = match wallet.clone() {
-            None => WalletVariant::InternetIdentity,
-            Some(x) => x,
-        };
-        if vw.eq(&WalletVariant::InternetIdentity) {
-            match { self.account_repo.get_account_by_anchor(anchor, vw) } {
-                None => {
-                    let account = AccountRequest {
-                        anchor,
-                        wallet,
-                        access_point: None,
-                        email: None,
-                    };
-                    self.create_account(account).await
-                }
-                Some(acc) => {
-                    //TODO looks like we can recover not only with the recovery phrase but with every registered device (bug?)
-                    ic_service::trap_if_not_authenticated(anchor.clone(), get_caller()).await;
-                    to_success_response(account_to_account_response(acc))
-                }
-            }
-        } else {
-            secure_2fa();
-            match { self.account_repo.get_account() } {
-                None => trap("Recovery not registered"),
-                Some(account) => {
-                    if !account.anchor.eq(&anchor) {
-                        trap("Recovery not registered")
-                    }
-                    to_success_response(account_to_account_response(account))
-                }
-            }
         }
     }
 

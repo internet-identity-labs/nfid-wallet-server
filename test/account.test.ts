@@ -282,15 +282,6 @@ describe("Account", () => {
             expect(response.error).empty;
         });
 
-        it("should recover account.", async function () {
-            var response: HTTPAccountResponse = (await dfx.im.actor.recover_account(
-                iiAnchor,
-                []
-            )) as HTTPAccountResponse;
-            expect(response.status_code).eq(200);
-            expect(response.data[0].anchor).eq(iiAnchor);
-            expect(response.error).empty;
-        });
 
         it("should throw error due to not existing anchor.", async function () {
             try {
@@ -332,18 +323,6 @@ describe("Account", () => {
 
             expect(response.status_code).eq(200);
             expect(response.data[0].anchor).eq(iiAnchor);
-            expect(response.error).empty;
-        });
-
-        it("should recover NFID account using registered device.", async function () {
-            const identity = getIdentity("87654321876543218765432187654311");
-            const actor = await getActor(dfx.im.id, identity, imIdl);
-            var response: HTTPAccountResponse = (await actor.recover_account(nfidAnchor, [
-                { NFID: null },
-            ])) as HTTPAccountResponse;
-
-            expect(response.status_code).eq(200);
-            expect(response.data[0].anchor).eq(100000000n);
             expect(response.error).empty;
         });
 
