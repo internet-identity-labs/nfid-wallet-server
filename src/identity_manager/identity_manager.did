@@ -349,12 +349,9 @@ service : () -> {
     //---BEGIN-CUT---
     configure: (ConfigurationRequest) -> ();
     get_config: () -> (ConfigurationResponse) query;
-    anchors: () -> (HTTPAnchorsResponse) query;
     sync_controllers: () -> (vec text);
-    remove_account_by_phone_number: () -> (BoolHttpResponse);
     //---END-CUT---
     get_account: () -> (HTTPAccountResponse) query;
-    recover_account: (nat64, opt WalletVariant) -> (HTTPAccountResponse);
     get_account_by_anchor: (nat64) -> (HTTPAccountResponse) query;
     get_account_by_principal: (text) -> (HTTPAccountResponse) query;
     create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
@@ -362,27 +359,13 @@ service : () -> {
     remove_account_by_principal: (text) -> (BoolHttpResponse);
     update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
 
-    create_persona: (PersonaRequest) -> (HTTPAccountResponse);
-    update_persona: (PersonaRequest) -> (HTTPAccountResponse);
     read_personas: () -> (HTTPPersonasResponse) query;
 
-    create_application: (Application) -> (HTTPApplicationResponse);
-    create_application_all: (vec Application) -> (HTTPApplicationResponse);
-    delete_application: (text) -> (BoolHttpResponse);
     /**
     * Retrieve list of registered applications
     * @return HTTPApplicationResponse
     */
     read_applications: () -> (HTTPApplicationResponse) query;
-    is_over_the_application_limit: (text) -> (BoolHttpResponse) query;
-    update_application_alias: (text, text, opt text) -> (BoolHttpResponse);
-    /**
-    * Retrieve registered application
-    * @param domain
-    * @return HTTPAppResponse
-    */
-    get_application: (text) -> (HTTPAppResponse);
-    update_application: (Application) -> (HTTPApplicationResponse);
     update_2fa: (bool) -> (AccountResponse);
 
     create_access_point: (AccessPointRequest) -> (HTTPAccessPointResponse);
@@ -394,20 +377,10 @@ service : () -> {
     store_accounts: (vec Account) -> (BoolHttpResponse);
     restore_accounts: (text) -> (BoolHttpResponse);
     get_all_accounts_json: (nat32, nat32) -> (text) query;
-    add_all_accounts_json: (text) -> ();
     count_anchors: () -> (nat64) query;
-    recover_google_device: (vec text) -> (vec text);
-    certify_phone_number_sha2: (text, text) -> (StringHttpResponse) query;
-    //---BEGIN-CUT---
-    getCanisterMetrics: (GetMetricsParameters) -> (opt CanisterMetrics) query;
-    getCanisterLog: (opt CanisterLogRequest) -> (opt CanisterLogResponse) query;
-    collectCanisterMetrics: () -> ();
-    //---END-CUT---
     validate_signature: (opt text) -> (nat64, opt text) query;
     add_email_and_principal_for_create_account_validation: (text, text, nat64) -> (BoolHttpResponse);
-    recover_email: (vec PrincipalEmailRequest) -> (vec text);
     get_remaining_size_after_rebuild_device_index_slice_from_temp_stack: (opt nat64) -> (nat64);
     save_temp_stack_to_rebuild_device_index: () -> (text);
     sync_recovery_phrase_from_internet_identity: (nat64) -> (HTTPAccountResponse);
-    recover_root_access_point: (vec text) -> (vec text);
 }

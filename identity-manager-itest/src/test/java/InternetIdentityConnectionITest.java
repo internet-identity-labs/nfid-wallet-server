@@ -127,27 +127,6 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
         assertTrue(response.data.isPresent());
     }
 
-    @Test(priority = 50)
-    @SneakyThrows
-    public void recoverAccountWhenOk() {
-        var response = callUpdateHttp("recover_account", im, IDLValue.create(10000l, Type.NAT64));
-
-        assertEquals(200, response.statusCode.intValue());
-        assertTrue(response.error.isEmpty());
-        assertTrue(response.data.isPresent());
-    }
-
-
-    @Test(priority = 61)
-    public void recoverAccountWhenNotExistsInII() {
-        try {
-            callUpdateHttp("recover_account", im, IDLValue.create(10002l, Type.NAT64));
-            assertTrue(false);
-        } catch (Exception e) {
-            assertTrue(e.getMessage().contains("could not be authenticated"));
-        }
-    }
-
     @Test(priority = 70)
     @SneakyThrows
     public void removeAccountExpectOk() {
@@ -157,20 +136,6 @@ public class InternetIdentityConnectionITest extends BaseDFXITest {
         assertTrue(response.error.isEmpty());
         assertTrue(response.data.isPresent());
     }
-
-    @Test(priority = 71)
-    @SneakyThrows
-    public void recoverAccountWhenNotExistsInIdentityManager() {
-        call("account/register_seed_phrase");
-        var path = Paths.get(this.getClass().getClassLoader().getResource("identity/" + "recover_identity.pem").getPath()).toAbsolutePath().toString();
-        callDfxCommand("dfx identity import testii " + path);
-        callDfxCommand("dfx identity use testii");
-        callDfxCommand("dfx canister call identity_manager recover_account '(10000)'");
-        String actual = call("account/req_get_account", "identity_manager");
-        Pair<String, String> tuple = TestUtils.cutField(actual, "last_used");
-        validateWithFormatIdentity("account/exp_account_recovered", tuple.first());
-    }
-
 
     @SneakyThrows
     private void register() {

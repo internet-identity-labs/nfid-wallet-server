@@ -196,15 +196,6 @@ async fn create_account(account_request: AccountRequest) -> HttpResponse<Account
     response
 }
 
-#[update]
-async fn recover_account(
-    anchor: u64,
-    wallet: Option<WalletVariant>,
-) -> HttpResponse<AccountResponse> {
-    let mut account_service = get_account_service();
-    account_service.recover_account(anchor, wallet).await
-}
-
 #[query]
 #[operator]
 async fn get_account_by_anchor(

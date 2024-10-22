@@ -54,10 +54,6 @@ describe("Account", () => {
             expect(DFX.CREATE_ACCOUNT_FULL()).eq(Expected.ERROR("Impossible to link this II anchor, please try another one.", "404"));
         });
 
-        it("should recover account.", async function () {
-            expect(DFX.RECOVER_ACCOUNT()).eq(Expected.ACCOUNT("null", dfx.root));
-        });
-
         it("should remove account and create new one.", async function () {
             expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.BOOL("true", "200"));
             expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.ERROR("Unable to remove Account", "404"));
@@ -282,68 +278,11 @@ describe("Account", () => {
             expect(response.error).empty;
         });
 
-        it("should recover account.", async function () {
-            var response: HTTPAccountResponse = (await dfx.im.actor.recover_account(
-                iiAnchor,
-                []
-            )) as HTTPAccountResponse;
-            expect(response.status_code).eq(200);
-            expect(response.data[0].anchor).eq(iiAnchor);
-            expect(response.error).empty;
-        });
-
-        it("should throw error due to not existing anchor.", async function () {
-            try {
-                await dfx.im.actor.recover_account(iiAnchor + 1n, []);
-            } catch (e) {
-                expect(e.message).contains("could not be authenticated");
-            }
-        });
 
         it("should remove account.", async function () {
             var response: BoolHttpResponse = (await dfx.im.actor.remove_account()) as BoolHttpResponse;
             expect(response.status_code).eq(200);
             expect(response.data[0]).eq(true);
-            expect(response.error).empty;
-        });
-
-        it("should recover account using seed phrase.", async function () {
-            const identity = getIdentity("87654321876543218765432187654322");
-            const actor = await getActor(dfx.im.id, identity, imIdl);
-            var deviceData: DeviceData = {
-                alias: "RecoveryDevice",
-                protection: {
-                    protected: null,
-                },
-                pubkey: Array.from(new Uint8Array(identity.getPublicKey().toDer())),
-                key_type: {
-                    seed_phrase: null,
-                },
-                purpose: {
-                    authentication: null,
-                },
-                credential_id: [],
-            };
-
-            await dfx.iit.actor.add(iiAnchor, deviceData);
-
-            await actor.recover_account(iiAnchor, []);
-            var response: HTTPAccountResponse = (await actor.get_account()) as HTTPAccountResponse;
-
-            expect(response.status_code).eq(200);
-            expect(response.data[0].anchor).eq(iiAnchor);
-            expect(response.error).empty;
-        });
-
-        it("should recover NFID account using registered device.", async function () {
-            const identity = getIdentity("87654321876543218765432187654311");
-            const actor = await getActor(dfx.im.id, identity, imIdl);
-            var response: HTTPAccountResponse = (await actor.recover_account(nfidAnchor, [
-                { NFID: null },
-            ])) as HTTPAccountResponse;
-
-            expect(response.status_code).eq(200);
-            expect(response.data[0].anchor).eq(100000000n);
             expect(response.error).empty;
         });
 

@@ -22,17 +22,4 @@ public class AccountITest extends BaseIdentityManagerITest {
         validateWithFormatIdentity("account/exp_anchor_exists", actual);
     }
 
-    @Test(priority = 52)
-    public void recoverAccountExpectAccount() {
-        String actual = call("account/req_recover_account");
-        validateWithFormatIdentity("account/exp_account", actual);
-    }
-
-    @Test(priority = 70)
-    @Ignore //timestamp
-    public void getLogsExpectSuccess() {
-        validateWithFormatIdentity("account/exp_logs", call("common/req_get_logs"));
-        validateWithFormatIdentity("account/exp_all_logs", call("common/req_get_all_logs"));
-    }
-
 }
