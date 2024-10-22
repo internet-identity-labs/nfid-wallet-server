@@ -40,7 +40,7 @@ impl PersonaRepoTrait for PersonaRepo {
         if acc.is_none() {
             return None;
         }
-        let mut account = acc.unwrap().clone();
+        let mut account = acc.expect("Failed to retrieve account. The account repository returned None.").clone();
         account.personas.push(persona);
         self.account_repo.store_account(account)
     }
@@ -50,7 +50,7 @@ impl PersonaRepoTrait for PersonaRepo {
         if acc.is_none() {
             return None;
         }
-        let mut account = acc.unwrap().clone();
+        let mut account = acc.expect("Failed to retrieve account. The account repository returned None.").clone();
         account.personas = personas;
         self.account_repo.store_account(account)
     }

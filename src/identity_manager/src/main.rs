@@ -66,17 +66,17 @@ async fn configure(request: ConfigurationRequest) -> () {
         lambda_url: request.lambda_url.unwrap_or(default.lambda_url),
         lambda: request.lambda.unwrap_or(default.lambda),
         token_ttl: if request.token_ttl.is_some() {
-            Duration::from_secs(request.token_ttl.unwrap())
+            Duration::from_secs(request.token_ttl.expect("The request.token_ttl failed after existence check."))
         } else {
             default.token_ttl
         },
         token_refresh_ttl: if request.token_ttl.is_some() {
-            Duration::from_secs(request.token_refresh_ttl.unwrap())
+            Duration::from_secs(request.token_refresh_ttl.expect("The request.token_refresh_ttl failed after existence check."))
         } else {
             default.token_refresh_ttl
         },
         whitelisted_phone_numbers: if request.whitelisted_phone_numbers.is_some() {
-            request.whitelisted_phone_numbers.unwrap()
+            request.whitelisted_phone_numbers.expect("The request.whitelisted_phone_numbers failed after existence check.")
         } else {
             default.whitelisted_phone_numbers
         },
@@ -91,7 +91,7 @@ async fn configure(request: ConfigurationRequest) -> () {
             default.backup_canister_id
         },
         ii_canister_id: if request.ii_canister_id.is_some() {
-            request.ii_canister_id.unwrap()
+            request.ii_canister_id.expect("The request.ii_canister_id failed after existence check.")
         } else {
             default.ii_canister_id
         },
@@ -116,7 +116,7 @@ async fn configure(request: ConfigurationRequest) -> () {
             default.commit_hash
         },
         operator: if request.operator.is_some() {
-            request.operator.unwrap()
+            request.operator.expect("The request.operator failed after existence check.")
         } else {
             default.operator
         },
@@ -313,7 +313,7 @@ async fn get_all_accounts_json(from: u32, mut to: u32) -> String {
         to = len;
     }
     let b = &accounts[from as usize..to as usize];
-    serde_json::to_string(&b).unwrap()
+    serde_json::to_string(&b).expect("Failed to serialize the response to JSON")
 }
 
 #[query]

@@ -73,7 +73,13 @@ impl BasicEntity {
 
 impl AdminRepo {
     pub fn get() -> Principal {
-        ADMINS.with(|admins| admins.borrow().iter().next().unwrap().clone())
+        ADMINS.with(|admins| admins
+            .borrow()
+            .iter()
+            .next()
+            .expect("Failed to retrieve an admin. The admin list is empty.")
+            .clone()
+        )
     }
 
     pub fn save(principal: Principal) -> () {
@@ -116,7 +122,7 @@ impl ConfigurationRepo {
     pub fn get_default_config() -> Configuration {
         let lambda =
             Principal::from_text("ritih-icnvs-i7b67-sc2vs-nwo2e-bvpe5-viznv-uqluj-xzcvs-6iqsp-fqe")
-                .unwrap();
+                .expect("Failed to parse the lambda principal string.");
         Configuration {
             lambda_url: "https://d8m9ttp390ku4.cloudfront.net/dev".to_string(),
             lambda: lambda,
@@ -125,7 +131,7 @@ impl ConfigurationRepo {
             whitelisted_phone_numbers: Vec::default(),
             heartbeat: Option::None,
             backup_canister_id: None,
-            ii_canister_id: Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap(),
+            ii_canister_id: Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").expect("Failed to parse the ii_canister_id string."),
             whitelisted_canisters: None,
             env: None,
             git_branch: None,
@@ -218,7 +224,7 @@ pub fn post_upgrade() {
         Logs,
         Option<Applications>,
         Option<Configuration>,
-    ) = storage::stable_restore().unwrap();
+    ) = storage::stable_restore().expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     CONFIGURATION.with(|config| {
         let configuration = configuration_maybe.unwrap_or(ConfigurationRepo::get_default_config());
         config.replace(configuration);
