@@ -106,7 +106,8 @@ thread_local! {
     pub static ICRC_REGISTRY: RefCell<HashSet<ICRC1>> = RefCell::new(HashSet::default());
 }
 
-
+/// Synchronizes the controllers from the management canister.
+/// This ensures the canister is aware of all controllers, allowing them to function as administrators.
 #[update]
 #[candid_method(update)]
 async fn sync_controllers() -> Vec<String> {
@@ -125,6 +126,7 @@ async fn sync_controllers() -> Vec<String> {
     controllers.iter().map(|x| x.to_text()).collect()
 }
 
+/// Persists a single ICRC1 canister's metadata into the canister's storage.
 #[update]
 pub async fn store_icrc1_canister(request: ICRC1Request) {
     get_root_id().await;
@@ -152,6 +154,8 @@ pub async fn store_icrc1_canister(request: ICRC1Request) {
     });
 }
 
+/// Invoked when the canister starts.
+/// Initializes the application with `Conf` parameters and saves them to storage.
 #[init]
 pub async fn init(conf: Option<Conf>) {
     match conf {
@@ -164,6 +168,8 @@ pub async fn init(conf: Option<Conf>) {
     };
 }
 
+
+/// Returns all persisted ICRC1 canisters.
 #[query]
 pub async fn get_all_icrc1_canisters() -> HashSet<ICRC1> {
     ICRC_REGISTRY.with(|registry| {
@@ -172,6 +178,7 @@ pub async fn get_all_icrc1_canisters() -> HashSet<ICRC1> {
     })
 }
 
+/// Replaces the existing ICRC1 canisters with the provided list.
 #[update]
 pub async fn replace_icrc1_canisters(icrc1: Vec<ICRC1>) {
     trap_if_not_authenticated_admin();
@@ -183,6 +190,7 @@ pub async fn replace_icrc1_canisters(icrc1: Vec<ICRC1>) {
     })
 }
 
+/// Persists an array of ICRC1 canisters under a specified category.
 #[update]
 pub async fn store_new_icrc1_canisters(icrc1: Vec<ICRC1>) {
     trap_if_not_authenticated_admin();
@@ -200,6 +208,7 @@ struct Memory {
     config: Conf,
 }
 
+/// Applies changes prior to the canister upgrade.
 #[pre_upgrade]
 pub fn stable_save() {
     let registry = ICRC_REGISTRY.with(|registry| {
@@ -218,6 +227,7 @@ pub fn stable_save() {
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
 
+/// Applies changes following the canister upgrade.
 #[post_upgrade]
 pub fn stable_restore() {
     let (mo, ): (Memory, ) = storage::stable_restore()
