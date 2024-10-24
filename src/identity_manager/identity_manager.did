@@ -378,7 +378,6 @@ service : () -> {
     restore_accounts: (text) -> (BoolHttpResponse);
     get_all_accounts_json: (nat32, nat32) -> (text) query;
     count_anchors: () -> (nat64) query;
-    validate_signature: (opt text) -> (nat64, opt text) query;
     add_email_and_principal_for_create_account_validation: (text, text, nat64) -> (BoolHttpResponse);
     get_remaining_size_after_rebuild_device_index_slice_from_temp_stack: (opt nat64) -> (nat64);
     save_temp_stack_to_rebuild_device_index: () -> (text);

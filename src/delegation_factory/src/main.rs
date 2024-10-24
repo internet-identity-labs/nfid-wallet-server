@@ -29,12 +29,15 @@ pub struct InitArgs {
     pub im_canister: Principal,
 }
 
+/// Initializes the cryptographic salt.
+/// This is essential for generating user principals.
 #[update]
 #[candid_method]
 async fn init_salt() {
     state::init_salt().await;
 }
 
+/// Returns the principal based on the anchor number and hostname.
 #[query(composite = true)]
 #[candid_method(query)]
 async fn get_principal(anchor_number: AnchorNumber, frontend: FrontendHostname) -> Principal {
@@ -48,6 +51,8 @@ async fn get_principal(anchor_number: AnchorNumber, frontend: FrontendHostname) 
     delegation::get_principal(anchor_number, frontend)
 }
 
+/// Initiates the preparation of a delegation using the user's data.
+/// This is necessary to obtain the delegation in the `get_delegation` method.
 #[update]
 #[candid_method]
 async fn prepare_delegation(
@@ -67,6 +72,8 @@ async fn prepare_delegation(
         .await
 }
 
+/// Returns the delegation that was initially prepared by the `prepare_delegation` method.
+/// The delegation can only be returned through a query method.
 #[query(composite = true)]
 #[candid_method(query)]
 async fn get_delegation(
@@ -86,23 +93,29 @@ async fn get_delegation(
     delegation
 }
 
+
+/// Returns the canister ID of the Identity Manager.
 #[query]
 async fn get_im_canister_setting() -> Principal {
     state::get_im_canister()
 }
 
+/// Called when the canister starts.
+/// Initializes the application with `InitArgs` parameters and stores them in persistent storage.
 #[init]
 #[candid_method(init)]
 fn init(maybe_arg: Option<InitArgs>) {
     initialize(maybe_arg);
 }
 
+/// Applies changes following a canister upgrade.
 #[post_upgrade]
 async fn post_upgrade(maybe_arg: Option<InitArgs>) {
     init_from_memory().await;
     initialize(maybe_arg);
 }
 
+/// Applies changes prior to a canister upgrade.
 #[pre_upgrade]
 async fn save_persistent_state() {
     save_to_temp_memory().await;

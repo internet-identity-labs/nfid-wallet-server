@@ -38,6 +38,8 @@ impl Default for State {
     }
 }
 
+/// Invoked when the canister starts.
+/// Initializes the application with `InitArgs` parameters and stores them in persistent storage.
 #[init]
 #[candid_method(init)]
 fn init(maybe_arg: Option<InitArgs>) {
@@ -46,6 +48,8 @@ fn init(maybe_arg: Option<InitArgs>) {
     }
 }
 
+
+/// Returns a passkey for the given array of keys.
 #[query]
 #[candid_method(query)]
 async fn get_passkey(keys: Vec<String>) -> Vec<PasskeyData> {
@@ -60,7 +64,7 @@ async fn get_passkey(keys: Vec<String>) -> Vec<PasskeyData> {
     response
 }
 
-
+/// Persists the public data of a passkey using the specified key.
 #[update]
 #[candid_method(update)]
 async fn store_passkey(key: String, data: String) -> u64 {
@@ -78,11 +82,13 @@ async fn store_passkey(key: String, data: String) -> u64 {
     })
 }
 
+/// Applies changes after the canister upgrade.
 #[post_upgrade]
 async fn post_upgrade(maybe_arg: Option<InitArgs>) {
     init_from_memory().await;
 }
 
+/// Applies changes before the canister upgrade.
 #[pre_upgrade]
 async fn save_persistent_state() {
     save_to_temp_memory().await;
