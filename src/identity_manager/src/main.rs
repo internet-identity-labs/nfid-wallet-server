@@ -46,11 +46,15 @@ mod service;
 mod structure;
 mod util;
 
+/// Invoked when the canister starts.
+/// Initializes the application without parameters and saves the caller to storage.
 #[init]
 async fn init() -> () {
     AdminRepo::save(ic_service::get_caller());
 }
 
+/// Synchronizes controllers from the management canister.
+/// This ensures the canister is aware of all controllers, allowing them to function as administrators.
 #[update]
 async fn sync_controllers() -> Vec<String> {
     let controllers = ic_service::get_controllers().await;
@@ -58,6 +62,9 @@ async fn sync_controllers() -> Vec<String> {
     ControllersRepo::get().iter().map(|x| x.to_text()).collect()
 }
 
+/// Saves the configuration into storage.
+/// This is necessary for applying the global configuration for the canister.
+/// This method can only be called by an administrator.
 #[update]
 #[admin]
 async fn configure(request: ConfigurationRequest) -> () {
@@ -126,6 +133,9 @@ async fn configure(request: ConfigurationRequest) -> () {
     });
 }
 
+/// Returns the configuration to the caller.
+/// This ensures that the correct configuration is persisted.
+/// The configuration contains no sensitive data and is safe to be public.
 #[query]
 async fn get_config() -> ConfigurationResponse {
     let config = CONFIGURATION.with(|config| config.borrow().clone());
@@ -146,12 +156,16 @@ async fn get_config() -> ConfigurationResponse {
     }
 }
 
+/// Returns a list of access points to the caller based on their principal.
 #[query]
 async fn read_access_points() -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
     access_point_service.read_access_points()
 }
 
+/// Returns the access point used by the caller.
+/// This method updates the last used access point and browser for the caller's last sign-in, enabling tracking of access point usage.
+/// It requires two-factor authentication (2FA) if enabled (via passkey).
 #[update]
 #[two_f_a]
 async fn use_access_point(browser: Option<String>) -> HttpResponse<AccessPointResponse> {
@@ -159,6 +173,9 @@ async fn use_access_point(browser: Option<String>) -> HttpResponse<AccessPointRe
     access_point_service.use_access_point(browser)
 }
 
+/// Creates a new access point for the caller.
+/// This is necessary when a user adds a new device for signing in.
+/// Two-factor authentication (2FA) is required if enabled (via passkey).
 #[update]
 #[two_f_a]
 async fn create_access_point(
@@ -171,6 +188,9 @@ async fn create_access_point(
     response
 }
 
+/// Updates the existing access point for the caller.
+/// This is necessary when a user updates a device.
+/// Two-factor authentication (2FA) is required if enabled (via passkey).
 #[update]
 #[two_f_a]
 async fn update_access_point(
@@ -180,6 +200,9 @@ async fn update_access_point(
     access_point_service.update_access_point(access_point.clone())
 }
 
+/// Removes the existing access point for the caller.
+/// This is necessary when a user removes a device.
+/// Two-factor authentication (2FA) is required if enabled (via passkey).
 #[update]
 #[two_f_a]
 async fn remove_access_point(
@@ -189,6 +212,9 @@ async fn remove_access_point(
     access_point_service.remove_access_point(access_point)
 }
 
+/// Allows the user to create an account.
+/// This is necessary for users to register and subsequently add their access points.
+/// Two-factor authentication (2FA) cannot be enabled before the actual registration process.
 #[update]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
@@ -196,6 +222,9 @@ async fn create_account(account_request: AccountRequest) -> HttpResponse<Account
     response
 }
 
+/// Returns account information for a specified anchor.
+/// This is necessary for debugging purposes.
+/// Accessible only to operators.
 #[query]
 #[operator]
 async fn get_account_by_anchor(
@@ -211,6 +240,9 @@ async fn get_account_by_anchor(
     response
 }
 
+/// Adds the principal ID and email address to temporary storage for email validation during account creation.
+/// The TTL hashmap is utilized to keep the storage efficient.
+/// Accessible only to lambda users.
 #[update]
 #[lambda]
 async fn add_email_and_principal_for_create_account_validation(
@@ -222,6 +254,9 @@ async fn add_email_and_principal_for_create_account_validation(
     HttpResponse::data(200, true)
 }
 
+/// Returns account information for a specified principal.
+/// This is necessary for debugging purposes.
+/// Accessible only to operators.
 #[query]
 #[operator]
 async fn get_account_by_principal(princ: String) -> HttpResponse<AccountResponse> {
@@ -230,6 +265,8 @@ async fn get_account_by_principal(princ: String) -> HttpResponse<AccountResponse
     response
 }
 
+/// Returns the root principal ID based on any of the access point principal IDs.
+/// This is necessary to establish a connection from a device to the root user account.
 #[query]
 async fn get_root_by_principal(princ: String) -> Option<String> {
     let mut account_service = get_account_service();
@@ -237,6 +274,8 @@ async fn get_root_by_principal(princ: String) -> Option<String> {
     account_service.get_root_id_by_principal(princ)
 }
 
+/// Returns the anchor ID based on any of the access point principal IDs.
+/// This is necessary to obtain the anchor ID from a device associated with the root user account.
 #[query]
 async fn get_anchor_by_principal(princ: String) -> Option<u64> {
     let mut account_service = get_account_service();
@@ -244,6 +283,9 @@ async fn get_anchor_by_principal(princ: String) -> Option<u64> {
     account_service.get_anchor_by_principal(princ)
 }
 
+/// Enables or disables the two-factor authentication (2FA) sign-in option (passkey only).
+/// Once enabled, the user cannot sign in using any other access point, including Web2 devices.
+/// Two-factor authentication (2FA) is required if enabled (via passkey).
 #[update]
 #[two_f_a]
 async fn update_2fa(state: bool) -> AccountResponse {
@@ -251,12 +293,17 @@ async fn update_2fa(state: bool) -> AccountResponse {
     account_service.update_2fa(state)
 }
 
+/// Returns the account associated with the caller.
+/// This is necessary for displaying the user's data in the UI.
 #[query]
 async fn get_account() -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     account_service.get_account_response()
 }
 
+/// Removes the user account associated with the caller.
+/// Two-factor authentication (2FA) is required if enabled (via passkey).
+/// This method is deprecated as the flow is no longer in use.
 #[update]
 #[two_f_a]
 #[deprecated()]
@@ -265,6 +312,10 @@ async fn remove_account() -> HttpResponse<bool> {
     account_service.remove_account()
 }
 
+/// Returns a list of personas.
+/// A persona is a subaccount generated for a specific application with a different derivation origin.
+/// This approach has been replaced by the global account and anonymous account.
+/// This method is deprecated as the flow is no longer in use.
 #[deprecated()]
 #[query]
 async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
@@ -272,15 +323,9 @@ async fn read_personas() -> HttpResponse<Vec<PersonaResponse>> {
     persona_service.read_personas()
 }
 
-#[query]
-async fn validate_signature(payload: Option<String>) -> (u64, Option<String>) {
-    let mut account_service = get_account_service();
-    match account_service.get_account() {
-        None => trap("Not registered"),
-        Some(account) => (account.anchor, payload),
-    }
-}
-
+/// Returns a list of applications.
+/// This approach has been replaced by the global account and anonymous account.
+/// This method is deprecated as the flow is no longer in use.
 #[deprecated()]
 #[query]
 async fn read_applications() -> HttpResponse<Vec<Application>> {
@@ -288,7 +333,9 @@ async fn read_applications() -> HttpResponse<Vec<Application>> {
     application_service.read_applications()
 }
 
-//backup
+/// Returns all accounts within the specified range.
+/// This is necessary for backup purposes.
+/// Accessible only to operators.
 #[query]
 #[operator]
 async fn get_all_accounts_json(from: u32, mut to: u32) -> String {
@@ -307,6 +354,9 @@ async fn get_all_accounts_json(from: u32, mut to: u32) -> String {
     serde_json::to_string(&b).expect("Failed to serialize the response to JSON")
 }
 
+/// Returns the number of created anchors.
+/// This is necessary for backup purposes.
+/// Accessible only to operators.
 #[query]
 #[operator]
 async fn count_anchors() -> u64 {
@@ -315,6 +365,10 @@ async fn count_anchors() -> u64 {
     accounts as u64
 }
 
+/// Initiates the rebuild of the access point index in the canister.
+/// This is necessary for constructing the index of access point principals to the root account principal.
+/// This method does not apply the calculation of the certified tree.
+/// Accessible only to operators.
 #[update]
 #[operator]
 async fn rebuild_index() {
@@ -329,6 +383,10 @@ async fn rebuild_index() {
     })
 }
 
+/// Applies the specified amount of accounts in a single run.
+/// Due to the large number of anchors, it is not feasible to execute this in one go within the post-upgrade script.
+/// This method calculates the certified tree for certified query calls.
+/// Accessible only to operators.
 #[update]
 #[operator]
 async fn get_remaining_size_after_rebuild_device_index_slice_from_temp_stack(
@@ -337,12 +395,17 @@ async fn get_remaining_size_after_rebuild_device_index_slice_from_temp_stack(
     device_index_service::get_remaining_size_after_rebuild_index_slice_from_temp_stack(size)
 }
 
+/// Saves all accounts in a temporary stack to be processed by the `get_remaining_size_after_rebuild_device_index_slice_from_temp_stack` method.
+/// This process must be completed in its entirety to fully rebuild the index.
+/// Accessible only to operators.
 #[update]
 #[operator]
 async fn save_temp_stack_to_rebuild_device_index() -> String {
     device_index_service::save_temp_stack()
 }
 
+/// Retrieves the user recovery phrase from Internet Identity.
+/// This is necessary in the event of an inconsistency between their recovery phrase storage and ours.
 #[update]
 async fn sync_recovery_phrase_from_internet_identity(anchor: u64) -> HttpResponse<AccountResponse> {
     let account_service = get_account_service();
@@ -351,6 +414,8 @@ async fn sync_recovery_phrase_from_internet_identity(anchor: u64) -> HttpRespons
         .await
 }
 
+/// Returns a certified response.
+/// This is necessary to validate user access point principals for certification query calls.
 #[query]
 async fn get_root_certified() -> CertifiedResponse {
     let caller = caller().to_text();
@@ -375,15 +440,16 @@ async fn get_root_certified() -> CertifiedResponse {
     }
 }
 
+/// Applies changes before the canister upgrade.
 #[pre_upgrade]
 fn pre_upgrade() {
     repository::repo::pre_upgrade()
 }
 
+/// Applies changes after the canister upgrade.
 #[post_upgrade]
 fn post_upgrade() {
     repository::repo::post_upgrade()
 }
 
-//some test comment to change hash
 fn main() {}

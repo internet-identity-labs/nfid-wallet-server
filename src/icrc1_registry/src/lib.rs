@@ -46,6 +46,8 @@ thread_local! {
     pub static ICRC_REGISTRY: RefCell<HashMap<String, HashSet<ICRC1>>> = RefCell::new(HashMap::default());
 }
 
+
+/// Persists the ICRC1 canister metadata for a specified user ledger ID principal.
 #[update]
 pub async fn store_icrc1_canister(ledger_id: String, state: ICRC1State) {
     let caller = get_root_id().await;
@@ -61,6 +63,7 @@ pub async fn store_icrc1_canister(ledger_id: String, state: ICRC1State) {
     });
 }
 
+/// Removes the ICRC1 canister for a specified user ledger ID principal.
 #[update]
 pub async fn remove_icrc1_canister(ledger_id: String) {
     let caller = get_root_id().await;
@@ -72,11 +75,14 @@ pub async fn remove_icrc1_canister(ledger_id: String) {
     });
 }
 
+/// Invoked when the canister starts.
+/// Initializes the application with `Conf` parameters and saves them to storage.
 #[init]
 pub async fn init(conf: Conf) {
     CONFIG.with(|c| c.replace(conf));
 }
 
+/// Returns all ICRC1 canisters persisted for the specified ledger ID principal.
 #[query]
 pub async fn get_canisters_by_root(root: String) -> Vec<ICRC1> {
     ICRC_REGISTRY.with(|registry| {
@@ -92,6 +98,7 @@ struct Memory {
     config: Conf,
 }
 
+/// Applies changes before the canister upgrade.
 #[pre_upgrade]
 pub fn stable_save() {
     let registry = ICRC_REGISTRY.with(|registry| {
@@ -110,6 +117,7 @@ pub fn stable_save() {
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
 
+/// Applies changes after the canister upgrade.
 #[post_upgrade]
 pub fn stable_restore() {
     let (mo, ): (Memory, ) = storage::stable_restore()
