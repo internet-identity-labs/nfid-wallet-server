@@ -178,6 +178,24 @@ pub async fn get_all_icrc1_canisters() -> HashSet<ICRC1> {
     })
 }
 
+/// Returns amount of all persisted ICRC1 canisters.
+#[query]
+pub async fn count_icrc1_canisters() -> u64 {
+    ICRC_REGISTRY.with(|registry| {
+        let registry = registry.borrow();
+        registry.len() as u64
+    })
+}
+
+/// Retirns paginated response
+#[query]
+pub async fn get_icrc1_paginated(offset: u64, limit: u64) -> Vec<ICRC1> {
+    ICRC_REGISTRY.with(|registry| {
+        let registry = registry.borrow();
+        registry.iter().skip(offset as usize).take(limit as usize).cloned().collect()
+    })
+}
+
 /// Replaces the existing ICRC1 canisters with the provided list.
 #[update]
 pub async fn replace_icrc1_canisters(icrc1: Vec<ICRC1>) {
