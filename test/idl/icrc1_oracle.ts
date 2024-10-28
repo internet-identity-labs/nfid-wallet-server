@@ -33,10 +33,13 @@ export interface ICRC1Request {
     'symbol' : string,
 }
 export interface _SERVICE {
+    'count_icrc1_canisters' : ActorMethod<[], bigint>,
     'get_all_icrc1_canisters' : ActorMethod<[], Array<ICRC1>>,
-    'replace_icrc1_canisters' : ActorMethod<[Array<ICRC1>], Array<ICRC1>>,
+    'get_icrc1_paginated' : ActorMethod<[number, number], Array<ICRC1>>,
+    'replace_icrc1_canisters' : ActorMethod<[Array<ICRC1>], undefined>,
     'store_icrc1_canister' : ActorMethod<[ICRC1Request], undefined>,
-    'store_new_icrc1_canisters' : ActorMethod<[Array<ICRC1>]>,
+    'store_new_icrc1_canisters' : ActorMethod<[Array<ICRC1>], undefined>,
     'sync_controllers' : ActorMethod<[], Array<string>>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

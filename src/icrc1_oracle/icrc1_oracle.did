@@ -38,4 +38,6 @@ type ICRC1Request = record {
     store_new_icrc1_canisters : (vec ICRC1) -> ();
     store_icrc1_canister : (ICRC1Request) -> ();
     sync_controllers: () -> (vec text);
+    count_icrc1_canisters : () -> (nat64) query;
+    get_icrc1_paginated : (nat64, nat64) -> (vec ICRC1) query;
 }
