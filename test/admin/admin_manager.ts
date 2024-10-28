@@ -13,6 +13,7 @@ import {getActor, mapCategory, mapCategoryCSVToCategory} from "./util";
 import {ChainFusionTestnetParser} from "./chain_fusion_testnet";
 import {CANISTER_ID, FILE_PATH, KEY_PAIR} from "./constants";
 import {sleep} from "../util/call.util";
+import {expect} from "chai";
 
 export class AdminManager {
 
@@ -52,7 +53,12 @@ export class AdminManager {
     }
 
     async addToCSV() {
-        const canisters_from_oracle = await this.actor.get_all_icrc1_canisters() as ICRC1[];
+        let canisters =  await this.actor.count_icrc1_canisters() as number;
+        const offset = 25
+        let amountOfRequests = Math.ceil(Number(canisters) / offset);
+        const canisters_from_oracle = await Promise.all(Array.from({ length: amountOfRequests }, (_, i) =>
+            this.actor.get_icrc1_paginated(i * offset, offset)
+        )).then((res) => res.flat()) as Array<ICRC1>;
         const fields = ['name', 'symbol', 'ledger', 'index', 'category', 'logo', 'fee', 'decimals'];
         const opts = {fields};
         try {

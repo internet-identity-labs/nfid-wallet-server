@@ -65,4 +65,18 @@ describe("ICRC1 canister Oracle", () => {
         expect(allCanisters.length).eq(3);
         expect(allCanisters.find((k) => k.ledger === firstCanister.ledger).category).deep.eq({Known: null});
     })
+
+    it("Count/getPaginated ICRC1", async function () {
+      let canisters =  await dfx.icrc1_oracle.actor.count_icrc1_canisters() as number;
+        expect(canisters).eq(3n);
+        let b = await dfx.icrc1_oracle.actor.get_icrc1_paginated(0, 2) as Array<ICRC1>;
+        expect(b.length).eq(2);
+        const offset = 2;
+        let amountOfRequests = Math.ceil(Number(canisters) / offset);
+        expect(amountOfRequests).eq(2);
+        const all = await Promise.all(Array.from({ length: amountOfRequests }, (_, i) =>
+            dfx.icrc1_oracle.actor.get_icrc1_paginated(i * offset, offset)
+        )).then((res) => res.flat());
+        expect(all.length).eq(3);
+    });
 })
