@@ -2,14 +2,14 @@ use std::cell::{Cell, RefCell};
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
+use candid::{CandidType, Nat};
 use candid::{candid_method, Principal};
-use candid::CandidType;
 use ic_cdk::{call, caller, storage, trap};
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
 use serde::{Deserialize, Serialize};
 
 thread_local! {
-    static STATE: State = State::default();
+    static STATE: RefCell<State> = RefCell::new(State::default());
     static TRANSACTIONS: RefCell<HashMap<String, HashSet<SwapTransaction>>> = RefCell::new(HashMap::new());
 }
 
@@ -32,8 +32,8 @@ pub struct SwapTransaction {
     pub stage: SwapStage,
     pub source_ledger: String,
     pub target_ledger: String,
-    pub source_amount: u64,
-    pub target_amount: u64,
+    pub source_amount: Nat,
+    pub target_amount: Nat,
     pub uid: String,
 }
 
@@ -100,16 +100,16 @@ async fn get_transactions(caller: String) -> HashSet<SwapTransaction> {
 #[update]
 #[candid_method(update)]
 async fn store_transaction(data: SwapTransaction) {
-    let caller = caller().to_text();
+    let id = get_root_id().await;
     TRANSACTIONS.with(|trss| {
         let mut transactions = trss.borrow_mut();
-        transactions.entry(caller).or_insert(HashSet::new()).replace(data.clone());
+        transactions.entry(id).or_insert(HashSet::new()).replace(data.clone());
     })
 }
 
 /// Applies changes after the canister upgrade.
 #[post_upgrade]
-async fn post_upgrade(maybe_arg: Option<InitArgs>) {
+async fn post_upgrade(_: Option<InitArgs>) {
     init_from_memory().await;
 }
 
@@ -122,7 +122,7 @@ async fn save_persistent_state() {
 
 pub fn init_im_canister(im_canister: Principal) {
     STATE.with(|s| {
-        s.im_canister.set(Some(im_canister))
+        s.borrow().im_canister.set(Some(im_canister))
     });
 }
 
@@ -140,15 +140,15 @@ struct TempMemory {
 
 pub fn get_im_canister() -> Principal {
     STATE.with(|s| {
-        s.im_canister.get().expect("IM canister not set")
+        s.borrow().im_canister.get().expect("IM canister not set")
     })
 }
 
 pub async fn init_from_memory() {
-    let (mo, ): (TempMemory, ) = storage::stable_restore()
+    let (mo, ): (TempMemory,) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     STATE.with(|s| {
-        s.im_canister.set(mo.im_canister);
+        s.borrow_mut().im_canister.set(mo.im_canister);
     });
     TRANSACTIONS.with(|trss| {
         let mut map = trss.borrow_mut();
@@ -158,14 +158,14 @@ pub async fn init_from_memory() {
 
 pub async fn save_to_temp_memory() {
     let (im_canister, ) = STATE.with(|s| {
-        (s.im_canister.get(), )
+        (s.borrow_mut().im_canister.get(),)
     });
     let trss = TRANSACTIONS.with(|trs| {
         trs.borrow().clone()
     });
 
     let mo: TempMemory = TempMemory { im_canister, transactions: Some(trss) };
-    storage::stable_save((mo, ))
+    storage::stable_save((mo,))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
 
@@ -173,4 +173,19 @@ pub async fn save_to_temp_memory() {
 #[ic_cdk_macros::query(name = "__get_candid_interface_tmp_hack")]
 fn export_candid() -> String {
     __export_service()
+}
+
+
+async fn get_root_id() -> String {
+    match STATE.with(|c| c.borrow_mut().im_canister.get()) {
+        None => caller().to_text(), // Return caller for testing purposes when im_canister is None
+        Some(canister) => {
+            let princ = caller();
+            match call(canister, "get_root_by_principal", (princ.to_text(), 0)).await {
+                Ok((Some(root_id), )) => root_id,
+                Ok((None, )) => trap("No root found for this principal"),
+                Err((_, err)) => trap(&format!("Failed to request IM: {}", err)),
+            }
+        }
+    }
 }

@@ -24,8 +24,8 @@ type SwapTransaction = record {
     start_time : nat64;
     source_ledger : text;
     transfer_nfid_id : opt nat64;
-    target_amount : nat64;
-    source_amount : nat64;
+    target_amount : nat;
+    source_amount : nat;
 };service : (opt InitArgs) -> {
     get_transactions : (text) -> (vec SwapTransaction) query;
     store_transaction : (SwapTransaction) -> ();
