@@ -25,14 +25,16 @@ jobs:
           path: ci_libs
 
       - name: Cache Cargo dependencies.
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
+          key: cargo-canisters-test
+          restore-keys: |
+            cargo-canisters-
           path: |
             ${HOME}/.cargo/registry/
             ${HOME}/.cargo_target/
             src/**/target/
             target/
-          key: cargo-test
 
       - name: Versions
         run: |

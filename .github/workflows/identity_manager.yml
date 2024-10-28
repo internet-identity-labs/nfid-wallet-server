@@ -1,4 +1,4 @@
-name: SH - Identity Manager
+name: Identity Manager
 on:
   workflow_dispatch:
     inputs:
@@ -77,12 +77,14 @@ jobs:
       - name: Cache Cargo dependencies.
         uses: actions/cache@v4
         with:
+          key: cargo-canisters-identity-manager
+          restore-keys: |
+            cargo-canisters-
           path: |
             ${HOME}/.cargo/registry/
             ${HOME}/.cargo_target/
             src/**/target/
             target/
-          key: cargo-im
 
       - name: Versions
         run: |
@@ -173,8 +175,8 @@ jobs:
             exit 1
           fi
 
-          ci_echo_debug "dfx canister install --network '${NETWORK_NAME}' --mode upgrade 'identity_manager_replica'" >&2
-          if ! result=$(dfx canister install --network "${NETWORK_NAME}" --mode upgrade "identity_manager_replica"); then
+          ci_echo_debug "dfx canister install --yes --network '${NETWORK_NAME}' --mode upgrade 'identity_manager_replica'" >&2
+          if ! result=$(dfx canister install --yes --network "${NETWORK_NAME}" --mode upgrade "identity_manager_replica"); then
             ci_echo_error "Upgrade failed ${result}" >&2
             exit 1
           fi
@@ -240,8 +242,8 @@ jobs:
             CI_DEBUG="true"
           fi
 
-          ci_echo_debug "dfx canister install --network '${NETWORK_NAME}' --mode upgrade '${CANISTER_NAME}'" >&2
-          if ! result=$(dfx canister install --network "${NETWORK_NAME}" --mode upgrade "${CANISTER_NAME}"); then
+          ci_echo_debug "dfx canister install --yes --network '${NETWORK_NAME}' --mode upgrade '${CANISTER_NAME}'" >&2
+          if ! result=$(dfx canister install --yes --network "${NETWORK_NAME}" --mode upgrade "${CANISTER_NAME}"); then
             ci_echo_error "Upgrade failed ${result}" >&2
             exit 1
           fi
