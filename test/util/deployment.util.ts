@@ -228,7 +228,7 @@ export const getActor = async (
 ): Promise<Record<string, ActorMethod>> => {
     const agent: HttpAgent = new HttpAgent({host: localhost, identity: identity});
     await agent.fetchRootKey();
-    return Actor.createActor(idl, {agent, canisterId: imCanisterId});
+    return await Actor.createActor(idl, {agent, canisterId: imCanisterId});
 };
 
 export async function getTypedActor<T>(
