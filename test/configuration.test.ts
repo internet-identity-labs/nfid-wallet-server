@@ -1,10 +1,18 @@
 import "mocha";
-import { expect } from "chai";
-import { ConfigurationRequest, ConfigurationResponse } from "./idl/identity_manager";
-import { deploy } from "./util/deployment.util";
-import { Dfx } from "./type/dfx";
-import { App } from "./constanst/app.enum";
-import { DFX } from "./constanst/dfx.const";
+import {expect} from "chai";
+import {
+    AccessPointRequest,
+    BoolHttpResponse,
+    ConfigurationRequest,
+    ConfigurationResponse,
+    HTTPAccountRequest,
+} from "./idl/identity_manager";
+import {deploy, getActor, getIdentity} from "./util/deployment.util";
+import {Dfx} from "./type/dfx";
+import {App} from "./constanst/app.enum";
+import {DFX} from "./constanst/dfx.const";
+import {idlFactory as imIdl} from "./idl/identity_manager_idl";
+import {fail} from "assert";
 
 describe("Configuration", () => {
     var dfx: Dfx;
@@ -44,7 +52,10 @@ describe("Configuration", () => {
             'token_refresh_ttl': [],
             'heartbeat': [],
             'token_ttl': [],
-            'commit_hash': []
+            'commit_hash': [],
+            'operator': [],
+            'account_creation_paused': [],
+            'lambda_url': []
         } as ConfigurationRequest;
         const configureResult = await dfx.im.actor.configure(request);
         expect(configureResult).to.be.undefined;
@@ -61,6 +72,7 @@ describe("Configuration", () => {
         expect(configureResponse.heartbeat).to.be.an("array").that.is.empty;
         expect(configureResponse.token_ttl[0]).to.be.equal(60n);
         expect(configureResponse.commit_hash).to.be.an("array").that.is.empty;
+
     });
 
     it("should keep configuration in stable memory between redeployments", async function () {
@@ -71,11 +83,14 @@ describe("Configuration", () => {
             'ii_canister_id': [],
             'whitelisted_canisters': [],
             'git_branch': [],
-            'lambda': [],
+            'lambda': [dfx.user.identity.getPrincipal()],
             'token_refresh_ttl': [],
             'heartbeat': [],
             'token_ttl': [],
-            'commit_hash': []
+            'commit_hash': [],
+            'operator': [dfx.user.identity.getPrincipal()],
+            'account_creation_paused': [],
+            'lambda_url': []
         } as ConfigurationRequest;
         const configureResult = await dfx.im.actor.configure(request);
         expect(configureResult).to.be.undefined;
@@ -84,6 +99,51 @@ describe("Configuration", () => {
 
         const configureResponse: ConfigurationResponse = (await dfx.im.actor.get_config()) as ConfigurationResponse;
         expect(configureResponse.env[0]).to.be.eq("dev2");
+    });
+
+    it("should block/unblock account creation", async function () {
+        await dfx.im.actor.pause_account_creation(true);
+        const identity = getIdentity("87654321876543218765432187654311");
+        const principal = identity.getPrincipal().toText();
+        const dd: AccessPointRequest = {
+            icon: "Icon",
+            device: "Global",
+            pub_key: principal,
+            browser: "Browser",
+            device_type: {
+                Email: null,
+            },
+            credential_id: [],
+        };
+        var accountRequest: HTTPAccountRequest = {
+            access_point: [dd],
+            wallet: [{NFID: null}],
+            anchor: 0n,
+            email: ["test@test.test"],
+        };
+        const actor = await getActor(dfx.im.id, identity, imIdl);
+
+        let email_response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25) as BoolHttpResponse;
+
+        expect(email_response.status_code).eq(200);
+        try {
+            await actor.create_account(
+                accountRequest
+            )
+            fail("Should throw an error");
+        } catch (e) {
+            expect(e.message).to.contain("Account creation is paused due to high demand. Please try again later.");
+        }
+        await dfx.im.actor.pause_account_creation(false);
+
+        try {
+            await actor.create_account(
+                accountRequest
+            )
+        } catch (e) {
+            fail("Should not throw an error");
+        }
+
     });
 
 });

@@ -28,6 +28,7 @@ pub struct Configuration {
     pub git_branch: Option<String>,
     pub commit_hash: Option<String>,
     pub operator: Principal,
+    pub account_creation_paused: bool,
 }
 
 //todo rethink visibility
@@ -137,6 +138,7 @@ impl ConfigurationRepo {
             git_branch: None,
             commit_hash: None,
             operator: lambda,
+            account_creation_paused: false,
         }
     }
 }

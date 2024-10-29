@@ -10,6 +10,7 @@ import {compare, HttpAgent, lookup_path} from "@dfinity/agent";
 import {Principal} from "@dfinity/principal";
 import {verifyCertification} from "./util/cert_verification";
 import * as crypto from "crypto";
+import {LookupResultFound} from "@dfinity/agent/lib/esm/certificate";
 
 describe("ECDSA signer test", () => {
     describe("ECDSA tests", () => {
@@ -98,14 +99,14 @@ async function verifyCertifiedResponse(certifiedResponse: CertifiedKeyPairRespon
         rootKey: agent.rootKey,
         maxCertificateTimeOffsetMs: 50000,
     });
-    const treeHash = lookup_path([dfx.user.identity.getPrincipal().toText()], tree);
+    const treeHash = lookup_path([dfx.user.identity.getPrincipal().toText()], tree) as LookupResultFound;
     if (!treeHash) {
         throw new Error('Response not found in tree');
     }
     const newOwnedString = certifiedResponse.response.key_pair[0].public_key + certifiedResponse.response.key_pair[0].private_key_encrypted;
     const sha256Result = crypto.createHash('sha256').update(newOwnedString).digest();
     const byteArray = new Uint8Array(sha256Result);
-    if (!equal(byteArray, treeHash)) {
+    if (!equal(byteArray, treeHash.value as ArrayBuffer)) {
         throw new Error('Response hash does not match');
     }
 }

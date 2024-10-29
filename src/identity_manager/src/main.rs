@@ -3,7 +3,7 @@ use std::time::Duration;
 use ic_cdk::{caller, trap};
 use ic_cdk_macros::*;
 
-use canister_api_macros::{admin, lambda, operator, two_f_a};
+use canister_api_macros::{admin, lambda, operator, paused, two_f_a};
 use http::response_mapper::DataResponse;
 use service::{device_index_service, email_validation_service};
 
@@ -73,17 +73,27 @@ async fn configure(request: ConfigurationRequest) -> () {
         lambda_url: request.lambda_url.unwrap_or(default.lambda_url),
         lambda: request.lambda.unwrap_or(default.lambda),
         token_ttl: if request.token_ttl.is_some() {
-            Duration::from_secs(request.token_ttl.expect("The request.token_ttl failed after existence check."))
+            Duration::from_secs(
+                request
+                    .token_ttl
+                    .expect("The request.token_ttl failed after existence check."),
+            )
         } else {
             default.token_ttl
         },
         token_refresh_ttl: if request.token_ttl.is_some() {
-            Duration::from_secs(request.token_refresh_ttl.expect("The request.token_refresh_ttl failed after existence check."))
+            Duration::from_secs(
+                request
+                    .token_refresh_ttl
+                    .expect("The request.token_refresh_ttl failed after existence check."),
+            )
         } else {
             default.token_refresh_ttl
         },
         whitelisted_phone_numbers: if request.whitelisted_phone_numbers.is_some() {
-            request.whitelisted_phone_numbers.expect("The request.whitelisted_phone_numbers failed after existence check.")
+            request
+                .whitelisted_phone_numbers
+                .expect("The request.whitelisted_phone_numbers failed after existence check.")
         } else {
             default.whitelisted_phone_numbers
         },
@@ -98,7 +108,9 @@ async fn configure(request: ConfigurationRequest) -> () {
             default.backup_canister_id
         },
         ii_canister_id: if request.ii_canister_id.is_some() {
-            request.ii_canister_id.expect("The request.ii_canister_id failed after existence check.")
+            request
+                .ii_canister_id
+                .expect("The request.ii_canister_id failed after existence check.")
         } else {
             default.ii_canister_id
         },
@@ -123,10 +135,15 @@ async fn configure(request: ConfigurationRequest) -> () {
             default.commit_hash
         },
         operator: if request.operator.is_some() {
-            request.operator.expect("The request.operator failed after existence check.")
+            request
+                .operator
+                .expect("The request.operator failed after existence check.")
         } else {
             default.operator
         },
+        account_creation_paused: request
+            .account_creation_paused
+            .unwrap_or(default.account_creation_paused),
     };
     CONFIGURATION.with(|config| {
         config.replace(configuration);
@@ -153,6 +170,7 @@ async fn get_config() -> ConfigurationResponse {
         git_branch: config.git_branch,
         commit_hash: config.commit_hash,
         operator: Some(config.operator),
+        account_creation_paused: Some(config.account_creation_paused),
     }
 }
 
@@ -178,6 +196,7 @@ async fn use_access_point(browser: Option<String>) -> HttpResponse<AccessPointRe
 /// Two-factor authentication (2FA) is required if enabled (via passkey).
 #[update]
 #[two_f_a]
+#[paused]
 async fn create_access_point(
     access_point_request: AccessPointRequest,
 ) -> HttpResponse<Vec<AccessPointResponse>> {
@@ -193,6 +212,7 @@ async fn create_access_point(
 /// Two-factor authentication (2FA) is required if enabled (via passkey).
 #[update]
 #[two_f_a]
+#[paused]
 async fn update_access_point(
     access_point: AccessPointRequest,
 ) -> HttpResponse<Vec<AccessPointResponse>> {
@@ -216,6 +236,7 @@ async fn remove_access_point(
 /// This is necessary for users to register and subsequently add their access points.
 /// Two-factor authentication (2FA) cannot be enabled before the actual registration process.
 #[update]
+#[paused]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
     let response = account_service.create_account(account_request).await;
@@ -238,6 +259,17 @@ async fn get_account_by_anchor(
     };
     let response = account_service.get_account_by_anchor(anchor, wv);
     response
+}
+
+/// Pauses account creation to prevent new accounts from being created.
+#[update]
+#[operator]
+async fn pause_account_creation(pause: bool) {
+    let config = ConfigurationRepo::get();
+    ConfigurationRepo::save(Configuration {
+        account_creation_paused: pause,
+        ..config
+    });
 }
 
 /// Adds the principal ID and email address to temporary storage for email validation during account creation.

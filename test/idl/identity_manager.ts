@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export interface AccessPointRemoveRequest { 'pub_key' : string }
 export interface AccessPointRequest {
@@ -88,20 +89,18 @@ export interface CertifiedResponse {
     'witness' : Uint8Array | number[],
     'response' : string,
 }
-export interface PrincipalEmailRequest {
-    'email' : string,
-    'principal_id' : string,
-}
 export interface ConfigurationRequest {
     'env' : [] | [string],
     'whitelisted_phone_numbers' : [] | [Array<string>],
     'backup_canister_id' : [] | [string],
     'ii_canister_id' : [] | [Principal],
     'whitelisted_canisters' : [] | [Array<Principal>],
+    'operator' : [] | [Principal],
     'git_branch' : [] | [string],
     'lambda' : [] | [Principal],
     'lambda_url' : [] | [string],
     'token_refresh_ttl' : [] | [bigint],
+    'account_creation_paused' : [] | [boolean],
     'heartbeat' : [] | [number],
     'token_ttl' : [] | [bigint],
     'commit_hash' : [] | [string],
@@ -112,10 +111,12 @@ export interface ConfigurationResponse {
     'backup_canister_id' : [] | [string],
     'ii_canister_id' : [] | [Principal],
     'whitelisted_canisters' : [] | [Array<Principal>],
+    'operator' : [] | [Principal],
     'git_branch' : [] | [string],
     'lambda' : [] | [Principal],
     'lambda_url' : [] | [string],
     'token_refresh_ttl' : [] | [bigint],
+    'account_creation_paused' : [] | [boolean],
     'heartbeat' : [] | [number],
     'token_ttl' : [] | [bigint],
     'commit_hash' : [] | [string],
@@ -225,6 +226,10 @@ export interface PersonaResponse {
     'persona_name' : string,
     'persona_id' : string,
 }
+export interface PrincipalEmailRequest {
+    'email' : string,
+    'principal_id' : string,
+}
 export interface Response { 'error' : [] | [Error], 'status_code' : number }
 export interface StringHttpResponse {
     'data' : [] | [string],
@@ -235,13 +240,10 @@ export type UpdateCallsAggregatedData = BigUint64Array | bigint[];
 export type WalletVariant = { 'II' : null } |
     { 'NFID' : null };
 export interface _SERVICE {
-    'add_all_accounts_json' : ActorMethod<[string], undefined>,
-    'anchors' : ActorMethod<[], HTTPAnchorsResponse>,
-    'certify_phone_number_sha2' : ActorMethod<
-        [string, string],
-        StringHttpResponse
+    'add_email_and_principal_for_create_account_validation' : ActorMethod<
+        [string, string, number],
+        BoolHttpResponse
     >,
-    'collectCanisterMetrics' : ActorMethod<[], undefined>,
     'configure' : ActorMethod<[ConfigurationRequest], undefined>,
     'count_anchors' : ActorMethod<[], bigint>,
     'create_access_point' : ActorMethod<
@@ -249,48 +251,34 @@ export interface _SERVICE {
         HTTPAccessPointResponse
     >,
     'create_account' : ActorMethod<[HTTPAccountRequest], HTTPAccountResponse>,
-    'create_application' : ActorMethod<[Application], HTTPApplicationResponse>,
-    'create_application_all' : ActorMethod<
-        [Array<Application>],
-        HTTPApplicationResponse
-    >,
-    'create_persona' : ActorMethod<[PersonaRequest], HTTPAccountResponse>,
-    'delete_application' : ActorMethod<[string], BoolHttpResponse>,
-    'getCanisterLog' : ActorMethod<
-        [[] | [CanisterLogRequest]],
-        [] | [CanisterLogResponse]
-    >,
-    'getCanisterMetrics' : ActorMethod<
-        [GetMetricsParameters],
-        [] | [CanisterMetrics]
-    >,
     'get_account' : ActorMethod<[], HTTPAccountResponse>,
     'get_account_by_anchor' : ActorMethod<[bigint], HTTPAccountResponse>,
     'get_account_by_principal' : ActorMethod<[string], HTTPAccountResponse>,
     'get_all_accounts_json' : ActorMethod<[number, number], string>,
-    'get_application' : ActorMethod<[string], HTTPAppResponse>,
     'get_config' : ActorMethod<[], ConfigurationResponse>,
+    'get_remaining_size_after_rebuild_device_index_slice_from_temp_stack' : ActorMethod<
+        [[] | [bigint]],
+        bigint
+    >,
     'get_root_certified' : ActorMethod<[], CertifiedResponse>,
-    'is_over_the_application_limit' : ActorMethod<[string], BoolHttpResponse>,
     'read_access_points' : ActorMethod<[], HTTPAccessPointResponse>,
     'read_applications' : ActorMethod<[], HTTPApplicationResponse>,
     'read_personas' : ActorMethod<[], HTTPPersonasResponse>,
-    'recover_account' : ActorMethod<
-        [bigint, [] | [WalletVariant]],
-        HTTPAccountResponse
-    >,
     'remove_access_point' : ActorMethod<
         [AccessPointRemoveRequest],
         HTTPAccessPointResponse
     >,
     'remove_account' : ActorMethod<[], BoolHttpResponse>,
-    'remove_account_by_phone_number' : ActorMethod<[], BoolHttpResponse>,
     'remove_account_by_principal' : ActorMethod<[string], BoolHttpResponse>,
     'restore_accounts' : ActorMethod<[string], BoolHttpResponse>,
+    'save_temp_stack_to_rebuild_device_index' : ActorMethod<[], string>,
     'store_accounts' : ActorMethod<[Array<Account>], BoolHttpResponse>,
     'sync_controllers' : ActorMethod<[], Array<string>>,
+    'sync_recovery_phrase_from_internet_identity' : ActorMethod<
+        [bigint],
+        HTTPAccountResponse
+    >,
     'update_2fa' : ActorMethod<[boolean], AccountResponse>,
-    'get_root_by_principal': ActorMethod<[string], [[] | [string]]>,
     'update_access_point' : ActorMethod<
         [AccessPointRequest],
         HTTPAccessPointResponse
@@ -299,27 +287,8 @@ export interface _SERVICE {
         [HTTPAccountUpdateRequest],
         HTTPAccountResponse
     >,
-    'update_application' : ActorMethod<[Application], HTTPApplicationResponse>,
-    'update_application_alias' : ActorMethod<
-        [string, string, [] | [string]],
-        BoolHttpResponse
-    >,
-    'update_persona' : ActorMethod<[PersonaRequest], HTTPAccountResponse>,
-    'use_access_point': ActorMethod<[[] | [string]], HTTPOneAccessPointResponse>,
-    'add_email_and_principal_for_create_account_validation' : ActorMethod<
-        [string, string, number],
-        BoolHttpResponse
-    >,
-    'recover_google_device' : ActorMethod<[Array<string>], Array<string>>,
-    'recover_email' : ActorMethod<[Array<PrincipalEmailRequest>], Array<string>>,
-    'save_temp_stack_to_rebuild_device_index' : ActorMethod<[], string>,
-    'get_remaining_size_after_rebuild_device_index_slice_from_temp_stack' : ActorMethod<
-        [[] | [bigint]],
-        bigint
-    >,
-    'sync_recovery_phrase_from_internet_identity' : ActorMethod<
-        [bigint],
-        HTTPAccountResponse
-    >,
-    'recover_root_access_point' : ActorMethod<[Array<string>], Array<string>>,
+    'use_access_point' : ActorMethod<[[] | [string]], HTTPOneAccessPointResponse>,
+    'pause_account_creation' : ActorMethod<[boolean], undefined>,
 }
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

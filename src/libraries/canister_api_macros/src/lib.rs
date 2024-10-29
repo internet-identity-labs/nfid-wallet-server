@@ -126,6 +126,36 @@ pub fn operator(_: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
+#[proc_macro_attribute]
+pub fn paused(_: TokenStream, item: TokenStream) -> TokenStream {
+    let mut inner = parse_macro_input!(item as ItemFn);
+    let wrapper_sig = inner.sig.clone();
+    let inner_method_name = format_ident!("{}_admin", inner.sig.ident);
+    inner.sig.ident = inner_method_name.clone();
+
+    let is_async = inner.sig.asyncness.is_some();
+    let arg_names = get_arg_names(&inner.sig);
+
+    let function_call = if is_async {
+        quote! { #inner_method_name ( #(#arg_names),* ) .await }
+    } else {
+        quote! { #inner_method_name ( #(#arg_names),* ) }
+    };
+
+    let expanded = quote!(
+        #[allow(unused_mut)]
+        #wrapper_sig {
+            if ConfigurationRepo::get().account_creation_paused {
+                trap("Account creation is paused due to high demand. Please try again later.")
+            } else {
+                #function_call
+            }
+        }
+        #inner
+    );
+    TokenStream::from(expanded)
+}
+
 fn get_arg_names(signature: &Signature) -> Vec<Ident> {
     signature
         .inputs
