@@ -223,6 +223,8 @@ export const idlFactory = ({ IDL }) => {
             [HTTPOneAccessPointResponse],
             [],
         ),
+        'get_root_by_principal': IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], []),
+
         'pause_account_creation' : IDL.Func([IDL.Bool], [], []),
     });
 };

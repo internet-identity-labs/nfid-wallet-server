@@ -279,6 +279,7 @@ export interface _SERVICE {
         HTTPAccountResponse
     >,
     'update_2fa' : ActorMethod<[boolean], AccountResponse>,
+    'get_root_by_principal': ActorMethod<[string], [[] | [string]]>,
     'update_access_point' : ActorMethod<
         [AccessPointRequest],
         HTTPAccessPointResponse
