@@ -108,6 +108,7 @@ pub struct ConfigurationRequest {
     pub git_branch: Option<String>,
     pub commit_hash: Option<String>,
     pub operator: Option<Principal>,
+    pub account_creation_paused: Option<bool>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -125,6 +126,7 @@ pub struct ConfigurationResponse {
     pub git_branch: Option<String>,
     pub commit_hash: Option<String>,
     pub operator: Option<Principal>,
+    pub account_creation_paused: Option<bool>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

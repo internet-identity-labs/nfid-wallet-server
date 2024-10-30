@@ -16,6 +16,7 @@ type ConfigurationRequest = record {
     git_branch: opt text;
     commit_hash: opt text;
     operator: opt principal;
+    account_creation_paused: opt bool;
 };
 
 type ConfigurationResponse = record {
@@ -32,6 +33,7 @@ type ConfigurationResponse = record {
     git_branch: opt text;
     commit_hash: opt text;
     operator: opt principal;
+    account_creation_paused: opt bool;
 };
 
     //---END-CUT---
@@ -90,7 +92,10 @@ type WalletVariant = variant {
 };
 
 type DeviceType = variant {
-    Email; Passkey; Recovery; Unknown
+    Email;
+    Passkey;
+    Recovery;
+    Unknown
 };
 
 type HTTPAccountRequest = record {
@@ -206,9 +211,9 @@ type CertifiedResponse = record {
     witness: vec nat8;
 };
 
-type PrincipalEmailRequest = record { 
+type PrincipalEmailRequest = record {
     principal_id: text;
-    email: text; 
+    email: text;
 };
 
     //---BEGIN-CUT---
@@ -382,4 +387,5 @@ service : () -> {
     get_remaining_size_after_rebuild_device_index_slice_from_temp_stack: (opt nat64) -> (nat64);
     save_temp_stack_to_rebuild_device_index: () -> (text);
     sync_recovery_phrase_from_internet_identity: (nat64) -> (HTTPAccountResponse);
+    pause_account_creation: (bool) -> ();
 }
