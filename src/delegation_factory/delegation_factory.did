@@ -34,5 +34,6 @@ service : (opt InitArgs) -> {
     get_principal : (UserNumber, FrontendHostname) -> (principal) query;
     prepare_delegation : (UserNumber, FrontendHostname, SessionKey, maxTimeToLive : opt nat64, opt vec principal) -> (UserKey, Timestamp);
     get_delegation: (UserNumber, FrontendHostname, SessionKey, Timestamp, opt vec principal) -> (GetDelegationResponse) query;
-
+    set_operator: (principal) -> ();
+    clean_memory: () -> ();
 }

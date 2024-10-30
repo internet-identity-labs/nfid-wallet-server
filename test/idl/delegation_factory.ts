@@ -21,6 +21,7 @@ export type Timestamp = bigint;
 export type UserKey = PublicKey;
 export type UserNumber = bigint;
 export interface _SERVICE {
+    'clean_memory' : ActorMethod<[], undefined>,
     'get_delegation' : ActorMethod<
         [
             UserNumber,
@@ -43,5 +44,7 @@ export interface _SERVICE {
         ],
         [UserKey, Timestamp]
     >,
+    'set_operator' : ActorMethod<[Principal], undefined>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

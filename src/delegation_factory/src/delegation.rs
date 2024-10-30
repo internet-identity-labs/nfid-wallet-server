@@ -20,7 +20,7 @@ const DEFAULT_EXPIRATION_PERIOD_NS: u64 = 30 * MINUTE_NS;
 // (calculated as now() + this)
 const MAX_EXPIRATION_PERIOD_NS: u64 = 30 * DAY_NS;
 
-pub async fn prepare_delegation(
+async fn prepare_delegation(
     anchor_number: AnchorNumber,
     frontend: FrontendHostname,
     session_key: SessionKey,

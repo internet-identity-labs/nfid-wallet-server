@@ -30,6 +30,7 @@ struct State {
     sigs: RefCell<SignatureMap>,
     salt: Cell<Option<Salt>>,
     im_canister: Cell<Option<Principal>>,
+    operator: Cell<Option<Principal>>,
 }
 
 //TODO move to stable
@@ -37,6 +38,7 @@ struct State {
 struct TempMemory {
     salt: Option<Salt>,
     im_canister: Option<Principal>,
+    operator: Option<Principal>,
 }
 
 impl Default for State {
@@ -45,10 +47,10 @@ impl Default for State {
             sigs: RefCell::new(SignatureMap::default()),
             salt: Cell::new(None),
             im_canister: Cell::new(None),
+            operator: Cell::new(None),
         }
     }
 }
-
 
 pub fn assets_mut<R>(f: impl FnOnce(&mut CertifiedAssets) -> R) -> R {
     ASSETS.with(|assets| f(&mut assets.borrow_mut()))
@@ -80,6 +82,15 @@ pub fn get_salt() -> Salt {
     })
 }
 
+pub fn clean_state() {
+    STATE.with(|s| {
+        s.sigs.replace(SignatureMap::default());
+    });
+    ASSETS.with(|assets| {
+        assets.replace(CertifiedAssets::default());
+    });
+}
+
 pub fn get_im_canister() -> Principal {
     STATE.with(|s| {
         s.im_canister.get().expect("IM canister not set")
@@ -102,20 +113,33 @@ pub fn init_im_canister(im_canister: Principal) {
     });
 }
 
+pub fn set_operator(operator: Principal) {
+    STATE.with(|s| {
+        s.operator.set(Some(operator))
+    });
+}
+
+pub fn get_operator() -> Principal{
+    STATE.with(|s| {
+        s.operator.get().expect("Operator not set")
+    })
+}
+
 pub async fn init_from_memory() {
     let (mo, ): (TempMemory, ) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     STATE.with(|s| {
         s.salt.set(mo.salt);
         s.im_canister.set(mo.im_canister);
+        s.operator.set(mo.operator);
     });
 }
 
 pub async fn save_to_temp_memory() {
-    let (salt, im_canister) = STATE.with(|s| {
-        (s.salt.get(), s.im_canister.get())
+    let (salt, im_canister, operator) = STATE.with(|s| {
+        (s.salt.get(), s.im_canister.get(), s.operator.get())
     });
-    let mo: TempMemory = TempMemory { salt, im_canister };
+    let mo: TempMemory = TempMemory { salt, im_canister, operator };
     storage::stable_save((mo, ))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }

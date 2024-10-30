@@ -20,6 +20,7 @@ export const idlFactory = ({ IDL }) => {
     });
     const UserKey = PublicKey;
     return IDL.Service({
+        'clean_memory' : IDL.Func([], [], []),
         'get_delegation' : IDL.Func(
             [
                 UserNumber,
@@ -48,6 +49,7 @@ export const idlFactory = ({ IDL }) => {
             [UserKey, Timestamp],
             [],
         ),
+        'set_operator' : IDL.Func([IDL.Principal], [], []),
     });
 };
 export const init = ({ IDL }) => {

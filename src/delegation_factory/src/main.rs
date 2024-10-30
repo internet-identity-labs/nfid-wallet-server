@@ -1,13 +1,15 @@
 use candid::{candid_method, Principal};
 use candid::CandidType;
 use canister_sig_util::signature_map::LABEL_SIG;
-use ic_cdk::{call, print, trap};
+use ic_cdk::{call, id, print, trap};
+use ic_cdk::api::call::CallResult;
+use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use ic_cdk::api::set_certified_data;
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
 use internet_identity_interface::internet_identity::types::*;
 use serde::{Deserialize, Serialize};
 
-use crate::state::{get_im_canister, init_from_memory, init_im_canister, Salt, save_to_temp_memory};
+use crate::state::{get_im_canister, init_from_memory, init_im_canister, Salt, save_to_temp_memory, clean_state};
 
 /// Type conversions between internal and external types.
 mod delegation;
@@ -100,6 +102,28 @@ async fn get_im_canister_setting() -> Principal {
     state::get_im_canister()
 }
 
+/// Sets the operator principal.
+#[update]
+async fn set_operator(operator: Principal) {
+    let controllers = get_controllers().await;
+    if !controllers.contains(&ic_cdk::caller()) {
+        trap("Unauthorized: caller is not a controller");
+    }
+    state::set_operator(operator);
+}
+
+/// Cleans the memory of the canister.
+/// This is only allowed by the operator in case of memory overflow.
+#[update]
+async fn clean_memory() {
+    let caller = ic_cdk::caller();
+    let operator = state::get_operator();
+    if caller != operator {
+        trap("Unauthorized: caller is not the operator");
+    }
+    clean_state();
+}
+
 /// Called when the canister starts.
 /// Initializes the application with `InitArgs` parameters and stores them in persistent storage.
 #[init]
@@ -153,6 +177,26 @@ async fn random_salt() -> Salt {
         ));
     });
     salt
+}
+
+#[derive(CandidType, Debug, Clone, Deserialize)]
+pub struct CanisterIdRequest {
+    #[serde(rename = "canister_id")]
+    pub canister_id: Principal,
+}
+
+pub async fn get_controllers() -> Vec<Principal> {
+    let res: CallResult<(CanisterStatusResponse,)> = call(
+        Principal::management_canister(),
+        "canister_status",
+        (CanisterIdRequest { canister_id: id() },),
+    )
+        .await;
+
+
+    return res
+        .expect("Get controllers function exited unexpectedly: inter-canister call to management canister for canister_status returned an empty result.")
+        .0.settings.controllers;
 }
 
 fn main() {}
