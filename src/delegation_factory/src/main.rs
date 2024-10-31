@@ -57,7 +57,7 @@ async fn get_principal(anchor_number: AnchorNumber, frontend: FrontendHostname) 
 /// This is necessary to obtain the delegation in the `get_delegation` method.
 #[update]
 #[candid_method]
-async fn prepare_delegation(
+fn prepare_delegation(
     anchor_number: AnchorNumber,
     frontend: FrontendHostname,
     session_key: SessionKey,
@@ -71,7 +71,6 @@ async fn prepare_delegation(
         max_time_to_live,
         targets,
     )
-        .await
 }
 
 /// Returns the delegation that was initially prepared by the `prepare_delegation` method.

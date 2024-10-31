@@ -68,7 +68,7 @@ pub fn signature_map_mut<R>(f: impl FnOnce(&mut SignatureMap) -> R) -> R {
     STATE.with(|s| f(&mut s.sigs.borrow_mut()))
 }
 
-pub async fn ensure_settings_set() {
+pub fn ensure_settings_set() {
     if STATE.with(|s| s.salt.get()).is_none() {
         trap("Salt not set")
     }

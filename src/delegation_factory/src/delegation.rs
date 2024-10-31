@@ -20,14 +20,14 @@ const DEFAULT_EXPIRATION_PERIOD_NS: u64 = 30 * MINUTE_NS;
 // (calculated as now() + this)
 const MAX_EXPIRATION_PERIOD_NS: u64 = 30 * DAY_NS;
 
-async fn prepare_delegation(
+pub fn prepare_delegation(
     anchor_number: AnchorNumber,
     frontend: FrontendHostname,
     session_key: SessionKey,
     max_time_to_live: Option<u64>,
     targets: Option<Vec<Principal>>,
 ) -> (UserKey, Timestamp) {
-    state::ensure_settings_set().await;
+    state::ensure_settings_set();
     check_frontend_length(&frontend);
 
     let session_duration_ns = u64::min(
