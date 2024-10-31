@@ -143,8 +143,10 @@ describe("Delegation Factory test", () => {
 
     it("Add operator and clean the memory", async function () {
         const identity = getIdentity("87654321876543218765432187654311");
+        const notAdmin = getIdentity("87654321876543218765432187654377");
         try {
-            await dfActor.set_operator(identity.getPrincipal())
+            let dffActor = await getActor(dfx.delegation_factory.id, notAdmin, dfIdl);
+            await dffActor.set_operator(identity.getPrincipal())
             fail("Should throw an error")
         } catch (e) {
             expect(e.message).contains("Unauthorized")
