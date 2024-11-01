@@ -13,9 +13,9 @@ type SwapStage = variant {
 
 type SwapTransaction = record {
     uid : text;
-    withdraw : opt nat64;
-    swap : opt nat64;
-    deposit : opt nat64;
+    withdraw : opt nat;
+    swap : opt nat;
+    deposit : opt nat;
     end_time : opt nat64;
     transfer_id : opt nat64;
     target_ledger : text;
