@@ -19,9 +19,6 @@ describe("ECDSA signer test", () => {
             dfx = await deploy({apps: [App.ECDSASigner]});
         });
 
-        after(() => {
-            DFX.STOP();
-        });
         it("verify controllers", async function () {
             try {
                 await dfx.ic_signer.actor.get_kp_certified(dfx.user.identity.getPrincipal().toText());

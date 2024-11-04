@@ -25,10 +25,6 @@ describe("Access Point", () => {
         dfx = await deploy({apps: [App.IdentityManager]});
     });
 
-    after(() => {
-        DFX.STOP();
-    });
-
     it("should protect recovery phrase", async function () {
         const identity = getIdentity("87654321876543218765432187654311");
         const principal = identity.getPrincipal().toText();

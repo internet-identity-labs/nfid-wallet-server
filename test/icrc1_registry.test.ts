@@ -12,10 +12,6 @@ describe("ICRC1 canister Storage", () => {
         dfx = await deploy({apps: [App.ICRC1Registry]});
     });
 
-    after(() => {
-        DFX.STOP();
-    });
-
     let canister_id = "id1";
     let one_more_canister_id = "id2";
 

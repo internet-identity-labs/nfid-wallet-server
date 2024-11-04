@@ -5,6 +5,7 @@
 Ensure that the required items are installed prior to setting up the development environment:
 - Rustup ^v1.27.1
 - DFX ^v0.22.0
+- jq ^1.6
 
 #### Launch local DFX
 

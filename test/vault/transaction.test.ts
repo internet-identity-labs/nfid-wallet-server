@@ -86,10 +86,6 @@ describe.skip("Transaction", () => {
         wallet3 = await dfx.vault.actor_member_2.register_wallet({name: ["Wallet2"], vault_id: 3n}) as Wallet
     });
 
-    after(() => {
-        DFX.STOP();
-    });
-
     it("Transaction register required 1 approves", async function () {
         await setMemberThreshold([1])
 
