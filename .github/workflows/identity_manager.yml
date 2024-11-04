@@ -34,7 +34,8 @@ jobs:
     name: Build and Deploy
     environment: ${{ github.event.inputs.network_name }}
     runs-on:
-      group: dfx-runner
+      - self-hosted
+      - runner-2
     defaults:
       run:
         shell: bash

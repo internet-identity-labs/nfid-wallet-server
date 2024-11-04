@@ -34,10 +34,6 @@ describe("Wallet", () => {
         });
     });
 
-    after(() => {
-        DFX.STOP();
-    });
-
     let wallet1: Wallet;
     let wallet2: Wallet;
 

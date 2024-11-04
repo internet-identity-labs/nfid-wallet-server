@@ -23,7 +23,7 @@ const localhost: string = "http://127.0.0.1:8000";
 
 export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[] }): Promise<Dfx> => {
     var i = 0;
-    var imConfigurationArguments = [];
+    var imConfigurationArguments = new Set<string>;
     var dfx: Dfx = {
         root: null,
         user: {
@@ -80,18 +80,12 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         dfx.user.identity = getIdentity("87654321876543218765432187654321");
         dfx.user.principal = dfx.user.identity.getPrincipal().toString();
 
-        if (clean) {
-            DFX.STOP();
-            DFX.REMOVE_DFX_FOLDER();
+        if (clean) {            
             DFX.CREATE_TEST_PERSON();
             DFX.USE_TEST_ADMIN();
         }
 
         dfx.root = DFX.GET_PRINCIPAL();
-
-        if (clean) {
-            DFX.INIT();
-        }
 
         if (apps.includes(App.IdentityManager)) {
             if (clean) {
@@ -99,8 +93,8 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             } else {
                 DFX.UPGRADE_FORCE("identity_manager");
             }
-            imConfigurationArguments.push(`operator = opt principal "${dfx.user.principal}"`);
-            imConfigurationArguments.push(`lambda = opt principal "${dfx.user.principal}"`);
+            imConfigurationArguments.add(`operator = opt principal "${dfx.user.principal}"`);
+            imConfigurationArguments.add(`lambda = opt principal "${dfx.user.principal}"`);
             var response = DFX.CONFIGURE();
 
             if (response !== "()") {
@@ -117,7 +111,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             DFX.SYNC_CONTROLLER();
 
             if (!apps.includes(App.InternetIdentityTest)) {
-                imConfigurationArguments.push(`env = opt "test"`);
+                imConfigurationArguments.add(`env = opt "test"`);
             }
         }
 
@@ -134,7 +128,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
 
             dfx.iit.actor = await getTypedActor<InternetIdentityTest>(dfx.iit.id, dfx.user.identity, iitIdl);
 
-            imConfigurationArguments.push(`ii_canister_id = opt principal "${dfx.iit.id}"`);
+            imConfigurationArguments.add(`ii_canister_id = opt principal "${dfx.iit.id}"`);
         }
 
         if (apps.includes(App.ICRC1Registry)) {
@@ -153,7 +147,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         }
 
         if (apps.includes(App.IdentityManager)) {
-            DFX.CONFIGURE_IM(imConfigurationArguments.join("; "));
+            DFX.CONFIGURE_IM(Array.from(imConfigurationArguments).join("; "));
         }
         if (apps.includes(App.Vault)) {
             DFX.USE_TEST_ADMIN();
@@ -180,7 +174,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             return dfx;
         }
         if (apps.includes(App.DelegationFactory)) {
-            execute(`dfx deploy delegation_factory  --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
+            execute(`dfx deploy delegation_factory --mode reinstall -y --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
 
             dfx.delegation_factory.id = DFX.GET_CANISTER_ID("delegation_factory");
             console.log(">> ", dfx.delegation_factory.id);
@@ -189,7 +183,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             return dfx;
         }
         if (apps.includes(App.NFIDStorage)) {
-            execute(`dfx deploy nfid_storage  --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
+            execute(`dfx deploy nfid_storage --mode reinstall -y --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
 
             dfx.nfid_storage.id = DFX.GET_CANISTER_ID("nfid_storage");
             console.log(">> ", dfx.nfid_storage.id);
@@ -198,7 +192,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             return dfx;
         }
         if (apps.includes(App.SwapTrsStorage)) {
-            execute(`dfx deploy swap_trs_storage  --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
+            execute(`dfx deploy swap_trs_storage --mode reinstall -y --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
 
             dfx.swap_trs_storage.id = DFX.GET_CANISTER_ID("swap_trs_storage");
             console.log(">> ", dfx.swap_trs_storage.id);
@@ -207,12 +201,11 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             return dfx;
         }
 
-        DFX.CONFIGURE_IM(imConfigurationArguments.join("; "));
+        DFX.CONFIGURE_IM(Array.from(imConfigurationArguments).join("; "));
 
         return dfx;
     }
 
-    DFX.STOP();
     process.exit(1);
 };
 

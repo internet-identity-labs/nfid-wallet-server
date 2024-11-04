@@ -17,10 +17,6 @@ describe("NFID Storage test", () => {
         dfx = await deploy({apps: [App.IdentityManager, App.NFIDStorage]});
     });
 
-    after(() => {
-        DFX.STOP();
-    });
-
     it("Store/Get passkey", async function () {
         const identity = getIdentity("87654321876543218765432187654311");
         const principal = identity.getPrincipal().toText();

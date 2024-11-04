@@ -24,10 +24,6 @@ describe("Delegation Factory test", () => {
         dfx = await deploy({apps: [App.IdentityManager, App.DelegationFactory]});
     });
 
-    after(() => {
-        DFX.STOP();
-    });
-
     it("Get delegation", async function () {
         const identity = getIdentity("87654321876543218765432187654311");
         const principal = identity.getPrincipal().toText();

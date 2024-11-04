@@ -26,10 +26,6 @@ describe("Vault", () => {
             Array(32).fill(1));
     });
 
-    after(() => {
-        DFX.STOP();
-    });
-
     it("get_vaults empty", async function () {
         let vaults = await dfx.vault.admin_actor.get_vaults() as [Vault]
         expect(vaults.length).eq(0)

@@ -40,9 +40,6 @@ describe("Policy", () => {
         wallet2 = await dfx.vault.admin_actor.register_wallet({name: ["Wallet2"], vault_id: 1n}) as Wallet
     });
 
-    after(() => {
-        DFX.STOP();
-    });
     let defaultPolicy1: Policy;
     let defaultPolicy2: Policy;
     it("verify default policy", async function () {

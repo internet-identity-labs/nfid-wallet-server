@@ -1,20 +1,17 @@
 import { call, execute } from "../util/call.util"
 
 export const DFX = {
-    STOP: () => execute(`dfx stop; kill -9 $(lsof -i TCP:8000 | grep LISTEN | awk '{print $2}')`),
-    KILL_PORT: () => execute(`kill -9 $(lsof -i TCP:8000 | grep LISTEN | awk '{print $2}')`),
-    REMOVE_DFX_FOLDER: () => execute(`rm -rf .dfx`),
     CREATE_TEST_PERSON: () => execute(`dfx identity new test --storage-mode plaintext`),
     USE_TEST_ADMIN: () => execute(`dfx identity use test_admin`),
     GET_PRINCIPAL: () => call(`dfx identity get-principal`),
     INIT: () => execute(`dfx start --clean --background`),
-    DEPLOY: (x: string) => execute(`dfx deploy ${x} --no-wallet`),
-    DEPLOY_SPECIFIED: (x: string, y: string) => execute(`dfx deploy ${x} --no-wallet --specified-id ${y}`),
+    DEPLOY: (x: string) => execute(`dfx deploy ${x} --no-wallet --mode reinstall -y`),
+    DEPLOY_SPECIFIED: (x: string, y: string) => execute(`dfx deploy ${x} --no-wallet --specified-id ${y} --mode reinstall -y`),
     UPGRADE_FORCE: (x: string) => execute(`dfx canister install --mode upgrade --upgrade-unchanged ${x} `),
     GET_CANISTER_ID: (x: string) => call(`dfx canister id ${x}`),
     ADD_CONTROLLER: (x: string, y: string) => execute(`dfx canister update-settings --add-controller "${x}" ${y}`),
     SYNC_CONTROLLER: () => execute(`dfx canister call identity_manager sync_controllers`),
-    DEPLOY_II: () => execute(`dfx deploy internet_identity_test --no-wallet --argument '(null)'`),
+    DEPLOY_II: () => execute(`dfx deploy internet_identity_test --no-wallet --argument '(null)' --mode reinstall -y`),
     INIT_SALT: () => call(`dfx canister call internet_identity_test init_salt`),
     CONFIGURE: () => call(`dfx canister call identity_manager configure '(record {env = opt "test"})'`),
     CONFIGURE_IM: (x: string) => call(`dfx canister call identity_manager configure '(record {${x}})'`),
@@ -35,6 +32,6 @@ export const DFX = {
     INIT_ESS: () => call(`dfx canister call eth_secret_storage init '()'`),
     LEDGER_FILL_BALANCE: (x:string) => call(`dfx canister call ledger transfer "(record { to=vec { ${x} };
           amount=record { e8s=200_000_000 }; fee=record { e8s=10_000 }; memo=0:nat64; } )"`),
-    DEPLOY_ECDSA: () => execute(`dfx deploy signer_ic --no-wallet`),
-    DEPLOY_WITH_ARGUMENT: (x: string, y:string) => execute(`dfx deploy ${x} --no-wallet --argument '(${y})'`),
+    DEPLOY_ECDSA: () => execute(`dfx deploy signer_ic --no-wallet --mode reinstall -y`),
+    DEPLOY_WITH_ARGUMENT: (x: string, y: string) => execute(`dfx deploy ${x} --no-wallet --argument '(${y})' --mode reinstall -y`),
 }
