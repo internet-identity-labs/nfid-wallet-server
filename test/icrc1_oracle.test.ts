@@ -12,10 +12,6 @@ describe("ICRC1 canister Oracle", () => {
         dfx = await deploy({apps: [App.ICRC1Oracle]});
     });
 
-    after(() => {
-        DFX.STOP();
-    });
-
     it("Store/retrieve canister id", async function () {
         await dfx.icrc1_oracle.actor.sync_controllers();
         let firstCanister: ICRC1 = {

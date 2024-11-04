@@ -21,10 +21,6 @@ describe("Configuration", () => {
         dfx = await deploy({apps: [App.IdentityManager]});
     });
 
-    after(() => {
-        DFX.STOP();
-    });
-
     it("should respond with correct configuration", async function () {
         const result: ConfigurationResponse = (await dfx.im.actor.get_config()) as ConfigurationResponse;
         expect(result.env[0]).to.be.eq("test");

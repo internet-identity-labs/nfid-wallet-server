@@ -18,10 +18,6 @@ describe("Swap Trs Storage test", () => {
         dfx = await deploy({apps: [App.IdentityManager, App.SwapTrsStorage]});
     });
 
-    after(() => {
-        DFX.STOP();
-    });
-
     it("Store/Get transactions", async function () {
         const identity = getIdentity("87654321876543218765432187654311");
         const principal = identity.getPrincipal().toText();

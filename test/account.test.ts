@@ -36,11 +36,6 @@ describe("Account", () => {
             dfx = await deploy({apps: [App.IdentityManager, App.IdentityManagerReplica]});
         });
 
-        after(() => {
-            DFX.STOP();
-            DFX.KILL_PORT();
-        });
-
         it("should create correct account.", async function () {
             expect(DFX.CREATE_ACCOUNT("12345")).eq(Expected.ACCOUNT("null", dfx.root));
         });
@@ -74,10 +69,6 @@ describe("Account", () => {
         before(async () => {
             dfx = await deploy({ apps: [App.IdentityManager, App.InternetIdentityTest] });
             iiAnchor = await register(dfx.iit.actor, dfx.user.identity);
-        });
-
-        after(() => {
-            DFX.STOP();
         });
 
         it("should return an error empty device data on NFID account", async function () {
