@@ -143,12 +143,14 @@ jobs:
           ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
-      - name: Save artifact
+      - name: POST-BUILD => Save artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CANISTER_WASM }}
           include-hidden-files: true
-          path: ${{ github.workspace }}/${{ env.CANISTER_WASM }}
+          path: |
+            ${{ env.CANISTER_WASM }}
+            .dfx
 
   deploy:
     name: Deploy
