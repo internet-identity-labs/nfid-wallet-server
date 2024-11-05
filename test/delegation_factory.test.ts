@@ -4,13 +4,14 @@ import {App} from "./constanst/app.enum";
 import {expect} from "chai";
 import {GetDelegationResponse} from "./idl/delegation_factory";
 import {Delegation, DelegationChain, DelegationIdentity} from "@dfinity/identity";
-import {DerEncodedPublicKey, Signature} from "@dfinity/agent";
+import {Signature} from "@dfinity/agent";
 import {Principal} from "@dfinity/principal";
 import {fail} from "assert";
 import {DFX} from "./constanst/dfx.const";
 import {AccessPointRequest, HTTPAccountRequest, HTTPAccountResponse} from "./idl/identity_manager";
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {idlFactory as dfIdl} from "./idl/delegation_factory_idl";
+import {hasOwnProperty} from "./admin/util";
 
 describe("Delegation Factory test", () => {
     var dfx: Dfx;
@@ -134,6 +135,48 @@ describe("Delegation Factory test", () => {
         } catch (e) {
             expect(e.message).contains("Unauthorised")
         }
+    })
+
+    it("Add operator and clean the memory", async function () {
+        const identity = getIdentity("87654321876543218765432187654311");
+        const notAdmin = getIdentity("87654321876543218765432187654377");
+        try {
+            let dffActor = await getActor(dfx.delegation_factory.id, notAdmin, dfIdl);
+            await dffActor.set_operator(identity.getPrincipal())
+            fail("Should throw an error")
+        } catch (e) {
+            expect(e.message).contains("Unauthorized")
+        }
+        DFX.ADD_CONTROLLER(identity.getPrincipal().toText(), "delegation_factory")
+        await dfActor.set_operator(identity.getPrincipal())
+        let resp = await dfActor.prepare_delegation(
+            100000000n,
+            "nfid.one",
+            pk,
+            [],
+            targets
+        )
+        let delegation = await dfActor.get_delegation(
+            100000000n,
+            "nfid.one",
+            pk,
+            resp[1],
+            targets
+        )
+
+        expect(delegation.signed_delegation).not.undefined
+
+        await dfActor.clean_memory()
+
+        let response = await dfActor.get_delegation(
+            100000000n,
+            "nfid.one",
+            pk,
+            resp[1],
+            targets
+        )
+
+        expect(hasOwnProperty(response, "no_such_delegation")).to.be.true
     })
 })
 
