@@ -1,9 +1,11 @@
 import {Dfx} from "./type/dfx";
-import {deploy} from "./util/deployment.util";
+import {deploy, getActor, getIdentity} from "./util/deployment.util";
 import {App} from "./constanst/app.enum";
-import {DFX} from "./constanst/dfx.const";
 import {expect} from "chai";
 import {ICRC1} from "./idl/icrc1_oracle";
+import {idlFactory} from "./idl/icrc1_oracle_idl";
+import {fail} from "assert";
+import {DFX} from "./constanst/dfx.const";
 
 describe("ICRC1 canister Oracle", () => {
     var dfx: Dfx;
@@ -12,8 +14,22 @@ describe("ICRC1 canister Oracle", () => {
         dfx = await deploy({apps: [App.ICRC1Oracle]});
     });
 
+    it("Set operator", async function () {
+        const identity = getIdentity("87654321876543218765432187654311");
+        const notAdmin = getIdentity("87654321876543218765432187654377");
+        let dffActor = await getActor(dfx.icrc1_oracle.id, notAdmin, idlFactory);
+        try {
+            await dffActor.set_operator(notAdmin.getPrincipal())
+            fail("Should throw an error")
+        } catch (e) {
+            expect(e.message).contains("Unauthorized")
+        }
+        DFX.ADD_CONTROLLER(identity.getPrincipal().toText(), "icrc1_oracle")
+        dfx.icrc1_oracle.actor = await getActor(dfx.icrc1_oracle.id, identity, idlFactory);
+        await dfx.icrc1_oracle.actor.set_operator(identity.getPrincipal())
+    });
+
     it("Store/retrieve canister id", async function () {
-        await dfx.icrc1_oracle.actor.sync_controllers();
         let firstCanister: ICRC1 = {
             logo: ["logo"],
             name: "name",
@@ -75,4 +91,5 @@ describe("ICRC1 canister Oracle", () => {
         )).then((res) => res.flat());
         expect(all.length).eq(3);
     });
+
 })
