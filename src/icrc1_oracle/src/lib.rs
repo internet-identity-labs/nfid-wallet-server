@@ -60,7 +60,7 @@ pub struct CanisterStatusResponse {
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, Serialize, PartialEq)]
 pub struct Conf {
     pub im_canister: Option<Principal>,
-    pub controllers: Option<Vec<Principal>>,
+    pub operator: Option<Principal>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, Eq)]
@@ -100,30 +100,10 @@ pub struct ICRC1Request {
 
 thread_local! {
      static CONFIG: RefCell<Conf> = RefCell::new( Conf {
-        controllers: Default::default(),
-        im_canister: None
+        im_canister: None,
+        operator: None
     });
     pub static ICRC_REGISTRY: RefCell<HashSet<ICRC1>> = RefCell::new(HashSet::default());
-}
-
-/// Synchronizes the controllers from the management canister.
-/// This ensures the canister is aware of all controllers, allowing them to function as administrators.
-#[update]
-#[candid_method(update)]
-async fn sync_controllers() -> Vec<String> {
-    let res: CallResult<(CanisterStatusResponse, )> = call(
-        Principal::management_canister(),
-        "canister_status",
-        (CanisterIdRequest {
-            canister_id: id(),
-        }, ),
-    ).await;
-
-    let controllers = res
-        .expect("Sync controller function exited unexpectedly: inter-canister call to management canister for canister_status returned an empty result.")
-        .0.settings.controllers;
-    CONFIG.with(|c| c.borrow_mut().controllers.replace(controllers.clone()));
-    controllers.iter().map(|x| x.to_text()).collect()
 }
 
 /// Persists a single ICRC1 canister's metadata into the canister's storage.
@@ -220,6 +200,20 @@ pub async fn store_new_icrc1_canisters(icrc1: Vec<ICRC1>) {
     })
 }
 
+
+/// Sets the operator principal.
+#[update]
+async fn set_operator(operator: Principal) {
+    let controllers = get_controllers().await;
+    if !controllers.contains(&ic_cdk::caller()) {
+        trap("Unauthorized: caller is not a controller");
+    }
+    CONFIG.with(|config| {
+        let mut config = config.borrow_mut();
+        config.operator = Some(operator);
+    });
+}
+
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
 struct Memory {
     registry: HashSet<ICRC1>,
@@ -287,16 +281,30 @@ async fn get_root_id() -> String {
 
 fn trap_if_not_authenticated_admin() {
     let princ = caller();
-    match CONFIG.with(|c| c.borrow_mut().controllers.clone())
+    match CONFIG.with(|c| c.borrow_mut().operator)
     {
         None => {
             trap("Unauthorised")
         }
-        Some(controllers) => {
-            if !controllers.contains(&princ) {
+        Some(operator) => {
+            if !operator.eq(&princ) {
                 trap("Unauthorised")
             }
         }
     }
+}
+
+
+
+async fn get_controllers() -> Vec<Principal> {
+    let res: CallResult<(ic_cdk::api::management_canister::main::CanisterStatusResponse,)> = call(
+        Principal::management_canister(),
+        "canister_status",
+        (CanisterIdRequest { canister_id: id() },),
+    )
+        .await;
+    res
+        .expect("Get controllers function exited unexpectedly: inter-canister call to management canister for canister_status returned an empty result.")
+        .0.settings.controllers
 }
 

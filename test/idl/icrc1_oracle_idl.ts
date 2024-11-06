@@ -40,9 +40,9 @@ export const idlFactory = ({ IDL }) => {
             ['query'],
         ),
         'replace_icrc1_canisters' : IDL.Func([IDL.Vec(ICRC1)], [], []),
+        'set_operator' : IDL.Func([IDL.Principal], [], []),
         'store_icrc1_canister' : IDL.Func([ICRC1Request], [], []),
         'store_new_icrc1_canisters' : IDL.Func([IDL.Vec(ICRC1)], [], []),
-        'sync_controllers' : IDL.Func([], [IDL.Vec(IDL.Text)], []),
     });
 };
 export const init = ({ IDL }) => {

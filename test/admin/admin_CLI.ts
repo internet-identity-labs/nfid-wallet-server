@@ -10,14 +10,14 @@ async function run() {
         case 'formCSV':
             await adminManager.addICTokens();
             await adminManager.addToCSV();
-            console.log('Тёма, CSV готов!!!');
+            console.log('CSV ready!!!');
             break;
         case 'uploadCSV':
             await adminManager.addFromCSV();
-            console.log('Тёма, загрузили!!! Полёт нормальный!!!');
+            console.log('CSV uploaded!!!');
             break;
         default:
-            console.log('Тёма, не то написал!!!');
+            console.log('Invalid method');
             break;
     }
 }
