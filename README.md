@@ -6,15 +6,17 @@
 <br/>
 <br/>
 
-Wallet backend tests
+**Wallet backend tests**
+<br/>
 [![GitHub Delegation Factory Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/delegation_factory.yml?logo=github&label=Delegation%20Factory%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/delegation_factory.yml)
 [![GitHub Identity Manager Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/identity_manager.yml?logo=github&label=Identity%20Manager%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/identity_manager.yml)
-[![GitHub NFID Storage Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/nfid_storage.yml?logo=github&label=NFID%Storage%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/nfid_storage.yml)
-[![GitHub Wallet Swap Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/swap_trs_storage.yml?logo=github&label=Wallet%Swap%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/swap_trs_storage.yml)
+[![GitHub NFID Storage Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/nfid_storage.yml?logo=github&label=NFID%20Storage%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/nfid_storage.yml)
+[![GitHub Wallet Swap Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/swap_trs_storage.yml?logo=github&label=Wallet%20Swap%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/swap_trs_storage.yml)
 
-ICRC1 public token registry API tests
-[![GitHub ICRC1 Oracle Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/icrc1_oracle.yml?logo=github&label=ICRC1%Oracle%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/icrc1_oracle.yml)
-[![GitHub ICRC1 Registry Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/icrc1_registry.yml?logo=github&label=ICRC1%Registry%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/icrc1_registry.yml)
+**ICRC1 public token registry API tests**
+<br/>
+[![GitHub ICRC1 Oracle Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/icrc1_oracle.yml?logo=github&label=ICRC1%20Oracle%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/icrc1_oracle.yml)
+[![GitHub ICRC1 Registry Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/icrc1_registry.yml?logo=github&label=ICRC1%20Registry%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/icrc1_registry.yml)
 
 # NFID Wallet
 
