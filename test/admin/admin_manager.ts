@@ -46,7 +46,6 @@ export class AdminManager {
 
         for (const batch of batches) {
             console.log("Перезаписываю SNS");
-            console.log(batch);
             await this.actor.store_new_icrc1_canisters(batch);
 
         }
@@ -95,7 +94,7 @@ export class AdminManager {
                     name: record.name,
                     ledger: record.ledger,
                     category: mapCategoryCSVToCategory(record.category),
-                    index: record.index === undefined ? [] : [record.index],
+                    index: record.index === undefined || record.index.length < 2 ? [] : [record.index],
                     symbol: record.symbol,
                     logo: record.logo === undefined ? [] : [record.logo],
                     fee: BigInt(record.fee),
