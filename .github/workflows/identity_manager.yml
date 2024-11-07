@@ -15,7 +15,6 @@ on:
         required: true
         type: choice
         options:
-          - identity_manager_replica
           - identity_manager
           - test_im
       confirmation:
@@ -159,77 +158,6 @@ jobs:
           rm -rf .dfx;
           ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
-
-      - name: DEPLOY PROD => Upgrade the identity_manager_replica canister.
-        if: ${{ (env.CANISTER_NAME == 'identity_manager') && ( env.NETWORK_NAME== 'ic' ) }}
-        run: |
-          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-          dfx identity use "${DFX_ID_NAME}"
-
-          CI_DEBUG="true"
-
-          ci_echo_debug "dfx build --network '${NETWORK_NAME}' 'identity_manager_replica'" >&2
-          if ! result_build=$(dfx build --network "${NETWORK_NAME}" "identity_manager_replica"); then
-            ci_echo_error "Build identity_manager_replica failed ${result_build}" >&2
-            exit 1
-          fi
-
-          ci_echo_debug "dfx canister install --yes --network '${NETWORK_NAME}' --mode upgrade 'identity_manager_replica'" >&2
-          if ! result=$(dfx canister install --yes --network "${NETWORK_NAME}" --mode upgrade "identity_manager_replica"); then
-            ci_echo_error "Upgrade failed ${result}" >&2
-            exit 1
-          fi
-
-          ci_echo_debug "Command output was '${result}'" >&2
-
-          # If hash the same - than fail deploy
-          if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
-            ci_echo_error "${result}" >&2
-            exit 1
-          fi
-
-          ci_echo_success "Canister 'identity_manager_replica' was upgraded" >&2
-
-      - name: DEPLOY PROD => Send configuration to the identity_manager_replica canister.
-        if: ${{ (env.CANISTER_NAME == 'identity_manager') && ( env.NETWORK_NAME== 'ic' ) }}
-        run: |
-          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-          dfx identity use "${DFX_ID_NAME}"
-
-          CI_DEBUG="true"
-
-          CANISTER_DATA_NAME_VAR="CANISTER_CONFIG_TEST_DATA"
-
-          CANISTER_DATA="$(sed "s/PLACEHOLDER_GITHUB_REF_NAME/${CANISTER_BRANCH}/" <<< "${!CANISTER_DATA_NAME_VAR}" | sed "s/PLACEHOLDER_GITHUB_SHA/${GITHUB_SHA}/")"
-
-          ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' 'identity_manager_replica' configure '${CANISTER_DATA}'" >&2
-          if ! result=$(dfx canister call --network "${NETWORK_NAME}" "identity_manager_replica" configure "${CANISTER_DATA}"); then
-            ci_echo_error "Configure failed ${result}" >&2
-            exit 1
-          fi
-
-          ci_echo_debug "Command output was '${result}'" >&2
-
-          # If '()' not found - than fail
-          if ! echo "${result}" | grep -q '()'; then
-            ci_echo_error "${result}" >&2
-            exit 1
-          fi
-          
-          ci_echo_success "${result}" >&2
-        env:
-          CANISTER_CONFIG_TEST_DATA: >-
-            (
-                record {
-                    lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/prod";
-                    lambda = opt principal "djzd2-ixtid-3l667-7se2h-lm3ic-xqgon-cwvyf-3rus4-bl43o-eogn4-zqe";
-                    whitelisted_canisters = opt vec {principal "bryxc-zqaaa-aaaal-aajga-cai"};
-                    git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
-                    commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
-                }
-            )
 
       - name: DEPLOY => Upgrade the canister.
         run: |
