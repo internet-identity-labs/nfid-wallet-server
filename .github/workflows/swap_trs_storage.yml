@@ -10,13 +10,20 @@ on:
           - dev
           - stage
           - ic
+      canister_name:
+        description: 'Choose applicable canister'
+        default: swap_trs_storage
+        required: true
+        type: choice
+        options:
+          - swap_trs_storage
       confirmation:
         description: 'For the ic deployment - confirm your choice by typing "Yes"'
         type: string
 
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
-  CANISTER_NAME: swap_trs_storage
+  CANISTER_NAME: ${{ github.event.inputs.canister_name }}
   CI_DEBUG: 'true'
   RELEASE_TAG_REGEX: '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
 
@@ -143,11 +150,12 @@ jobs:
           ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
-      - name: POST-BUILD => Save artifact
+      - name: POST-BUILD => Save artifact.
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CANISTER_WASM }}
           include-hidden-files: true
+          retention-days: 1
           path: |
             ${{ env.CANISTER_WASM }}
             .dfx
@@ -289,3 +297,16 @@ jobs:
             exit 1
           fi
           ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
+
+      - name: POST-DEPLOY => Cleaning.
+        uses: geekyeggo/delete-artifact@f275313e70c08f6120db482d7a6b98377786765b # v5.1.0
+        with:
+          name: ${{ env.CANISTER_WASM }}
+          failOnError: false
+
+      - name: POST-DEPLOY => Save artifact.
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{github.sha}}-${{ env.CANISTER_WASM }}
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          path: ${{ env.CANISTER_WASM }}

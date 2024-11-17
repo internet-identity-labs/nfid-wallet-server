@@ -81,12 +81,18 @@ jobs:
           - swap_trs_storage
           - icrc1_oracle
         include:
-          - workflow_file_name: identity_manager.yml
-          - workflow_file_name: icrc1_registry.yml
-          - workflow_file_name: delegation_factory.yml
-          - workflow_file_name: nfid_storage.yml
-          - workflow_file_name: swap_trs_storage.yml
-          - workflow_file_name: icrc1_oracle.yml
+          - canister_name: identity_manager
+            workflow_file_name: identity_manager.yml
+          - canister_name: icrc1_registry
+            workflow_file_name: icrc1_registry.yml
+          - canister_name: delegation_factory
+            workflow_file_name: delegation_factory.yml
+          - canister_name: nfid_storage
+            workflow_file_name: nfid_storage.yml
+          - canister_name: swap_trs_storage
+            workflow_file_name: swap_trs_storage.yml
+          - canister_name: icrc1_oracle
+            workflow_file_name: icrc1_oracle.yml
 
     steps:
       - name: Triggering ${{ matrix.canister_name }} Deploy
@@ -98,8 +104,9 @@ jobs:
           workflow_file_name: ${{ matrix.workflow_file_name }}
           github_token: ${{ secrets.PAT }}
           comment_downstream_url: ${{ github.event.head_commit.message }}
-          client_payload: |
-            '{
+          client_payload: >-
+            {
               "network_name": "${{ github.event.inputs.network_name || ( contains(github.event_name, 'release') && 'ic' || 'dev' ) }}",
+              "canister_name": "${{ matrix.canister_name }}",
               "confirmation": "Yes"
-            }'
+            }
