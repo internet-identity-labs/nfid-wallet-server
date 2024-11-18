@@ -84,7 +84,7 @@ Paying for gas or making other purchases across networks in a pain. Leveraging I
 
 ## What you'll find
 
-The current repository is the frontend interface for NFID Wallet, where you'll find setup, deployment, and testing instructions, as well as technical information on its architecture.
+The current repository is the canister backend codebase for NFID Wallet, where you'll find setup, deployment, and testing instructions, as well as technical information on its architecture.
 
 ---
 
