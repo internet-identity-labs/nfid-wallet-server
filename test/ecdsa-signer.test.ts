@@ -6,7 +6,7 @@ import {deploy} from "./util/deployment.util";
 import {DFX} from "./constanst/dfx.const";
 import {CertifiedKeyPairResponse, KeyPair, KeyPairResponse} from "./idl/ecdsa";
 import {fail} from "assert";
-import {compare, HttpAgent, lookup_path} from "@dfinity/agent";
+import { compare, HttpAgent, lookup_path, LookupResultFound } from "@dfinity/agent";
 import {Principal} from "@dfinity/principal";
 import {verifyCertification} from "./util/cert_verification";
 import * as crypto from "crypto";
@@ -102,7 +102,7 @@ async function verifyCertifiedResponse(certifiedResponse: CertifiedKeyPairRespon
     const newOwnedString = certifiedResponse.response.key_pair[0].public_key + certifiedResponse.response.key_pair[0].private_key_encrypted;
     const sha256Result = crypto.createHash('sha256').update(newOwnedString).digest();
     const byteArray = new Uint8Array(sha256Result);
-    if (!equal(byteArray, treeHash)) {
+    if (!equal(byteArray, (treeHash as LookupResultFound).value as ArrayBuffer)) {
         throw new Error('Response hash does not match');
     }
 }

@@ -4,9 +4,8 @@ import {Dfx} from "../type/dfx";
 import {App} from "../constanst/app.enum";
 import {Policy, PolicyRegisterRequest, Transaction, TransactionRegisterRequest, Vault, Wallet} from "../idl/vault";
 import {expect} from "chai";
-import {fromHexString, principalToAddress} from "ictool"
-import {DFX} from "../constanst/dfx.const";
-import {Principal} from "@dfinity/principal";
+import { Principal } from "@dfinity/principal";
+import { AccountIdentifier, SubAccount } from "@dfinity/ledger-icp";
 
 
 let memberAddress: string;
@@ -17,10 +16,13 @@ describe("Policy", () => {
     let wallet2: Wallet;
 
     before(async () => {
-        dfx = await deploy({apps: [App.Vault]});
-        memberAddress = principalToAddress(
-            dfx.vault.member_1.getPrincipal() as any,
-            Array(32).fill(1));
+        dfx = await deploy({ apps: [App.Vault] });
+
+        memberAddress = AccountIdentifier.fromPrincipal({
+            principal: dfx.vault.member_1.getPrincipal(),
+            subAccount: SubAccount.fromBytes(new Uint8Array(Array(32).fill(1))) as SubAccount
+        }).toHex()
+
         await dfx.vault.admin_actor.register_vault({
             description: [],
             name: "vault1"
@@ -255,15 +257,19 @@ describe("Policy", () => {
             policy_type: {
                 'threshold_policy': {
                     amount_threshold: 10n,
-                    currency: {'ICP': null},
+                    currency: { 'ICP': null },
                     member_threshold: [1],
                     wallets: []
                 }
             },
-            state: {'Active': null},
+            state: { 'Active': null },
             vault_id: 2n
         } as PolicyRegisterRequest) as Policy;
-        to = principalToAddress(Principal.fromText(dfx.vault.id) as any, fromHexString(wallet1.uid))
+        to = AccountIdentifier.fromPrincipal({
+            principal: Principal.fromText(dfx.vault.id),
+            subAccount: SubAccount.fromPrincipal(Principal.fromHex(wallet1.uid)) as SubAccount
+        }).toHex()
+        // to = principalToAddress(Principal.fromText(dfx.vault.id) as any, fromHexString(wallet1.uid))
         let tokens = 100n;
         let registerRequest: TransactionRegisterRequest = {address: to, amount: tokens, wallet_id: wallet1.uid}
         let actualTransaction = await dfx.vault.admin_actor.register_transaction(registerRequest) as Transaction

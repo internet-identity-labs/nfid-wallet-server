@@ -1,11 +1,10 @@
 import "mocha";
-import {deploy} from "../util/deployment.util";
-import {Dfx} from "../type/dfx";
-import {App} from "../constanst/app.enum";
-import {Vault, VaultMember,} from "../idl/vault";
-import {expect} from "chai";
-import {principalToAddress} from "ictool"
-import {DFX} from "../constanst/dfx.const";
+import { deploy } from "../util/deployment.util";
+import { Dfx } from "../type/dfx";
+import { App } from "../constanst/app.enum";
+import { Vault, VaultMember, } from "../idl/vault";
+import { expect } from "chai";
+import { AccountIdentifier, SubAccount } from "@dfinity/ledger-icp";
 
 let rootAddress: string;
 let memberAddress: string;
@@ -15,15 +14,17 @@ describe("Vault", () => {
 
 
     before(async () => {
-        dfx = await deploy({apps: [App.Vault]});
+        dfx = await deploy({ apps: [App.Vault] });
 
-        rootAddress = principalToAddress(
-            dfx.user.identity.getPrincipal() as any,
-            Array(32).fill(1));
+        rootAddress = AccountIdentifier.fromPrincipal({
+            principal: dfx.user.identity.getPrincipal(),
+            subAccount: SubAccount.fromBytes(new Uint8Array(Array(32).fill(1))) as SubAccount
+        }).toHex()
 
-        memberAddress = principalToAddress(
-            dfx.vault.member_1.getPrincipal() as any,
-            Array(32).fill(1));
+        memberAddress = AccountIdentifier.fromPrincipal({
+            principal: dfx.vault.member_1.getPrincipal(),
+            subAccount: SubAccount.fromBytes(new Uint8Array(Array(32).fill(1))) as SubAccount
+        }).toHex()
     });
 
     it("get_vaults empty", async function () {
@@ -74,8 +75,8 @@ describe("Vault", () => {
         let member = await dfx.vault.admin_actor.store_member({
             address: memberAddress,
             name: ["MoyaLaskovayaSuchechka"],
-            role: {'Member': null},
-            state: {'Active': null},
+            role: { 'Member': null },
+            state: { 'Active': null },
             vault_id: 1n
         }) as Vault;
 
@@ -106,21 +107,21 @@ describe("Vault", () => {
         let request = structuredClone(vault);
         request.name = "Updated name";
         request.description = ["Updated description"];
-        request.state = {'Archived': null};
-        request.members.find(l => l.user_uuid === memberAddress).state = {'Archived': null}
+        request.state = { 'Archived': null };
+        request.members.find(l => l.user_uuid === memberAddress).state = { 'Archived': null }
 
         let updated = await dfx.vault.admin_actor.update_vault(request) as Vault;
 
         let expected = structuredClone(vault);
         expected.name = "Updated name";
         expected.description = ["Updated description"];
-        expected.state = {'Archived': null};
+        expected.state = { 'Archived': null };
 
         //does not update members
         verifyVault(updated, expected)
         expect(request.modified_date !== updated.modified_date).true
 
-        expected.members.find(l => l.user_uuid === memberAddress).state = {'Archived': null}
+        expected.members.find(l => l.user_uuid === memberAddress).state = { 'Archived': null }
         expected.members.find(l => l.user_uuid === memberAddress).name = []
 
         let vaultMember = (await dfx.vault.actor_member_1.get_vaults() as [Vault])
@@ -128,8 +129,8 @@ describe("Vault", () => {
         let archivedMemberVaylt = await dfx.vault.admin_actor.store_member({
             address: memberAddress,
             name: [],
-            role: {'Member': null},
-            state: {'Archived': null},
+            role: { 'Member': null },
+            state: { 'Archived': null },
             vault_id: 1n
         }) as Vault;
 
@@ -160,9 +161,9 @@ describe("Vault", () => {
             await dfx.vault.actor_member_1.store_member({
                 address: memberAddress,
                 name: ["Moya Laskovaya Suchechka"],
-                role: {'Member': null},
+                role: { 'Member': null },
                 vault_id: 2n,
-                state: {'Active': null},
+                state: { 'Active': null },
             })
         } catch (e: any) {
             expect(e.message.includes("Unauthorised")).eq(true)
@@ -171,9 +172,9 @@ describe("Vault", () => {
             await dfx.vault.actor_member_1.store_member({
                 address: memberAddress,
                 name: ["Moya Laskovaya Suchechka"],
-                role: {'Member': null},
+                role: { 'Member': null },
                 vault_id: 1n,
-                state: {'Active': null},
+                state: { 'Active': null },
             })
         } catch (e: any) {
             expect(e.message.includes("Not enough permissions")).eq(true)
@@ -224,24 +225,24 @@ function getExpectedVault(): Vault {
         members: [
             {
                 name: [],
-                role: {'Admin': null},
-                state: {'Active': null},
+                role: { 'Admin': null },
+                state: { 'Active': null },
                 user_uuid: rootAddress
             }
         ],
         modified_date: 0n,
         name: 'vault1',
         policies: [1n],
-        state: {'Active': null},
+        state: { 'Active': null },
         wallets: []
     }
 }
 
 function getDefaultMember(): VaultMember {
     return {
-        state: {'Active': null},
+        state: { 'Active': null },
         user_uuid: memberAddress,
         name: ["MoyaLaskovayaSuchechka"],
-        role: {'Member': null},
+        role: { 'Member': null },
     }
 }
