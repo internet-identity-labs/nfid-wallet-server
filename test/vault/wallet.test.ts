@@ -1,21 +1,22 @@
 import "mocha";
-import {deploy} from "../util/deployment.util";
-import {Dfx} from "../type/dfx";
-import {App} from "../constanst/app.enum";
-import {Wallet} from "../idl/vault";
-import {expect} from "chai";
-import {principalToAddress} from "ictool"
-import {DFX} from "../constanst/dfx.const";
+import { deploy } from "../util/deployment.util";
+import { Dfx } from "../type/dfx";
+import { App } from "../constanst/app.enum";
+import { Wallet } from "../idl/vault";
+import { expect } from "chai";
+import { AccountIdentifier, SubAccount } from "@dfinity/ledger-icp";
 
 let memberAddress: string;
 describe("Wallet", () => {
     let dfx: Dfx;
 
     before(async () => {
-        dfx = await deploy({apps: [App.Vault]});
-        memberAddress = principalToAddress(
-            dfx.vault.member_1.getPrincipal() as any,
-            Array(32).fill(1));
+        dfx = await deploy({ apps: [App.Vault] });
+
+        memberAddress = AccountIdentifier.fromPrincipal({
+            principal: dfx.vault.member_1.getPrincipal(),
+            subAccount: SubAccount.fromBytes(new Uint8Array(Array(32).fill(1))) as SubAccount
+        }).toHex()
 
         await dfx.vault.admin_actor.register_vault({
             description: [],
@@ -28,9 +29,9 @@ describe("Wallet", () => {
         await dfx.vault.admin_actor.store_member({
             address: memberAddress,
             name: ["MoyaLaskovayaSuchechka"],
-            role: {'Member': null},
+            role: { 'Member': null },
             vault_id: 1n,
-            state: {'Active': null},
+            state: { 'Active': null },
         });
     });
 
@@ -39,23 +40,23 @@ describe("Wallet", () => {
 
     it("wallet register", async function () {
 
-        wallet1 = await dfx.vault.admin_actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
+        wallet1 = await dfx.vault.admin_actor.register_wallet({ name: ["Wallet1"], vault_id: 1n }) as Wallet
         verifyWallet(wallet1, {
             created_date: 0n,
             uid: wallet1.uid,
             modified_date: 0n,
             name: ["Wallet1"],
-            state: {'Active': null},
+            state: { 'Active': null },
             vaults: [1n]
 
         })
-        wallet2 = await dfx.vault.admin_actor.register_wallet({name: ["Wallet2"], vault_id: 1n}) as Wallet
+        wallet2 = await dfx.vault.admin_actor.register_wallet({ name: ["Wallet2"], vault_id: 1n }) as Wallet
         verifyWallet(wallet2, {
             created_date: 0n,
             uid: wallet2.uid,
             modified_date: 0n,
             name: ["Wallet2"],
-            state: {'Active': null},
+            state: { 'Active': null },
             vaults: [1n]
 
         })
@@ -68,7 +69,7 @@ describe("Wallet", () => {
             uid: wallet1.uid,
             modified_date: 0n,
             name: ["Wallet1"],
-            state: {'Active': null},
+            state: { 'Active': null },
             vaults: [1n]
 
         })
@@ -77,7 +78,7 @@ describe("Wallet", () => {
             uid: wallet2.uid,
             modified_date: 0n,
             name: ["Wallet2"],
-            state: {'Active': null},
+            state: { 'Active': null },
             vaults: [1n]
         })
     });
@@ -87,12 +88,12 @@ describe("Wallet", () => {
             uid: wallet1.uid,
             modified_date: 123n,
             name: ["Wallet1_Udated"],
-            state: {'Archived': null},
+            state: { 'Archived': null },
             vaults: [2n]
 
         }) as Wallet
         wallet1.name = ["Wallet1_Udated"]
-        wallet1.state = {'Archived': null}
+        wallet1.state = { 'Archived': null }
         verifyWallet(wallet1, updated)
         expect(wallet1.modified_date !== updated.modified_date).true
     })
@@ -104,7 +105,7 @@ describe("Wallet", () => {
                 uid: wallet1.uid,
                 modified_date: 123n,
                 name: ["Wallet1_Udated"],
-                state: {'Archived': null},
+                state: { 'Archived': null },
                 vaults: [2n]
 
             })
@@ -125,17 +126,17 @@ describe("Wallet", () => {
             expect(e.message.includes("Nonexistent key")).eq(true)
         }
         try {
-            await dfx.vault.actor_member_1.register_wallet({name: ["Wallet1"], vault_id: 3n})
+            await dfx.vault.actor_member_1.register_wallet({ name: ["Wallet1"], vault_id: 3n })
         } catch (e: any) {
             expect(e.message.includes("Nonexistent key")).eq(true)
         }
         try {
-            await dfx.vault.actor_member_1.register_wallet({name: ["Wallet1"], vault_id: 2n})
+            await dfx.vault.actor_member_1.register_wallet({ name: ["Wallet1"], vault_id: 2n })
         } catch (e: any) {
             expect(e.message.includes("Unauthorised")).eq(true)
         }
         try {
-            await dfx.vault.actor_member_1.register_wallet({name: ["Wallet1"], vault_id: 1n})
+            await dfx.vault.actor_member_1.register_wallet({ name: ["Wallet1"], vault_id: 1n })
         } catch (e: any) {
             expect(e.message.includes("Not enough permissions")).eq(true)
         }

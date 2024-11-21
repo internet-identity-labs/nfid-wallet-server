@@ -6,6 +6,7 @@ import {
   compare,
   HttpAgent,
   lookup_path,
+  LookupResultFound,
 } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { PipeArrayBuffer, lebDecode } from '@dfinity/candid';
@@ -37,7 +38,7 @@ export async function verifyCertifiedResponse(certificate: Uint8Array | number[]
   }
   const sha256Result = crypto.createHash('sha256').update(newOwnedString).digest();
   const byteArray = new Uint8Array(sha256Result);
-  if (!equal(byteArray, treeHash)) {
+  if (!equal(byteArray, (treeHash as LookupResultFound).value as ArrayBuffer)) {
       throw new Error('Response hash does not match');
   }
 }
@@ -69,7 +70,7 @@ function validateCertificateTime(
   nowMs: number,
 ): void {
   const certificateTimeNs = lebDecode(
-    new PipeArrayBuffer(certificate.lookup(['time'])),
+    new PipeArrayBuffer((certificate.lookup(['time']) as LookupResultFound).value as ArrayBuffer),
   );
   const certificateTimeMs = Number(certificateTimeNs / BigInt(1_000_000));
 
@@ -104,7 +105,7 @@ async function validateTree(
     );
   }
 
-  if (!equal(certifiedData, treeRootHash)) {
+  if (!equal((certifiedData as LookupResultFound).value as ArrayBuffer, treeRootHash)) {
     throw new CertificateVerificationError(
       'Tree root hash did not match the certified data in the certificate.',
     );

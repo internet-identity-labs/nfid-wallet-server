@@ -1,7 +1,7 @@
 import "mocha";
-import {deploy} from "../util/deployment.util";
-import {Dfx} from "../type/dfx";
-import {App} from "../constanst/app.enum";
+import { deploy } from "../util/deployment.util";
+import { Dfx } from "../type/dfx";
+import { App } from "../constanst/app.enum";
 import {
     Approve,
     Policy,
@@ -13,11 +13,11 @@ import {
     VaultRegisterRequest,
     Wallet
 } from "../idl/vault";
-import {expect} from "chai";
-import {fromHexString, principalToAddress, principalToAddressBytes} from "ictool"
-import {DFX} from "../constanst/dfx.const";
-import {Principal} from "@dfinity/principal";
-import {fail} from "assert";
+import { expect } from "chai";
+import { DFX } from "../constanst/dfx.const";
+import { Principal } from "@dfinity/principal";
+import { fail } from "assert";
+import { AccountIdentifier, SubAccount } from "@dfinity/ledger-icp";
 
 
 describe.skip("Transaction", () => {
@@ -37,11 +37,20 @@ describe.skip("Transaction", () => {
     let tokens = 100000n
 
     before(async () => {
-        dfx = await deploy({apps: [App.Vault]});
+        dfx = await deploy({ apps: [App.Vault] });
 
-        adminAddress = principalToAddress(dfx.user.identity.getPrincipal() as any, Array(32).fill(1));
-        memberAddress1 = principalToAddress(dfx.vault.member_1.getPrincipal() as any, Array(32).fill(1));
-        memberAddress2 = principalToAddress(dfx.vault.member_2.getPrincipal() as any, Array(32).fill(1));
+        adminAddress = AccountIdentifier.fromPrincipal({
+            principal: dfx.user.identity.getPrincipal(),
+            subAccount: SubAccount.fromBytes(new Uint8Array(Array(32).fill(1))) as SubAccount
+        }).toHex();
+        memberAddress1 = AccountIdentifier.fromPrincipal({
+            principal: dfx.vault.member_1.getPrincipal(),
+            subAccount: SubAccount.fromBytes(new Uint8Array(Array(32).fill(1))) as SubAccount
+        }).toHex();
+        memberAddress2 = AccountIdentifier.fromPrincipal({
+            principal: dfx.vault.member_2.getPrincipal(),
+            subAccount: SubAccount.fromBytes(new Uint8Array(Array(32).fill(1))) as SubAccount
+        }).toHex();
 
         let request: VaultRegisterRequest = {
             description: ["test"],
@@ -53,37 +62,43 @@ describe.skip("Transaction", () => {
         let vaultMember: VaultMemberRequest = {
             address: memberAddress1,
             name: ["MoyaLaskovayaSuchechka"],
-            role: {'Member': null},
+            role: { 'Member': null },
             vault_id: 1n,
-            state: {'Active': null},
+            state: { 'Active': null },
         }
 
         await dfx.vault.admin_actor.store_member(vaultMember) as Vault;
         vaultMember.address = memberAddress2;
         await dfx.vault.admin_actor.store_member(vaultMember) as Vault;
-        wallet1 = await dfx.vault.admin_actor.register_wallet({name: ["Wallet1"], vault_id: 1n}) as Wallet
-        let walBytes = principalToAddressBytes(Principal.fromText(dfx.vault.id) as any, fromHexString(wallet1.uid))
+        wallet1 = await dfx.vault.admin_actor.register_wallet({ name: ["Wallet1"], vault_id: 1n }) as Wallet
+        let walBytes = AccountIdentifier.fromPrincipal({
+            principal: Principal.fromText(dfx.vault.id),
+            subAccount: SubAccount.fromPrincipal(Principal.fromHex(wallet1.uid)) as SubAccount
+        }).toHex()
         DFX.LEDGER_FILL_BALANCE(walBytes.toString().replaceAll(',', ';'))
-        wallet2 = await dfx.vault.admin_actor.register_wallet({name: ["Wallet2"], vault_id: 1n}) as Wallet
+        wallet2 = await dfx.vault.admin_actor.register_wallet({ name: ["Wallet2"], vault_id: 1n }) as Wallet
         let tp: ThresholdPolicy = {
             amount_threshold: 1n,
-            currency: {'ICP': null},
+            currency: { 'ICP': null },
             member_threshold: [1],
             wallets: []
         }
-        let request1: PolicyRegisterRequest = {policy_type: {'threshold_policy': tp}, vault_id: 1n};
+        let request1: PolicyRegisterRequest = { policy_type: { 'threshold_policy': tp }, vault_id: 1n };
         policy = await dfx.vault.admin_actor.register_policy(request1) as Policy
         let tp2: ThresholdPolicy = {
             amount_threshold: 1n,
-            currency: {'ICP': null},
+            currency: { 'ICP': null },
             member_threshold: [1],
             wallets: []
         }
-        let request2: PolicyRegisterRequest = {policy_type: {'threshold_policy': tp}, vault_id: 2n};
+        let request2: PolicyRegisterRequest = { policy_type: { 'threshold_policy': tp }, vault_id: 2n };
         policy2 = await dfx.vault.admin_actor.register_policy(request2) as Policy
-        to = principalToAddress(Principal.fromText(dfx.vault.id) as any, fromHexString(wallet2.uid))
+        to = AccountIdentifier.fromPrincipal({
+            principal: Principal.fromText(dfx.vault.id),
+            subAccount: SubAccount.fromPrincipal(Principal.fromHex(wallet2.uid)) as SubAccount
+        }).toHex();
         vault3 = await dfx.vault.actor_member_2.register_vault(request) as Vault
-        wallet3 = await dfx.vault.actor_member_2.register_wallet({name: ["Wallet2"], vault_id: 3n}) as Wallet
+        wallet3 = await dfx.vault.actor_member_2.register_wallet({ name: ["Wallet2"], vault_id: 3n }) as Wallet
     });
 
     it("Transaction register required 1 approves", async function () {
@@ -91,7 +106,7 @@ describe.skip("Transaction", () => {
 
         let expectedTransaction: Transaction = getDefaultTransaction()
         expectedTransaction.block_index = [2n]
-        expectedTransaction.state = {'Approved': null}
+        expectedTransaction.state = { 'Approved': null }
 
         let actualTransaction = await dfx.vault.admin_actor.register_transaction({
             address: to,
@@ -127,13 +142,13 @@ describe.skip("Transaction", () => {
         expectedTransaction.approves.push({
             created_date: 0n,
             signer: memberAddress1,
-            status: {'Approved': null}
+            status: { 'Approved': null }
         })
         expectedTransaction.block_index[0] = 3n
-        expectedTransaction.state = {'Approved': null}
+        expectedTransaction.state = { 'Approved': null }
 
         let completed = await dfx.vault.actor_member_1.approve_transaction({
-            state: {'Approved': null},
+            state: { 'Approved': null },
             transaction_id: actualTransaction.id
         }) as Transaction
 
@@ -153,7 +168,7 @@ describe.skip("Transaction", () => {
         expectedTransaction.approves.push({
             created_date: 0n,
             signer: memberAddress1,
-            status: {'Approved': null}
+            status: { 'Approved': null }
         })
 
         let tr = await dfx.vault.admin_actor.register_transaction({
@@ -163,7 +178,7 @@ describe.skip("Transaction", () => {
         }) as Transaction
 
         let actualTransaction = await dfx.vault.actor_member_1.approve_transaction({
-            state: {'Approved': null},
+            state: { 'Approved': null },
             transaction_id: tr.id
         }) as Transaction
 
@@ -174,13 +189,13 @@ describe.skip("Transaction", () => {
         expectedTransaction.approves.push({
             created_date: 0n,
             signer: memberAddress2,
-            status: {'Approved': null}
+            status: { 'Approved': null }
         })
         expectedTransaction.block_index[0] = 4n
-        expectedTransaction.state = {'Approved': null}
+        expectedTransaction.state = { 'Approved': null }
 
         let completed = await dfx.vault.actor_member_2.approve_transaction({
-            state: {'Approved': null},
+            state: { 'Approved': null },
             transaction_id: tr.id
         }) as Transaction
 
@@ -194,7 +209,7 @@ describe.skip("Transaction", () => {
         expectedTransaction.approves.push({
             created_date: 0n,
             signer: memberAddress1,
-            status: {'Approved': null}
+            status: { 'Approved': null }
         })
 
         let tr = await dfx.vault.admin_actor.register_transaction({
@@ -204,7 +219,7 @@ describe.skip("Transaction", () => {
         }) as Transaction
 
         let actualTransaction = await dfx.vault.actor_member_1.approve_transaction({
-            state: {'Approved': null},
+            state: { 'Approved': null },
             transaction_id: tr.id
         }) as Transaction
 
@@ -215,13 +230,13 @@ describe.skip("Transaction", () => {
         expectedTransaction.approves.push({
             created_date: 0n,
             signer: memberAddress2,
-            status: {'Rejected': null}
+            status: { 'Rejected': null }
         })
         expectedTransaction.block_index = []
-        expectedTransaction.state = {'Rejected': null}
+        expectedTransaction.state = { 'Rejected': null }
 
         let completed = await dfx.vault.actor_member_2.approve_transaction({
-            state: {'Rejected': null},
+            state: { 'Rejected': null },
             transaction_id: tr.id
         }) as Transaction
 
@@ -235,7 +250,7 @@ describe.skip("Transaction", () => {
         expectedTransaction.approves.push({
             created_date: 0n,
             signer: memberAddress1,
-            status: {'Approved': null}
+            status: { 'Approved': null }
         })
 
         let tr = await dfx.vault.admin_actor.register_transaction({
@@ -245,7 +260,7 @@ describe.skip("Transaction", () => {
         }) as Transaction
 
         let actualTransaction = await dfx.vault.actor_member_1.approve_transaction({
-            state: {'Approved': null},
+            state: { 'Approved': null },
             transaction_id: tr.id
         }) as Transaction
 
@@ -256,13 +271,13 @@ describe.skip("Transaction", () => {
         expectedTransaction.approves.push({
             created_date: 0n,
             signer: adminAddress,
-            status: {'Canceled': null}
+            status: { 'Canceled': null }
         })
         expectedTransaction.block_index = []
-        expectedTransaction.state = {'Canceled': null}
+        expectedTransaction.state = { 'Canceled': null }
 
         let completed = await dfx.vault.admin_actor.approve_transaction({
-            state: {'Canceled': null},
+            state: { 'Canceled': null },
             transaction_id: tr.id
         }) as Transaction
 
@@ -273,7 +288,7 @@ describe.skip("Transaction", () => {
         await setMemberThreshold([1])
         let expectedTransaction: Transaction = getDefaultTransaction()
         expectedTransaction.block_index = []
-        expectedTransaction.state = {'Rejected': null}
+        expectedTransaction.state = { 'Rejected': null }
         expectedTransaction.from = wallet2.uid
         expectedTransaction.amount = 10000000000n
         let actualTransaction = await dfx.vault.admin_actor.register_transaction({
@@ -292,7 +307,7 @@ describe.skip("Transaction", () => {
     it("Negative scenarios", async function () {
         try {
             await dfx.vault.admin_actor.approve_transaction({
-                state: {'Approved': null},
+                state: { 'Approved': null },
                 transaction_id: 1n
             })
         } catch (e) {
@@ -300,7 +315,7 @@ describe.skip("Transaction", () => {
         }
         try {
             await dfx.vault.admin_actor.approve_transaction({
-                state: {'Canceled': null},
+                state: { 'Canceled': null },
                 transaction_id: 1n
             })
         } catch (e) {
@@ -308,7 +323,7 @@ describe.skip("Transaction", () => {
         }
         try {
             await dfx.vault.admin_actor.approve_transaction({
-                state: {'Pending': null},
+                state: { 'Pending': null },
                 transaction_id: 1n
             })
         } catch (e) {
@@ -316,7 +331,7 @@ describe.skip("Transaction", () => {
         }
         try {
             await dfx.vault.admin_actor.approve_transaction({
-                state: {'Rejected': null},
+                state: { 'Rejected': null },
                 transaction_id: 1n
             })
         } catch (e) {
@@ -324,7 +339,7 @@ describe.skip("Transaction", () => {
         }
         try {
             await dfx.vault.admin_actor.approve_transaction({
-                state: {'Approved': null},
+                state: { 'Approved': null },
                 transaction_id: 100n
             })
         } catch (e) {
@@ -356,7 +371,7 @@ describe.skip("Transaction", () => {
 
     it("Get backup", async function () {
         try {
-            await dfx.vault.admin_actor.get_all_json(0, 10, {'Vaults': null})
+            await dfx.vault.admin_actor.get_all_json(0, 10, { 'Vaults': null })
             fail("Should unauthorised")
         } catch (e) {
             expect(e.message).contains("Unauthorised")
@@ -365,28 +380,28 @@ describe.skip("Transaction", () => {
             DFX.ADD_CONTROLLER(dfx.vault.id, "vault");
         }
         await dfx.vault.admin_actor.sync_controllers()
-        let cVaults = await dfx.vault.admin_actor.count({'Vaults': null}) as number
-        let vaultsString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Vaults': null}) as string
+        let cVaults = await dfx.vault.admin_actor.count({ 'Vaults': null }) as number
+        let vaultsString = await dfx.vault.admin_actor.get_all_json(0, 10, { 'Vaults': null }) as string
         let vaults = JSON.parse(vaultsString) as [Vault]
         expect(vaults.length).eq(3)
         expect(cVaults).eq(3n)
-        let walletString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Wallets': null}) as string
-        let cWallets = await dfx.vault.admin_actor.count({'Wallets': null}) as number
+        let walletString = await dfx.vault.admin_actor.get_all_json(0, 10, { 'Wallets': null }) as string
+        let cWallets = await dfx.vault.admin_actor.count({ 'Wallets': null }) as number
         let wallets = JSON.parse(walletString) as [Wallet]
         expect(wallets.length).eq(3)
         expect(cWallets).eq(3n)
-        let cTr = await dfx.vault.admin_actor.count({'Transactions': null}) as number
-        let transactionsString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Transactions': null}) as string
+        let cTr = await dfx.vault.admin_actor.count({ 'Transactions': null }) as number
+        let transactionsString = await dfx.vault.admin_actor.get_all_json(0, 10, { 'Transactions': null }) as string
         let transactions = JSON.parse(transactionsString) as [Transaction]
         expect(transactions.length).eq(6)
         expect(cTr).eq(6n)
-        let cPolicy = await dfx.vault.admin_actor.count({'Policies': null}) as number
-        let policyString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Policies': null}) as string
+        let cPolicy = await dfx.vault.admin_actor.count({ 'Policies': null }) as number
+        let policyString = await dfx.vault.admin_actor.get_all_json(0, 10, { 'Policies': null }) as string
         let policies = JSON.parse(policyString) as [Policy]
         expect(policies.length).eq(5)
         expect(cPolicy).eq(5n)
-        let usersString = await dfx.vault.admin_actor.get_all_json(0, 10, {'Users': null}) as string
-        let cUsers = await dfx.vault.admin_actor.count({'Users': null}) as number
+        let usersString = await dfx.vault.admin_actor.get_all_json(0, 10, { 'Users': null }) as string
+        let cUsers = await dfx.vault.admin_actor.count({ 'Users': null }) as number
         expect(cUsers).eq(3n)
         expect(usersString).contains(adminAddress)
         expect(usersString).contains(memberAddress1)
@@ -428,7 +443,7 @@ describe.skip("Transaction", () => {
         let adminApprove: Approve = {
             created_date: 0n,
             signer: adminAddress,
-            status: {'Approved': null}
+            status: { 'Approved': null }
         }
         return {
             amount: 100000n,
@@ -436,7 +451,7 @@ describe.skip("Transaction", () => {
             approves: [adminApprove],
             block_index: [],
             created_date: 0n,
-            currency: {'ICP': null},
+            currency: { 'ICP': null },
             from: wallet1.uid,
             id: 0n,
             member_threshold: policy.policy_type.threshold_policy.member_threshold[0],
@@ -444,7 +459,7 @@ describe.skip("Transaction", () => {
             modified_date: 0n,
             owner: adminAddress,
             policy_id: policy.id,
-            state: {'Pending': null},
+            state: { 'Pending': null },
             to: to,
             vault_id: 1n
         }
