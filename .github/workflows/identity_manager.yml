@@ -275,6 +275,37 @@ jobs:
         with:
           name: ${{ env.CANISTER_WASM }}
 
+      - name: DEPLOY => Take snapshot.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          dfx identity use "${DFX_ID_NAME}"
+
+          ci_echo_info "Stopping the canister '${CANISTER_NAME}'" >&2
+          dfx canister stop --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+          ci_echo_info "Getting Snapshots" >&2
+          ci_echo_debug "dfx canister snapshot list '${CANISTER_NAME}' --network '${NETWORK_NAME}'" >&2
+          snapshots_list="$(dfx canister snapshot list "${CANISTER_NAME}" --network "${NETWORK_NAME}" 2>&1)"
+          ci_echo_debug "snapshots_list='${snapshots_list}'" >&2
+
+          if [ -n "${snapshots_list}" ]; then
+            snapshot_id="$(echo "${snapshots_list}"  | grep -o '[0-9a-z]\{36,\}' || true | head -n 1)"
+            ci_echo_debug "snapshot_id='${snapshot_id}'" >&2
+          fi
+
+          if [ -n "${snapshot_id}" ]; then
+            ci_echo_info "Deleting Snapshot '${snapshot_id}'" >&2
+            ci_echo_debug "dfx canister snapshot delete '${CANISTER_NAME}' --network '${NETWORK_NAME}' '${snapshot_id}'" >&2
+            dfx canister snapshot delete "${CANISTER_NAME}" --network "${NETWORK_NAME}" "$snapshot_id"
+          fi
+
+          ci_echo_info "Creating Snapshot" >&2
+          dfx canister snapshot create --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+          ci_echo_info "Starting the canister '${CANISTER_NAME}'" >&2
+          dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
       - name: DEPLOY => Upgrade the canister.
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
