@@ -49,6 +49,11 @@ pub trait AccessPointRepoTrait {
         access_points: HashSet<AccessPoint>,
         root_princ: String,
     ) -> Option<Account>;
+    fn store_access_points_by_anchor(
+        &self,
+        access_points: HashSet<AccessPoint>,
+        anchor: u64,
+    ) -> Option<Account>;
     fn update_account_index(&self, additional_principal_id: String, root_princ: String);
 }
 
@@ -118,6 +123,21 @@ impl AccessPointRepoTrait for AccessPointRepo {
         let mut acc = self
             .account_repo
             .get_account_by_principal(root_princ)
+            .expect("Failed to retrieve the account.")
+            .clone();
+        acc.access_points = access_points.clone();
+        let resp = self.account_repo.store_account(acc);
+        resp
+    }
+
+    fn store_access_points_by_anchor(
+        &self,
+        access_points: HashSet<AccessPoint>,
+        anchor: u64,
+    ) -> Option<Account> {
+        let mut acc = self
+            .account_repo
+            .get_account_by_anchor(anchor, WalletVariant::InternetIdentity)
             .expect("Failed to retrieve the account.")
             .clone();
         acc.access_points = access_points.clone();
