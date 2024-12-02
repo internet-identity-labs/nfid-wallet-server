@@ -442,12 +442,14 @@ describe("Account", () => {
             const getAccountResponseNotFound = await recoveryPhraseActor.get_account();
             expect(getAccountResponseNotFound.status_code).to.eq(404);
 
+            await actor.remove_access_point({ pub_key: rootAccessPointIdentity.getPrincipal().toText() });
+
             const recoveryPhraseResponse = await recoveryPhraseActor.sync_recovery_phrase_from_internet_identity(accountResponse.data[0].anchor);
-            expect(recoveryPhraseResponse.data[0].access_points.length).eq(2);
+            expect(recoveryPhraseResponse.data[0].access_points.length).eq(1);
             expect(recoveryPhraseResponse.status_code).eq(200);
 
             const getAccountResponseFound = await recoveryPhraseActor.get_account();
-            expect(getAccountResponseFound.data[0].access_points.length).eq(2);
+            expect(getAccountResponseFound.data[0].access_points.length).eq(1);
             expect(getAccountResponseFound.status_code).to.eq(200);
 
             const recoveryDevice = getAccountResponseFound.data[0].access_points.find(x => 'Recovery' in x.device_type);
