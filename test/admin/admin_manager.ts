@@ -12,8 +12,6 @@ import {ICRC1CsvData} from "./types";
 import {getActor, mapCategory, mapCategoryCSVToCategory} from "./util";
 import {ChainFusionTestnetParser} from "./chain_fusion_testnet";
 import {CANISTER_ID, FILE_PATH, KEY_PAIR} from "./constants";
-import {sleep} from "../util/call.util";
-import {expect} from "chai";
 
 export class AdminManager {
 
@@ -58,7 +56,7 @@ export class AdminManager {
         const canisters_from_oracle = await Promise.all(Array.from({ length: amountOfRequests }, (_, i) =>
             this.actor.get_icrc1_paginated(i * offset, offset)
         )).then((res) => res.flat()) as Array<ICRC1>;
-        const fields = ['name', 'symbol', 'ledger', 'index', 'category', 'logo', 'fee', 'decimals'];
+        const fields = ['name', 'symbol', 'ledger', 'index', 'category', 'logo', 'fee', 'decimals', 'root_canister_id', 'date_added'];
         const opts = {fields};
         try {
             const csv = parse(canisters_from_oracle
@@ -71,7 +69,9 @@ export class AdminManager {
                             symbol: c.symbol,
                             logo: c.logo.length > 0 ? c.logo[0] : undefined,
                             fee: c.fee.toString(),
-                            decimals: c.decimals.toString()
+                            decimals: c.decimals.toString(),
+                            root_canister_id: c.root_canister_id.length > 0 ? c.root_canister_id[0] : undefined,
+                            date_added: c.date_added.toString()
                         }
                     })
                 , opts);
@@ -98,7 +98,9 @@ export class AdminManager {
                     symbol: record.symbol,
                     logo: record.logo === undefined ? [] : [record.logo],
                     fee: BigInt(record.fee),
-                    decimals: Number(record.decimals)
+                    decimals: Number(record.decimals),
+                    root_canister_id: [record.root_canister_id],
+                    date_added: BigInt(record.date_added)
                 }
             });
 
@@ -116,5 +118,9 @@ export class AdminManager {
             console.log("Выгружаю CSV");
             await this.actor.replace_icrc1_canisters(batch);
         }
+    }
+
+    removeCanister(ledgerId: string) {
+        return this.actor.remove_icrc1_canister(ledgerId);
     }
 }

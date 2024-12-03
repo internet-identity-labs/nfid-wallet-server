@@ -14,9 +14,11 @@ export const idlFactory = ({ IDL }) => {
     });
     const ICRC1 = IDL.Record({
         'fee' : IDL.Nat,
+        'root_canister_id' : IDL.Opt(IDL.Text),
         'decimals' : IDL.Nat8,
         'logo' : IDL.Opt(IDL.Text),
         'name' : IDL.Text,
+        'date_added' : IDL.Nat64,
         'ledger' : IDL.Text,
         'category' : Category,
         'index' : IDL.Opt(IDL.Text),
@@ -39,6 +41,7 @@ export const idlFactory = ({ IDL }) => {
             [IDL.Vec(ICRC1)],
             ['query'],
         ),
+        'remove_icrc1_canister' : IDL.Func([IDL.Text], [], []),
         'replace_icrc1_canisters' : IDL.Func([IDL.Vec(ICRC1)], [], []),
         'set_operator' : IDL.Func([IDL.Principal], [], []),
         'store_icrc1_canister' : IDL.Func([ICRC1Request], [], []),

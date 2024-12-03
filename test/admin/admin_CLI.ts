@@ -16,6 +16,10 @@ async function run() {
             await adminManager.addFromCSV();
             console.log('CSV uploaded!!!');
             break;
+        case 'removeCanister':
+            await adminManager.removeCanister(process.argv[3]);
+            console.log('Canister removed!!!');
+            break;
         default:
             console.log('Invalid method');
             break;

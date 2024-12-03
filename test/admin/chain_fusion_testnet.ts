@@ -20,7 +20,9 @@ export class ChainFusionTestnetParser {
                 symbol: c.icrc1_metadata.icrc1_symbol,
                 category: {ChainFusionTestnet: null},
                 fee: BigInt(c.icrc1_metadata.icrc1_fee),
-                decimals: parseInt(c.icrc1_metadata.icrc1_decimals)
+                decimals: parseInt(c.icrc1_metadata.icrc1_decimals),
+                root_canister_id: c.sns_root_canister_id ? [c.sns_root_canister_id] : [],
+                date_added: BigInt(Date.now())
             }
         });
         return canisters;
