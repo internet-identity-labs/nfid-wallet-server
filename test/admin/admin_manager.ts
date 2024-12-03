@@ -50,10 +50,10 @@ export class AdminManager {
     }
 
     async addToCSV() {
-        let canisters =  await this.actor.count_icrc1_canisters() as number;
+        let canisters = await this.actor.count_icrc1_canisters() as number;
         const offset = 25
         let amountOfRequests = Math.ceil(Number(canisters) / offset);
-        const canisters_from_oracle = await Promise.all(Array.from({ length: amountOfRequests }, (_, i) =>
+        const canisters_from_oracle = await Promise.all(Array.from({length: amountOfRequests}, (_, i) =>
             this.actor.get_icrc1_paginated(i * offset, offset)
         )).then((res) => res.flat()) as Array<ICRC1>;
         const fields = ['name', 'symbol', 'ledger', 'index', 'category', 'logo', 'fee', 'decimals', 'root_canister_id', 'date_added'];

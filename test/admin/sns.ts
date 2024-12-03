@@ -49,6 +49,6 @@ export class SnsParser {
                 });
         });
         const canisters = await Promise.all(canisterPromises.filter((c) => c !== undefined)) as ICRC1[];
-        return canisters
+        return canisters.filter((c) => c !== undefined) as ICRC1[];
     }
 }
