@@ -40,10 +40,10 @@ export class AdminManager {
             return chunks;
         };
 
-        const batches = chunkArray(all, 999);
+        const batches = chunkArray(all, 25);
 
         for (const batch of batches) {
-            console.log("Перезаписываю SNS");
+            console.log("Rewriting SNS");
             await this.actor.store_new_icrc1_canisters(batch);
 
         }
