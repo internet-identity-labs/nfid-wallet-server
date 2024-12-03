@@ -24,9 +24,15 @@ export class SnsParser {
             data = data.concat(generalCanisterInfos)
         }
         const canisterPromises = data.map((l) => {
+            if (l.derived_state.sns_tokens_per_icp === 0) {
+                return undefined
+            }
             return chai.request(`https://sns-api.internetcomputer.org`)
                 .get(`/api/v1/snses/${l.canister_ids.root_canister_id}`).then((a) => {
                     const c = a.body as CanisterObject;
+                    if (c.enabled === false) {
+                        return undefined
+                    }
                     let can: ICRC1 = {
                         name: c.icrc1_metadata.icrc1_name,
                         logo: c.logo ? [c.logo] : [],
@@ -42,7 +48,7 @@ export class SnsParser {
                     return can
                 });
         });
-        const canisters = await Promise.all(canisterPromises);
+        const canisters = await Promise.all(canisterPromises.filter((c) => c !== undefined)) as ICRC1[];
         return canisters
     }
 }
