@@ -15,9 +15,11 @@ export interface Conf {
 }
 export interface ICRC1 {
     'fee' : bigint,
+    'root_canister_id' : [] | [string],
     'decimals' : number,
     'logo' : [] | [string],
     'name' : string,
+    'date_added' : bigint,
     'ledger' : string,
     'category' : Category,
     'index' : [] | [string],
@@ -36,6 +38,7 @@ export interface _SERVICE {
     'count_icrc1_canisters' : ActorMethod<[], bigint>,
     'get_all_icrc1_canisters' : ActorMethod<[], Array<ICRC1>>,
     'get_icrc1_paginated' : ActorMethod<[bigint, bigint], Array<ICRC1>>,
+    'remove_icrc1_canister' : ActorMethod<[string], undefined>,
     'replace_icrc1_canisters' : ActorMethod<[Array<ICRC1>], undefined>,
     'set_operator' : ActorMethod<[Principal], undefined>,
     'store_icrc1_canister' : ActorMethod<[ICRC1Request], undefined>,

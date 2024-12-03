@@ -22,6 +22,8 @@ type ICRC1 = record {
     symbol : text;
     decimals : nat8;
     fee : nat;
+    root_canister_id: opt text;
+    date_added: nat64;
 };
 
 type ICRC1Request = record {
@@ -40,4 +42,5 @@ type ICRC1Request = record {
     set_operator : (principal) -> ();
     count_icrc1_canisters : () -> (nat64) query;
     get_icrc1_paginated : (nat64, nat64) -> (vec ICRC1) query;
+    remove_icrc1_canister : (text) -> ();
 }
