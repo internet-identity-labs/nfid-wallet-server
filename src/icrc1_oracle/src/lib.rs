@@ -20,14 +20,11 @@ pub enum Category {
     Sns,
 }
 
-
-
 #[derive(CandidType, Debug, Clone, Deserialize)]
 pub struct CanisterIdRequest {
     #[serde(rename = "canister_id")]
     pub canister_id: Principal,
 }
-
 
 #[derive(Serialize, Deserialize, CandidType, Clone, PartialEq, Eq, Debug)]
 pub enum CanisterStatus {
@@ -73,6 +70,8 @@ pub struct ICRC1 {
     pub category: Category,
     pub decimals: u8,
     pub fee: Nat,
+    pub root_canister_id: Option<String>,
+    pub date_added: u64
 }
 
 impl Hash for ICRC1 {
@@ -129,6 +128,8 @@ pub async fn store_icrc1_canister(request: ICRC1Request) {
             category: Category::Community,
             decimals: request.decimals,
             fee: request.fee,
+            root_canister_id: None,
+            date_added: ic_cdk::api::time(),
         };
         registry.replace(canister_id);
     });
@@ -194,10 +195,28 @@ pub async fn store_new_icrc1_canisters(icrc1: Vec<ICRC1>) {
     trap_if_not_authenticated_admin();
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
-        for canister in icrc1 {
-            registry.insert(canister);
+        for mut canister in icrc1 {
+            let existent_canister = registry.get(&canister);
+            //if canister exists - update metadata. Sometimes SNS logo can be updated silently
+            if existent_canister.is_some() {
+                canister.index = existent_canister.unwrap().index.clone();
+                canister.date_added = existent_canister.unwrap().date_added;
+                registry.replace(canister);
+            } else {
+                registry.insert(canister);
+            }
         }
     })
+}
+
+/// Removes an ICRC1 canister by its ledger principal.
+#[update]
+pub async fn remove_icrc1_canister(ledger: String) {
+    trap_if_not_authenticated_admin();
+    ICRC_REGISTRY.with(|registry| {
+        let mut registry = registry.borrow_mut();
+        registry.retain(|canister| canister.ledger != ledger);
+    });
 }
 
 
@@ -214,9 +233,36 @@ async fn set_operator(operator: Principal) {
     });
 }
 
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug, Eq)]
+pub struct ICRC1Memory {
+    pub index: Option<String>,
+    pub ledger: String,
+    pub name: String,
+    pub logo: Option<String>,
+    pub symbol: String,
+    pub category: Category,
+    pub decimals: u8,
+    pub fee: Nat,
+    pub root_canister_id: Option<String>,
+    pub date_added: Option<u64>
+}
+
+impl Hash for ICRC1Memory {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.ledger.hash(state);
+    }
+}
+
+impl PartialEq for ICRC1Memory {
+    fn eq(&self, other: &Self) -> bool {
+        self.ledger == other.ledger
+    }
+}
+
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
 struct Memory {
-    registry: HashSet<ICRC1>,
+    registry: HashSet<ICRC1Memory>,
     config: Conf,
 }
 
@@ -224,8 +270,19 @@ struct Memory {
 #[pre_upgrade]
 pub fn stable_save() {
     let registry = ICRC_REGISTRY.with(|registry| {
-        let registry = registry.borrow();
-        registry.clone()
+        let registry1 = registry.borrow();
+        registry1.iter().map(|x| ICRC1Memory {
+            index: x.index.clone(),
+            ledger: x.ledger.clone(),
+            name: x.name.clone(),
+            logo: x.logo.clone(),
+            symbol: x.symbol.clone(),
+            category: x.category.clone(),
+            decimals: x.decimals,
+            fee: x.fee.clone(),
+            root_canister_id: x.root_canister_id.clone(),
+            date_added: Some(x.date_added),
+        }).collect()
     });
     let config = CONFIG.with(|config| {
         let config = config.borrow();
@@ -250,7 +307,18 @@ pub fn stable_restore() {
     });
     ICRC_REGISTRY.with(|mut registry| {
         let mut registry = registry.borrow_mut();
-        *registry = mo.registry;
+        *registry =  mo.registry.iter().map(|x| ICRC1 {
+            index: x.index.clone(),
+            ledger: x.ledger.clone(),
+            name: x.name.clone(),
+            logo: x.logo.clone(),
+            symbol: x.symbol.clone(),
+            category: x.category.clone(),
+            decimals: x.decimals,
+            fee: x.fee.clone(),
+            root_canister_id: x.root_canister_id.clone(),
+            date_added: x.date_added.unwrap_or(ic_cdk::api::time()),
+        }).collect()
     });
 }
 

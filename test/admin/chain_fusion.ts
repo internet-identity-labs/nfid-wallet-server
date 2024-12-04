@@ -7,7 +7,7 @@ chai.use(chaiHttp);
 
 
 export class ChainFusionParser {
-    async parseCanister() {
+    async parseCanister(): Promise<ICRC1[]> {
         const response = await chai.request("https://icrc-api.internetcomputer.org")
             .get("/api/v1/ledgers?token_types=ckerc20_mainnet")
         const data = response.body.data as RootCanister[];
@@ -20,7 +20,9 @@ export class ChainFusionParser {
                 symbol: c.icrc1_metadata.icrc1_symbol,
                 category: {ChainFusion: null},
                 fee: BigInt(c.icrc1_metadata.icrc1_fee),
-                decimals: parseInt(c.icrc1_metadata.icrc1_decimals)
+                decimals: parseInt(c.icrc1_metadata.icrc1_decimals),
+                root_canister_id: c.sns_root_canister_id ? [c.sns_root_canister_id] : [],
+                date_added: BigInt(Date.now())
             }
         });
         return canisters;

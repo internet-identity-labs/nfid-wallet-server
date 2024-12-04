@@ -38,7 +38,9 @@ describe("ICRC1 canister Oracle", () => {
             symbol: "symbol",
             category: {Spam: null},
             fee: BigInt(1),
-            decimals: 1
+            decimals: 1,
+            root_canister_id: [],
+            date_added: BigInt(Date.now())
         }
         await dfx.icrc1_oracle.actor.store_icrc1_canister(firstCanister);
         let allCanisters = await dfx.icrc1_oracle.actor.get_all_icrc1_canisters() as Array<ICRC1>;
@@ -58,7 +60,9 @@ describe("ICRC1 canister Oracle", () => {
             symbol: "symbol2",
             category: {Spam: null},
             fee: BigInt(1),
-            decimals: 1
+            decimals: 1,
+            root_canister_id: [],
+            date_added: BigInt(Date.now())
         }
         const third: ICRC1 = {
             logo: ["logo3"],
@@ -68,7 +72,9 @@ describe("ICRC1 canister Oracle", () => {
             symbol: "symbol3",
             category: {Spam: null},
             fee: BigInt(1),
-            decimals: 1
+            decimals: 1,
+            root_canister_id: [],
+            date_added: BigInt(Date.now())
         }
         firstCanister = allCanisters[0]
         firstCanister.category = {Known: null}
@@ -91,5 +97,13 @@ describe("ICRC1 canister Oracle", () => {
         )).then((res) => res.flat());
         expect(all.length).eq(3);
     });
+
+    it("Remove ICRC1", async function () {
+        let allCanisters = await dfx.icrc1_oracle.actor.get_all_icrc1_canisters() as Array<ICRC1>;
+        expect(allCanisters.length).eq(3);
+        await dfx.icrc1_oracle.actor.remove_icrc1_canister(allCanisters[0].ledger);
+        allCanisters = await dfx.icrc1_oracle.actor.get_all_icrc1_canisters() as Array<ICRC1>;
+        expect(allCanisters.length).eq(2);
+    })
 
 })

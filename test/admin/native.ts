@@ -13,7 +13,9 @@ export class NativeParser {
                 symbol: "ICP",
                 category: {Native: null},
                 fee: BigInt(10000),
-                decimals: 8
+                decimals: 8,
+                root_canister_id: [],
+                date_added: BigInt(Date.now())
             }
         ];
     }
