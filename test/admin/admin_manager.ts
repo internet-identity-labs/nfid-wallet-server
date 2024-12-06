@@ -58,9 +58,8 @@ export class AdminManager {
             this.actor.get_icrc1_paginated(i * offset, offset)
         )).then((res) => res.flat()) as Array<ICRC1>;
 
-        let canistersToUpdateMetadata = canisters_from_oracle.filter((c) => hasOwnProperty(c.category, "Known") || hasOwnProperty(c.category, "Community"));
         let updatedMetadata = new Map<string, any>();
-        for (const c of canistersToUpdateMetadata) {
+        for (const c of canisters_from_oracle) {
             try {
                 const metadata = await getMetadata(c.ledger);
                 updatedMetadata.set(c.ledger, metadata);
