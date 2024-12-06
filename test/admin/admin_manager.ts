@@ -79,6 +79,8 @@ export class AdminManager {
                             c.name = metadata.name;
                             c.symbol = metadata.symbol;
                             c.logo = metadata.logo ? [metadata.logo] : c.logo;
+                            c.decimals = metadata.decimals;
+                            c.fee = metadata.fee;
                         }
                         return {
                             name: c.name,
