@@ -9,9 +9,10 @@ import {parse} from 'json2csv';
 import * as fs from 'fs';
 import {parse as csvParse} from 'csv-parse/sync';
 import {ICRC1CsvData} from "./types";
-import {getActor, mapCategory, mapCategoryCSVToCategory} from "./util";
+import {getActor, hasOwnProperty, mapCategory, mapCategoryCSVToCategory} from "./util";
 import {ChainFusionTestnetParser} from "./chain_fusion_testnet";
 import {CANISTER_ID, FILE_PATH, KEY_PAIR} from "./constants";
+import {getMetadata} from "./metadata_service";
 
 export class AdminManager {
 
@@ -56,11 +57,31 @@ export class AdminManager {
         const canisters_from_oracle = await Promise.all(Array.from({length: amountOfRequests}, (_, i) =>
             this.actor.get_icrc1_paginated(i * offset, offset)
         )).then((res) => res.flat()) as Array<ICRC1>;
+
+        let updatedMetadata = new Map<string, any>();
+        for (const c of canisters_from_oracle) {
+            try {
+                const metadata = await getMetadata(c.ledger);
+                updatedMetadata.set(c.ledger, metadata);
+            } catch (e) {
+                console.error(`Error while fetching metadata for ledger ${c.ledger} and name ${c.name}: ${e}`);
+            }
+        }
+
         const fields = ['name', 'symbol', 'ledger', 'index', 'category', 'logo', 'fee', 'decimals', 'root_canister_id', 'date_added'];
         const opts = {fields};
         try {
             const csv = parse(canisters_from_oracle
                     .map((c) => {
+                        //update metadata. sometimes logo can be replaced
+                        if (updatedMetadata.has(c.ledger)) {
+                            let metadata = updatedMetadata.get(c.ledger);
+                            c.name = metadata.name;
+                            c.symbol = metadata.symbol;
+                            c.logo = metadata.logo ? [metadata.logo] : c.logo;
+                            c.decimals = metadata.decimals;
+                            c.fee = metadata.fee;
+                        }
                         return {
                             name: c.name,
                             ledger: c.ledger,
