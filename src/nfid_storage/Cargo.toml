@@ -6,8 +6,8 @@ edition = "2021"
 [dependencies]
 candid = "0.10"
 candid_parser = "0.1.2"
-ic-cdk = "0.13"
-ic-cdk-macros = "0.13"
+ic-cdk = "0.16"
+ic-cdk-macros = "0.16"
 
 # other dependencies
 serde = "1"
