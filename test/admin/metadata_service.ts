@@ -1,7 +1,7 @@
 import * as Agent from "@dfinity/agent"
 
 import { idlFactory as icrc1IDL } from "./idl/icrc1"
-import { _SERVICE as ICRC1ServiceIDL } from "./idl/icrc1.d"
+import { _SERVICE as ICRC1ServiceIDL } from "./idl/icrc1.idl"
 import {HttpAgent} from "@dfinity/agent";
 
 export const agentBaseConfig = { host: "https://ic0.app" }
