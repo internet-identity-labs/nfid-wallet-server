@@ -12,5 +12,5 @@ ic-cdk = "0.16.0"
 ic-cdk-macros = "0.16.0"
 ic-ledger-types = "0.13.0"
 serde = "1"
-ic-stable-structures = "0.6.0"
+ic-stable-structures = "0.6.5"
 
