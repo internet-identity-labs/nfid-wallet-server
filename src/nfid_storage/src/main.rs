@@ -1,5 +1,5 @@
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use candid::{candid_method, Principal};
 use candid::CandidType;
@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 thread_local! {
     static STATE: State = State::default();
     static PASSKEYS: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
+    static USER_KEYS: RefCell<HashMap<u64, Vec<String>>> = RefCell::new(HashMap::new());
 }
 
 
@@ -64,22 +65,80 @@ async fn get_passkey(keys: Vec<String>) -> Vec<PasskeyData> {
     response
 }
 
+/// Returns the public data of a passkey using the specified key.
+#[query]
+#[candid_method(query)]
+async fn get_passkey_by_anchor(anchor: u64) -> Vec<PasskeyData> {
+    let mut response: Vec<PasskeyData> = Vec::new();
+    USER_KEYS.with(|user_keys| {
+        if let Some(keys_vec) = user_keys.borrow().get(&anchor) {
+            PASSKEYS.with(|passkeys| {
+                for key in keys_vec {
+                    if let Some(value) = passkeys.borrow().get(key) {
+                        response.push(PasskeyData { key: key.clone(), data: value.clone() });
+                    }
+                }
+            });
+        }
+    });
+    response
+}
+
 /// Persists the public data of a passkey using the specified key.
 #[update]
 #[candid_method(update)]
-async fn store_passkey(key: String, data: String) -> u64 {
+async fn store_passkey(key: String, data: String, anchor: u64) -> u64 {
     let caller: Principal = ic_cdk::caller();
     let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
         .await
         .expect("Identity Manager canister returned an empty response for the get_anchor_by_principal method.");
-    if option_root.is_none() {
+    if option_root.is_none() || option_root.expect("The option_root failed after existence check.") != anchor {
         trap("Unauthorised");
     }
     PASSKEYS.with(|passkeys| {
         let mut passkeys = passkeys.borrow_mut();
         passkeys.insert(key.clone(), data.clone());
-        option_root.expect("The option_root failed after existence check.")
-    })
+    });
+    USER_KEYS.with(|user_keys| {
+        let mut user_keys = user_keys.borrow_mut();
+        if let Some(keys_vec) = user_keys.get_mut(&anchor) {
+            if !keys_vec.contains(&key) {
+                keys_vec.push(key.clone());
+            }
+        } else {
+            user_keys.insert(anchor, vec![key.clone()]);
+        }
+
+
+
+
+    });
+    option_root.expect("The option_root failed after existence check.")
+
+}
+
+/// Removes the public data of a passkey using the specified key.
+#[update]
+#[candid_method(update)]
+async fn remove_passkey(key: String, anchor: u64) -> u64 {
+    let caller: Principal = ic_cdk::caller();
+    let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
+        .await
+        .expect("Identity Manager canister returned an empty response for the get_anchor_by_principal method.");
+    if option_root.is_none() || option_root.expect("The option_root failed after existence check.") != anchor {
+        trap("Unauthorised");
+    }
+    PASSKEYS.with(|passkeys| {
+        let mut passkeys = passkeys.borrow_mut();
+        passkeys.remove(&key);
+    });
+    USER_KEYS.with(|user_keys| {
+        let mut user_keys = user_keys.borrow_mut();
+        if let Some(keys_vec) = user_keys.get_mut(&anchor) {
+            keys_vec.retain(|x| x != &key);
+        }
+    });
+    option_root.expect("The option_root failed after existence check.")
 }
 
 /// Applies changes after the canister upgrade.
@@ -110,6 +169,7 @@ candid::export_service!();
 struct TempMemory {
     im_canister: Option<Principal>,
     passkeys: Option<HashMap<String, String>>,
+    anchors_data: Option<HashMap<u64, Vec<String>>>,
 }
 
 
@@ -129,6 +189,10 @@ pub async fn init_from_memory() {
         let mut map = passkeys.borrow_mut();
         mo.passkeys.map(|b| map.extend(b));
     });
+    USER_KEYS.with(|user_keys| {
+        let mut map = user_keys.borrow_mut();
+        mo.anchors_data.map(|b| map.extend(b));
+    });
 }
 
 pub async fn save_to_temp_memory() {
@@ -139,7 +203,11 @@ pub async fn save_to_temp_memory() {
         passkeys.borrow().clone()
     });
 
-    let mo: TempMemory = TempMemory { im_canister, passkeys: Some(passkeys) };
+    let anchors_data = USER_KEYS.with(|user_keys| {
+        user_keys.borrow().clone()
+    });
+
+    let mo: TempMemory = TempMemory { im_canister, passkeys: Some(passkeys), anchors_data: Some(anchors_data) };
     storage::stable_save((mo, ))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
