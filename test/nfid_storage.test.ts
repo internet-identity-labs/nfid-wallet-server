@@ -1,8 +1,7 @@
 import {Dfx} from "./type/dfx";
-import {deploy, getActor, getIdentity} from "./util/deployment.util";
+import {deploy, getActor, getIdentity, getTypedActor} from "./util/deployment.util";
 import {App} from "./constanst/app.enum";
 import {expect} from "chai";
-import {DFX} from "./constanst/dfx.const";
 import {AccessPointRequest, HTTPAccountRequest, HTTPAccountResponse} from "./idl/identity_manager";
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {idlFactory as nfidSIDL} from "./idl/nfid_storage_idl";
@@ -17,7 +16,7 @@ describe("NFID Storage test", () => {
         dfx = await deploy({apps: [App.IdentityManager, App.NFIDStorage]});
     });
 
-    it("Store/Get passkey", async function () {
+    it("Store/Get/Remove passkey", async function () {
         const identity = getIdentity("87654321876543218765432187654311");
         const principal = identity.getPrincipal().toText();
         const dd: AccessPointRequest = {
@@ -44,9 +43,9 @@ describe("NFID Storage test", () => {
         const response = accResponse.data[0];
         expect(response.anchor).eq(100000000n);
 
-        storageActor = await getActor(dfx.nfid_storage.id, identity, nfidSIDL);
+        storageActor = await getTypedActor(dfx.nfid_storage.id, identity, nfidSIDL);
 
-        let anchor = await storageActor.store_passkey("PASSKEY_ID", "SOME+TEST_STRING")
+        let anchor = await storageActor.store_passkey("PASSKEY_ID", "SOME+TEST_STRING", 100000000n)
 
         expect(anchor).eq(100000000n)
 
@@ -59,5 +58,15 @@ describe("NFID Storage test", () => {
         passkey = await storageActor.get_passkey(["PASSKEY_ID"])
 
         expect(passkey[0].data).eq("SOME+TEST_STRING")
+
+        passkey = await storageActor.get_passkey_by_anchor(100000000n)
+
+        expect(passkey[0].data).eq("SOME+TEST_STRING")
+
+        await storageActor.remove_passkey("PASSKEY_ID", 100000000n)
+
+        const data = await storageActor.get_passkey_by_anchor(100000000n) as PassKeyData[]
+
+        expect(data.length).eq(0)
     })
 })
