@@ -341,3 +341,38 @@ jobs:
           name: ${{github.sha}}-${{ env.CANISTER_WASM }}
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
           path: ${{ env.CANISTER_WASM }}
+
+      - name: POST-DEPLOY => Upload to S3.
+        env:
+          ARTIFACT_BUCKET_NAME: ${{ vars.ARTIFACT_BUCKET_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ vars.S3_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          VERSION="${{github.sha}}"
+
+          if [ "${GITHUB_REF_TYPE}" == 'tag' ]; then
+            VERSION="${GITHUB_REF_NAME}"
+          fi
+
+          COMPRESS_FILE_NAME="${VERSION}-${{ env.CANISTER_WASM }}.tar.gz"
+
+          ci_echo_info "Compressing file '${COMPRESS_FILE_NAME}'" >&2
+          ci_echo_debug "tar -zcvf '${COMPRESS_FILE_NAME}' '${{ env.CANISTER_WASM }}'" >&2
+          if ! tar -zcvf "${COMPRESS_FILE_NAME}" "${{ env.CANISTER_WASM }}" >&2; then
+              ci_echo_error "Issue on compressing files" >&2
+              exit 1
+          fi
+
+          ci_echo_info "Uploading artifact to S3." >&2
+          if ! aws s3 cp \
+              --no-progress \
+              "${COMPRESS_FILE_NAME}" "s3://${ARTIFACT_BUCKET_NAME}/${CANISTER_NAME}/${COMPRESS_FILE_NAME}"; then
+
+              ci_echo_error "Can't upload artifact '${COMPRESS_FILE_NAME}' to s3://${ARTIFACT_BUCKET_NAME}/${CANISTER_NAME}/${COMPRESS_FILE_NAME}" >&2
+              exit 1
+          fi
+
+          ci_echo_success "Artifact file link: https://${ARTIFACT_BUCKET_NAME}.s3.${AWS_DEFAULT_REGION}.amazonaws.com/${CANISTER_NAME}/${COMPRESS_FILE_NAME}"
+          ci_echo_success "Upload Done" >&2
