@@ -461,16 +461,16 @@ jobs:
           ci_echo_info "DFX_ID_NAME=${DFX_ID_NAME}" >&2
           ci_echo_info "DFX_ID_PATH=${DFX_ID_PATH}" >&2
 
-          - name: PRE-DEPLOY => Write identity.
-          env:
-            DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
-          run: |
-            source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-  
-            mkdir -p "${DFX_ID_PATH}"
-  
-            ci_echo_warn "Preparing encoded key..." >&2
-            echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
+      - name: PRE-RESTORE => Write identity.
+        env:
+          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          mkdir -p "${DFX_ID_PATH}"
+
+          ci_echo_warn "Preparing encoded key..." >&2
+          echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
   
       - name: RESTORE => Start the canister.
         run: |
