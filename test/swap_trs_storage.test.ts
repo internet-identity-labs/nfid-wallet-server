@@ -2,7 +2,6 @@ import {Dfx} from "./type/dfx";
 import {deploy, getActor, getIdentity, getTypedActor} from "./util/deployment.util";
 import {App} from "./constanst/app.enum";
 import {expect} from "chai";
-import {DFX} from "./constanst/dfx.const";
 import {AccessPointRequest, HTTPAccountRequest, HTTPAccountResponse} from "./idl/identity_manager";
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {idlFactory as swapStorageIDL} from "./idl/swap_trs_storage_idl";
@@ -57,7 +56,7 @@ describe("Swap Trs Storage test", () => {
             end_time: [4n],
             transfer_id: [5n],
             target_ledger: "Ledger",
-            error: [],
+            errors: [{ time: 0n, message: "Error" }],
             stage: {
                 Completed: null
             },
@@ -90,5 +89,6 @@ describe("Swap Trs Storage test", () => {
 
         let trsFromMemory = await storageActor.get_transactions(identity.getPrincipal().toText())
         expect(trsFromMemory.length).eq(1)
+        expect(trsFromMemory[0].errors.length).eq(1)
     })
 })

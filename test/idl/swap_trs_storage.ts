@@ -2,6 +2,7 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export interface Error { 'time' : bigint, 'message' : string }
 export interface InitArgs { 'im_canister' : Principal }
 export type SwapStage = { 'Withdraw' : null } |
     { 'Deposit' : null } |
@@ -13,11 +14,11 @@ export interface SwapTransaction {
     'uid' : string,
     'withdraw' : [] | [bigint],
     'swap' : [] | [bigint],
+    'errors' : Array<Error>,
     'deposit' : [] | [bigint],
     'end_time' : [] | [bigint],
     'transfer_id' : [] | [bigint],
     'target_ledger' : string,
-    'error' : [] | [string],
     'stage' : SwapStage,
     'start_time' : bigint,
     'source_ledger' : string,
@@ -30,3 +31,4 @@ export interface _SERVICE {
     'store_transaction' : ActorMethod<[SwapTransaction], undefined>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

@@ -2,8 +2,8 @@ use std::cell::{Cell, RefCell};
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
-use candid::{CandidType, Nat};
 use candid::{candid_method, Principal};
+use candid::{CandidType, Nat};
 use ic_cdk::{call, caller, storage, trap};
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
 use serde::{Deserialize, Serialize};
@@ -18,6 +18,12 @@ pub struct InitArgs {
     pub im_canister: Principal,
 }
 
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize, Eq, PartialEq)]
+pub struct Error {
+    pub message: String,
+    pub time: u64,
+}
+
 
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize, Eq)]
 pub struct SwapTransaction {
@@ -28,7 +34,7 @@ pub struct SwapTransaction {
     pub deposit: Option<Nat>,
     pub swap: Option<Nat>,
     pub withdraw: Option<Nat>,
-    pub error: Option<String>,
+    pub errors: Vec<Error>,
     pub stage: SwapStage,
     pub source_ledger: String,
     pub target_ledger: String,
@@ -134,9 +140,39 @@ candid::export_service!();
 #[derive(Clone, Debug, CandidType, Deserialize)]
 struct TempMemory {
     im_canister: Option<Principal>,
-    transactions: Option<HashMap<String, HashSet<SwapTransaction>>>,
+    transactions: Option<HashMap<String, HashSet<SwapTransactionTempMemory>>>,
 }
 
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize, Eq)]
+pub struct SwapTransactionTempMemory {
+    pub start_time: u64,
+    pub end_time: Option<u64>,
+    pub transfer_id: Option<u64>,
+    pub transfer_nfid_id: Option<u64>,
+    pub deposit: Option<Nat>,
+    pub swap: Option<Nat>,
+    pub withdraw: Option<Nat>,
+    pub errors: Option<Vec<Error>>,
+    pub error: Option<String>,
+    pub stage: SwapStage,
+    pub source_ledger: String,
+    pub target_ledger: String,
+    pub source_amount: Nat,
+    pub target_amount: Nat,
+    pub uid: String,
+}
+
+impl Hash for SwapTransactionTempMemory {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.uid.hash(state);
+    }
+}
+
+impl PartialEq for SwapTransactionTempMemory {
+    fn eq(&self, other: &Self) -> bool {
+        self.uid == other.uid
+    }
+}
 
 pub fn get_im_canister() -> Principal {
     STATE.with(|s| {
@@ -152,7 +188,28 @@ pub async fn init_from_memory() {
     });
     TRANSACTIONS.with(|trss| {
         let mut map = trss.borrow_mut();
-        mo.transactions.map(|b| map.extend(b));
+        if let Some(transactions) = mo.transactions {
+            for (k, v) in transactions {
+                let swap_transactions: HashSet<SwapTransaction> = v.into_iter().map(|t| SwapTransaction {
+                    start_time: t.start_time,
+                    end_time: t.end_time,
+                    transfer_id: t.transfer_id,
+                    transfer_nfid_id: t.transfer_nfid_id,
+                    deposit: t.deposit,
+                    swap: t.swap,
+                    withdraw: t.withdraw,
+                    errors: t.error.map(|e| vec![Error { message: e, time: t.end_time.unwrap_or(t.start_time) }])
+                        .unwrap_or(t.errors.unwrap_or(Vec::new())),
+                    stage: t.stage,
+                    source_ledger: t.source_ledger,
+                    target_ledger: t.target_ledger,
+                    source_amount: t.source_amount,
+                    target_amount: t.target_amount,
+                    uid: t.uid,
+                }).collect();
+                map.insert(k, swap_transactions);
+            }
+        }
     });
 }
 
@@ -160,11 +217,31 @@ pub async fn save_to_temp_memory() {
     let (im_canister, ) = STATE.with(|s| {
         (s.borrow_mut().im_canister.get(),)
     });
-    let trss = TRANSACTIONS.with(|trs| {
+    let trs_current = TRANSACTIONS.with(|trs| {
         trs.borrow().clone()
     });
 
-    let mo: TempMemory = TempMemory { im_canister, transactions: Some(trss) };
+    let trs_m: HashMap<String, HashSet<SwapTransactionTempMemory>> = trs_current.into_iter()
+        .map(|(k, v)| (k, v.into_iter()
+            .map(|t| SwapTransactionTempMemory {
+                start_time: t.start_time,
+                end_time: t.end_time,
+                transfer_id: t.transfer_id,
+                transfer_nfid_id: t.transfer_nfid_id,
+                deposit: t.deposit,
+                swap: t.swap,
+                withdraw: t.withdraw,
+                errors: if t.errors.is_empty() { None } else { Some(t.errors) },
+                error: None,
+                stage: t.stage,
+                source_ledger: t.source_ledger,
+                target_ledger: t.target_ledger,
+                source_amount: t.source_amount,
+                target_amount: t.target_amount,
+                uid: t.uid,
+            }).collect::<HashSet<_>>())).collect();
+
+    let mo: TempMemory = TempMemory { im_canister, transactions: Some(trs_m) };
     storage::stable_save((mo,))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }

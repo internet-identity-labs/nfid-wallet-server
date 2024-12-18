@@ -11,6 +11,11 @@ type SwapStage = variant {
     TransferSwap;
 };
 
+type Error = record {
+    time : nat64;
+    message : text;
+};
+
 type SwapTransaction = record {
     uid : text;
     withdraw : opt nat;
@@ -19,7 +24,7 @@ type SwapTransaction = record {
     end_time : opt nat64;
     transfer_id : opt nat64;
     target_ledger : text;
-    error : opt text;
+    errors : vec Error;
     stage : SwapStage;
     start_time : nat64;
     source_ledger : text;
