@@ -456,15 +456,10 @@
   resolved "https://registry.npmjs.org/@streamparser/json/-/json-0.0.6.tgz"
   integrity sha512-vL9EVn/v+OhZ+Wcs6O4iKE9EUpwHUqHmCtNUMWjqp+6dr85+XPOSGTEsqYNq1Vn04uk9SWlOVmx9J48ggJVT2Q==
 
-"@swc/core-linux-x64-gnu@1.3.20":
+"@swc/core-darwin-arm64@1.3.20":
   version "1.3.20"
-  resolved "https://registry.npmjs.org/@swc/core-linux-x64-gnu/-/core-linux-x64-gnu-1.3.20.tgz"
-  integrity sha512-F5TKwsZh3F7CzfYoTAiNwhZazQ02NCgFZSqSwO4lOYbT7RU+zXI3OfLoi2R8f0dzfqh26QSdeeMFPdMb3LpzXg==
-
-"@swc/core-linux-x64-musl@1.3.20":
-  version "1.3.20"
-  resolved "https://registry.npmjs.org/@swc/core-linux-x64-musl/-/core-linux-x64-musl-1.3.20.tgz"
-  integrity sha512-svbrCeaWU2N9saeg5yKZ2aQh+eYE6vW7y+ptZHgLIriuhnelg38mNqNjKK9emhshUNqOPLFJbW8kA1P+jOyyLw==
+  resolved "https://registry.npmjs.org/@swc/core-darwin-arm64/-/core-darwin-arm64-1.3.20.tgz"
+  integrity sha512-ZLk5oVP4v/BAdC3FuBuyB0xpnkZStblIajiyo/kpp/7mq3YbABhOxTCUJGDozISbkaZlIZFXjqvHHnIS42tssw==
 
 "@swc/core@>=1.2.50":
   version "1.3.20"
@@ -942,10 +937,10 @@ es-errors@^1.3.0:
   resolved "https://registry.npmjs.org/es-errors/-/es-errors-1.3.0.tgz"
   integrity sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==
 
-esbuild-linux-64@0.14.43:
+esbuild-darwin-arm64@0.14.43:
   version "0.14.43"
-  resolved "https://registry.npmjs.org/esbuild-linux-64/-/esbuild-linux-64-0.14.43.tgz"
-  integrity sha512-EwINwGMyiJMgBby5/SbMqKcUhS5AYAZ2CpEBzSowsJPNBJEdhkCTtEjk757TN/wxgbu3QklqDM6KghY660QCUw==
+  resolved "https://registry.npmjs.org/esbuild-darwin-arm64/-/esbuild-darwin-arm64-0.14.43.tgz"
+  integrity sha512-1HyFUKs8DMCBOvw1Qxpr5Vv/ThNcVIFb5xgXWK3pyT40WPvgYIiRTwJCvNs4l8i5qWF8/CK5bQxJVDjQvtv0Yw==
 
 esbuild@0.14.43:
   version "0.14.43"
