@@ -1,18 +1,19 @@
-import {idlFactory as icrcOracle1Idl} from "../idl/icrc1_oracle_idl";
+import {idlFactory as icrcOracle1Idl} from "../test/idl/icrc1_oracle_idl";
 import {Ed25519KeyIdentity} from "@dfinity/identity";
 import {SnsParser} from "./sns";
 import {NativeParser} from "./native";
 import {ChainFusionParser} from "./chain_fusion";
 import {ActorMethod} from "@dfinity/agent";
-import {ICRC1} from "../idl/icrc1_oracle";
+import {ICRC1} from "../test/idl/icrc1_oracle";
 import {parse} from 'json2csv';
 import * as fs from 'fs';
 import {parse as csvParse} from 'csv-parse/sync';
 import {ICRC1CsvData} from "./types";
-import {getActor, hasOwnProperty, mapCategory, mapCategoryCSVToCategory} from "./util";
+import {getActor, mapCategory, mapCategoryCSVToCategory} from "./util";
 import {ChainFusionTestnetParser} from "./chain_fusion_testnet";
 import {CANISTER_ID, FILE_PATH, KEY_PAIR} from "./constants";
 import {getMetadata} from "./metadata_service";
+import sharp from 'sharp'
 
 export class AdminManager {
 
@@ -71,8 +72,8 @@ export class AdminManager {
         const fields = ['name', 'symbol', 'ledger', 'index', 'category', 'logo', 'fee', 'decimals', 'root_canister_id', 'date_added'];
         const opts = {fields};
         try {
-            const csv = parse(canisters_from_oracle
-                    .map((c) => {
+            const csv = (parse(await Promise.all(canisters_from_oracle
+                    .map(async (c) => {
                         //update metadata. sometimes logo can be replaced
                         if (updatedMetadata.has(c.ledger)) {
                             let metadata = updatedMetadata.get(c.ledger);
@@ -82,20 +83,32 @@ export class AdminManager {
                             c.decimals = metadata.decimals;
                             c.fee = metadata.fee;
                         }
+                        let logo;
+                        if (c.logo.length > 0) {
+                            try {
+                                logo = await compressLogo(c.logo[0])
+                            } catch (e) {
+                                console.error(`Error while compressing logo for ledger ${c.ledger} and name ${c.name}: ${e}`);
+                                logo = c.logo[0]
+                            }
+                        } else {
+                            logo = undefined
+                        }
+
                         return {
                             name: c.name,
                             ledger: c.ledger,
                             category: mapCategory(c.category).toString(),
                             index: c.index.length > 0 ? c.index[0] : undefined,
                             symbol: c.symbol,
-                            logo: c.logo.length > 0 ? c.logo[0] : undefined,
+                            logo,
                             fee: c.fee.toString(),
                             decimals: c.decimals.toString(),
                             root_canister_id: c.root_canister_id.length > 0 ? c.root_canister_id[0] : undefined,
                             date_added: c.date_added.toString()
                         }
-                    })
-                , opts);
+                    }))
+                , opts));
             fs.writeFileSync(FILE_PATH, csv);
             console.log('CSV file saved successfully!');
         } catch (err) {
@@ -144,4 +157,20 @@ export class AdminManager {
     removeCanister(ledgerId: string) {
         return this.actor.remove_icrc1_canister(ledgerId);
     }
+}
+
+export async function compressLogo(base64Logo: string): Promise<string> {
+    const uri = base64Logo.split(';base64,')
+    if (uri.length < 2 || uri[0] === "data:image/svg+xml") {
+        return base64Logo
+    }
+    const buffer = Buffer.from(uri.pop(), 'base64');
+    if (buffer.length === 0) {
+        return base64Logo
+    }
+    const resizedBuffer = await sharp(buffer)
+        .resize(100, 100)
+        .toBuffer();
+    let format = uri.pop()
+    return format + ";base64," + resizedBuffer.toString('base64');
 }

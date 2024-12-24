@@ -11,7 +11,7 @@ import {DFX} from "./constanst/dfx.const";
 import {AccessPointRequest, HTTPAccountRequest, HTTPAccountResponse} from "./idl/identity_manager";
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {idlFactory as dfIdl} from "./idl/delegation_factory_idl";
-import {hasOwnProperty} from "./admin/util";
+import {hasOwnProperty} from "../admin_oracle/util";
 
 describe("Delegation Factory test", () => {
     var dfx: Dfx;
