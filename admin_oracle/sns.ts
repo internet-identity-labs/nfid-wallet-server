@@ -1,6 +1,6 @@
 import chai from "chai";
 import chaiHttp from "chai-http";
-import {ICRC1} from "../idl/icrc1_oracle";
+import {ICRC1} from "../test/idl/icrc1_oracle";
 import {CanisterObject} from "./types";
 
 chai.use(chaiHttp);

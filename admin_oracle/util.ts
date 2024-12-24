@@ -1,4 +1,4 @@
-import {Category} from "../idl/icrc1_oracle";
+import {Category} from "../test/idl/icrc1_oracle";
 import {CategoryCSV} from "./types";
 import {Actor, ActorMethod, HttpAgent, Identity} from "@dfinity/agent";
 import {IDL} from "@dfinity/candid";
