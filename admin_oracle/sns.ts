@@ -18,10 +18,11 @@ export class SnsParser {
 
             const generalCanisterInfos = response.body as any;
             page = page + 1
-            if (generalCanisterInfos.length === 0) {
+            if (generalCanisterInfos.length === 0 || generalCanisterInfos.length === undefined) {
                 isRequestNeeded = false
+            } else {
+                data = data.concat(generalCanisterInfos)
             }
-            data = data.concat(generalCanisterInfos)
         }
         const canisterPromises = data.map((l) => {
             if (l.derived_state.sns_tokens_per_icp === 0) {
