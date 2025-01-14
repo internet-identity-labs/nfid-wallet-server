@@ -24,6 +24,11 @@ pub struct Error {
     pub time: u64,
 }
 
+#[derive(Clone, Debug, CandidType, Deserialize, Eq, PartialEq, Serialize)]
+pub enum SwapProvider {
+    Kong,
+    IcpSwap,
+}
 
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize, Eq)]
 pub struct SwapTransaction {
@@ -41,6 +46,7 @@ pub struct SwapTransaction {
     pub source_amount: Nat,
     pub target_amount: Nat,
     pub uid: String,
+    pub swap_provider: SwapProvider
 }
 
 impl Hash for SwapTransaction {
@@ -160,6 +166,7 @@ pub struct SwapTransactionTempMemory {
     pub source_amount: Nat,
     pub target_amount: Nat,
     pub uid: String,
+    pub swap_provider: Option<SwapProvider>
 }
 
 impl Hash for SwapTransactionTempMemory {
@@ -206,6 +213,7 @@ pub async fn init_from_memory() {
                     source_amount: t.source_amount,
                     target_amount: t.target_amount,
                     uid: t.uid,
+                    swap_provider: t.swap_provider.unwrap_or(SwapProvider::IcpSwap),
                 }).collect();
                 map.insert(k, swap_transactions);
             }
@@ -239,6 +247,7 @@ pub async fn save_to_temp_memory() {
                 source_amount: t.source_amount,
                 target_amount: t.target_amount,
                 uid: t.uid,
+                swap_provider: Some(t.swap_provider),
             }).collect::<HashSet<_>>())).collect();
 
     let mo: TempMemory = TempMemory { im_canister, transactions: Some(trs_m) };

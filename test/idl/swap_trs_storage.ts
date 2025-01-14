@@ -4,6 +4,7 @@ import type { IDL } from '@dfinity/candid';
 
 export interface Error { 'time' : bigint, 'message' : string }
 export interface InitArgs { 'im_canister' : Principal }
+export type SwapProvider = { 'Kong' : null } | { 'IcpSwap' : null };
 export type SwapStage = { 'Withdraw' : null } |
     { 'Deposit' : null } |
     { 'Swap' : null } |
@@ -25,6 +26,7 @@ export interface SwapTransaction {
     'transfer_nfid_id' : [] | [bigint],
     'target_amount' : bigint,
     'source_amount' : bigint,
+    'swap_provider' : SwapProvider,
 }
 export interface _SERVICE {
     'get_transactions' : ActorMethod<[string], Array<SwapTransaction>>,
