@@ -91,7 +91,6 @@ describe("Swap Trs Storage test", () => {
         expect(trss[0].withdraw[0]).eq(2n)
 
         execute(`dfx deploy swap_trs_storage  --argument '(opt record { im_canister = principal "${dfx.im.id}" })' --upgrade-unchanged`)
-
         let trsFromMemory = await storageActor.get_transactions(identity.getPrincipal().toText())
         expect(trsFromMemory.length).eq(1)
         expect(trsFromMemory[0].errors.length).eq(1)
