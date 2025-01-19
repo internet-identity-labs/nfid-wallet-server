@@ -16,6 +16,11 @@ type Error = record {
     message : text;
 };
 
+type SwapProvider = variant {
+    Kong;
+    IcpSwap;
+};
+
 type SwapTransaction = record {
     uid : text;
     withdraw : opt nat;
@@ -31,6 +36,7 @@ type SwapTransaction = record {
     transfer_nfid_id : opt nat64;
     target_amount : nat;
     source_amount : nat;
+    swap_provider : SwapProvider;
 };service : (opt InitArgs) -> {
     get_transactions : (text) -> (vec SwapTransaction) query;
     store_transaction : (SwapTransaction) -> ();

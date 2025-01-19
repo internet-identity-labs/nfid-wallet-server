@@ -8,6 +8,7 @@ import {idlFactory as swapStorageIDL} from "./idl/swap_trs_storage_idl";
 import {_SERVICE, SwapTransaction} from "./idl/swap_trs_storage";
 import {execute} from "./util/call.util";
 import * as Agent from "@dfinity/agent";
+import {hasOwnProperty} from "../admin_oracle/util";
 
 describe("Swap Trs Storage test", () => {
     var dfx: Dfx;
@@ -64,7 +65,10 @@ describe("Swap Trs Storage test", () => {
             source_ledger: "Source",
             transfer_nfid_id: [0n],
             target_amount: 0n,
-            source_amount: 0n
+            source_amount: 0n,
+            swap_provider: {
+                IcpSwap: null
+            }
         }
 
         await storageActor.store_transaction(trs)
@@ -75,6 +79,7 @@ describe("Swap Trs Storage test", () => {
 
         expect(trss[0].uid).eq("123")
         expect(trss[0].withdraw[0]).eq(1n)
+        expect(hasOwnProperty(trss[0].swap_provider, "IcpSwap")).is.true
 
         trs.withdraw = [2n]
 
@@ -86,7 +91,6 @@ describe("Swap Trs Storage test", () => {
         expect(trss[0].withdraw[0]).eq(2n)
 
         execute(`dfx deploy swap_trs_storage  --argument '(opt record { im_canister = principal "${dfx.im.id}" })' --upgrade-unchanged`)
-
         let trsFromMemory = await storageActor.get_transactions(identity.getPrincipal().toText())
         expect(trsFromMemory.length).eq(1)
         expect(trsFromMemory[0].errors.length).eq(1)

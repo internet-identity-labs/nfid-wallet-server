@@ -9,6 +9,7 @@ export const idlFactory = ({ IDL }) => {
         'TransferNFID' : IDL.Null,
         'TransferSwap' : IDL.Null,
     });
+    const SwapProvider = IDL.Variant({ 'Kong' : IDL.Null, 'IcpSwap' : IDL.Null });
     const SwapTransaction = IDL.Record({
         'uid' : IDL.Text,
         'withdraw' : IDL.Opt(IDL.Nat),
@@ -24,6 +25,7 @@ export const idlFactory = ({ IDL }) => {
         'transfer_nfid_id' : IDL.Opt(IDL.Nat64),
         'target_amount' : IDL.Nat,
         'source_amount' : IDL.Nat,
+        'swap_provider' : SwapProvider,
     });
     return IDL.Service({
         'get_transactions' : IDL.Func(
