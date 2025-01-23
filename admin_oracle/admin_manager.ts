@@ -161,7 +161,7 @@ export class AdminManager {
 
 export async function compressLogo(base64Logo: string): Promise<string> {
     const uri = base64Logo.split(';base64,')
-    if (uri.length < 2 || uri[0] === "data:image/svg+xml") {
+    if (uri.length < 2 || uri[0] === "data:image/svg+xml" || uri[0] === "data:image/gif") {
         return base64Logo
     }
     const buffer = Buffer.from(uri.pop(), 'base64');
