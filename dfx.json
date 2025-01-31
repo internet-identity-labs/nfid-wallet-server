@@ -23,6 +23,17 @@
         }
       ]
     },
+    "ecdsa_storage": {
+      "type": "custom",
+      "candid": "src/ecdsa_storage/ecdsa_storage.did",
+      "wasm": "ecdsa_storage.wasm",
+      "build": "src/ecdsa_storage/build.sh",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
+    },
     "swap_trs_storage": {
       "type": "custom",
       "candid": "src/swap_trs_storage/swap_trs_storage.did",

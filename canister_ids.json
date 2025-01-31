@@ -47,6 +47,9 @@
     "stage": "yw55o-diaaa-aaaao-a3pha-cai",
     "ic": "yvnmi-7aaaa-aaaal-ajnzq-cai"
   },
+  "ecdsa_storage" : {
+    "dev": "zhr63-daaaa-aaaap-qbh4q-cai"
+  },
   "swap_trs_storage": {
     "dev": "mfoln-bqaaa-aaaao-qeuqq-cai",
     "stage": "ckqrk-4yaaa-aaaak-adxsa-cai",

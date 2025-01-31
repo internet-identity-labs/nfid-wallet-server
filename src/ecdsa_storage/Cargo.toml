@@ -1,0 +1,15 @@
+[package]
+name = "ecdsa_storage"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+candid = "0.10"
+candid_parser = "0.1.2"
+ic-cdk = "0.13.2"
+ic-cdk-macros = "0.13.2"
+# other dependencies
+serde = { version = "1.0"}
+serde_cbor = "0.11"
+sha2 = "0.10"
+hex = "0.4"

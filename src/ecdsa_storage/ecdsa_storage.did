@@ -1,0 +1,11 @@
+type InitArgs = record {
+    im_canister: principal;
+    salt: text;
+    ecdsa_salt: text
+};
+
+
+service : (opt InitArgs) -> {
+    get_salt : () -> (text) ;
+    get_anon_salt : (text) -> (text) ;
+}
