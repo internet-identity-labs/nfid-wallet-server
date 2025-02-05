@@ -111,8 +111,6 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
                     }
                     acc.access_points
                         .insert(access_point_request_to_access_point(dd));
-                    self.access_point_service
-                        .update_account_index(acc.principal_id.clone(), acc.principal_id.clone());
                 }
             }
         } else {

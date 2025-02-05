@@ -32,7 +32,6 @@ pub trait AccessPointServiceTrait {
     ) -> HttpResponse<Vec<AccessPointResponse>>;
     fn migrate_recovery_device(&self, device_data: DeviceData, account: &Account) -> Account;
     fn recover_root_access_point(&self, device: DeviceData, account: Account) -> Account;
-    fn update_index(&self, additional_principal_id: String, root_princ: String);
 }
 
 #[derive(Default)]
@@ -198,10 +197,5 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
         self.access_point_repo
             .update_account_index(access_point_principal_id, account.principal_id.clone());
         account_updated.expect("Failed to update access points for the account.")
-    }
-
-    fn update_index(&self, additional_principal_id: String, root_princ: String) {
-        self.access_point_repo
-            .update_account_index(additional_principal_id,root_princ);
     }
 }
