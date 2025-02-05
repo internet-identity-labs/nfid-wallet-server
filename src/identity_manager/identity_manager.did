@@ -95,7 +95,8 @@ type DeviceType = variant {
     Email;
     Passkey;
     Recovery;
-    Unknown
+    Unknown;
+    Password
 };
 
 type HTTPAccountRequest = record {

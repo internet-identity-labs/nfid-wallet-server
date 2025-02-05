@@ -97,7 +97,8 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             }
         }
         if acc.wallet.eq(&WalletVariant::NFID) {
-            if account_request.email.is_none() {
+            if account_request.email.is_none() && !account_request.access_point.clone().
+                unwrap().device_type.eq(&DeviceType::Password) {
                 trap("Email is empty");
             }
             let anchor = self.account_repo.find_next_nfid_anchor();
@@ -107,9 +108,6 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
                 Some(dd) => {
                     if !acc.principal_id.eq(&dd.pub_key) {
                         trap("Incorrect Device Data")
-                    }
-                    if !&dd.device_type.eq(&DeviceType::Email) {
-                        trap("Only email device can be registered as a root")
                     }
                     acc.access_points
                         .insert(access_point_request_to_access_point(dd));
