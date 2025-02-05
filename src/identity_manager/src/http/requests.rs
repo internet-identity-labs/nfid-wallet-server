@@ -72,6 +72,8 @@ pub enum DeviceType {
     Recovery,
     #[serde(rename = "Unknown")]
     Unknown,
+    #[serde(rename = "Password")]
+    Password,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
