@@ -297,6 +297,14 @@ async fn get_account_by_principal(princ: String) -> HttpResponse<AccountResponse
     response
 }
 
+
+#[update]
+#[operator]
+async fn reset_2fa()  {
+    let mut account_service = get_account_service();
+    account_service.reset_2fa();
+}
+
 /// Returns the root principal ID based on any of the access point principal IDs.
 /// This is necessary to establish a connection from a device to the root user account.
 #[query]

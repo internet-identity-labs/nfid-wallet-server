@@ -48,6 +48,7 @@ pub trait AccountRepoTrait {
     fn remove_account_index(&self, additional_principal_id: String);
     fn get_all_accounts(&self) -> Vec<Account>;
     fn find_next_nfid_anchor(&self) -> u64;
+    fn reset_2fa(&self);
 }
 
 #[derive(Default, Clone, Copy)]
@@ -195,5 +196,10 @@ impl AccountRepoTrait for AccountRepo {
                     }
                 })
         })
+    }
+
+
+    fn reset_2fa(&self)  {
+        ACCOUNTS.with(|accounts| accounts.borrow_mut().values_mut().for_each(|acc| acc.is2fa_enabled = false));
     }
 }

@@ -38,6 +38,7 @@ pub trait AccountServiceTrait {
         &self,
         anchor: u64,
     ) -> HttpResponse<AccountResponse>;
+    fn reset_2fa(&self);
 }
 
 #[derive(Default)]
@@ -209,5 +210,11 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             });
 
         account_response
+    }
+
+
+
+    fn reset_2fa(&self) {
+        self.account_repo.reset_2fa();
     }
 }
