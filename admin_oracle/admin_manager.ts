@@ -3,25 +3,30 @@ import {Ed25519KeyIdentity} from "@dfinity/identity";
 import {SnsParser} from "./sns";
 import {NativeParser} from "./native";
 import {ChainFusionParser} from "./chain_fusion";
-import {ActorMethod} from "@dfinity/agent";
+import * as Agent from "@dfinity/agent";
+import {ActorMethod, HttpAgent} from "@dfinity/agent";
 import {ICRC1} from "../test/idl/icrc1_oracle";
 import {parse} from 'json2csv';
 import * as fs from 'fs';
 import {parse as csvParse} from 'csv-parse/sync';
-import {ICRC1CsvData} from "./types";
+import {ICRC1CsvData, PairToSend} from "./types";
 import {getActor, mapCategory, mapCategoryCSVToCategory} from "./util";
 import {ChainFusionTestnetParser} from "./chain_fusion_testnet";
-import {CANISTER_ID, FILE_PATH, KEY_PAIR} from "./constants";
+import {CANISTER_ID, FILE_PATH, KEY_PAIR, LEDGER_TO_SEND, LIST_TO_SEND_PATH} from "./constants";
 import {getMetadata} from "./metadata_service";
 import sharp from 'sharp'
+import {_SERVICE as ICRC1ServiceIDL, Account, Icrc1TransferResult, TransferArg} from "./idl/icrc1.idl";
+import {idlFactory as icrc1IDL} from "./idl/icrc1";
+import {Principal} from "@dfinity/principal";
 
 export class AdminManager {
 
     private actor: Record<string, ActorMethod>
+    private adminED: Ed25519KeyIdentity
 
     constructor() {
-        const adminEd = Ed25519KeyIdentity.fromParsedJson(KEY_PAIR);
-        this.actor = getActor(CANISTER_ID, adminEd, icrcOracle1Idl);
+        this.adminED = Ed25519KeyIdentity.fromParsedJson(KEY_PAIR);
+        this.actor = getActor(CANISTER_ID, this.adminED, icrcOracle1Idl);
     }
 
     async addICTokens() {
@@ -156,6 +161,41 @@ export class AdminManager {
 
     removeCanister(ledgerId: string) {
         return this.actor.remove_icrc1_canister(ledgerId);
+    }
+
+    getPrincipal(): string {
+        console.log(this.adminED.getPrincipal().toText())
+        return this.adminED.getPrincipal().toText()
+    }
+
+    async sendByList() {
+        const csvData = fs.readFileSync(LIST_TO_SEND_PATH, 'utf8');
+        const records: PairToSend[] = csvParse(csvData, {
+            columns: true,
+            skip_empty_lines: true,
+        });
+        const actor = Agent.Actor.createActor<ICRC1ServiceIDL>(icrc1IDL, {
+            canisterId: LEDGER_TO_SEND,
+            agent: new HttpAgent({ host: "https://ic0.app", identity: this.adminED }),
+        })
+        let metadata = await getMetadata(LEDGER_TO_SEND)
+        for (const p of records) {
+            console.log(p)
+            const acc: Account = {
+                owner: Principal.fromText(p.principal_id),
+                subaccount: []
+            }
+            const t: TransferArg = {
+                to: acc,
+                amount: BigInt(p.tokens ** metadata.decimals),
+                fee: [],
+                memo: [],
+                from_subaccount: [],
+                created_at_time: []
+            }
+            let result: Icrc1TransferResult = await actor.icrc1_transfer(t)
+            console.log(result)
+        }
     }
 }
 

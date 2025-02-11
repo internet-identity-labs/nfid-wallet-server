@@ -20,6 +20,12 @@ async function run() {
             await adminManager.removeCanister(process.argv[3]);
             console.log('Canister removed!!!');
             break;
+        case 'getPrincipal':
+            adminManager.getPrincipal();
+            break;
+        case 'sendByList':
+            await adminManager.sendByList();
+            break;
         default:
             console.log('Invalid method');
             break;

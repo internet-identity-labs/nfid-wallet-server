@@ -12,6 +12,11 @@ export interface ICRC1CsvData {
     date_added: string
 }
 
+export interface PairToSend {
+    principal_id: string,
+    tokens: number
+}
+
 export enum CategoryCSV {
     Sns = "Sns",
     Known = "Known",
