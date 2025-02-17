@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use ic_cdk::api::time;
 use ic_cdk::trap;
 
 use crate::http::requests::{AccountResponse, DeviceType, WalletVariant};
@@ -12,7 +13,7 @@ use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
 use crate::service::ic_service::DeviceData;
 use crate::{get_caller, AccessPointServiceTrait, Account, HttpResponse};
-
+use crate::repository::repo::TEMP_KEYS;
 use super::email_validation_service;
 
 #[async_trait(? Send)]
@@ -91,44 +92,55 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
         if account_request.email.is_some() {
             if !email_validation_service::contains(
                 account_request.email.clone().expect("Failed to retrieve the email from the account request.").to_string(),
-                princ,
+                princ.clone(),
             ) {
                 trap("Email and principal are not valid.")
             }
         }
         if acc.wallet.eq(&WalletVariant::NFID) {
-            if account_request.email.is_none() && !account_request.access_point.clone().
-                unwrap().device_type.eq(&DeviceType::Password) {
+            if account_request.email.is_none() && account_request.access_point.clone().
+                unwrap().device_type.eq(&DeviceType::Email) {
                 trap("Email is empty");
+            }
+            if account_request.name.is_none() && account_request.access_point.clone().
+                unwrap().device_type.eq(&DeviceType::Passkey) {
+                trap("Name is empty");
             }
             let anchor = self.account_repo.find_next_nfid_anchor();
             acc.anchor = anchor;
             match account_request.access_point {
                 None => trap("Device Data required"),
                 Some(dd) => {
-                    if !acc.principal_id.eq(&dd.pub_key) {
-                        trap("Incorrect Device Data")
-                    }
                     acc.access_points
-                        .insert(access_point_request_to_access_point(dd));
+                        .insert(access_point_request_to_access_point(dd.clone()));
                 }
             }
         } else {
             devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
         }
-        match { self.account_repo.create_account(acc.clone()) } {
+        if account_request.name.is_some() {
+            acc.name = account_request.name.clone();
+            acc.is2fa_enabled = true;
+        }
+        match { self.account_repo.create_account(acc) } {
             None => to_error_response("Impossible to link this II anchor, please try another one."),
-            Some(_) => {
+            Some(mut new_acc) => {
+                if new_acc.name.is_some() {
+                    TEMP_KEYS.with(|keys| {
+                        keys.borrow_mut().clean_expired_entries(time());
+                        keys.borrow_mut().insert(princ.clone(), new_acc.anchor.clone(), time());
+                    });
+                }
                 let recovery_device = devices
                     .into_iter()
                     .find(|dd| dd.key_type.eq(&KeyType::SeedPhrase));
                 match recovery_device {
                     None => {}
                     Some(rd) => {
-                        acc = self.access_point_service.migrate_recovery_device(rd, &acc);
+                        new_acc = self.access_point_service.migrate_recovery_device(rd, &new_acc);
                     }
                 }
-                to_success_response(account_to_account_response(acc))
+                to_success_response(account_to_account_response(new_acc))
             }
         }
     }
