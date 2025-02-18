@@ -23,6 +23,7 @@ export const idlFactory = ({ IDL }) => {
     });
     const DeviceType = IDL.Variant({
         'Email' : IDL.Null,
+        'Password' : IDL.Null,
         'Passkey' : IDL.Null,
         'Recovery' : IDL.Null,
         'Unknown' : IDL.Null,
@@ -51,6 +52,7 @@ export const idlFactory = ({ IDL }) => {
     });
     const WalletVariant = IDL.Variant({ 'II' : IDL.Null, 'NFID' : IDL.Null });
     const HTTPAccountRequest = IDL.Record({
+        'name' : IDL.Opt(IDL.Text),
         'anchor' : IDL.Nat64,
         'email' : IDL.Opt(IDL.Text),
         'access_point' : IDL.Opt(AccessPointRequest),
@@ -134,10 +136,6 @@ export const idlFactory = ({ IDL }) => {
         'principal_id' : IDL.Text,
         'phone_number' : IDL.Opt(IDL.Text),
     });
-    const HTTPAccountUpdateRequest = IDL.Record({
-        'name' : IDL.Opt(IDL.Text),
-        'email' : IDL.Opt(IDL.Text),
-    });
     const HTTPOneAccessPointResponse = IDL.Record({
         'data' : IDL.Opt(AccessPointResponse),
         'error' : IDL.Opt(Error),
@@ -184,6 +182,7 @@ export const idlFactory = ({ IDL }) => {
             [],
         ),
         'get_root_certified' : IDL.Func([], [CertifiedResponse], ['query']),
+        'pause_account_creation' : IDL.Func([IDL.Bool], [], []),
         'read_access_points' : IDL.Func([], [HTTPAccessPointResponse], ['query']),
         'read_applications' : IDL.Func([], [HTTPApplicationResponse], ['query']),
         'read_personas' : IDL.Func([], [HTTPPersonasResponse], ['query']),
@@ -213,19 +212,12 @@ export const idlFactory = ({ IDL }) => {
             [HTTPAccessPointResponse],
             [],
         ),
-        'update_account' : IDL.Func(
-            [HTTPAccountUpdateRequest],
-            [HTTPAccountResponse],
-            [],
-        ),
         'use_access_point' : IDL.Func(
             [IDL.Opt(IDL.Text)],
             [HTTPOneAccessPointResponse],
             [],
         ),
         'get_root_by_principal': IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], []),
-
-        'pause_account_creation' : IDL.Func([IDL.Bool], [], []),
     });
 };
 export const init = ({ IDL }) => { return []; };

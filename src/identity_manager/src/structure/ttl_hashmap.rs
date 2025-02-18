@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use ic_cdk::api::time;
 
 pub struct TtlHashMap<K, V> {
     map: HashMap<K, (V, u64)>,

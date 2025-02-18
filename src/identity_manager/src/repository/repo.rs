@@ -12,6 +12,13 @@ use std::cell::RefCell;
 use std::collections::{BTreeSet, HashSet};
 use std::hash::Hash;
 use std::time::Duration;
+use crate::structure::ttl_hashmap::TtlHashMap;
+
+const fn secs_to_nanos(secs: u64) -> u64 {
+    secs * 1_000_000_000
+}
+const MINUTE_NS: u64 = secs_to_nanos(60);
+const TEMP_KEY_EXPIRATION_NS: u64 = 10 * MINUTE_NS;
 
 #[derive(Debug, Deserialize, CandidType, Clone)]
 pub struct Configuration {
@@ -36,6 +43,7 @@ pub type Applications = BTreeSet<Application>;
 
 thread_local! {
   pub static APPLICATIONS: RefCell<BTreeSet<Application>> = RefCell::new(BTreeSet::new());
+  pub static TEMP_KEYS: RefCell<TtlHashMap<String, u64>> = RefCell::new(TtlHashMap::new(TEMP_KEY_EXPIRATION_NS));
     pub static ADMINS: RefCell<HashSet<Principal>> = RefCell::new(HashSet::new());
     pub static CONTROLLERS: RefCell<HashSet<Principal>> = RefCell::new(HashSet::new());
     pub static CONFIGURATION: RefCell<Configuration> = RefCell::new(ConfigurationRepo::get_default_config());

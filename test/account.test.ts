@@ -1,28 +1,26 @@
 import "mocha";
-import { expect } from "chai";
-import { sleep } from "./util/call.util";
-import { Dfx } from "./type/dfx";
-import { App } from "./constanst/app.enum";
-import { deploy, getActor, getIdentity, getTypedActor } from "./util/deployment.util";
-import { register } from "./util/internet_identity.util";
+import {expect} from "chai";
+import {Dfx} from "./type/dfx";
+import {App} from "./constanst/app.enum";
+import {deploy, getActor, getIdentity, getTypedActor} from "./util/deployment.util";
+import {register} from "./util/internet_identity.util";
 import {
+    _SERVICE as IdentityManagerType,
     AccessPointRequest,
     AccountResponse,
-    BoolHttpResponse, CertifiedResponse,
+    BoolHttpResponse,
+    CertifiedResponse,
     HTTPAccessPointResponse,
     HTTPAccountRequest,
     HTTPAccountResponse,
-    HTTPAccountUpdateRequest,
 } from "./idl/identity_manager";
-import { DFX } from "./constanst/dfx.const";
-import { idlFactory as imIdl } from "./idl/identity_manager_idl";
+import {DFX} from "./constanst/dfx.const";
+import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {idlFactory as iitIdl} from "./idl/internet_identity_test_idl";
-import { Expected } from "./constanst/expected.const";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
-import { DeviceData } from "./idl/internet_identity_test";
-import { fail } from "assert";
-import { _SERVICE as IdentityManagerType } from "./idl/identity_manager"
-import { _SERVICE as InternetIdentityTest } from "./idl/internet_identity_test"
+import {Expected} from "./constanst/expected.const";
+import {Ed25519KeyIdentity} from "@dfinity/identity";
+import {_SERVICE as InternetIdentityTest, DeviceData} from "./idl/internet_identity_test";
+import {fail} from "assert";
 
 const PHONE = "123456";
 const PHONE_SHA2 = "123456_SHA2";
@@ -67,19 +65,20 @@ describe("Account", () => {
         var nfidAnchor: bigint;
 
         before(async () => {
-            dfx = await deploy({ apps: [App.IdentityManager, App.InternetIdentityTest] });
+            dfx = await deploy({apps: [App.IdentityManager, App.InternetIdentityTest]});
             iiAnchor = await register(dfx.iit.actor, dfx.user.identity);
         });
 
         it("should return an error empty device data on NFID account", async function () {
-            let response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("testdefault@test.test", dfx.user.principal, 25) as BoolHttpResponse;
+            let response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("testdefault@test.test", dfx.user.principal, 25n) as BoolHttpResponse;
             expect(response.status_code).eq(200);
 
             var accountRequest: HTTPAccountRequest = {
                 access_point: [],
-                wallet: [{ NFID: null }],
+                wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["testdefault@test.test"],
+                name: []
             };
 
             try {
@@ -91,17 +90,18 @@ describe("Account", () => {
         });
 
         it("should return an error by adding new email with bigger timestamp due to self cleaning of the service", async function () {
-            let response1 = await dfx.im.actor.add_email_and_principal_for_create_account_validation("testdefault@test.test", dfx.user.principal, 900000) as BoolHttpResponse;
+            let response1 = await dfx.im.actor.add_email_and_principal_for_create_account_validation("testdefault@test.test", dfx.user.principal, 900000n) as BoolHttpResponse;
             expect(response1.status_code).eq(200);
-            
-            let response2 = await dfx.im.actor.add_email_and_principal_for_create_account_validation("1@test.test", dfx.user.principal, 900000 * 2 + 1) as BoolHttpResponse;
+
+            let response2 = await dfx.im.actor.add_email_and_principal_for_create_account_validation("1@test.test", dfx.user.principal, BigInt(900000 * 2 + 1)) as BoolHttpResponse;
             expect(response2.status_code).eq(200);
 
             var accountRequest: HTTPAccountRequest = {
                 access_point: [],
-                wallet: [{ NFID: null }],
+                wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["testdefault@test.test"],
+                name: []
             };
 
             try {
@@ -117,10 +117,10 @@ describe("Account", () => {
             let too_long_email_address = `${"a".repeat(321)}@test.test`;
 
             try {
-                await dfx.im.actor.add_email_and_principal_for_create_account_validation(too_long_email_address, dfx.user.principal, 25) as BoolHttpResponse;
+                await dfx.im.actor.add_email_and_principal_for_create_account_validation(too_long_email_address, dfx.user.principal, 25n) as BoolHttpResponse;
                 fail("It has to fail.");
             } catch (e) {
-                console.log({ e })
+                console.log({e})
                 expect(e.message).contains("Incorrect email address size: it's more than 320 characters.");
             }
         });
@@ -140,13 +140,14 @@ describe("Account", () => {
             };
             var accountRequest: HTTPAccountRequest = {
                 access_point: [dd],
-                wallet: [{ NFID: null }],
+                wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["test@test.test"],
+                name: []
             };
             const actor = await getActor(dfx.im.id, identity, imIdl);
 
-            let email_response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25) as BoolHttpResponse;
+            let email_response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25n) as BoolHttpResponse;
             expect(email_response.status_code).eq(200);
 
             const accResponse: HTTPAccountResponse = (await actor.create_account(
@@ -159,7 +160,7 @@ describe("Account", () => {
             expect(response.access_points.length).eq(1);
             expect(response.personas.length).eq(0);
             expect(response.email[0]).contains("test@test.test");
-            var certifiedResponse = (await actor.get_root_certified())as CertifiedResponse
+            var certifiedResponse = (await actor.get_root_certified()) as CertifiedResponse
             expect(certifiedResponse.witness.length > 0).eq(true)
             expect(certifiedResponse.response).eq(identity.getPrincipal().toText())
         });
@@ -170,6 +171,7 @@ describe("Account", () => {
                 wallet: [],
                 anchor: iiAnchor + 1n,
                 email: [],
+                name: []
             };
             try {
                 await dfx.im.actor.create_account(accountRequest);
@@ -184,6 +186,7 @@ describe("Account", () => {
                 wallet: [],
                 anchor: iiAnchor,
                 email: [],
+                name: []
             };
 
             var response: HTTPAccountResponse = (await dfx.im.actor.create_account(
@@ -197,9 +200,10 @@ describe("Account", () => {
         it("should try to create account and receive incorrect email and principal when incorrect email.", async function () {
             var accountRequest: HTTPAccountRequest = {
                 access_point: [],
-                wallet: [{ NFID: null }],
+                wallet: [{NFID: null}],
                 anchor: iiAnchor,
                 email: ["invalid@test.test"],
+                name: []
             };
 
             try {
@@ -212,9 +216,10 @@ describe("Account", () => {
         it("should try to create account and receive incorrect email and principal when incorrect principal.", async function () {
             var accountRequest: HTTPAccountRequest = {
                 access_point: [],
-                wallet: [{ NFID: null }],
+                wallet: [{NFID: null}],
                 anchor: iiAnchor,
                 email: ["test@test.test"],
+                name: []
             };
 
             try {
@@ -284,6 +289,7 @@ describe("Account", () => {
                 access_point: [],
                 wallet: [],
                 email: [],
+                name: []
             };
             await dfx.im.actor.create_account(accountRequest as any);
             const backup = await dfx.im.actor.get_all_accounts_json(0, 5);
@@ -304,14 +310,15 @@ describe("Account", () => {
             };
             var accountRequest: HTTPAccountRequest = {
                 access_point: [dd],
-                wallet: [{ NFID: null }],
+                wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["test2@test.test"],
+                name: []
             };
             const actor = await getActor(dfx.im.id, identity, imIdl);
 
             const principal = identity.getPrincipal().toString();
-            let email_response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test2@test.test", principal, 25) as BoolHttpResponse;
+            let email_response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test2@test.test", principal, 25n) as BoolHttpResponse;
             expect(email_response.status_code).eq(200);
 
             await actor.create_account(accountRequest);
@@ -370,9 +377,10 @@ describe("Account", () => {
 
             var accountRequest: HTTPAccountRequest = {
                 access_point: [accessPointRequest],
-                wallet: [{ II: null }],
+                wallet: [{II: null}],
                 anchor,
                 email: [],
+                name: []
             };
 
             const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, rootAccessPointIdentity, imIdl);
@@ -442,7 +450,7 @@ describe("Account", () => {
             const getAccountResponseNotFound = await recoveryPhraseActor.get_account();
             expect(getAccountResponseNotFound.status_code).to.eq(404);
 
-            await actor.remove_access_point({ pub_key: rootAccessPointIdentity.getPrincipal().toText() });
+            await actor.remove_access_point({pub_key: rootAccessPointIdentity.getPrincipal().toText()});
 
             const recoveryPhraseResponse = await recoveryPhraseActor.sync_recovery_phrase_from_internet_identity(accountResponse.data[0].anchor);
             expect(recoveryPhraseResponse.data[0].access_points.length).eq(1);
@@ -457,5 +465,81 @@ describe("Account", () => {
             expect(recoveryDevice.principal_id).to.eq(recoveryPhrasePrincipal);
         });
 
+        it("should create NFID account with passkey", async function () {
+            const tempIdentity = getIdentity("87654321876543218765432187654312");
+            let actor = await getActor(dfx.im.id, tempIdentity, imIdl);
+
+            const deviceIdentity = getIdentity("87654321876543218765432187654313");
+
+            const dd: AccessPointRequest = {
+                icon: "Passkey",
+                device: "Passkey",
+                pub_key: deviceIdentity.getPrincipal().toText(),
+                browser: "",
+                device_type: {
+                    Passkey: null,
+                },
+                credential_id: ["someId"],
+            };
+            var accountRequest: HTTPAccountRequest = {
+                access_point: [dd],
+                wallet: [{NFID: null}],
+                anchor: 0n,
+                email: [],
+                name: ["TestWallet"]
+            };
+
+            await actor.create_account(
+                accountRequest
+            );
+            const accResponse: HTTPAccountResponse = (await actor.get_account()) as HTTPAccountResponse;
+            const response = accResponse.data[0];
+            expect(Object.keys(response.wallet)).contains("NFID");
+            expect(response.access_points.length).eq(1);
+            expect(response.personas.length).eq(0);
+            expect(response.name[0]).eq("TestWallet");
+
+            actor = await getActor(dfx.im.id, deviceIdentity, imIdl);
+
+            var certifiedResponse = (await actor.get_root_certified()) as CertifiedResponse
+            expect(certifiedResponse.witness.length > 0).eq(true)
+            expect(certifiedResponse.response).eq(tempIdentity.getPrincipal().toText())
+        });
+
+        it("should trap on wrong device", async function () {
+            const tempIdentity = getIdentity("87654321876543218765432187654312");
+            let actor = await getActor(dfx.im.id, tempIdentity, imIdl);
+
+            const deviceIdentity = getIdentity("87654321876543218765432187654313");
+
+            const dd: AccessPointRequest = {
+                icon: "Passkey",
+                device: "Passkey",
+                pub_key: deviceIdentity.getPrincipal().toText(),
+                browser: "",
+                device_type: {
+                    Passkey: null,
+                },
+                credential_id: ["someId"],
+            };
+
+            var accountRequest = {
+                access_point: [dd],
+                wallet: [{NFID: null}],
+                anchor: 0n,
+                email: [],
+                name: []
+            };
+
+            try {
+                await actor.create_account(
+                    accountRequest
+                );
+                fail("Should fail");
+            } catch (e) {
+                expect(e.message).contains("Name is empty");
+            }
+
+        });
     });
 });

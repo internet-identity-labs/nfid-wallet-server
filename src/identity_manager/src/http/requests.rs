@@ -13,6 +13,7 @@ pub struct AccountRequest {
     pub wallet: Option<WalletVariant>,
     pub access_point: Option<AccessPointRequest>,
     pub email: Option<String>,
+    pub name: Option<String>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

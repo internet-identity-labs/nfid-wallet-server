@@ -129,6 +129,7 @@ export interface DailyMetricsData {
     'timeMillis' : bigint,
 }
 export type DeviceType = { 'Email' : null } |
+    { 'Password' : null } |
     { 'Passkey' : null } |
     { 'Recovery' : null } |
     { 'Unknown' : null };
@@ -159,6 +160,7 @@ export interface HTTPAccessPointResponse {
     'status_code' : number,
 }
 export interface HTTPAccountRequest {
+    'name' : [] | [string],
     'anchor' : bigint,
     'email' : [] | [string],
     'access_point' : [] | [AccessPointRequest],
@@ -241,7 +243,7 @@ export type WalletVariant = { 'II' : null } |
     { 'NFID' : null };
 export interface _SERVICE {
     'add_email_and_principal_for_create_account_validation' : ActorMethod<
-        [string, string, number],
+        [string, string, bigint],
         BoolHttpResponse
     >,
     'configure' : ActorMethod<[ConfigurationRequest], undefined>,
@@ -261,6 +263,7 @@ export interface _SERVICE {
         bigint
     >,
     'get_root_certified' : ActorMethod<[], CertifiedResponse>,
+    'pause_account_creation' : ActorMethod<[boolean], undefined>,
     'read_access_points' : ActorMethod<[], HTTPAccessPointResponse>,
     'read_applications' : ActorMethod<[], HTTPApplicationResponse>,
     'read_personas' : ActorMethod<[], HTTPPersonasResponse>,
@@ -284,12 +287,7 @@ export interface _SERVICE {
         [AccessPointRequest],
         HTTPAccessPointResponse
     >,
-    'update_account' : ActorMethod<
-        [HTTPAccountUpdateRequest],
-        HTTPAccountResponse
-    >,
     'use_access_point' : ActorMethod<[[] | [string]], HTTPOneAccessPointResponse>,
-    'pause_account_creation' : ActorMethod<[boolean], undefined>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

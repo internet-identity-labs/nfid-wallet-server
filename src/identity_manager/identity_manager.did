@@ -104,6 +104,7 @@ type HTTPAccountRequest = record {
     wallet: opt WalletVariant;
     access_point: opt AccessPointRequest;
     email: opt text;
+    name: opt text;
 };
 
 type HTTPAccountUpdateRequest = record {
@@ -363,7 +364,6 @@ service : () -> {
     create_account: (HTTPAccountRequest) -> (HTTPAccountResponse);
     remove_account: () -> (BoolHttpResponse);
     remove_account_by_principal: (text) -> (BoolHttpResponse);
-    update_account: (HTTPAccountUpdateRequest) -> (HTTPAccountResponse);
 
     read_personas: () -> (HTTPPersonasResponse) query;
 

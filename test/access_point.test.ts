@@ -45,10 +45,11 @@ describe("Access Point", () => {
             access_point: [passKeyEmailRequest],
             wallet: [{'NFID': null}],
             anchor: 0n,
-            email: ["test@test.test"]
+            email: ["test@test.test"],
+            name: []
         };
 
-        let response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25) as BoolHttpResponse;
+        let response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25n) as BoolHttpResponse;
         expect(response.status_code).eq(200);
 
         const actor = await getActor(dfx.im.id, identity, imIdl);
@@ -155,7 +156,7 @@ describe("Access Point", () => {
         const principal = identity.getPrincipal().toText();
         const email = "test@test.test";
 
-        const validationResponse = await dfx.im.actor.add_email_and_principal_for_create_account_validation(email, principal, 25);
+        const validationResponse = await dfx.im.actor.add_email_and_principal_for_create_account_validation(email, principal, 25n);
         expect(validationResponse.status_code).eq(200);
 
         const accessPointRequest: AccessPointRequest = {
@@ -174,6 +175,7 @@ describe("Access Point", () => {
             wallet: [{ NFID: null }],
             anchor: 0n,
             email: [email],
+            name: []
         };
 
         const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
