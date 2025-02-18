@@ -98,23 +98,23 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             }
         }
         if acc.wallet.eq(&WalletVariant::NFID) {
-            if account_request.email.is_none() && account_request.access_point.clone().
-                unwrap().device_type.eq(&DeviceType::Email) {
-                trap("Email is empty");
-            }
-            if account_request.name.is_none() && account_request.access_point.clone().
-                unwrap().device_type.eq(&DeviceType::Passkey) {
-                trap("Name is empty");
-            }
-            let anchor = self.account_repo.find_next_nfid_anchor();
-            acc.anchor = anchor;
-            match account_request.access_point {
+            match account_request.access_point.clone() {
                 None => trap("Device Data required"),
                 Some(dd) => {
                     acc.access_points
                         .insert(access_point_request_to_access_point(dd.clone()));
                 }
             }
+            let device_type = account_request.access_point.
+                unwrap().device_type;
+            if account_request.email.is_none() && device_type.eq(&DeviceType::Email) {
+                trap("Email is empty");
+            }
+            if account_request.name.is_none() && device_type.eq(&DeviceType::Passkey) {
+                trap("Name is empty");
+            }
+            let anchor = self.account_repo.find_next_nfid_anchor();
+            acc.anchor = anchor;
         } else {
             devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
         }

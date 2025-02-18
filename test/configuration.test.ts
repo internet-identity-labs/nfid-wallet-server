@@ -116,10 +116,11 @@ describe("Configuration", () => {
             wallet: [{NFID: null}],
             anchor: 0n,
             email: ["test@test.test"],
+            name: [],
         };
         const actor = await getActor(dfx.im.id, identity, imIdl);
 
-        let email_response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25) as BoolHttpResponse;
+        let email_response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25n) as BoolHttpResponse;
 
         expect(email_response.status_code).eq(200);
         try {
