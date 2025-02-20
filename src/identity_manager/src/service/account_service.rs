@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use ic_cdk::api::time;
-use ic_cdk::trap;
+use ic_cdk::{print, trap};
 
-use crate::http::requests::{AccountResponse, DeviceType, WalletVariant};
+use crate::http::requests::{AccountResponse, ChallengeAttempt, DeviceType, WalletVariant};
 use crate::ic_service::KeyType;
 use crate::mapper::access_point_mapper::access_point_request_to_access_point;
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
@@ -13,7 +13,7 @@ use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
 use crate::service::ic_service::DeviceData;
 use crate::{get_caller, AccessPointServiceTrait, Account, HttpResponse};
-use crate::repository::repo::TEMP_KEYS;
+use crate::repository::repo::{CAPTCHA_CAHLLENGES, TEMP_KEYS};
 use super::email_validation_service;
 
 #[async_trait(? Send)]
@@ -39,6 +39,7 @@ pub trait AccountServiceTrait {
         &self,
         anchor: u64,
     ) -> HttpResponse<AccountResponse>;
+    fn validate_captcha(&self, challenge_attempt: ChallengeAttempt);
 }
 
 #[derive(Default)]
@@ -119,6 +120,10 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
         }
         if account_request.name.is_some() {
+            let challenge_attempt = account_request.challenge_attempt.clone().unwrap_or_else(|| {
+                trap("Challenge solution required");
+            });
+            self.validate_captcha(challenge_attempt);
             acc.name = account_request.name.clone();
             acc.is2fa_enabled = true;
         }
@@ -221,5 +226,29 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             });
 
         account_response
+    }
+
+
+     fn validate_captcha(&self, challenge_attempt: ChallengeAttempt) {
+        CAPTCHA_CAHLLENGES.with(|challenges| {
+            let mut challenges = challenges.borrow_mut();
+            challenges.clean_expired_entries(time());
+
+            let challenge = challenges.remove(&challenge_attempt.challenge_key)
+                .unwrap_or_else(||
+                    { trap("Incorrect captcha key"); }
+                );
+            match challenge {
+                None => {}
+                Some(challenge) => {
+                    let challenge_attempt_chars = challenge_attempt.chars.unwrap_or_else(||
+                        { trap("Solution is required"); }
+                    );
+                    if !challenge.eq(&challenge_attempt_chars) {
+                        trap("Incorrect captcha solution");
+                    }
+                }
+            }
+        });
     }
 }

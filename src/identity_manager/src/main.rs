@@ -1,11 +1,11 @@
-use std::time::Duration;
-
-use ic_cdk::{caller, trap};
-use ic_cdk_macros::*;
-
+use candid::{CandidType, Deserialize};
 use canister_api_macros::{admin, lambda, operator, paused, two_f_a};
 use http::response_mapper::DataResponse;
+use ic_cdk::api::time;
+use ic_cdk::{caller, trap};
+use ic_cdk_macros::*;
 use service::{device_index_service, email_validation_service};
+use std::time::Duration;
 
 use crate::application_service::ApplicationService;
 use crate::container::container_wrapper::{
@@ -13,7 +13,7 @@ use crate::container::container_wrapper::{
     get_persona_service,
 };
 use crate::http::requests;
-use crate::http::requests::{AccountResponse, WalletVariant};
+use crate::http::requests::{AccountResponse, Challenge, WalletVariant};
 use crate::http::response_mapper;
 use crate::ic_service::get_caller;
 use crate::repository::account_repo::{
@@ -21,9 +21,7 @@ use crate::repository::account_repo::{
 };
 use crate::repository::application_repo::{Application, ApplicationRepo};
 use crate::repository::persona_repo::PersonaRepo;
-use crate::repository::repo::{
-    AdminRepo, Configuration, ConfigurationRepo, ControllersRepo, CONFIGURATION,
-};
+use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo, CAPTCHA_CAHLLENGES, CONFIGURATION};
 use crate::requests::{
     AccessPointRemoveRequest, AccessPointRequest, AccessPointResponse, AccountRequest,
     ConfigurationRequest, ConfigurationResponse, PersonaResponse,
@@ -36,6 +34,7 @@ use crate::service::certified_service::{get_witness, CertifiedResponse};
 use crate::service::persona_service::PersonaServiceTrait;
 use crate::service::security_service::{secure_2fa, secure_principal_2fa};
 use crate::service::{application_service, ic_service};
+use crate::util::captcha::{create_captcha, make_rng, random_string, Base64};
 
 mod container;
 mod http;
@@ -144,6 +143,8 @@ async fn configure(request: ConfigurationRequest) -> () {
         account_creation_paused: request
             .account_creation_paused
             .unwrap_or(default.account_creation_paused),
+        max_free_captcha_per_minute: request.max_free_captcha_per_minute.unwrap_or(default.max_free_captcha_per_minute),
+        test_captcha: request.test_captcha.unwrap_or(default.test_captcha),
     };
     CONFIGURATION.with(|config| {
         config.replace(configuration);
@@ -171,6 +172,8 @@ async fn get_config() -> ConfigurationResponse {
         commit_hash: config.commit_hash,
         operator: Some(config.operator),
         account_creation_paused: Some(config.account_creation_paused),
+        max_free_captcha_per_minute: Some(config.max_free_captcha_per_minute),
+        test_captcha: Some(config.test_captcha),
     }
 }
 
@@ -238,6 +241,7 @@ async fn remove_access_point(
 #[update]
 #[paused]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
+
     let mut account_service = get_account_service();
     let response = account_service.create_account(account_request).await;
     response
@@ -470,6 +474,44 @@ async fn get_root_certified() -> CertifiedResponse {
             }
         }
     }
+}
+
+#[update]
+pub async fn get_captcha() -> Challenge {
+    let time = time();
+    let mut rng = &mut make_rng().await;
+    let key = random_string(&mut rng, 10);
+    let challenges_in_progress = CAPTCHA_CAHLLENGES.with(|challenges| {
+        challenges.borrow_mut().clean_expired_entries(time);
+        challenges.borrow().count()
+    });
+    let chars: Option<String>;
+    let challenge: Challenge;
+    let max_free_captcha_per_minute = CONFIGURATION.with(|config| config.borrow().max_free_captcha_per_minute);
+    if challenges_in_progress <= max_free_captcha_per_minute as usize {
+        challenge = Challenge {
+            png_base64: None,
+            challenge_key: key.to_string(),
+        };
+        chars = None;
+    } else {
+        let (Base64(png_base64), res_chars) = create_captcha(rng);
+
+        challenge = Challenge {
+            png_base64: Some(png_base64),
+            challenge_key: key.to_string(),
+        };
+        chars = Some(res_chars);
+    }
+    CAPTCHA_CAHLLENGES.with(|challenges| {
+        challenges.borrow_mut().clean_expired_entries(time);
+        challenges.borrow_mut().insert(
+            key.clone(),
+            chars,
+            time,
+        );
+    });
+    challenge
 }
 
 /// Applies changes before the canister upgrade.

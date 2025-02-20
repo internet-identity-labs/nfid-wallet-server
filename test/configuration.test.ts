@@ -117,6 +117,7 @@ describe("Configuration", () => {
             anchor: 0n,
             email: ["test@test.test"],
             name: [],
+                challenge_attempt: [],
         };
         const actor = await getActor(dfx.im.id, identity, imIdl);
 

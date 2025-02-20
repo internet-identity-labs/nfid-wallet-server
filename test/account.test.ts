@@ -9,7 +9,7 @@ import {
     AccessPointRequest,
     AccountResponse,
     BoolHttpResponse,
-    CertifiedResponse,
+    CertifiedResponse, Challenge,
     HTTPAccessPointResponse,
     HTTPAccountRequest,
     HTTPAccountResponse,
@@ -78,7 +78,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["testdefault@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             try {
@@ -101,7 +102,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["testdefault@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             try {
@@ -143,7 +145,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["test@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
             const actor = await getActor(dfx.im.id, identity, imIdl);
 
@@ -171,7 +174,8 @@ describe("Account", () => {
                 wallet: [],
                 anchor: iiAnchor + 1n,
                 email: [],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
             try {
                 await dfx.im.actor.create_account(accountRequest);
@@ -186,7 +190,8 @@ describe("Account", () => {
                 wallet: [],
                 anchor: iiAnchor,
                 email: [],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             var response: HTTPAccountResponse = (await dfx.im.actor.create_account(
@@ -203,7 +208,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: iiAnchor,
                 email: ["invalid@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             try {
@@ -219,7 +225,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: iiAnchor,
                 email: ["test@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             try {
@@ -289,7 +296,8 @@ describe("Account", () => {
                 access_point: [],
                 wallet: [],
                 email: [],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
             await dfx.im.actor.create_account(accountRequest as any);
             const backup = await dfx.im.actor.get_all_accounts_json(0, 5);
@@ -313,7 +321,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["test2@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
             const actor = await getActor(dfx.im.id, identity, imIdl);
 
@@ -380,7 +389,8 @@ describe("Account", () => {
                 wallet: [{II: null}],
                 anchor,
                 email: [],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, rootAccessPointIdentity, imIdl);
@@ -481,12 +491,19 @@ describe("Account", () => {
                 },
                 credential_id: ["someId"],
             };
+
+            const captcha = await actor.get_captcha() as Challenge;
+
             var accountRequest: HTTPAccountRequest = {
                 access_point: [dd],
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: [],
-                name: ["TestWallet"]
+                name: ["TestWallet"],
+                challenge_attempt: [{
+                    chars: ["aaaaa"],
+                    challenge_key: captcha.challenge_key
+                }]
             };
 
             await actor.create_account(
@@ -528,7 +545,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: [],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             try {
