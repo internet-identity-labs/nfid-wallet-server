@@ -6,7 +6,9 @@ use rand_core::{RngCore, SeedableRng};
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 use candid::Principal;
-use crate::repository::repo::CONFIGURATION;
+use ic_cdk::api::time;
+use crate::http::requests::Challenge;
+use crate::repository::repo::{CAPTCHA_CAHLLENGES, CONFIGURATION};
 
 // Some time helpers
 const fn secs_to_nanos(secs: u64) -> u64 {
@@ -63,6 +65,43 @@ lazy_static! {
 
     static ref TEST_CAPTCHA: Vec<char>  = vec!['a'];
 
+}
+
+pub async fn generate_captcha() -> Challenge{
+    let time = time();
+    let mut rng = &mut make_rng().await;
+    let key = random_string(&mut rng, 10);
+    let challenges_in_progress = CAPTCHA_CAHLLENGES.with(|challenges| {
+        challenges.borrow_mut().clean_expired_entries(time);
+        challenges.borrow().count()
+    });
+    let chars: Option<String>;
+    let challenge: Challenge;
+    let max_free_captcha_per_minute = CONFIGURATION.with(|config| config.borrow().max_free_captcha_per_minute);
+    if challenges_in_progress <= max_free_captcha_per_minute as usize {
+        challenge = Challenge {
+            png_base64: None,
+            challenge_key: key.to_string(),
+        };
+        chars = None;
+    } else {
+        let (Base64(png_base64), res_chars) = create_captcha(rng);
+
+        challenge = Challenge {
+            png_base64: Some(png_base64),
+            challenge_key: key.to_string(),
+        };
+        chars = Some(res_chars);
+    }
+    CAPTCHA_CAHLLENGES.with(|challenges| {
+        challenges.borrow_mut().clean_expired_entries(time);
+        challenges.borrow_mut().insert(
+            key.clone(),
+            chars,
+            time,
+        );
+    });
+    challenge
 }
 
 // Get a random number generator based on 'raw_rand'
