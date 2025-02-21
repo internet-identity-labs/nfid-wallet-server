@@ -51,7 +51,9 @@ describe("Configuration", () => {
             'commit_hash': [],
             'operator': [],
             'account_creation_paused': [],
-            'lambda_url': []
+            'lambda_url': [],
+            'test_captcha': [true],
+            'max_free_captcha_per_minute': [],
         } as ConfigurationRequest;
         const configureResult = await dfx.im.actor.configure(request);
         expect(configureResult).to.be.undefined;
@@ -86,7 +88,9 @@ describe("Configuration", () => {
             'commit_hash': [],
             'operator': [dfx.user.identity.getPrincipal()],
             'account_creation_paused': [],
-            'lambda_url': []
+            'lambda_url': [],
+            'test_captcha': [true],
+            'max_free_captcha_per_minute': [],
         } as ConfigurationRequest;
         const configureResult = await dfx.im.actor.configure(request);
         expect(configureResult).to.be.undefined;

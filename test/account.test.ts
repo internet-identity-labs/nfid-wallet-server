@@ -9,7 +9,7 @@ import {
     AccessPointRequest,
     AccountResponse,
     BoolHttpResponse,
-    CertifiedResponse, Challenge,
+    CertifiedResponse, Challenge, ConfigurationRequest, ConfigurationResponse,
     HTTPAccessPointResponse,
     HTTPAccountRequest,
     HTTPAccountResponse,
@@ -558,6 +558,160 @@ describe("Account", () => {
                 expect(e.message).contains("Name is empty");
             }
 
+        });
+
+        it("Should get captcha and create account with it", async function () {
+            const request = {
+                'env': ["dev2"],
+                'whitelisted_phone_numbers': [],
+                'backup_canister_id': [],
+                'ii_canister_id': [],
+                'whitelisted_canisters': [],
+                'git_branch': [],
+                'lambda': [dfx.user.identity.getPrincipal()],
+                'token_refresh_ttl': [],
+                'heartbeat': [],
+                'token_ttl': [],
+                'commit_hash': [],
+                'operator': [dfx.user.identity.getPrincipal()],
+                'account_creation_paused': [],
+                'lambda_url': [],
+                'test_captcha': [true],
+                'max_free_captcha_per_minute': [0],
+            } as ConfigurationRequest;
+            const confResp = await dfx.im.actor.configure(request) as ConfigurationResponse;
+
+            const tempIdentity = Ed25519KeyIdentity.generate();
+            let actor = await getActor(dfx.im.id, tempIdentity, imIdl);
+            const deviceIdentity = Ed25519KeyIdentity.generate();
+
+            const dd: AccessPointRequest = {
+                icon: "Passkey",
+                device: "Passkey",
+                pub_key: deviceIdentity.getPrincipal().toText(),
+                browser: "",
+                device_type: {
+                    Passkey: null,
+                },
+                credential_id: ["someId"],
+            };
+
+            const emptyCaptcha = await actor.get_captcha() as Challenge;
+            expect(emptyCaptcha.png_base64.length).eq(0);
+            const captcha = await actor.get_captcha() as Challenge;
+            expect(captcha.png_base64.length).eq(1);
+
+            var accountRequest = {
+                access_point: [dd],
+                wallet: [{NFID: null}],
+                anchor: 0n,
+                email: [],
+                name: ["aaa"],
+                challenge_attempt: [ {
+                    chars: ["aaaaa"],
+                    challenge_key: captcha.challenge_key
+                }]
+            };
+
+           let accThroughCaptcha: HTTPAccountResponse = await actor.create_account(accountRequest) as HTTPAccountResponse;
+           expect(accThroughCaptcha.status_code).eq(200);
+        });
+
+        it("Not test captcha should fail on create acc attempt", async function () {
+            const request = {
+                'env': ["dev2"],
+                'whitelisted_phone_numbers': [],
+                'backup_canister_id': [],
+                'ii_canister_id': [],
+                'whitelisted_canisters': [],
+                'git_branch': [],
+                'lambda': [dfx.user.identity.getPrincipal()],
+                'token_refresh_ttl': [],
+                'heartbeat': [],
+                'token_ttl': [],
+                'commit_hash': [],
+                'operator': [dfx.user.identity.getPrincipal()],
+                'account_creation_paused': [],
+                'lambda_url': [],
+                'test_captcha': [false],
+                'max_free_captcha_per_minute': [0],
+            } as ConfigurationRequest;
+            await dfx.im.actor.configure(request);
+
+            const tempIdentity = Ed25519KeyIdentity.generate();
+            let actor = await getActor(dfx.im.id, tempIdentity, imIdl);
+            const deviceIdentity = Ed25519KeyIdentity.generate();
+
+            const dd: AccessPointRequest = {
+                icon: "Passkey",
+                device: "Passkey",
+                pub_key: deviceIdentity.getPrincipal().toText(),
+                browser: "",
+                device_type: {
+                    Passkey: null,
+                },
+                credential_id: ["someId"],
+            };
+            await actor.get_captcha()
+            const captcha = await actor.get_captcha() as Challenge;
+            expect(captcha.png_base64.length).eq(1);
+
+            var accountRequest = {
+                access_point: [dd],
+                wallet: [{NFID: null}],
+                anchor: 0n,
+                email: [],
+                name: ["aaa"],
+                challenge_attempt: [ {
+                    chars: ["aaaaa"],
+                    challenge_key: captcha.challenge_key
+                }]
+            };
+
+            try {
+                await actor.create_account(accountRequest) as HTTPAccountResponse;
+                fail("Should fail");
+            } catch (e) {
+                expect(e.message).contains("Incorrect captcha solution");
+            }
+
+            accountRequest = {
+                access_point: [dd],
+                wallet: [{NFID: null}],
+                anchor: 0n,
+                email: [],
+                name: ["aaa"],
+                challenge_attempt: [ {
+                    chars: [],
+                    challenge_key: captcha.challenge_key
+                }]
+            };
+
+            try {
+                await actor.create_account(accountRequest) as HTTPAccountResponse;
+                fail("Should fail");
+            } catch (e) {
+                expect(e.message).contains("Solution is required");
+            }
+
+            accountRequest = {
+                access_point: [dd],
+                wallet: [{NFID: null}],
+                anchor: 0n,
+                email: [],
+                name: ["aaa"],
+                challenge_attempt: [ {
+                    chars: [],
+                    challenge_key: "asdasd"
+                }]
+            };
+
+            try {
+                await actor.create_account(accountRequest) as HTTPAccountResponse;
+                fail("Should fail");
+            } catch (e) {
+                expect(e.message).contains("Incorrect captcha key");
+            }
         });
     });
 });

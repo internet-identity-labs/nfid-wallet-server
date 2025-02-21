@@ -47,7 +47,7 @@ describe("Access Point", () => {
             anchor: 0n,
             email: ["test@test.test"],
             name: [],
-                challenge_attempt: []
+            challenge_attempt: []
         };
 
         let response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25n) as BoolHttpResponse;
