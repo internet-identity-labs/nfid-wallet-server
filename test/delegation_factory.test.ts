@@ -44,6 +44,7 @@ describe("Delegation Factory test", () => {
             anchor: 0n,
             email: ["test@test.test"],
             name: [],
+                challenge_attempt: [],
         };
         const actor = await getActor(dfx.im.id, identity, imIdl);
         await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25n);

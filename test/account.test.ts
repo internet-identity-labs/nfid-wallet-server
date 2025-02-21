@@ -9,7 +9,7 @@ import {
     AccessPointRequest,
     AccountResponse,
     BoolHttpResponse,
-    CertifiedResponse,
+    CertifiedResponse, Challenge, ConfigurationRequest, ConfigurationResponse,
     HTTPAccessPointResponse,
     HTTPAccountRequest,
     HTTPAccountResponse,
@@ -78,7 +78,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["testdefault@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             try {
@@ -101,7 +102,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["testdefault@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             try {
@@ -143,7 +145,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["test@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
             const actor = await getActor(dfx.im.id, identity, imIdl);
 
@@ -171,7 +174,8 @@ describe("Account", () => {
                 wallet: [],
                 anchor: iiAnchor + 1n,
                 email: [],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
             try {
                 await dfx.im.actor.create_account(accountRequest);
@@ -186,7 +190,8 @@ describe("Account", () => {
                 wallet: [],
                 anchor: iiAnchor,
                 email: [],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             var response: HTTPAccountResponse = (await dfx.im.actor.create_account(
@@ -203,7 +208,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: iiAnchor,
                 email: ["invalid@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             try {
@@ -219,7 +225,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: iiAnchor,
                 email: ["test@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             try {
@@ -289,7 +296,8 @@ describe("Account", () => {
                 access_point: [],
                 wallet: [],
                 email: [],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
             await dfx.im.actor.create_account(accountRequest as any);
             const backup = await dfx.im.actor.get_all_accounts_json(0, 5);
@@ -313,7 +321,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: ["test2@test.test"],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
             const actor = await getActor(dfx.im.id, identity, imIdl);
 
@@ -380,7 +389,8 @@ describe("Account", () => {
                 wallet: [{II: null}],
                 anchor,
                 email: [],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, rootAccessPointIdentity, imIdl);
@@ -481,12 +491,19 @@ describe("Account", () => {
                 },
                 credential_id: ["someId"],
             };
+
+            const captcha = await actor.get_captcha() as Challenge;
+
             var accountRequest: HTTPAccountRequest = {
                 access_point: [dd],
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: [],
-                name: ["TestWallet"]
+                name: ["TestWallet"],
+                challenge_attempt: [{
+                    chars: ["aaaaa"],
+                    challenge_key: captcha.challenge_key
+                }]
             };
 
             await actor.create_account(
@@ -528,7 +545,8 @@ describe("Account", () => {
                 wallet: [{NFID: null}],
                 anchor: 0n,
                 email: [],
-                name: []
+                name: [],
+                challenge_attempt: []
             };
 
             try {
@@ -540,6 +558,160 @@ describe("Account", () => {
                 expect(e.message).contains("Name is empty");
             }
 
+        });
+
+        it("Should get captcha and create account with it", async function () {
+            const request = {
+                'env': ["dev2"],
+                'whitelisted_phone_numbers': [],
+                'backup_canister_id': [],
+                'ii_canister_id': [],
+                'whitelisted_canisters': [],
+                'git_branch': [],
+                'lambda': [dfx.user.identity.getPrincipal()],
+                'token_refresh_ttl': [],
+                'heartbeat': [],
+                'token_ttl': [],
+                'commit_hash': [],
+                'operator': [dfx.user.identity.getPrincipal()],
+                'account_creation_paused': [],
+                'lambda_url': [],
+                'test_captcha': [true],
+                'max_free_captcha_per_minute': [0],
+            } as ConfigurationRequest;
+            const confResp = await dfx.im.actor.configure(request) as ConfigurationResponse;
+
+            const tempIdentity = Ed25519KeyIdentity.generate();
+            let actor = await getActor(dfx.im.id, tempIdentity, imIdl);
+            const deviceIdentity = Ed25519KeyIdentity.generate();
+
+            const dd: AccessPointRequest = {
+                icon: "Passkey",
+                device: "Passkey",
+                pub_key: deviceIdentity.getPrincipal().toText(),
+                browser: "",
+                device_type: {
+                    Passkey: null,
+                },
+                credential_id: ["someId"],
+            };
+
+            const emptyCaptcha = await actor.get_captcha() as Challenge;
+            expect(emptyCaptcha.png_base64.length).eq(0);
+            const captcha = await actor.get_captcha() as Challenge;
+            expect(captcha.png_base64.length).eq(1);
+
+            var accountRequest = {
+                access_point: [dd],
+                wallet: [{NFID: null}],
+                anchor: 0n,
+                email: [],
+                name: ["aaa"],
+                challenge_attempt: [ {
+                    chars: ["aaaaa"],
+                    challenge_key: captcha.challenge_key
+                }]
+            };
+
+           let accThroughCaptcha: HTTPAccountResponse = await actor.create_account(accountRequest) as HTTPAccountResponse;
+           expect(accThroughCaptcha.status_code).eq(200);
+        });
+
+        it("Not test captcha should fail on create acc attempt", async function () {
+            const request = {
+                'env': ["dev2"],
+                'whitelisted_phone_numbers': [],
+                'backup_canister_id': [],
+                'ii_canister_id': [],
+                'whitelisted_canisters': [],
+                'git_branch': [],
+                'lambda': [dfx.user.identity.getPrincipal()],
+                'token_refresh_ttl': [],
+                'heartbeat': [],
+                'token_ttl': [],
+                'commit_hash': [],
+                'operator': [dfx.user.identity.getPrincipal()],
+                'account_creation_paused': [],
+                'lambda_url': [],
+                'test_captcha': [false],
+                'max_free_captcha_per_minute': [0],
+            } as ConfigurationRequest;
+            await dfx.im.actor.configure(request);
+
+            const tempIdentity = Ed25519KeyIdentity.generate();
+            let actor = await getActor(dfx.im.id, tempIdentity, imIdl);
+            const deviceIdentity = Ed25519KeyIdentity.generate();
+
+            const dd: AccessPointRequest = {
+                icon: "Passkey",
+                device: "Passkey",
+                pub_key: deviceIdentity.getPrincipal().toText(),
+                browser: "",
+                device_type: {
+                    Passkey: null,
+                },
+                credential_id: ["someId"],
+            };
+            await actor.get_captcha()
+            const captcha = await actor.get_captcha() as Challenge;
+            expect(captcha.png_base64.length).eq(1);
+
+            var accountRequest = {
+                access_point: [dd],
+                wallet: [{NFID: null}],
+                anchor: 0n,
+                email: [],
+                name: ["aaa"],
+                challenge_attempt: [ {
+                    chars: ["aaaaa"],
+                    challenge_key: captcha.challenge_key
+                }]
+            };
+
+            try {
+                await actor.create_account(accountRequest) as HTTPAccountResponse;
+                fail("Should fail");
+            } catch (e) {
+                expect(e.message).contains("Incorrect captcha solution");
+            }
+
+            accountRequest = {
+                access_point: [dd],
+                wallet: [{NFID: null}],
+                anchor: 0n,
+                email: [],
+                name: ["aaa"],
+                challenge_attempt: [ {
+                    chars: [],
+                    challenge_key: captcha.challenge_key
+                }]
+            };
+
+            try {
+                await actor.create_account(accountRequest) as HTTPAccountResponse;
+                fail("Should fail");
+            } catch (e) {
+                expect(e.message).contains("Solution is required");
+            }
+
+            accountRequest = {
+                access_point: [dd],
+                wallet: [{NFID: null}],
+                anchor: 0n,
+                email: [],
+                name: ["aaa"],
+                challenge_attempt: [ {
+                    chars: [],
+                    challenge_key: "asdasd"
+                }]
+            };
+
+            try {
+                await actor.create_account(accountRequest) as HTTPAccountResponse;
+                fail("Should fail");
+            } catch (e) {
+                expect(e.message).contains("Incorrect captcha key");
+            }
         });
     });
 });

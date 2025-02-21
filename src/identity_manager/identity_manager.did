@@ -17,6 +17,18 @@ type ConfigurationRequest = record {
     commit_hash: opt text;
     operator: opt principal;
     account_creation_paused: opt bool;
+    max_free_captcha_per_minute: opt nat16;
+    test_captcha: opt bool;
+};
+
+type Challenge = record {
+    png_base64: opt text;
+    challenge_key: text;
+};
+
+type ChallengeAttempt = record {
+    chars: opt text;
+    challenge_key: text;
 };
 
 type ConfigurationResponse = record {
@@ -34,6 +46,8 @@ type ConfigurationResponse = record {
     commit_hash: opt text;
     operator: opt principal;
     account_creation_paused: opt bool;
+    max_free_captcha_per_minute: opt nat16;
+    test_captcha: opt bool;
 };
 
     //---END-CUT---
@@ -105,6 +119,7 @@ type HTTPAccountRequest = record {
     access_point: opt AccessPointRequest;
     email: opt text;
     name: opt text;
+    challenge_attempt: opt ChallengeAttempt;
 };
 
 type HTTPAccountUpdateRequest = record {
@@ -344,6 +359,8 @@ variant {
 
 type CanisterHeapMemoryAggregatedData = vec nat64;
 
+
+
 type CanisterCyclesAggregatedData = vec nat64;
 
     //---END-CUT---
@@ -389,4 +406,5 @@ service : () -> {
     save_temp_stack_to_rebuild_device_index: () -> (text);
     sync_recovery_phrase_from_internet_identity: (nat64) -> (HTTPAccountResponse);
     pause_account_creation: (bool) -> ();
+    get_captcha: () -> (Challenge);
 }

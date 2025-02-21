@@ -14,6 +14,21 @@ pub struct AccountRequest {
     pub access_point: Option<AccessPointRequest>,
     pub email: Option<String>,
     pub name: Option<String>,
+    pub challenge_attempt: Option<ChallengeAttempt>
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, Eq, PartialEq)]
+pub struct Challenge {
+    pub png_base64: Option<String>,
+    pub challenge_key: ChallengeKey,
+}
+
+pub type ChallengeKey = String;
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct ChallengeAttempt {
+    pub chars: Option<String>,
+    pub challenge_key: ChallengeKey,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -112,6 +127,8 @@ pub struct ConfigurationRequest {
     pub commit_hash: Option<String>,
     pub operator: Option<Principal>,
     pub account_creation_paused: Option<bool>,
+    pub max_free_captcha_per_minute: Option<u16>,
+    pub test_captcha: Option<bool>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -130,6 +147,8 @@ pub struct ConfigurationResponse {
     pub commit_hash: Option<String>,
     pub operator: Option<Principal>,
     pub account_creation_paused: Option<bool>,
+    pub max_free_captcha_per_minute: Option<u16>,
+    pub test_captcha: Option<bool>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

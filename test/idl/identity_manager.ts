@@ -89,6 +89,14 @@ export interface CertifiedResponse {
     'witness' : Uint8Array | number[],
     'response' : string,
 }
+export interface Challenge {
+    'png_base64' : [] | [string],
+    'challenge_key' : string,
+}
+export interface ChallengeAttempt {
+    'chars' : [] | [string],
+    'challenge_key' : string,
+}
 export interface ConfigurationRequest {
     'env' : [] | [string],
     'whitelisted_phone_numbers' : [] | [Array<string>],
@@ -101,9 +109,11 @@ export interface ConfigurationRequest {
     'lambda_url' : [] | [string],
     'token_refresh_ttl' : [] | [bigint],
     'account_creation_paused' : [] | [boolean],
+    'test_captcha' : [] | [boolean],
     'heartbeat' : [] | [number],
     'token_ttl' : [] | [bigint],
     'commit_hash' : [] | [string],
+    'max_free_captcha_per_minute' : [] | [number],
 }
 export interface ConfigurationResponse {
     'env' : [] | [string],
@@ -117,9 +127,11 @@ export interface ConfigurationResponse {
     'lambda_url' : [] | [string],
     'token_refresh_ttl' : [] | [bigint],
     'account_creation_paused' : [] | [boolean],
+    'test_captcha' : [] | [boolean],
     'heartbeat' : [] | [number],
     'token_ttl' : [] | [bigint],
     'commit_hash' : [] | [string],
+    'max_free_captcha_per_minute' : [] | [number],
 }
 export interface DailyMetricsData {
     'updateCalls' : bigint,
@@ -165,6 +177,7 @@ export interface HTTPAccountRequest {
     'email' : [] | [string],
     'access_point' : [] | [AccessPointRequest],
     'wallet' : [] | [WalletVariant],
+    'challenge_attempt' : [] | [ChallengeAttempt],
 }
 export interface HTTPAccountResponse {
     'data' : [] | [AccountResponse],
@@ -257,6 +270,7 @@ export interface _SERVICE {
     'get_account_by_anchor' : ActorMethod<[bigint], HTTPAccountResponse>,
     'get_account_by_principal' : ActorMethod<[string], HTTPAccountResponse>,
     'get_all_accounts_json' : ActorMethod<[number, number], string>,
+    'get_captcha' : ActorMethod<[], Challenge>,
     'get_config' : ActorMethod<[], ConfigurationResponse>,
     'get_remaining_size_after_rebuild_device_index_slice_from_temp_stack' : ActorMethod<
         [[] | [bigint]],

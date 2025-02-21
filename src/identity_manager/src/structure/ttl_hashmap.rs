@@ -25,6 +25,14 @@ where
         self.map.get(key).map(|(value, _)| value)
     }
 
+    pub fn remove(&mut self, key: &K) -> Option<V> {
+        self.map.remove(key).map(|(value, _)| value)
+    }
+
+    pub fn count(&self) -> usize {
+        self.map.iter().count()
+    }
+
     pub fn clean_expired_entries(&mut self, timestamp: u64) {
         let mut deletion_timestamp = timestamp - self.ttl_millis;
         self.map.retain(|_, (_, expiration)| expiration > &mut deletion_timestamp)

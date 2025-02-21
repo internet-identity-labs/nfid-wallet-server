@@ -46,7 +46,8 @@ describe("Access Point", () => {
             wallet: [{'NFID': null}],
             anchor: 0n,
             email: ["test@test.test"],
-            name: []
+            name: [],
+            challenge_attempt: []
         };
 
         let response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25n) as BoolHttpResponse;
@@ -175,7 +176,8 @@ describe("Access Point", () => {
             wallet: [{ NFID: null }],
             anchor: 0n,
             email: [email],
-            name: []
+            name: [],
+                challenge_attempt: []
         };
 
         const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
