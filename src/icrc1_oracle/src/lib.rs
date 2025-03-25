@@ -86,6 +86,26 @@ impl PartialEq for ICRC1 {
     }
 }
 
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug, Eq)]
+pub struct NeuronData {
+    pub name: String,
+    pub ledger: String,
+    pub neuron_id: String,
+    pub date_added: u64
+}
+
+impl Hash for NeuronData {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.ledger.hash(state);
+    }
+}
+
+impl PartialEq for NeuronData {
+    fn eq(&self, other: &Self) -> bool {
+        self.ledger == other.ledger
+    }
+}
+
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, Hash, PartialEq, Eq)]
 pub struct ICRC1Request {
     pub index: Option<String>,
@@ -103,6 +123,7 @@ thread_local! {
         operator: None
     });
     pub static ICRC_REGISTRY: RefCell<HashSet<ICRC1>> = RefCell::new(HashSet::default());
+    pub static NEURON_REGISTRY: RefCell<HashSet<NeuronData>> = RefCell::new(HashSet::default());
 }
 
 /// Persists a single ICRC1 canister's metadata into the canister's storage.
@@ -233,6 +254,26 @@ async fn set_operator(operator: Principal) {
     });
 }
 
+#[query]
+async fn get_all_neurons() -> Vec<NeuronData> {
+    NEURON_REGISTRY.with(|registry| {
+        let registry = registry.borrow();
+        registry.clone().into_iter().collect()
+    })
+}
+
+#[update]
+async fn replace_all_neurons(neurons: Vec<NeuronData>) {
+    trap_if_not_authenticated_admin();
+    NEURON_REGISTRY.with(|registry| {
+        let mut registry = registry.borrow_mut();
+        registry.clear();
+        for neuron in neurons {
+            registry.insert(neuron);
+        }
+    })
+}
+
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, Eq)]
 pub struct ICRC1Memory {
@@ -263,6 +304,7 @@ impl PartialEq for ICRC1Memory {
 #[derive(Clone, Debug, CandidType, Serialize, Deserialize)]
 struct Memory {
     registry: HashSet<ICRC1Memory>,
+    neurons: Option<HashSet<NeuronData>>,
     config: Conf,
 }
 
@@ -288,9 +330,14 @@ pub fn stable_save() {
         let config = config.borrow();
         config.clone()
     });
+    let neurons =  NEURON_REGISTRY.with(|registry| {
+        let registry = registry.borrow();
+        registry.clone()
+    });
     let mem = Memory {
         registry,
         config,
+        neurons: Some(neurons)
     };
     storage::stable_save((mem, ))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
@@ -319,6 +366,10 @@ pub fn stable_restore() {
             root_canister_id: x.root_canister_id.clone(),
             date_added: x.date_added.unwrap_or(ic_cdk::api::time()),
         }).collect()
+    });
+    NEURON_REGISTRY.with(|mut registry| {
+        let mut registry = registry.borrow_mut();
+        *registry = mo.neurons.unwrap_or_default().clone();
     });
 }
 

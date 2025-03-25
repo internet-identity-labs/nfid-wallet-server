@@ -2,7 +2,7 @@ import {Dfx} from "./type/dfx";
 import {deploy, getActor, getIdentity} from "./util/deployment.util";
 import {App} from "./constanst/app.enum";
 import {expect} from "chai";
-import {ICRC1} from "./idl/icrc1_oracle";
+import {ICRC1, NeuronData} from "./idl/icrc1_oracle";
 import {idlFactory} from "./idl/icrc1_oracle_idl";
 import {fail} from "assert";
 import {DFX} from "./constanst/dfx.const";
@@ -85,14 +85,14 @@ describe("ICRC1 canister Oracle", () => {
     })
 
     it("Count/getPaginated ICRC1", async function () {
-      let canisters =  await dfx.icrc1_oracle.actor.count_icrc1_canisters() as number;
+        let canisters = await dfx.icrc1_oracle.actor.count_icrc1_canisters() as number;
         expect(canisters).eq(3n);
         let b = await dfx.icrc1_oracle.actor.get_icrc1_paginated(0, 2) as Array<ICRC1>;
         expect(b.length).eq(2);
         const offset = 2;
         let amountOfRequests = Math.ceil(Number(canisters) / offset);
         expect(amountOfRequests).eq(2);
-        const all = await Promise.all(Array.from({ length: amountOfRequests }, (_, i) =>
+        const all = await Promise.all(Array.from({length: amountOfRequests}, (_, i) =>
             dfx.icrc1_oracle.actor.get_icrc1_paginated(i * offset, offset)
         )).then((res) => res.flat());
         expect(all.length).eq(3);
@@ -104,6 +104,26 @@ describe("ICRC1 canister Oracle", () => {
         await dfx.icrc1_oracle.actor.remove_icrc1_canister(allCanisters[0].ledger);
         allCanisters = await dfx.icrc1_oracle.actor.get_all_icrc1_canisters() as Array<ICRC1>;
         expect(allCanisters.length).eq(2);
+    })
+
+    it("Replace neurons", async function () {
+        let neurons: Array<NeuronData> = [
+            {
+                name: "name",
+                date_added: BigInt(Date.now()),
+                ledger: "ledger",
+                neuron_id: "neuron_id"
+            },
+            {
+                name: "name2",
+                date_added: BigInt(Date.now()),
+                ledger: "ledger2",
+                neuron_id: "neuron_id2"
+            }
+        ]
+        await dfx.icrc1_oracle.actor.replace_all_neurons(neurons);
+        let allNeurons = await dfx.icrc1_oracle.actor.get_all_neurons() as Array<NeuronData>;
+        expect(allNeurons.length).eq(2);
     })
 
 })
