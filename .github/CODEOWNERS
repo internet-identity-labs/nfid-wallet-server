@@ -2,7 +2,4 @@
 # Each line is a file pattern followed by one or more owners.
 
 # nfid-wallet-server repository owner
-* @olsemeno @dmitriiIdentityLabs
-
-# GitHub workflows and configurations owner
-.github/* @DaniilIdentity
+* @olsemeno @dmytroidentitylabs
