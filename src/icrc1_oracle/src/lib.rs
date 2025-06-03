@@ -300,7 +300,6 @@ async fn replace_all_neurons(neurons: Vec<NeuronData>) {
 
 #[update]
 pub async fn allow_signing() {
-    get_root_id().await;
     let _ = signer::allow_signing(None).await;
 }
 
