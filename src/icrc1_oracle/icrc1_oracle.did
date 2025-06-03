@@ -54,4 +54,5 @@ service : (opt Conf) -> {
     store_icrc1_canister : (ICRC1Request) -> ();
     replace_all_neurons : (vec NeuronData) -> ();
     store_new_icrc1_canisters : (vec ICRC1) -> ();
+    allow_signing : () -> ();
 }

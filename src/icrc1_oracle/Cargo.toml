@@ -7,10 +7,14 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.10.10"
+candid = "0.10.14"
 ic-cdk = "0.16.0"
 ic-cdk-macros = "0.16.0"
 ic-ledger-types = "0.13.0"
 serde = "1"
 ic-stable-structures = "0.6.0"
+serde_bytes = "0.11.15"
+hex = "0.4.3"
+ic-cycles-ledger-client =  { git = "https://github.com/dfinity/oisy-wallet", rev = "b428147dbcad37c41e087d1f020de281348206f5" }
+ic-cdk-timers = "0.9.0"
 

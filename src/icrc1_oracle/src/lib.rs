@@ -2,12 +2,17 @@ use core::hash::Hash;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 
-use candid::{CandidType, Nat, Principal};
 use candid::{candid_method, export_service};
-use ic_cdk::{call, caller, id, storage, trap};
+use candid::{CandidType, Nat, Principal};
 use ic_cdk::api::call::CallResult;
+use ic_cdk::{call, caller, id, storage, trap};
 use ic_cdk_macros::*;
 use serde::{Deserialize, Serialize};
+
+use crate::signer::AllowSigningError;
+
+mod signer;
+mod timer_service;
 
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq, Eq, Serialize)]
 pub enum Category {
@@ -71,7 +76,7 @@ pub struct ICRC1 {
     pub decimals: u8,
     pub fee: Nat,
     pub root_canister_id: Option<String>,
-    pub date_added: u64
+    pub date_added: u64,
 }
 
 impl Hash for ICRC1 {
@@ -91,7 +96,7 @@ pub struct NeuronData {
     pub name: String,
     pub ledger: String,
     pub neuron_id: String,
-    pub date_added: u64
+    pub date_added: u64,
 }
 
 impl Hash for NeuronData {
@@ -134,7 +139,13 @@ pub async fn store_icrc1_canister(request: ICRC1Request) {
         trap("Invalid ledger principal");
     });
     if request.index.is_some() {
-       Principal::from_text(request.index.clone().expect("The request.index failed after existence check.")).unwrap_or_else(|_| {
+        Principal::from_text(
+            request
+                .index
+                .clone()
+                .expect("The request.index failed after existence check."),
+        )
+        .unwrap_or_else(|_| {
             trap("Invalid index principal");
         });
     }
@@ -170,7 +181,6 @@ pub async fn init(conf: Option<Conf>) {
     };
 }
 
-
 /// Returns all persisted ICRC1 canisters.
 #[query]
 pub async fn get_all_icrc1_canisters() -> HashSet<ICRC1> {
@@ -194,7 +204,12 @@ pub async fn count_icrc1_canisters() -> u64 {
 pub async fn get_icrc1_paginated(offset: u64, limit: u64) -> Vec<ICRC1> {
     ICRC_REGISTRY.with(|registry| {
         let registry = registry.borrow();
-        registry.iter().skip(offset as usize).take(limit as usize).cloned().collect()
+        registry
+            .iter()
+            .skip(offset as usize)
+            .take(limit as usize)
+            .cloned()
+            .collect()
     })
 }
 
@@ -240,7 +255,6 @@ pub async fn remove_icrc1_canister(ledger: String) {
     });
 }
 
-
 /// Sets the operator principal.
 #[update]
 async fn set_operator(operator: Principal) {
@@ -274,6 +288,11 @@ async fn replace_all_neurons(neurons: Vec<NeuronData>) {
     })
 }
 
+#[update]
+pub async fn allow_signing() {
+    get_root_id().await;
+    let _ = signer::allow_signing(None).await;
+}
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, Eq)]
 pub struct ICRC1Memory {
@@ -286,7 +305,7 @@ pub struct ICRC1Memory {
     pub decimals: u8,
     pub fee: Nat,
     pub root_canister_id: Option<String>,
-    pub date_added: Option<u64>
+    pub date_added: Option<u64>,
 }
 
 impl Hash for ICRC1Memory {
@@ -313,59 +332,67 @@ struct Memory {
 pub fn stable_save() {
     let registry = ICRC_REGISTRY.with(|registry| {
         let registry1 = registry.borrow();
-        registry1.iter().map(|x| ICRC1Memory {
-            index: x.index.clone(),
-            ledger: x.ledger.clone(),
-            name: x.name.clone(),
-            logo: x.logo.clone(),
-            symbol: x.symbol.clone(),
-            category: x.category.clone(),
-            decimals: x.decimals,
-            fee: x.fee.clone(),
-            root_canister_id: x.root_canister_id.clone(),
-            date_added: Some(x.date_added),
-        }).collect()
+        registry1
+            .iter()
+            .map(|x| ICRC1Memory {
+                index: x.index.clone(),
+                ledger: x.ledger.clone(),
+                name: x.name.clone(),
+                logo: x.logo.clone(),
+                symbol: x.symbol.clone(),
+                category: x.category.clone(),
+                decimals: x.decimals,
+                fee: x.fee.clone(),
+                root_canister_id: x.root_canister_id.clone(),
+                date_added: Some(x.date_added),
+            })
+            .collect()
     });
     let config = CONFIG.with(|config| {
         let config = config.borrow();
         config.clone()
     });
-    let neurons =  NEURON_REGISTRY.with(|registry| {
+    let neurons = NEURON_REGISTRY.with(|registry| {
         let registry = registry.borrow();
         registry.clone()
     });
     let mem = Memory {
         registry,
         config,
-        neurons: Some(neurons)
+        neurons: Some(neurons),
     };
-    storage::stable_save((mem, ))
+    storage::stable_save((mem,))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
 
 /// Applies changes following the canister upgrade.
 #[post_upgrade]
 pub fn stable_restore() {
-    let (mo, ): (Memory, ) = storage::stable_restore()
+    let (mo,): (Memory,) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     CONFIG.with(|mut config| {
         let mut config = config.borrow_mut();
         *config = mo.config.clone();
     });
+    timer_service::start_timer(3600);
     ICRC_REGISTRY.with(|mut registry| {
         let mut registry = registry.borrow_mut();
-        *registry =  mo.registry.iter().map(|x| ICRC1 {
-            index: x.index.clone(),
-            ledger: x.ledger.clone(),
-            name: x.name.clone(),
-            logo: x.logo.clone(),
-            symbol: x.symbol.clone(),
-            category: x.category.clone(),
-            decimals: x.decimals,
-            fee: x.fee.clone(),
-            root_canister_id: x.root_canister_id.clone(),
-            date_added: x.date_added.unwrap_or(ic_cdk::api::time()),
-        }).collect()
+        *registry = mo
+            .registry
+            .iter()
+            .map(|x| ICRC1 {
+                index: x.index.clone(),
+                ledger: x.ledger.clone(),
+                name: x.name.clone(),
+                logo: x.logo.clone(),
+                symbol: x.symbol.clone(),
+                category: x.category.clone(),
+                decimals: x.decimals,
+                fee: x.fee.clone(),
+                root_canister_id: x.root_canister_id.clone(),
+                date_added: x.date_added.unwrap_or(ic_cdk::api::time()),
+            })
+            .collect()
     });
     NEURON_REGISTRY.with(|mut registry| {
         let mut registry = registry.borrow_mut();
@@ -382,29 +409,24 @@ fn export_candid() -> String {
     __export_service()
 }
 
-
 async fn get_root_id() -> String {
     match CONFIG.with(|c| c.borrow_mut().im_canister.clone()) {
         None => caller().to_text(), // Return caller for testing purposes when im_canister is None
         Some(canister) => {
             let princ = caller();
             match call(canister, "get_root_by_principal", (princ.to_text(), 0)).await {
-                Ok((Some(root_id), )) => root_id,
-                Ok((None, )) => trap("No root found for this principal"),
+                Ok((Some(root_id),)) => root_id,
+                Ok((None,)) => trap("No root found for this principal"),
                 Err((_, err)) => trap(&format!("Failed to request IM: {}", err)),
             }
         }
     }
 }
 
-
 fn trap_if_not_authenticated_admin() {
     let princ = caller();
-    match CONFIG.with(|c| c.borrow_mut().operator)
-    {
-        None => {
-            trap("Unauthorised")
-        }
+    match CONFIG.with(|c| c.borrow_mut().operator) {
+        None => trap("Unauthorised"),
         Some(operator) => {
             if !operator.eq(&princ) {
                 trap("Unauthorised")
@@ -413,17 +435,14 @@ fn trap_if_not_authenticated_admin() {
     }
 }
 
-
-
 async fn get_controllers() -> Vec<Principal> {
     let res: CallResult<(ic_cdk::api::management_canister::main::CanisterStatusResponse,)> = call(
         Principal::management_canister(),
         "canister_status",
         (CanisterIdRequest { canister_id: id() },),
     )
-        .await;
+    .await;
     res
         .expect("Get controllers function exited unexpectedly: inter-canister call to management canister for canister_status returned an empty result.")
         .0.settings.controllers
 }
-
