@@ -9,7 +9,7 @@ use ic_cdk::{call, caller, id, storage, trap};
 use ic_cdk_macros::*;
 use serde::{Deserialize, Serialize};
 
-use crate::signer::AllowSigningError;
+use crate::signer::{TopUpCyclesLedgerRequest};
 
 mod signer;
 mod timer_service;
@@ -274,6 +274,16 @@ async fn get_all_neurons() -> Vec<NeuronData> {
         let registry = registry.borrow();
         registry.clone().into_iter().collect()
     })
+}
+
+
+#[update]
+async fn up_cycles(amount: Option<u128>) {
+    trap_if_not_authenticated_admin();
+    let _ = signer::top_up_cycles_ledger(TopUpCyclesLedgerRequest {
+        threshold: Some(Nat::from(amount.unwrap_or(2_000_000_000_000u128))),
+        percentage: None,
+    }).await;
 }
 
 #[update]
