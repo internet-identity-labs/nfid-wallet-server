@@ -19,7 +19,7 @@ const fn secs_to_nanos(secs: u64) -> u64 {
 }
 pub const MINUTE_NS: u64 = secs_to_nanos(60);
 const TEMP_KEY_EXPIRATION_NS: u64 = 10 * MINUTE_NS;
-const CAPTCHA_KEY_EXPIRATION_NS: u64 = 1 * MINUTE_NS;
+const CAPTCHA_KEY_EXPIRATION_NS: u64 = 5 * MINUTE_NS;
 
 #[derive(Debug, Deserialize, CandidType, Clone)]
 pub struct Configuration {
@@ -38,7 +38,7 @@ pub struct Configuration {
     pub operator: Principal,
     pub account_creation_paused: bool,
     pub max_free_captcha_per_minute: u16,
-    pub test_captcha: bool
+    pub test_captcha: bool,
 }
 
 //todo rethink visibility
@@ -87,13 +87,14 @@ impl BasicEntity {
 
 impl AdminRepo {
     pub fn get() -> Principal {
-        ADMINS.with(|admins| admins
-            .borrow()
-            .iter()
-            .next()
-            .expect("Failed to retrieve an admin. The admin list is empty.")
-            .clone()
-        )
+        ADMINS.with(|admins| {
+            admins
+                .borrow()
+                .iter()
+                .next()
+                .expect("Failed to retrieve an admin. The admin list is empty.")
+                .clone()
+        })
     }
 
     pub fn save(principal: Principal) -> () {
@@ -145,7 +146,8 @@ impl ConfigurationRepo {
             whitelisted_phone_numbers: Vec::default(),
             heartbeat: Option::None,
             backup_canister_id: None,
-            ii_canister_id: Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").expect("Failed to parse the ii_canister_id string."),
+            ii_canister_id: Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai")
+                .expect("Failed to parse the ii_canister_id string."),
             whitelisted_canisters: None,
             env: None,
             git_branch: None,
@@ -153,7 +155,7 @@ impl ConfigurationRepo {
             operator: lambda,
             account_creation_paused: false,
             max_free_captcha_per_minute: 10,
-            test_captcha: false
+            test_captcha: false,
         }
     }
 }
@@ -241,7 +243,8 @@ pub fn post_upgrade() {
         Logs,
         Option<Applications>,
         Option<Configuration>,
-    ) = storage::stable_restore().expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
+    ) = storage::stable_restore()
+        .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     CONFIGURATION.with(|config| {
         let configuration = configuration_maybe.unwrap_or(ConfigurationRepo::get_default_config());
         config.replace(configuration);

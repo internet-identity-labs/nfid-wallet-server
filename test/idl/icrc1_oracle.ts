@@ -10,7 +10,7 @@ export type Category = { 'Sns' : null } |
     { 'ChainFusion' : null } |
     { 'Community' : null };
 export interface Conf {
-    'controllers' : [] | [Array<Principal>],
+    'operator' : [] | [Principal],
     'im_canister' : [] | [Principal],
 }
 export interface ICRC1 {
@@ -34,11 +34,19 @@ export interface ICRC1Request {
     'index' : [] | [string],
     'symbol' : string,
 }
+export interface NeuronData {
+    'name' : string,
+    'date_added' : bigint,
+    'ledger' : string,
+    'neuron_id' : string,
+}
 export interface _SERVICE {
     'count_icrc1_canisters' : ActorMethod<[], bigint>,
     'get_all_icrc1_canisters' : ActorMethod<[], Array<ICRC1>>,
+    'get_all_neurons' : ActorMethod<[], Array<NeuronData>>,
     'get_icrc1_paginated' : ActorMethod<[bigint, bigint], Array<ICRC1>>,
     'remove_icrc1_canister' : ActorMethod<[string], undefined>,
+    'replace_all_neurons' : ActorMethod<[Array<NeuronData>], undefined>,
     'replace_icrc1_canisters' : ActorMethod<[Array<ICRC1>], undefined>,
     'set_operator' : ActorMethod<[Principal], undefined>,
     'store_icrc1_canister' : ActorMethod<[ICRC1Request], undefined>,

@@ -20,6 +20,14 @@ async function run() {
             await adminManager.removeCanister(process.argv[3]);
             console.log('Canister removed!!!');
             break;
+        case 'formNeuronsCSV':
+            await adminManager.formNeuronsCSV();
+            console.log('Neurons CSV ready!!!');
+            break;
+        case 'replaceNeurons':
+            await adminManager.replaceNeuronsFromCSV();
+            console.log('Neurons replaced!!!');
+            break;
         default:
             console.log('Invalid method');
             break;
