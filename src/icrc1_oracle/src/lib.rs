@@ -1,15 +1,20 @@
 use core::hash::Hash;
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
-use candid::{candid_method, export_service};
+use candid::{export_service};
 use candid::{CandidType, Nat, Principal};
 use ic_cdk::api::call::CallResult;
+use ic_cdk::api::time;
 use ic_cdk::{call, caller, id, storage, trap};
 use ic_cdk_macros::*;
 use serde::{Deserialize, Serialize};
 
-use crate::signer::{TopUpCyclesLedgerRequest};
+use crate::signer::{
+    btc_principal_to_p2wpkh_address, estimate_fee, get_all_utxos, get_fee_per_byte,
+    utxos_selection, BtcSelectUserUtxosFeeResult, SelectedUtxosFeeError, SelectedUtxosFeeRequest,
+    SelectedUtxosFeeResponse, TopUpCyclesLedgerRequest, MIN_CONFIRMATIONS_ACCEPTED_BTC_TX,
+};
 
 mod signer;
 mod timer_service;
@@ -276,14 +281,14 @@ async fn get_all_neurons() -> Vec<NeuronData> {
     })
 }
 
-
 #[update]
 async fn up_cycles(amount: Option<u128>) {
     trap_if_not_authenticated_admin();
     let _ = signer::top_up_cycles_ledger(TopUpCyclesLedgerRequest {
         threshold: Some(Nat::from(amount.unwrap_or(2_000_000_000_000u128))),
         percentage: None,
-    }).await;
+    })
+    .await;
 }
 
 #[update]
@@ -301,6 +306,64 @@ async fn replace_all_neurons(neurons: Vec<NeuronData>) {
 #[update]
 pub async fn allow_signing() {
     let _ = signer::allow_signing(None).await;
+}
+
+#[update]
+pub async fn btc_select_user_utxos_fee(
+    params: SelectedUtxosFeeRequest,
+) -> BtcSelectUserUtxosFeeResult {
+    async fn inner(
+        params: SelectedUtxosFeeRequest,
+    ) -> Result<SelectedUtxosFeeResponse, SelectedUtxosFeeError> {
+        let principal = ic_cdk::caller();
+        let source_address = btc_principal_to_p2wpkh_address(params.network, &principal)
+            .await
+            .map_err(|msg| SelectedUtxosFeeError::InternalError { msg })?;
+        let all_utxos = get_all_utxos(
+            params.network,
+            source_address.clone(),
+            Some(
+                params
+                    .min_confirmations
+                    .unwrap_or(MIN_CONFIRMATIONS_ACCEPTED_BTC_TX),
+            ),
+        )
+        .await
+        .map_err(|msg| SelectedUtxosFeeError::InternalError { msg })?;
+        let now_ns = time();
+
+        let median_fee_millisatoshi_per_vbyte = get_fee_per_byte(params.network)
+            .await
+            .map_err(|msg| SelectedUtxosFeeError::InternalError { msg })?;
+        // We support sending to one destination only.
+        // Therefore, the outputs are the destination and the source address for the change.
+        let output_count = 2;
+        let mut available_utxos = all_utxos.clone();
+        let selected_utxos =
+            utxos_selection(params.amount_satoshis, &mut available_utxos, output_count);
+
+        // Fee calculation might still take into account default tx size and expected output.
+        // But if there are no selcted utxos, no tx is possible. Therefore, no fee should be
+        // present.
+        if selected_utxos.is_empty() {
+            return Ok(SelectedUtxosFeeResponse {
+                utxos: selected_utxos,
+                fee_satoshis: 0,
+            });
+        }
+
+        let fee_satoshis = estimate_fee(
+            selected_utxos.len() as u64,
+            median_fee_millisatoshi_per_vbyte,
+            output_count as u64,
+        );
+
+        Ok(SelectedUtxosFeeResponse {
+            utxos: selected_utxos,
+            fee_satoshis,
+        })
+    }
+    inner(params).await.into()
 }
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, Eq)]

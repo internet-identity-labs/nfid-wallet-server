@@ -43,6 +43,34 @@ type NeuronData = record {
     neuron_id : text;
 };
 
+
+
+type Outpoint = record { txid : blob; vout : nat32 };
+
+type BitcoinNetwork = variant { mainnet; regtest; testnet };
+type Utxo = record { height : nat32; value : nat64; outpoint : Outpoint };
+
+
+type SelectedUtxosFeeRequest = record {
+	network : BitcoinNetwork;
+	amount_satoshis : nat64;
+	min_confirmations : opt nat32
+};
+type SelectedUtxosFeeResponse = record {
+	fee_satoshis : nat64;
+	utxos : vec Utxo
+};
+
+type BtcSelectUserUtxosFeeResult = variant {
+	Ok : SelectedUtxosFeeResponse;
+	Err : SelectedUtxosFeeError
+};
+
+type SelectedUtxosFeeError = variant {
+	InternalError : record { msg : text }
+};
+
+
 service : (opt Conf) -> {
     count_icrc1_canisters : () -> (nat64) query;
     get_all_icrc1_canisters : () -> (vec ICRC1) query;
@@ -55,4 +83,7 @@ service : (opt Conf) -> {
     replace_all_neurons : (vec NeuronData) -> ();
     store_new_icrc1_canisters : (vec ICRC1) -> ();
     allow_signing : () -> ();
+	btc_select_user_utxos_fee : (SelectedUtxosFeeRequest) -> (
+		BtcSelectUserUtxosFeeResult
+	);
 }

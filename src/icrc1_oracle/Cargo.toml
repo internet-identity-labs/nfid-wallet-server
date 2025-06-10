@@ -17,4 +17,5 @@ serde_bytes = "0.11.15"
 hex = "0.4.3"
 ic-cycles-ledger-client =  { git = "https://github.com/dfinity/oisy-wallet", rev = "b428147dbcad37c41e087d1f020de281348206f5" }
 ic-cdk-timers = "0.9.0"
+bitcoin = "0.32.6"
 
