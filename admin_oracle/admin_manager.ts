@@ -18,6 +18,7 @@ import sharp from 'sharp'
 import {_SERVICE as ICRC1ServiceIDL, Account, Icrc1TransferResult, TransferArg} from "./idl/icrc1.idl";
 import {idlFactory as icrc1IDL} from "./idl/icrc1";
 import {Principal} from "@dfinity/principal";
+import { stakeNeuron } from "./sns-governance.api";
 
 export class AdminManager {
 
@@ -174,27 +175,16 @@ export class AdminManager {
             columns: true,
             skip_empty_lines: true,
         });
-        const actor = Agent.Actor.createActor<ICRC1ServiceIDL>(icrc1IDL, {
-            canisterId: LEDGER_TO_SEND,
-            agent: new HttpAgent({ host: "https://ic0.app", identity: this.adminED }),
-        })
-        let metadata = await getMetadata(LEDGER_TO_SEND)
+
+        let sender = this.adminED;
+
         for (const p of records) {
-            console.log(p)
-            const acc: Account = {
-                owner: Principal.fromText(p.principal_id),
-                subaccount: []
-            }
-            const t: TransferArg = {
-                to: acc,
-                amount: BigInt(p.tokens ** metadata.decimals),
-                fee: [],
-                memo: [],
-                from_subaccount: [],
-                created_at_time: []
-            }
-            let result: Icrc1TransferResult = await actor.icrc1_transfer(t)
-            console.log(result)
+            stakeNeuron({
+                identity: sender,
+                canisterId: Principal.fromText(LEDGER_TO_SEND),
+                stake: BigInt(p.tokens),
+                controller: Principal.fromText(p.principal_id)
+            })
         }
     }
 }
