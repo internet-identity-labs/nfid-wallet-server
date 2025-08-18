@@ -110,7 +110,8 @@ type DeviceType = variant {
     Passkey;
     Recovery;
     Unknown;
-    Password
+    Password;
+    InternetIdentity
 };
 
 type HTTPAccountRequest = record {
