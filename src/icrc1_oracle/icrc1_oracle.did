@@ -1,46 +1,89 @@
 type Category = variant {
     Sns;
-    Known;
     Spam;
+    Native;
+    Known;
     ChainFusionTestnet;
     ChainFusion;
     Community;
-    Native;
 };
 
 type Conf = record {
-    controllers : opt vec principal;
+    operator : opt principal;
     im_canister : opt principal;
 };
 
 type ICRC1 = record {
+    fee : nat;
+    root_canister_id : opt text;
+    decimals : nat8;
     logo : opt text;
     name : text;
+    date_added : nat64;
     ledger : text;
     category : Category;
     index : opt text;
     symbol : text;
-    decimals : nat8;
-    fee : nat;
-    root_canister_id: opt text;
-    date_added: nat64;
 };
 
 type ICRC1Request = record {
+    fee : nat;
+    decimals : nat8;
     logo : opt text;
     name : text;
     ledger : text;
     index : opt text;
     symbol : text;
-    decimals : nat8;
-    fee : nat;
-};service : (opt Conf) -> {
-    get_all_icrc1_canisters : () -> (vec ICRC1) query;
-    replace_icrc1_canisters : (vec ICRC1) -> ();
-    store_new_icrc1_canisters : (vec ICRC1) -> ();
-    store_icrc1_canister : (ICRC1Request) -> ();
-    set_operator : (principal) -> ();
+};
+
+type NeuronData = record {
+    name : text;
+    date_added : nat64;
+    ledger : text;
+    neuron_id : text;
+};
+
+
+
+type Outpoint = record { txid : blob; vout : nat32 };
+
+type BitcoinNetwork = variant { mainnet; regtest; testnet };
+type Utxo = record { height : nat32; value : nat64; outpoint : Outpoint };
+
+
+type SelectedUtxosFeeRequest = record {
+	network : BitcoinNetwork;
+	amount_satoshis : nat64;
+	min_confirmations : opt nat32
+};
+type SelectedUtxosFeeResponse = record {
+	fee_satoshis : nat64;
+	utxos : vec Utxo
+};
+
+type BtcSelectUserUtxosFeeResult = variant {
+	Ok : SelectedUtxosFeeResponse;
+	Err : SelectedUtxosFeeError
+};
+
+type SelectedUtxosFeeError = variant {
+	InternalError : record { msg : text }
+};
+
+
+service : (opt Conf) -> {
     count_icrc1_canisters : () -> (nat64) query;
+    get_all_icrc1_canisters : () -> (vec ICRC1) query;
+    get_all_neurons : () -> (vec NeuronData) query;
     get_icrc1_paginated : (nat64, nat64) -> (vec ICRC1) query;
     remove_icrc1_canister : (text) -> ();
+    replace_icrc1_canisters : (vec ICRC1) -> ();
+    set_operator : (principal) -> ();
+    store_icrc1_canister : (ICRC1Request) -> ();
+    replace_all_neurons : (vec NeuronData) -> ();
+    store_new_icrc1_canisters : (vec ICRC1) -> ();
+    allow_signing : () -> ();
+	btc_select_user_utxos_fee : (SelectedUtxosFeeRequest) -> (
+		BtcSelectUserUtxosFeeResult
+	);
 }

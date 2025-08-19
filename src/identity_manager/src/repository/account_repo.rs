@@ -2,9 +2,10 @@ use crate::http::requests::WalletVariant;
 use crate::ic_service;
 use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::persona_repo::Persona;
-use crate::repository::repo::{is_anchor_exists, BasicEntity};
+use crate::repository::repo::{is_anchor_exists, BasicEntity, TEMP_KEYS};
 use crate::service::certified_service::{remove_certify_keys, update_certify_keys};
 use candid::{CandidType, Deserialize, Principal};
+use ic_cdk::api::time;
 use ic_cdk::storage;
 use itertools::Itertools;
 use serde::Serialize;
@@ -20,7 +21,6 @@ thread_local! {
 pub struct Account {
     pub anchor: u64,
     pub principal_id: String,
-    #[deprecated()]
     pub name: Option<String>,
     #[deprecated()]
     pub phone_number: Option<String>,
@@ -42,12 +42,12 @@ pub trait AccountRepoTrait {
     fn create_account(&self, account: Account) -> Option<Account>;
     fn store_account(&self, account: Account) -> Option<Account>;
     fn remove_account(&self) -> Option<Account>;
-    fn exists(&self, principal: &Principal) -> bool;
     fn update_account_index_with_pub_key(&self, additional_key: String, princ: String);
     fn update_account_index(&self, additional_principal_id: String);
     fn remove_account_index(&self, additional_principal_id: String);
     fn get_all_accounts(&self) -> Vec<Account>;
     fn find_next_nfid_anchor(&self) -> u64;
+    fn find_in_temp_keys(&self, princ: String) -> Option<Account>;
 }
 
 #[derive(Default, Clone, Copy)]
@@ -58,7 +58,9 @@ impl AccountRepoTrait for AccountRepo {
         let princ = ic_service::get_caller().to_text();
         PRINCIPAL_INDEX.with(|index| {
             ACCOUNTS.with(|accounts| match index.borrow().get(&princ) {
-                None => None,
+                None => {
+                    self.find_in_temp_keys(princ.clone())
+                }
                 Some(key) => match accounts.borrow().get(key) {
                     None => None,
                     Some(acc) => Option::from(acc.to_owned()),
@@ -70,7 +72,7 @@ impl AccountRepoTrait for AccountRepo {
     fn get_account_by_principal(&self, princ: String) -> Option<Account> {
         PRINCIPAL_INDEX.with(|index| {
             ACCOUNTS.with(|accounts| match index.borrow().get(&princ) {
-                None => None,
+                None => self.find_in_temp_keys(princ.clone()),
                 Some(key) => match accounts.borrow().get(key) {
                     None => None,
                     Some(acc) => Option::from(acc.to_owned()),
@@ -98,6 +100,11 @@ impl AccountRepoTrait for AccountRepo {
                 if index.borrow().contains_key(&account.principal_id) {
                     return None;
                 }
+                for ap in account.access_points.iter() {
+                    if index.borrow().contains_key(&ap.principal_id) {
+                        return None;
+                    }
+                }
                 if is_anchor_exists(account.anchor, account.wallet.clone()) {
                     return None;
                 } else {
@@ -105,6 +112,12 @@ impl AccountRepoTrait for AccountRepo {
                         .borrow_mut()
                         .insert(account.principal_id.clone(), account.principal_id.clone());
                     update_certify_keys(account.principal_id.clone(), account.principal_id.clone());
+                    for ap in account.access_points.iter() {
+                        index
+                            .borrow_mut()
+                            .insert(ap.principal_id.clone(), account.principal_id.clone());
+                        update_certify_keys(ap.principal_id.clone(), account.principal_id.clone());
+                    }
                     accounts
                         .borrow_mut()
                         .insert(account.principal_id.clone(), account.clone());
@@ -140,10 +153,6 @@ impl AccountRepoTrait for AccountRepo {
                 }
             })
         })
-    }
-
-    fn exists(&self, principal: &Principal) -> bool {
-        PRINCIPAL_INDEX.with(|index| index.borrow().contains_key(&principal.to_text()))
     }
 
     fn update_account_index_with_pub_key(&self, additional_principal_id: String, princ: String) {
@@ -194,6 +203,18 @@ impl AccountRepoTrait for AccountRepo {
                         x.anchor + 1
                     }
                 })
+        })
+    }
+
+    fn find_in_temp_keys(&self, princ: String) -> Option<Account> {
+        TEMP_KEYS.with(|keys| {
+            keys.borrow_mut().clean_expired_entries(time());
+            match keys.borrow().get(&princ) {
+                None => None,
+                Some(anchor) => {
+                    return self.get_account_by_anchor(anchor.clone(), WalletVariant::NFID);
+                }
+            }
         })
     }
 }

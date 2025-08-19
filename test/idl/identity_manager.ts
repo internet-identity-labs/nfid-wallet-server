@@ -89,6 +89,14 @@ export interface CertifiedResponse {
     'witness' : Uint8Array | number[],
     'response' : string,
 }
+export interface Challenge {
+    'png_base64' : [] | [string],
+    'challenge_key' : string,
+}
+export interface ChallengeAttempt {
+    'chars' : [] | [string],
+    'challenge_key' : string,
+}
 export interface ConfigurationRequest {
     'env' : [] | [string],
     'whitelisted_phone_numbers' : [] | [Array<string>],
@@ -101,9 +109,11 @@ export interface ConfigurationRequest {
     'lambda_url' : [] | [string],
     'token_refresh_ttl' : [] | [bigint],
     'account_creation_paused' : [] | [boolean],
+    'test_captcha' : [] | [boolean],
     'heartbeat' : [] | [number],
     'token_ttl' : [] | [bigint],
     'commit_hash' : [] | [string],
+    'max_free_captcha_per_minute' : [] | [number],
 }
 export interface ConfigurationResponse {
     'env' : [] | [string],
@@ -117,9 +127,11 @@ export interface ConfigurationResponse {
     'lambda_url' : [] | [string],
     'token_refresh_ttl' : [] | [bigint],
     'account_creation_paused' : [] | [boolean],
+    'test_captcha' : [] | [boolean],
     'heartbeat' : [] | [number],
     'token_ttl' : [] | [bigint],
     'commit_hash' : [] | [string],
+    'max_free_captcha_per_minute' : [] | [number],
 }
 export interface DailyMetricsData {
     'updateCalls' : bigint,
@@ -129,6 +141,7 @@ export interface DailyMetricsData {
     'timeMillis' : bigint,
 }
 export type DeviceType = { 'Email' : null } |
+    { 'Password' : null } |
     { 'Passkey' : null } |
     { 'Recovery' : null } |
     { 'Unknown' : null };
@@ -159,10 +172,12 @@ export interface HTTPAccessPointResponse {
     'status_code' : number,
 }
 export interface HTTPAccountRequest {
+    'name' : [] | [string],
     'anchor' : bigint,
     'email' : [] | [string],
     'access_point' : [] | [AccessPointRequest],
     'wallet' : [] | [WalletVariant],
+    'challenge_attempt' : [] | [ChallengeAttempt],
 }
 export interface HTTPAccountResponse {
     'data' : [] | [AccountResponse],
@@ -241,7 +256,7 @@ export type WalletVariant = { 'II' : null } |
     { 'NFID' : null };
 export interface _SERVICE {
     'add_email_and_principal_for_create_account_validation' : ActorMethod<
-        [string, string, number],
+        [string, string, bigint],
         BoolHttpResponse
     >,
     'configure' : ActorMethod<[ConfigurationRequest], undefined>,
@@ -255,12 +270,14 @@ export interface _SERVICE {
     'get_account_by_anchor' : ActorMethod<[bigint], HTTPAccountResponse>,
     'get_account_by_principal' : ActorMethod<[string], HTTPAccountResponse>,
     'get_all_accounts_json' : ActorMethod<[number, number], string>,
+    'get_captcha' : ActorMethod<[], Challenge>,
     'get_config' : ActorMethod<[], ConfigurationResponse>,
     'get_remaining_size_after_rebuild_device_index_slice_from_temp_stack' : ActorMethod<
         [[] | [bigint]],
         bigint
     >,
     'get_root_certified' : ActorMethod<[], CertifiedResponse>,
+    'pause_account_creation' : ActorMethod<[boolean], undefined>,
     'read_access_points' : ActorMethod<[], HTTPAccessPointResponse>,
     'read_applications' : ActorMethod<[], HTTPApplicationResponse>,
     'read_personas' : ActorMethod<[], HTTPPersonasResponse>,
@@ -284,12 +301,7 @@ export interface _SERVICE {
         [AccessPointRequest],
         HTTPAccessPointResponse
     >,
-    'update_account' : ActorMethod<
-        [HTTPAccountUpdateRequest],
-        HTTPAccountResponse
-    >,
     'use_access_point' : ActorMethod<[[] | [string]], HTTPOneAccessPointResponse>,
-    'pause_account_creation' : ActorMethod<[boolean], undefined>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

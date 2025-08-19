@@ -51,7 +51,9 @@ describe("Configuration", () => {
             'commit_hash': [],
             'operator': [],
             'account_creation_paused': [],
-            'lambda_url': []
+            'lambda_url': [],
+            'test_captcha': [true],
+            'max_free_captcha_per_minute': [],
         } as ConfigurationRequest;
         const configureResult = await dfx.im.actor.configure(request);
         expect(configureResult).to.be.undefined;
@@ -86,7 +88,9 @@ describe("Configuration", () => {
             'commit_hash': [],
             'operator': [dfx.user.identity.getPrincipal()],
             'account_creation_paused': [],
-            'lambda_url': []
+            'lambda_url': [],
+            'test_captcha': [true],
+            'max_free_captcha_per_minute': [],
         } as ConfigurationRequest;
         const configureResult = await dfx.im.actor.configure(request);
         expect(configureResult).to.be.undefined;
@@ -116,10 +120,12 @@ describe("Configuration", () => {
             wallet: [{NFID: null}],
             anchor: 0n,
             email: ["test@test.test"],
+            name: [],
+                challenge_attempt: [],
         };
         const actor = await getActor(dfx.im.id, identity, imIdl);
 
-        let email_response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25) as BoolHttpResponse;
+        let email_response = await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25n) as BoolHttpResponse;
 
         expect(email_response.status_code).eq(200);
         try {

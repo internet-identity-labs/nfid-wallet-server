@@ -43,9 +43,11 @@ describe("Delegation Factory test", () => {
             wallet: [{NFID: null}],
             anchor: 0n,
             email: ["test@test.test"],
+            name: [],
+                challenge_attempt: [],
         };
         const actor = await getActor(dfx.im.id, identity, imIdl);
-        await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25);
+        await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25n);
         const accResponse: HTTPAccountResponse = (await actor.create_account(
             accountRequest
         )) as HTTPAccountResponse;

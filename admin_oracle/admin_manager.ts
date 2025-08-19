@@ -11,7 +11,7 @@ import {parse as csvParse} from 'csv-parse/sync';
 import {ICRC1CsvData} from "./types";
 import {getActor, mapCategory, mapCategoryCSVToCategory} from "./util";
 import {ChainFusionTestnetParser} from "./chain_fusion_testnet";
-import {CANISTER_ID, FILE_PATH, KEY_PAIR} from "./constants";
+import {CANISTER_ID, FILE_PATH, FILE_PATH_NEURON, KEY_PAIR} from "./constants";
 import {getMetadata} from "./metadata_service";
 import sharp from 'sharp'
 
@@ -157,7 +157,39 @@ export class AdminManager {
     removeCanister(ledgerId: string) {
         return this.actor.remove_icrc1_canister(ledgerId);
     }
+
+    async formNeuronsCSV() {
+        const neurons = await this.actor.get_all_neurons() as Array<{ name: string, date_added: bigint, ledger: string, neuron_id: string }>;
+        const fields = ['name', 'ledger', 'neuron_id', 'date_added'];
+        const opts = {fields};
+        try {
+            const csv = (parse(neurons, opts));
+            fs.writeFileSync(FILE_PATH_NEURON, csv);
+            console.log('CSV file saved successfully!');
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async replaceNeuronsFromCSV() {
+        const csvData = fs.readFileSync(FILE_PATH_NEURON, 'utf8');
+        const records: Array<{ name: string, ledger: string, neuron_id: string, date_added: string }> = csvParse(csvData, {
+            columns: true,
+            skip_empty_lines: true,
+        });
+        const asd = records
+            .map((record) => {
+                return {
+                    name: record.name,
+                    ledger: record.ledger,
+                    neuron_id: record.neuron_id,
+                    date_added: BigInt(Date.now())
+                }
+            });
+        await this.actor.replace_all_neurons(asd);
+    }
 }
+
 
 export async function compressLogo(base64Logo: string): Promise<string> {
     const uri = base64Logo.split(';base64,')

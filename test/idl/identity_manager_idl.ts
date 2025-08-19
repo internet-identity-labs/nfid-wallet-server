@@ -17,12 +17,15 @@ export const idlFactory = ({ IDL }) => {
         'lambda_url' : IDL.Opt(IDL.Text),
         'token_refresh_ttl' : IDL.Opt(IDL.Nat64),
         'account_creation_paused' : IDL.Opt(IDL.Bool),
+        'test_captcha' : IDL.Opt(IDL.Bool),
         'heartbeat' : IDL.Opt(IDL.Nat32),
         'token_ttl' : IDL.Opt(IDL.Nat64),
         'commit_hash' : IDL.Opt(IDL.Text),
+        'max_free_captcha_per_minute' : IDL.Opt(IDL.Nat16),
     });
     const DeviceType = IDL.Variant({
         'Email' : IDL.Null,
+        'Password' : IDL.Null,
         'Passkey' : IDL.Null,
         'Recovery' : IDL.Null,
         'Unknown' : IDL.Null,
@@ -50,11 +53,17 @@ export const idlFactory = ({ IDL }) => {
         'status_code' : IDL.Nat16,
     });
     const WalletVariant = IDL.Variant({ 'II' : IDL.Null, 'NFID' : IDL.Null });
+    const ChallengeAttempt = IDL.Record({
+        'chars' : IDL.Opt(IDL.Text),
+        'challenge_key' : IDL.Text,
+    });
     const HTTPAccountRequest = IDL.Record({
+        'name' : IDL.Opt(IDL.Text),
         'anchor' : IDL.Nat64,
         'email' : IDL.Opt(IDL.Text),
         'access_point' : IDL.Opt(AccessPointRequest),
         'wallet' : IDL.Opt(WalletVariant),
+        'challenge_attempt' : IDL.Opt(ChallengeAttempt),
     });
     const PersonaResponse = IDL.Record({
         'domain' : IDL.Text,
@@ -77,6 +86,10 @@ export const idlFactory = ({ IDL }) => {
         'error' : IDL.Opt(Error),
         'status_code' : IDL.Nat16,
     });
+    const Challenge = IDL.Record({
+        'png_base64' : IDL.Opt(IDL.Text),
+        'challenge_key' : IDL.Text,
+    });
     const ConfigurationResponse = IDL.Record({
         'env' : IDL.Opt(IDL.Text),
         'whitelisted_phone_numbers' : IDL.Opt(IDL.Vec(IDL.Text)),
@@ -89,9 +102,11 @@ export const idlFactory = ({ IDL }) => {
         'lambda_url' : IDL.Opt(IDL.Text),
         'token_refresh_ttl' : IDL.Opt(IDL.Nat64),
         'account_creation_paused' : IDL.Opt(IDL.Bool),
+        'test_captcha' : IDL.Opt(IDL.Bool),
         'heartbeat' : IDL.Opt(IDL.Nat32),
         'token_ttl' : IDL.Opt(IDL.Nat64),
         'commit_hash' : IDL.Opt(IDL.Text),
+        'max_free_captcha_per_minute' : IDL.Opt(IDL.Nat16),
     });
     const CertifiedResponse = IDL.Record({
         'certificate' : IDL.Vec(IDL.Nat8),
@@ -134,10 +149,6 @@ export const idlFactory = ({ IDL }) => {
         'principal_id' : IDL.Text,
         'phone_number' : IDL.Opt(IDL.Text),
     });
-    const HTTPAccountUpdateRequest = IDL.Record({
-        'name' : IDL.Opt(IDL.Text),
-        'email' : IDL.Opt(IDL.Text),
-    });
     const HTTPOneAccessPointResponse = IDL.Record({
         'data' : IDL.Opt(AccessPointResponse),
         'error' : IDL.Opt(Error),
@@ -177,6 +188,7 @@ export const idlFactory = ({ IDL }) => {
             [IDL.Text],
             ['query'],
         ),
+        'get_captcha' : IDL.Func([], [Challenge], []),
         'get_config' : IDL.Func([], [ConfigurationResponse], ['query']),
         'get_remaining_size_after_rebuild_device_index_slice_from_temp_stack' : IDL.Func(
             [IDL.Opt(IDL.Nat64)],
@@ -184,6 +196,7 @@ export const idlFactory = ({ IDL }) => {
             [],
         ),
         'get_root_certified' : IDL.Func([], [CertifiedResponse], ['query']),
+        'pause_account_creation' : IDL.Func([IDL.Bool], [], []),
         'read_access_points' : IDL.Func([], [HTTPAccessPointResponse], ['query']),
         'read_applications' : IDL.Func([], [HTTPApplicationResponse], ['query']),
         'read_personas' : IDL.Func([], [HTTPPersonasResponse], ['query']),
@@ -213,19 +226,12 @@ export const idlFactory = ({ IDL }) => {
             [HTTPAccessPointResponse],
             [],
         ),
-        'update_account' : IDL.Func(
-            [HTTPAccountUpdateRequest],
-            [HTTPAccountResponse],
-            [],
-        ),
         'use_access_point' : IDL.Func(
             [IDL.Opt(IDL.Text)],
             [HTTPOneAccessPointResponse],
             [],
         ),
         'get_root_by_principal': IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], []),
-
-        'pause_account_creation' : IDL.Func([IDL.Bool], [], []),
     });
 };
 export const init = ({ IDL }) => { return []; };

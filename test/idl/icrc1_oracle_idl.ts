@@ -1,6 +1,6 @@
 export const idlFactory = ({ IDL }) => {
     const Conf = IDL.Record({
-        'controllers' : IDL.Opt(IDL.Vec(IDL.Principal)),
+        'operator' : IDL.Opt(IDL.Principal),
         'im_canister' : IDL.Opt(IDL.Principal),
     });
     const Category = IDL.Variant({
@@ -24,6 +24,12 @@ export const idlFactory = ({ IDL }) => {
         'index' : IDL.Opt(IDL.Text),
         'symbol' : IDL.Text,
     });
+    const NeuronData = IDL.Record({
+        'name' : IDL.Text,
+        'date_added' : IDL.Nat64,
+        'ledger' : IDL.Text,
+        'neuron_id' : IDL.Text,
+    });
     const ICRC1Request = IDL.Record({
         'fee' : IDL.Nat,
         'decimals' : IDL.Nat8,
@@ -36,12 +42,14 @@ export const idlFactory = ({ IDL }) => {
     return IDL.Service({
         'count_icrc1_canisters' : IDL.Func([], [IDL.Nat64], ['query']),
         'get_all_icrc1_canisters' : IDL.Func([], [IDL.Vec(ICRC1)], ['query']),
+        'get_all_neurons' : IDL.Func([], [IDL.Vec(NeuronData)], ['query']),
         'get_icrc1_paginated' : IDL.Func(
             [IDL.Nat64, IDL.Nat64],
             [IDL.Vec(ICRC1)],
             ['query'],
         ),
         'remove_icrc1_canister' : IDL.Func([IDL.Text], [], []),
+        'replace_all_neurons' : IDL.Func([IDL.Vec(NeuronData)], [], []),
         'replace_icrc1_canisters' : IDL.Func([IDL.Vec(ICRC1)], [], []),
         'set_operator' : IDL.Func([IDL.Principal], [], []),
         'store_icrc1_canister' : IDL.Func([ICRC1Request], [], []),
@@ -50,7 +58,7 @@ export const idlFactory = ({ IDL }) => {
 };
 export const init = ({ IDL }) => {
     const Conf = IDL.Record({
-        'controllers' : IDL.Opt(IDL.Vec(IDL.Principal)),
+        'operator' : IDL.Opt(IDL.Principal),
         'im_canister' : IDL.Opt(IDL.Principal),
     });
     return [IDL.Opt(Conf)];

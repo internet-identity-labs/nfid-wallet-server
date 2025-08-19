@@ -5,6 +5,7 @@ use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::account_repo::{Account, ACCOUNTS, PRINCIPAL_INDEX};
 use crate::repository::application_repo::Application;
 use crate::repository::persona_repo::Persona;
+use crate::structure::ttl_hashmap::TtlHashMap;
 use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::storage;
 use serde::Serialize;
@@ -12,6 +13,13 @@ use std::cell::RefCell;
 use std::collections::{BTreeSet, HashSet};
 use std::hash::Hash;
 use std::time::Duration;
+
+const fn secs_to_nanos(secs: u64) -> u64 {
+    secs * 1_000_000_000
+}
+pub const MINUTE_NS: u64 = secs_to_nanos(60);
+const TEMP_KEY_EXPIRATION_NS: u64 = 10 * MINUTE_NS;
+const CAPTCHA_KEY_EXPIRATION_NS: u64 = 5 * MINUTE_NS;
 
 #[derive(Debug, Deserialize, CandidType, Clone)]
 pub struct Configuration {
@@ -29,6 +37,8 @@ pub struct Configuration {
     pub commit_hash: Option<String>,
     pub operator: Principal,
     pub account_creation_paused: bool,
+    pub max_free_captcha_per_minute: u16,
+    pub test_captcha: bool,
 }
 
 //todo rethink visibility
@@ -36,9 +46,12 @@ pub type Applications = BTreeSet<Application>;
 
 thread_local! {
   pub static APPLICATIONS: RefCell<BTreeSet<Application>> = RefCell::new(BTreeSet::new());
+  pub static TEMP_KEYS: RefCell<TtlHashMap<String, u64>> = RefCell::new(TtlHashMap::new(TEMP_KEY_EXPIRATION_NS));
+  pub static CAPTCHA_CAHLLENGES: RefCell<TtlHashMap<String, Option<String>>> = RefCell::new(TtlHashMap::new(CAPTCHA_KEY_EXPIRATION_NS));
     pub static ADMINS: RefCell<HashSet<Principal>> = RefCell::new(HashSet::new());
     pub static CONTROLLERS: RefCell<HashSet<Principal>> = RefCell::new(HashSet::new());
     pub static CONFIGURATION: RefCell<Configuration> = RefCell::new(ConfigurationRepo::get_default_config());
+
 }
 
 pub struct AdminRepo {}
@@ -74,13 +87,14 @@ impl BasicEntity {
 
 impl AdminRepo {
     pub fn get() -> Principal {
-        ADMINS.with(|admins| admins
-            .borrow()
-            .iter()
-            .next()
-            .expect("Failed to retrieve an admin. The admin list is empty.")
-            .clone()
-        )
+        ADMINS.with(|admins| {
+            admins
+                .borrow()
+                .iter()
+                .next()
+                .expect("Failed to retrieve an admin. The admin list is empty.")
+                .clone()
+        })
     }
 
     pub fn save(principal: Principal) -> () {
@@ -132,13 +146,16 @@ impl ConfigurationRepo {
             whitelisted_phone_numbers: Vec::default(),
             heartbeat: Option::None,
             backup_canister_id: None,
-            ii_canister_id: Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").expect("Failed to parse the ii_canister_id string."),
+            ii_canister_id: Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai")
+                .expect("Failed to parse the ii_canister_id string."),
             whitelisted_canisters: None,
             env: None,
             git_branch: None,
             commit_hash: None,
             operator: lambda,
             account_creation_paused: false,
+            max_free_captcha_per_minute: 10,
+            test_captcha: false,
         }
     }
 }
@@ -226,7 +243,8 @@ pub fn post_upgrade() {
         Logs,
         Option<Applications>,
         Option<Configuration>,
-    ) = storage::stable_restore().expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
+    ) = storage::stable_restore()
+        .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     CONFIGURATION.with(|config| {
         let configuration = configuration_maybe.unwrap_or(ConfigurationRepo::get_default_config());
         config.replace(configuration);
