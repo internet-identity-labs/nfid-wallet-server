@@ -298,6 +298,7 @@ jobs:
                   echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
 
             - name: DEPLOY => Take snapshot.
+              if: ${{ env.NETWORK_NAME == 'local' }}
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
