@@ -30,74 +30,57 @@ jobs:
                   sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
                   echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
-            - name: Install Rust and wasm target
-              run: |
-                  curl https://sh.rustup.rs -sSf | sh -s -- -y
-                  source $HOME/.cargo/env
-                  rustup target add wasm32-unknown-unknown
+            - name: Install Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+                  target: wasm32-unknown-unknown
+                  override: true
 
             - name: Cache Cargo dependencies
               uses: actions/cache@v4
               with:
-                  key: cargo-canisters-test-${{ hashFiles('**/Cargo.lock') }}
+                  key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
                   restore-keys: |
-                      cargo-canisters-
+                      cargo-${{ runner.os }}-
                   path: |
-                      ${HOME}/.cargo/registry/
-                      ${HOME}/.cargo_target/
-                      src/**/target/
-                      target/
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                      target
+
+            - name: Cache Maven packages
+              uses: actions/cache@v4
+              with:
+                  path: ~/.m2/repository
+                  key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+                  restore-keys: |
+                      maven-${{ runner.os }}-
 
             - name: Versions
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
                   ci_versions
-
-            - name: Build and run JS integration tests
+            - name: Setup DFX identity
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-                  # Setup DFX identity
                   if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
-                    ci_echo_debug "Creating DFX test_admin identity" >&2
                     dfx identity new test_admin --storage-mode plaintext
                   fi
                   cp -f identity-manager-itest/src/test/resources/identity/identity.pem \
-                     ${HOME}/.config/dfx/identity/test_admin
+                    ${HOME}/.config/dfx/identity/test_admin
 
-                  # Move to test directory
-                  pushd identity-manager-itest || { ci_echo_error "Cannot enter identity-manager-itest"; exit 1; }
-
-                  # Stop icx-proxy if running
                   if pgrep icx-proxy > /dev/null; then
                     ci_echo_warn "Stopping icx-proxy..." >&2
                     kill -9 $(pgrep icx-proxy)
                   fi
 
-                  # Install npm dependencies & run JS tests
-                  ci_echo_debug "npm install && npm run test" >&2
+            - name: Build and run JS integration tests
+              run: |
+                  pushd identity-manager-itest
                   npm ci && npm run test
 
             - name: Build and run integration tests
               run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  # Setup DFX identity
-                  if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
-                    dfx identity new test_admin --storage-mode plaintext
-                  fi
-                  cp -f identity-manager-itest/src/test/resources/identity/identity.pem \
-                     ${HOME}/.config/dfx/identity/test_admin
-
-                  # Move to test directory
-                  pushd identity-manager-itest || { ci_echo_error "Cannot enter identity-manager-itest"; exit 1; }
-
-                  # Stop icx-proxy if running
-                  if pgrep icx-proxy > /dev/null; then
-                    ci_echo_warn "Stopping icx-proxy..." >&2
-                    kill -9 $(pgrep icx-proxy)
-                  fi
-
-                  # Run Maven tests
-                  ci_echo_debug "mvn test --no-transfer-progress" >&2
+                  pushd identity-manager-itest
                   mvn test --no-transfer-progress
