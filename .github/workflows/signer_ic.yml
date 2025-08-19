@@ -126,6 +126,13 @@ jobs:
                   ci_echo_warn "Preparing encoded key..." >&2
                   echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
 
+            - name: Install dfx
+              run: |
+                  export DFX_VERSION=0.22.0
+                  export DFXVM_INIT_YES=true
+                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+                  echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
             - name: BUILD => Build the canister.
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
