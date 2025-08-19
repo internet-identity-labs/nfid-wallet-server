@@ -1,112 +1,111 @@
 name: Release - Wallet Server
 on:
-  release:
-    types:
-      - released
-  workflow_dispatch:
-    inputs:
-      network_name:
-        description: 'Choose applicable network'
-        required: true
-        type: choice
-        options: 
-          - dev
-          - stage
-          - ic
+    release:
+        types:
+            - released
+    workflow_dispatch:
+        inputs:
+            network_name:
+                description: "Choose applicable network"
+                required: true
+                type: choice
+                options:
+                    - dev
+                    - stage
+                    - ic
 
 env:
-  NETWORK_NAME: ${{ github.event.inputs.network_name || ( contains(github.event_name, 'release') && 'ic' || 'dev' ) }}
-  CANISTER_NAME: identity_manager
-  CI_DEBUG: 'true'
-  RELEASE_TAG_REGEX: '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
-
+    NETWORK_NAME: ${{ github.event.inputs.network_name || ( contains(github.event_name, 'release') && 'ic' || 'dev' ) }}
+    CANISTER_NAME: identity_manager
+    CI_DEBUG: "true"
+    RELEASE_TAG_REGEX: '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
 
 jobs:
-  pre-release:
-    name: Pre Release
-    environment: ${{ github.event.inputs.network_name || ( contains(github.event_name, 'release') && 'ic' || 'dev' ) }}
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
+    pre-release:
+        name: Pre Release
+        environment: ${{ github.event.inputs.network_name || ( contains(github.event_name, 'release') && 'ic' || 'dev' ) }}
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                shell: bash
 
-    steps:
-      - name: Checkout CI repo.
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT }}
-          repository: internet-identity-labs/ci_libs
-          ref: main
-          path: ci_libs
+        steps:
+            - name: Checkout CI repo.
+              uses: actions/checkout@v4
+              with:
+                  token: ${{ secrets.PAT }}
+                  repository: internet-identity-labs/ci_libs
+                  ref: main
+                  path: ci_libs
 
-      - name: INPUT => Checks branch and network_name
-        if: ${{ env.NETWORK_NAME == 'ic' }}
-        run: |
-          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-  
-          if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
-            ci_echo_error "Releasing to IC not from tag not allowed." >&2
-            exit 1
-          fi
-  
-          # https://semver.org/
-          if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
-            ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
-            exit 1
-          fi
+            - name: INPUT => Checks branch and network_name
+              if: ${{ env.NETWORK_NAME == 'ic' }}
+              run: |
+                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
+                  if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
+                    ci_echo_error "Releasing to IC not from tag not allowed." >&2
+                    exit 1
+                  fi
 
-      - name: Versions
-        run: |
-          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-          
-          ci_versions
+                  # https://semver.org/
+                  if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
+                    ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
+                    exit 1
+                  fi
 
-  release:
-    name: Release
-    needs: pre-release
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    strategy:
-      fail-fast: false
-      matrix: 
-        canister_name:
-          - identity_manager
-          - icrc1_registry
-          - delegation_factory
-          - nfid_storage
-          - swap_trs_storage
-          - icrc1_oracle
-        include:
-          - canister_name: identity_manager
-            workflow_file_name: identity_manager.yml
-          - canister_name: icrc1_registry
-            workflow_file_name: icrc1_registry.yml
-          - canister_name: delegation_factory
-            workflow_file_name: delegation_factory.yml
-          - canister_name: nfid_storage
-            workflow_file_name: nfid_storage.yml
-          - canister_name: swap_trs_storage
-            workflow_file_name: swap_trs_storage.yml
-          - canister_name: icrc1_oracle
-            workflow_file_name: icrc1_oracle.yml
+                  ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
 
-    steps:
-      - name: Triggering ${{ matrix.canister_name }} Deploy
-        uses: convictional/trigger-workflow-and-wait@v1.6.5
-        with:
-          owner: internet-identity-labs
-          repo: nfid-wallet-server
-          ref: ${{ github.ref_name }}
-          workflow_file_name: ${{ matrix.workflow_file_name }}
-          github_token: ${{ secrets.PAT }}
-          comment_downstream_url: ${{ github.event.head_commit.message }}
-          client_payload: >-
-            {
-              "network_name": "${{ github.event.inputs.network_name || ( contains(github.event_name, 'release') && 'ic' || 'dev' ) }}",
-              "canister_name": "${{ matrix.canister_name }}",
-              "confirmation": "Yes"
-            }
+            - name: Versions
+              run: |
+                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+                  ci_versions
+
+    release:
+        name: Release
+        needs: pre-release
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                shell: bash
+        strategy:
+            fail-fast: false
+            matrix:
+                canister_name:
+                    - identity_manager
+                    - icrc1_registry
+                    - delegation_factory
+                    - nfid_storage
+                    - swap_trs_storage
+                    - icrc1_oracle
+                include:
+                    - canister_name: identity_manager
+                      workflow_file_name: identity_manager.yml
+                    - canister_name: icrc1_registry
+                      workflow_file_name: icrc1_registry.yml
+                    - canister_name: delegation_factory
+                      workflow_file_name: delegation_factory.yml
+                    - canister_name: nfid_storage
+                      workflow_file_name: nfid_storage.yml
+                    - canister_name: swap_trs_storage
+                      workflow_file_name: swap_trs_storage.yml
+                    - canister_name: icrc1_oracle
+                      workflow_file_name: icrc1_oracle.yml
+
+        steps:
+            - name: Triggering ${{ matrix.canister_name }} Deploy
+              uses: convictional/trigger-workflow-and-wait@v1.6.5
+              with:
+                  owner: internet-identity-labs
+                  repo: nfid-wallet-server
+                  ref: ${{ github.ref_name }}
+                  workflow_file_name: ${{ matrix.workflow_file_name }}
+                  github_token: ${{ secrets.PAT }}
+                  comment_downstream_url: ${{ github.event.head_commit.message }}
+                  client_payload: >-
+                      {
+                        "network_name": "${{ github.event.inputs.network_name || ( contains(github.event_name, 'release') && 'ic' || 'dev' ) }}",
+                        "canister_name": "${{ matrix.canister_name }}",
+                        "confirmation": "Yes"
+                      }

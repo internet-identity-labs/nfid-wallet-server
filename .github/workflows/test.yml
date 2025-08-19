@@ -1,95 +1,94 @@
 name: BEItest
 on:
-  - push
-  - workflow_dispatch
-
+    - push
+    - workflow_dispatch
 
 jobs:
-  test:
-    name: Unit & Integration tests
-    runs-on: [self-hosted, runner-1]
-    defaults:
-      run:
-        shell: bash
+    test:
+        name: Unit & Integration tests
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                shell: bash
 
-    steps:
-      - name: Checkout CI repo.
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout CI repo.
+              uses: actions/checkout@v4
 
-      - name: Checkout CI repo.
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT }}
-          repository: internet-identity-labs/ci_libs
-          ref: main
-          path: ci_libs
+            - name: Checkout CI repo.
+              uses: actions/checkout@v4
+              with:
+                  token: ${{ secrets.PAT }}
+                  repository: internet-identity-labs/ci_libs
+                  ref: main
+                  path: ci_libs
 
-      - name: Cache Cargo dependencies.
-        uses: actions/cache@v4
-        with:
-          key: cargo-canisters-test
-          restore-keys: |
-            cargo-canisters-
-          path: |
-            ${HOME}/.cargo/registry/
-            ${HOME}/.cargo_target/
-            src/**/target/
-            target/
+            - name: Cache Cargo dependencies.
+              uses: actions/cache@v4
+              with:
+                  key: cargo-canisters-test
+                  restore-keys: |
+                      cargo-canisters-
+                  path: |
+                      ${HOME}/.cargo/registry/
+                      ${HOME}/.cargo_target/
+                      src/**/target/
+                      target/
 
-      - name: Versions
-        run: |
-          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-          
-          ci_versions
+            - name: Versions
+              run: |
+                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-      - name: BE Integration Tests JS
-        run: |
-          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+                  ci_versions
 
-          if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
-            ci_echo_debug "dfx identity new test_admin --storage-mode plaintext" >&2
-            dfx identity new test_admin --storage-mode plaintext
-          fi
+            - name: BE Integration Tests JS
+              run: |
+                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          ci_echo_debug "cp -f identity-manager-itest/src/test/resources/identity/identity.pem ${HOME}/.config/dfx/identity/test_admin" >&2
-          cp -f identity-manager-itest/src/test/resources/identity/identity.pem ${HOME}/.config/dfx/identity/test_admin
-          
-          if ! pushd identity-manager-itest > /dev/null; then
-            ci_echo_error "Can't change directory to the 'identity-manager-itest' " >&2
-            exit 1
-          fi
-          
-          ci_echo_info "Stopping 'icx-proxy'..." >&2
-          if ! kill -9 $(pgrep icx-proxy) > /dev/null 2>&1; then
-            ci_echo_info "Can't stop 'icx-proxy' or it not found ..." >&2
-          else
-            ci_echo_warn "'icx-proxy' was stopped ..." >&2
-          fi
+                  if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
+                    ci_echo_debug "dfx identity new test_admin --storage-mode plaintext" >&2
+                    dfx identity new test_admin --storage-mode plaintext
+                  fi
 
-          ci_echo_debug "npm i && npm run test" >&2
-          npm i && npm run test
+                  ci_echo_debug "cp -f identity-manager-itest/src/test/resources/identity/identity.pem ${HOME}/.config/dfx/identity/test_admin" >&2
+                  cp -f identity-manager-itest/src/test/resources/identity/identity.pem ${HOME}/.config/dfx/identity/test_admin
 
-      - name: BE ITest
-        run: |
-          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+                  if ! pushd identity-manager-itest > /dev/null; then
+                    ci_echo_error "Can't change directory to the 'identity-manager-itest' " >&2
+                    exit 1
+                  fi
 
-          if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
-            dfx identity new test_admin --storage-mode plaintext
-          fi
+                  ci_echo_info "Stopping 'icx-proxy'..." >&2
+                  if ! kill -9 $(pgrep icx-proxy) > /dev/null 2>&1; then
+                    ci_echo_info "Can't stop 'icx-proxy' or it not found ..." >&2
+                  else
+                    ci_echo_warn "'icx-proxy' was stopped ..." >&2
+                  fi
 
-          cp -f identity-manager-itest/src/test/resources/identity/identity.pem ${HOME}/.config/dfx/identity/test_admin
+                  ci_echo_debug "npm i && npm run test" >&2
+                  npm i && npm run test
 
-          if ! pushd identity-manager-itest > /dev/null; then
-            ci_echo_error "Can't change directory to the 'identity-manager-itest' " >&2
-            exit 1
-          fi
+            - name: BE ITest
+              run: |
+                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-          ci_echo_info "Stopping 'icx-proxy'..." >&2
-          if ! kill -9 $(pgrep icx-proxy) > /dev/null 2>&1; then
-            ci_echo_info "Can't stop 'icx-proxy' or it not found ..." >&2
-          else
-            ci_echo_warn "'icx-proxy' was stopped ..." >&2
-          fi
+                  if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
+                    dfx identity new test_admin --storage-mode plaintext
+                  fi
 
-          ci_echo_debug "mvn test --no-transfer-progress" >&2
-          mvn test --no-transfer-progress
+                  cp -f identity-manager-itest/src/test/resources/identity/identity.pem ${HOME}/.config/dfx/identity/test_admin
+
+                  if ! pushd identity-manager-itest > /dev/null; then
+                    ci_echo_error "Can't change directory to the 'identity-manager-itest' " >&2
+                    exit 1
+                  fi
+
+                  ci_echo_info "Stopping 'icx-proxy'..." >&2
+                  if ! kill -9 $(pgrep icx-proxy) > /dev/null 2>&1; then
+                    ci_echo_info "Can't stop 'icx-proxy' or it not found ..." >&2
+                  else
+                    ci_echo_warn "'icx-proxy' was stopped ..." >&2
+                  fi
+
+                  ci_echo_debug "mvn test --no-transfer-progress" >&2
+                  mvn test --no-transfer-progress
