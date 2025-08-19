@@ -1,5 +1,4 @@
 import { ICRC1 } from "../test/idl/icrc1_oracle";
-// import {ICP_LOGO} from "./constants";
 
 export class NativeParser {
     async parseCanister(): Promise<ICRC1[]> {
