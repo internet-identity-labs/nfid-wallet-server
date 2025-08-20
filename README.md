@@ -29,18 +29,20 @@ NFID Wallet is the easiest to use, hardest to lose, and only wallet governed by 
 ### Lowest barrier to entry
 
 NFID Wallet takes wallet creation down from minutes to seconds with:
-- Email onboarding
-- Browser-based accessibility
-- No need for a seed phrase
+
+-   Email onboarding
+-   Browser-based accessibility
+-   No need for a seed phrase
 
 Users create an NFID Wallet on any browser from any device in seconds with just an email address. Email onboarding is a managed service offered by Internet Identity Labs, and users can switch this service off by enabling "self-sovereign mode" whereby only user-owned passkeys are able to authenticate wallet access. With this mode enabled, users can bypass email authentication altogether and authenticate directly with a passkey. If users attempt to use an email address, they will be required to authenticate with a passkey anyway.
 
 ### Highest security guarantees
 
 In contrast to centrally-controlled browser extension or mobile app wallets, NFID Wallet requires only trust in the Internet Computer Protocol:
-- Fully on-chain
-- Fault-tolerant access
-- ICP network key custody
+
+-   Fully on-chain
+-   Fault-tolerant access
+-   ICP network key custody
 
 The NFID Wallet frontend and backend code is stored on-chain and served directly into the browser environment, making both the frontend and backend tamper-resistant against malicious actors.
 
@@ -75,6 +77,7 @@ Currently, users managing liquidity in DeFi pools must visit each DEX separately
 #### Spending cap management
 
 Dapps like KongSwap and Waterneuron request spending approvals for tokens, leading to two key user needs:
+
 1. Adjusting the approved spending limit.
 2. Revoking permissions when needed.
 
@@ -83,18 +86,19 @@ This feature will allow users to easily modify or revoke token spending approval
 ---
 
 ## Navigating this repository
-- [What you'll find](#what-youll-find)
-- [Prerequisites](#prerequisites)
-- [Getting Started](#getting-started)
-  - [Launch Local DFX](#launch-local-dfx)
-  - [Deploy Identity Manager](#deploy-identity-manager)
-  - [Configure for Test Environment](#configure-for-test-environment)
-  - [Synchronize Controllers](#synchronize-controllers)
-  - [Run Satellite Applications](#run-satellite-applications)
-- [Integration Tests](#integration-tests)
-  - [Prerequisites](#integration-tests-prerequisites)
-  - [Run Integration Tests](#run-integration-tests)
-- [Community & Support](#community--support)
+
+-   [What you'll find](#what-youll-find)
+-   [Prerequisites](#prerequisites)
+-   [Getting Started](#getting-started)
+    -   [Launch Local DFX](#launch-local-dfx)
+    -   [Deploy Identity Manager](#deploy-identity-manager)
+    -   [Configure for Test Environment](#configure-for-test-environment)
+    -   [Synchronize Controllers](#synchronize-controllers)
+    -   [Run Satellite Applications](#run-satellite-applications)
+-   [Integration Tests](#integration-tests)
+    -   [Prerequisites](#integration-tests-prerequisites)
+    -   [Run Integration Tests](#run-integration-tests)
+-   [Community & Support](#community--support)
 
 ---
 
@@ -108,9 +112,9 @@ The current repository is the canister backend codebase for NFID Wallet, where y
 
 Ensure you have the following tools installed before diving into development:
 
-- **Rustup** `^v1.27.1`
-- **DFX** `^v0.22.0`
-- **jq** `^1.6`
+-   **Rustup** `^v1.27.1`
+-   **DFX** `^v0.23.0`
+-   **jq** `^1.6`
 
 > ⚠️ Note: These versions are specific for compatibility with the Internet Computer SDK.
 
@@ -171,8 +175,8 @@ dfx deploy swap_trs_storage  --argument '(opt record { im_canister = principal "
 
 Install these dependencies before testing:
 
-- **NodeJS** `^v20.16.0`
-- **Yarn** `^v1.22.22`
+-   **NodeJS** `^22.10.0`
+-   **Yarn** `^v1.22.22`
 
 ### Run Integration Tests
 
@@ -188,7 +192,7 @@ npm i && npm run test
 
 Join the NFID Wallet community to ask questions, get support, and stay updated!
 
-- [Discord](https://discord.gg/a9BFNrYJ99)
-- [OpenChat](https://oc.app/community/66hym-7iaaa-aaaaf-bm7aa-cai/channel/1241143482/?ref=prkg5-paaaa-aaaaf-aqbia-cai)
+-   [Discord](https://discord.gg/a9BFNrYJ99)
+-   [OpenChat](https://oc.app/community/66hym-7iaaa-aaaaf-bm7aa-cai/channel/1241143482/?ref=prkg5-paaaa-aaaaf-aqbia-cai)
 
 > **Web3 is all about community!** Let’s build, support, and grow together 🚀
