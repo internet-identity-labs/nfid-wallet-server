@@ -73,6 +73,11 @@ jobs:
                   target: wasm32-unknown-unknown
                   override: true
 
+            - name: Install ic-wasm
+              run: |
+                  cargo install ic-wasm --version 0.3.4
+                  echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
             - name: Cache Cargo dependencies
               uses: actions/cache@v4
               with:
