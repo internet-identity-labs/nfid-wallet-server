@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       network_name:
-        description: "Choose applicable network"
+        description: 'Choose applicable network'
         required: true
         type: choice
         options:
@@ -11,7 +11,7 @@ on:
           - stage
           - ic
       canister_name:
-        description: "Choose applicable canister"
+        description: 'Choose applicable canister'
         default: signer_ic
         required: true
         type: choice
@@ -24,7 +24,7 @@ on:
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   CANISTER_NAME: ${{ github.event.inputs.canister_name }}
-  CI_DEBUG: "true"
+  CI_DEBUG: 'true'
 
 jobs:
   build:

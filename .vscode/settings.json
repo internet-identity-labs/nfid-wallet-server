@@ -1,6 +1,6 @@
 {
   "yaml.format.enable": true,
-  "yaml.format.singleQuote": false,
+  "yaml.format.singleQuote": true,
   "yaml.format.bracketSpacing": true,
   "yaml.format.proseWrap": "preserve",
   "yaml.format.printWidth": 120,
