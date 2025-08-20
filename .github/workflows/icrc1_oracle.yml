@@ -155,15 +155,8 @@ jobs:
 
                   mkdir -p "${DFX_ID_PATH}"
 
-                  IDENTITY_FILE="${DFX_ID_PATH}/identity.pem"
-
-                  if [ -f "$IDENTITY_FILE" ]; then
-                      ci_echo_warn "Identity file already exists at $IDENTITY_FILE, skipping write." >&2
-                  else
-                      ci_echo_warn "Preparing encoded key..." >&2
-                      echo "${DFX_ID_KEY}" | base64 -d > "$IDENTITY_FILE"
-                      ci_echo_success "Identity file created at $IDENTITY_FILE" >&2
-                  fi
+                  ci_echo_warn "Preparing encoded key..." >&2
+                  echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
 
             - name: BUILD => Build the canister.
               run: |
@@ -294,15 +287,8 @@ jobs:
 
                   mkdir -p "${DFX_ID_PATH}"
 
-                  IDENTITY_FILE="${DFX_ID_PATH}/identity.pem"
-
-                  if [ -f "$IDENTITY_FILE" ]; then
-                      ci_echo_warn "Identity file already exists at $IDENTITY_FILE, skipping write." >&2
-                  else
-                      ci_echo_warn "Preparing encoded key..." >&2
-                      echo "${DFX_ID_KEY}" | base64 -d > "$IDENTITY_FILE"
-                      ci_echo_success "Identity file created at $IDENTITY_FILE" >&2
-                  fi
+                  ci_echo_warn "Preparing encoded key..." >&2
+                  echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
 
             - name: DEPLOY => Take snapshot.
               run: |
@@ -524,15 +510,8 @@ jobs:
 
                   mkdir -p "${DFX_ID_PATH}"
 
-                  IDENTITY_FILE="${DFX_ID_PATH}/identity.pem"
-
-                  if [ -f "$IDENTITY_FILE" ]; then
-                      ci_echo_warn "Identity file already exists at $IDENTITY_FILE, skipping write." >&2
-                  else
-                      ci_echo_warn "Preparing encoded key..." >&2
-                      echo "${DFX_ID_KEY}" | base64 -d > "$IDENTITY_FILE"
-                      ci_echo_success "Identity file created at $IDENTITY_FILE" >&2
-                  fi
+                  ci_echo_warn "Preparing encoded key..." >&2
+                  echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
 
             - name: RESTORE => Start the canister.
               run: |

@@ -47,21 +47,9 @@ jobs:
                   path: ci_libs
                   token: ${{ secrets.PAT }}
 
-            - name: Checks branch and network_name
-              if: ${{ env.NETWORK_NAME == 'ic' }}
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
-                    ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
-                    exit 1
-                  fi
-
-                  ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
-
             - name: Install dfx
               run: |
-                  export DFX_VERSION=0.22.0
+                  export DFX_VERSION=0.23.0
                   export DFXVM_INIT_YES=true
                   sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
                   echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
@@ -101,6 +89,29 @@ jobs:
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
                   ci_versions
+
+            - name: Checks branch and network_name
+              if: ${{ env.NETWORK_NAME == 'ic' }}
+              run: |
+                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+                  if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
+                    ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
+                    exit 1
+                  fi
+
+                  if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
+                    ci_echo_error "Releasing to IC not from tag not allowed." >&2
+                    exit 1
+                  fi
+
+                  # https://semver.org/
+                  if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
+                    ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
+                    exit 1
+                  fi
+
+                  ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
 
             - name: PRE-BUILD => Populate env vars.
               env:
@@ -192,21 +203,9 @@ jobs:
                   path: ci_libs
                   token: ${{ secrets.PAT }}
 
-            - name: Checks branch and network_name
-              if: ${{ env.NETWORK_NAME == 'ic' }}
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
-                    ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
-                    exit 1
-                  fi
-
-                  ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
-
             - name: Install dfx
               run: |
-                  export DFX_VERSION=0.22.0
+                  export DFX_VERSION=0.23.0
                   export DFXVM_INIT_YES=true
                   sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
                   echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
@@ -222,6 +221,29 @@ jobs:
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
                   ci_versions
+
+            - name: Checks branch and network_name
+              if: ${{ env.NETWORK_NAME == 'ic' }}
+              run: |
+                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+                  if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
+                    ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
+                    exit 1
+                  fi
+
+                  if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
+                    ci_echo_error "Releasing to IC not from tag not allowed." >&2
+                    exit 1
+                  fi
+
+                  # https://semver.org/
+                  if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
+                    ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
+                    exit 1
+                  fi
+
+                  ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
 
             - name: PRE-DEPLOY => Populate env vars.
               env:
@@ -273,7 +295,6 @@ jobs:
                   echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
 
             - name: DEPLOY => Take snapshot.
-              if: ${{ env.NETWORK_NAME == 'local' }}
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
@@ -405,6 +426,25 @@ jobs:
                   path: ci_libs
                   token: ${{ secrets.PAT }}
 
+            - name: Install dfx
+              run: |
+                  export DFX_VERSION=0.23.0
+                  export DFXVM_INIT_YES=true
+                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+                  echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+            - name: Install Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+                  target: wasm32-unknown-unknown
+                  override: true
+
+            - name: Versions
+              run: |
+                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+                  ci_versions
+
             - name: Checks branch and network_name
               if: ${{ env.NETWORK_NAME == 'ic' }}
               run: |
@@ -427,25 +467,6 @@ jobs:
                   fi
 
                   ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
-
-            - name: Install dfx
-              run: |
-                  export DFX_VERSION=0.22.0
-                  export DFXVM_INIT_YES=true
-                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
-                  echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-
-            - name: Install Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  toolchain: stable
-                  target: wasm32-unknown-unknown
-                  override: true
-
-            - name: Versions
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-                  ci_versions
 
             - name: PRE-RESTORE => Populate env vars.
               env:
