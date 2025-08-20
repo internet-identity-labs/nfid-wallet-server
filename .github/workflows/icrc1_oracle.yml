@@ -48,15 +48,6 @@ jobs:
                   path: ci_libs
                   token: ${{ secrets.PAT }}
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "22"
-                  cache: "npm"
-
-            - name: Install NPM dependencies
-              run: npm ci
-
             - name: Install dfx
               run: |
                   export DFX_VERSION=0.23.0
@@ -214,11 +205,6 @@ jobs:
                   ref: main
                   path: ci_libs
                   token: ${{ secrets.PAT }}
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "22"
 
             - name: Install dfx
               run: |
@@ -449,11 +435,6 @@ jobs:
                   ref: main
                   path: ci_libs
                   token: ${{ secrets.PAT }}
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "22"
 
             - name: Install dfx
               run: |
