@@ -1,527 +1,527 @@
 name: Signer IC
 on:
-    workflow_dispatch:
-        inputs:
-            network_name:
-                description: "Choose applicable network"
-                required: true
-                type: choice
-                options:
-                    - dev
-                    - stage
-                    - ic
-            canister_name:
-                description: "Choose applicable canister"
-                default: signer_ic
-                required: true
-                type: choice
-                options:
-                    - signer_ic
-            confirmation:
-                description: 'For the ic deployment - confirm your choice by typing "Yes"'
-                type: string
+  workflow_dispatch:
+    inputs:
+      network_name:
+        description: "Choose applicable network"
+        required: true
+        type: choice
+        options:
+          - dev
+          - stage
+          - ic
+      canister_name:
+        description: "Choose applicable canister"
+        default: signer_ic
+        required: true
+        type: choice
+        options:
+          - signer_ic
+      confirmation:
+        description: 'For the ic deployment - confirm your choice by typing "Yes"'
+        type: string
 
 env:
-    NETWORK_NAME: ${{ github.event.inputs.network_name }}
-    CANISTER_NAME: ${{ github.event.inputs.canister_name }}
-    CI_DEBUG: "true"
+  NETWORK_NAME: ${{ github.event.inputs.network_name }}
+  CANISTER_NAME: ${{ github.event.inputs.canister_name }}
+  CI_DEBUG: "true"
 
 jobs:
-    build:
-        name: Build
-        environment: ${{ github.event.inputs.network_name }}
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                shell: bash
-
-        steps:
-            - name: Checkout nfid-wallet-server repo
-              uses: actions/checkout@v4
-
-            - name: Checkout ci_libs repo
-              uses: actions/checkout@v4
-              with:
-                  repository: internet-identity-labs/ci_libs
-                  ref: main
-                  path: ci_libs
-                  token: ${{ secrets.PAT }}
-
-            - name: Install dfx
-              run: |
-                  export DFX_VERSION=0.23.0
-                  export DFXVM_INIT_YES=true
-                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
-                  echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-
-            - name: Install Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  toolchain: stable
-                  target: wasm32-unknown-unknown
-                  override: true
-
-            - name: Install ic-wasm
-              run: |
-                  cargo install ic-wasm --version 0.3.4
-                  echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-            - name: Cache Cargo dependencies
-              uses: actions/cache@v4
-              with:
-                  key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-                  restore-keys: |
-                      cargo-${{ runner.os }}-
-                  path: |
-                      ~/.cargo/registry
-                      ~/.cargo/git
-                      target
-
-            - name: Cache Maven packages
-              uses: actions/cache@v4
-              with:
-                  path: ~/.m2/repository
-                  key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
-                  restore-keys: |
-                      maven-${{ runner.os }}-
-
-            - name: Versions
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-                  ci_versions
-
-            - name: Checks branch and network_name
-              if: ${{ env.NETWORK_NAME == 'ic' }}
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
-                    ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
-                    exit 1
-                  fi
-
-                  if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
-                    ci_echo_error "Releasing to IC not from tag not allowed." >&2
-                    exit 1
-                  fi
-
-                  # https://semver.org/
-                  if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
-                    ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
-                    exit 1
-                  fi
-
-                  ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
-
-            - name: PRE-BUILD => Populate env vars.
-              env:
-                  DFX_ID_NAME: ${{ vars.DFX_ID_NAME }}
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  ci_echo_debug "Getting values from dfx.json" >&2
-                  if ! canister_data=$(cat dfx.json | jq -er ".canisters.\"${CANISTER_NAME}\""); then
-                    ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
-                    exit 1
-                  fi
-
-                  ci_echo_debug "Populating env variables" >&2
-                  CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
-                  CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
-                  CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
-
-                  ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
-                  DFX_ID_PATH="${HOME}/.config/dfx/identity/${DFX_ID_NAME}"
-
-                  echo "DFX_ID_NAME=${DFX_ID_NAME}" >> $GITHUB_ENV
-                  echo "DFX_ID_PATH=${DFX_ID_PATH}" >> $GITHUB_ENV
-
-                  echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
-                  echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
-                  echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
-
-            - name: PRE-BUILD => Print Vars.
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-                  ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
-                  ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
-                  ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
-                  ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
-                  ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
-                  ci_echo_info "DFX_ID_NAME=${DFX_ID_NAME}" >&2
-                  ci_echo_info "DFX_ID_PATH=${DFX_ID_PATH}" >&2
-
-            - name: PRE-BUILD => Write identity.
-              env:
-                  DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  mkdir -p "${DFX_ID_PATH}"
-
-                  ci_echo_warn "Preparing encoded key..." >&2
-                  echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
-
-            - name: BUILD => Build the canister.
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  dfx identity use "${DFX_ID_NAME}"
-
-                  rm -rf .dfx;
-                  ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
-                  dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
-
-            - name: POST-BUILD => Save artifact.
-              uses: actions/upload-artifact@v4
-              with:
-                  name: ${{ env.CANISTER_WASM }}
-                  include-hidden-files: true
-                  retention-days: 1
-                  path: |
-                      ${{ env.CANISTER_WASM }}
-                      .dfx
-
-    deploy:
-        name: Deploy
-        needs: build
-        environment: ${{ github.event.inputs.network_name }}
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                shell: bash
-
-        steps:
-            - name: Checkout nfid-wallet-server repo
-              uses: actions/checkout@v4
-
-            - name: Checkout ci_libs repo
-              uses: actions/checkout@v4
-              with:
-                  repository: internet-identity-labs/ci_libs
-                  ref: main
-                  path: ci_libs
-                  token: ${{ secrets.PAT }}
-
-            - name: Install dfx
-              run: |
-                  export DFX_VERSION=0.23.0
-                  export DFXVM_INIT_YES=true
-                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
-                  echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-
-            - name: Install Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  toolchain: stable
-                  target: wasm32-unknown-unknown
-                  override: true
-
-            - name: Versions
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-                  ci_versions
-
-            - name: Checks branch and network_name
-              if: ${{ env.NETWORK_NAME == 'ic' }}
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
-                    ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
-                    exit 1
-                  fi
-
-                  if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
-                    ci_echo_error "Releasing to IC not from tag not allowed." >&2
-                    exit 1
-                  fi
-
-                  # https://semver.org/
-                  if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
-                    ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
-                    exit 1
-                  fi
-
-                  ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
-
-            - name: PRE-DEPLOY => Populate env vars.
-              env:
-                  DFX_ID_NAME: ${{ vars.DFX_ID_NAME }}
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  ci_echo_debug "Getting values from dfx.json" >&2
-                  if ! canister_data=$(cat dfx.json | jq -er ".canisters.\"${CANISTER_NAME}\""); then
-                    ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
-                    exit 1
-                  fi
-
-                  ci_echo_debug "Populating env variables" >&2
-                  CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
-                  CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
-                  CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
-
-                  ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
-                  DFX_ID_PATH="${HOME}/.config/dfx/identity/${DFX_ID_NAME}"
-
-                  echo "DFX_ID_NAME=${DFX_ID_NAME}" >> $GITHUB_ENV
-                  echo "DFX_ID_PATH=${DFX_ID_PATH}" >> $GITHUB_ENV
-
-                  echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
-                  echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
-                  echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
-
-            - name: PRE-DEPLOY => Print Vars.
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-                  ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
-                  ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
-                  ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
-                  ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
-                  ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
-                  ci_echo_info "DFX_ID_NAME=${DFX_ID_NAME}" >&2
-                  ci_echo_info "DFX_ID_PATH=${DFX_ID_PATH}" >&2
-
-            - name: PRE-DEPLOY => Write identity.
-              env:
-                  DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  mkdir -p "${DFX_ID_PATH}"
-
-                  ci_echo_warn "Preparing encoded key..." >&2
-                  echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
-
-            - name: DEPLOY => Take snapshot.
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  dfx identity use "${DFX_ID_NAME}"
-
-                  ci_echo_info "Stopping the canister '${CANISTER_NAME}'" >&2
-                  dfx canister stop --network "${NETWORK_NAME}" "${CANISTER_NAME}"
-
-                  ci_echo_info "Getting Snapshots" >&2
-                  ci_echo_debug "dfx canister snapshot list '${CANISTER_NAME}' --network '${NETWORK_NAME}'" >&2
-                  snapshots_list="$(dfx canister snapshot list "${CANISTER_NAME}" --network "${NETWORK_NAME}" 2>&1)"
-                  ci_echo_debug "snapshots_list='${snapshots_list}'" >&2
-
-                  if [ -n "${snapshots_list}" ]; then
-                    snapshot_id="$(echo "${snapshots_list}"  | grep -o '[0-9a-z]\{36,\}' || true | head -n 1)"
-                    ci_echo_debug "snapshot_id='${snapshot_id}'" >&2
-                  fi
-
-                  if [ -n "${snapshot_id}" ]; then
-                    ci_echo_info "Deleting Snapshot '${snapshot_id}'" >&2
-                    ci_echo_debug "dfx canister snapshot delete '${CANISTER_NAME}' --network '${NETWORK_NAME}' '${snapshot_id}'" >&2
-                    dfx canister snapshot delete "${CANISTER_NAME}" --network "${NETWORK_NAME}" "$snapshot_id"
-                  fi
-
-                  ci_echo_info "Creating Snapshot" >&2
-                  dfx canister snapshot create --network "${NETWORK_NAME}" "${CANISTER_NAME}"
-
-                  ci_echo_info "Starting the canister '${CANISTER_NAME}'" >&2
-                  dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"
-
-            - name: DEPLOY => Load artifact
-              uses: actions/download-artifact@v4
-              with:
-                  name: ${{ env.CANISTER_WASM }}
-
-            - name: DEPLOY => Upgrade the canister.
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  if [ "${NETWORK_NAME}" == 'ic' ]; then
-                    CI_DEBUG="true"
-                  fi
-
-                  dfx identity use "${DFX_ID_NAME}"
-
-                  ci_echo_debug "Getting Identity Manager canister ID from canister_ids.json" >&2
-                  if ! im_canister_id=$(cat canister_ids.json | jq -er ".identity_manager.\"${NETWORK_NAME}\"") || [ -z "${im_canister_id}" ]; then
-                    ci_echo_error "Can't found Identity Manager canister ID from canister_ids.json" >&2
-                    exit 1
-                  fi
-
-                  ci_echo_warn "IM ${NETWORK_NAME} ID: ${im_canister_id}" >&2
-
-                  ci_echo_debug "dfx canister install --yes --network '${NETWORK_NAME}' --mode upgrade --argument '( opt record { im_canister = principal "${im_canister_id}" })' '${CANISTER_NAME}'" >&2
-                  if ! result=$(dfx canister install --yes --network "${NETWORK_NAME}" --mode upgrade --argument "( opt record { im_canister = principal \"${im_canister_id}\" })" "${CANISTER_NAME}"); then
-                    ci_echo_error "Upgrade failed ${result}" >&2
-                    exit 1
-                  fi
-
-                  ci_echo_debug "Command output was '${result}'" >&2
-
-                  # If hash the same - than fail deploy
-                  if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
-                    ci_echo_error "${result}" >&2
-                    exit 1
-                  fi
-                  ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
-
-            - name: POST-DEPLOY => Cleaning.
-              uses: geekyeggo/delete-artifact@f275313e70c08f6120db482d7a6b98377786765b # v5.1.0
-              with:
-                  name: ${{ env.CANISTER_WASM }}
-                  failOnError: false
-
-            - name: POST-DEPLOY => Upload to S3.
-              env:
-                  ARTIFACT_BUCKET_NAME: ${{ vars.ARTIFACT_BUCKET_NAME }}
-                  AWS_ACCESS_KEY_ID: ${{ vars.S3_AWS_ACCESS_KEY_ID }}
-                  AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_AWS_SECRET_ACCESS_KEY }}
-                  AWS_DEFAULT_REGION: us-east-1
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-                  VERSION="${{github.sha}}"
-
-                  if [ "${GITHUB_REF_TYPE}" == 'tag' ]; then
-                    VERSION="${GITHUB_REF_NAME}"
-                  fi
-
-                  COMPRESS_FILE_NAME="${VERSION}-${{ env.CANISTER_WASM }}.tar.gz"
-
-                  ci_echo_info "Compressing file '${COMPRESS_FILE_NAME}'" >&2
-                  ci_echo_debug "tar -zcvf '${COMPRESS_FILE_NAME}' '${{ env.CANISTER_WASM }}'" >&2
-                  if ! tar -zcvf "${COMPRESS_FILE_NAME}" "${{ env.CANISTER_WASM }}" >&2; then
-                      ci_echo_error "Issue on compressing files" >&2
-                      exit 1
-                  fi
-
-                  ci_echo_info "Uploading artifact to S3." >&2
-                  if ! aws s3 cp \
-                      --no-progress \
-                      "${COMPRESS_FILE_NAME}" "s3://${ARTIFACT_BUCKET_NAME}/${CANISTER_NAME}/${COMPRESS_FILE_NAME}"; then
-
-                      ci_echo_error "Can't upload artifact '${COMPRESS_FILE_NAME}' to s3://${ARTIFACT_BUCKET_NAME}/${CANISTER_NAME}/${COMPRESS_FILE_NAME}" >&2
-                      exit 1
-                  fi
-
-                  ci_echo_success "Artifact file link: https://${ARTIFACT_BUCKET_NAME}.s3.${AWS_DEFAULT_REGION}.amazonaws.com/${CANISTER_NAME}/${COMPRESS_FILE_NAME}"
-                  ci_echo_success "Upload Done" >&2
-
-    restore:
-        if: failure()
-        name: restore
-        needs: deploy
-        environment: ${{ github.event.inputs.network_name }}
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                shell: bash
-
-        steps:
-            - name: Checkout nfid-wallet-server repo
-              uses: actions/checkout@v4
-
-            - name: Checkout ci_libs repo
-              uses: actions/checkout@v4
-              with:
-                  repository: internet-identity-labs/ci_libs
-                  ref: main
-                  path: ci_libs
-                  token: ${{ secrets.PAT }}
-
-            - name: Install dfx
-              run: |
-                  export DFX_VERSION=0.23.0
-                  export DFXVM_INIT_YES=true
-                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
-                  echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-
-            - name: Install Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  toolchain: stable
-                  target: wasm32-unknown-unknown
-                  override: true
-
-            - name: Versions
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-                  ci_versions
-
-            - name: Checks branch and network_name
-              if: ${{ env.NETWORK_NAME == 'ic' }}
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
-                    ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
-                    exit 1
-                  fi
-
-                  if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
-                    ci_echo_error "Releasing to IC not from tag not allowed." >&2
-                    exit 1
-                  fi
-
-                  # https://semver.org/
-                  if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
-                    ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
-                    exit 1
-                  fi
-
-                  ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
-
-            - name: PRE-RESTORE => Populate env vars.
-              env:
-                  DFX_ID_NAME: ${{ vars.DFX_ID_NAME }}
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  ci_echo_debug "Getting values from dfx.json" >&2
-                  if ! canister_data=$(cat dfx.json | jq -er ".canisters.\"${CANISTER_NAME}\""); then
-                    ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
-                    exit 1
-                  fi
-
-                  ci_echo_debug "Populating env variables" >&2
-                  CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
-                  CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
-                  CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
-
-                  ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
-                  DFX_ID_PATH="${HOME}/.config/dfx/identity/${DFX_ID_NAME}"
-
-                  echo "DFX_ID_NAME=${DFX_ID_NAME}" >> $GITHUB_ENV
-                  echo "DFX_ID_PATH=${DFX_ID_PATH}" >> $GITHUB_ENV
-
-                  echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
-                  echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
-                  echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
-
-            - name: PRE-RESTORE => Print Vars.
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-                  ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
-                  ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
-                  ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
-                  ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
-                  ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
-                  ci_echo_info "DFX_ID_NAME=${DFX_ID_NAME}" >&2
-                  ci_echo_info "DFX_ID_PATH=${DFX_ID_PATH}" >&2
-
-            - name: PRE-RESTORE => Write identity.
-              env:
-                  DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  mkdir -p "${DFX_ID_PATH}"
-
-                  ci_echo_warn "Preparing encoded key..." >&2
-                  echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
-
-            - name: RESTORE => Start the canister.
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
-                  dfx identity use "${DFX_ID_NAME}"
-
-                  ci_echo_info "Starting the canister '${CANISTER_NAME}'" >&2
-                  dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+  build:
+    name: Build
+    environment: ${{ github.event.inputs.network_name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout nfid-wallet-server repo
+        uses: actions/checkout@v4
+
+      - name: Checkout ci_libs repo
+        uses: actions/checkout@v4
+        with:
+          repository: internet-identity-labs/ci_libs
+          ref: main
+          path: ci_libs
+          token: ${{ secrets.PAT }}
+
+      - name: Install dfx
+        run: |
+          export DFX_VERSION=0.23.0
+          export DFXVM_INIT_YES=true
+          sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Install ic-wasm
+        run: |
+          cargo install ic-wasm --version 0.3.4
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-${{ runner.os }}-
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            maven-${{ runner.os }}-
+
+      - name: Versions
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_versions
+
+      - name: Checks branch and network_name
+        if: ${{ env.NETWORK_NAME == 'ic' }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
+            ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
+            exit 1
+          fi
+
+          if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
+            ci_echo_error "Releasing to IC not from tag not allowed." >&2
+            exit 1
+          fi
+
+          # https://semver.org/
+          if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
+            ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
+            exit 1
+          fi
+
+          ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
+
+      - name: PRE-BUILD => Populate env vars.
+        env:
+          DFX_ID_NAME: ${{ vars.DFX_ID_NAME }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          ci_echo_debug "Getting values from dfx.json" >&2
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.\"${CANISTER_NAME}\""); then
+            ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Populating env variables" >&2
+          CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
+          CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
+          CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
+
+          ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
+          DFX_ID_PATH="${HOME}/.config/dfx/identity/${DFX_ID_NAME}"
+
+          echo "DFX_ID_NAME=${DFX_ID_NAME}" >> $GITHUB_ENV
+          echo "DFX_ID_PATH=${DFX_ID_PATH}" >> $GITHUB_ENV
+
+          echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
+          echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
+          echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
+
+      - name: PRE-BUILD => Print Vars.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
+          ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
+          ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
+          ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
+          ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
+          ci_echo_info "DFX_ID_NAME=${DFX_ID_NAME}" >&2
+          ci_echo_info "DFX_ID_PATH=${DFX_ID_PATH}" >&2
+
+      - name: PRE-BUILD => Write identity.
+        env:
+          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          mkdir -p "${DFX_ID_PATH}"
+
+          ci_echo_warn "Preparing encoded key..." >&2
+          echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
+
+      - name: BUILD => Build the canister.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          dfx identity use "${DFX_ID_NAME}"
+
+          rm -rf .dfx;
+          ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
+          dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+      - name: POST-BUILD => Save artifact.
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CANISTER_WASM }}
+          include-hidden-files: true
+          retention-days: 1
+          path: |
+            ${{ env.CANISTER_WASM }}
+            .dfx
+
+  deploy:
+    name: Deploy
+    needs: build
+    environment: ${{ github.event.inputs.network_name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout nfid-wallet-server repo
+        uses: actions/checkout@v4
+
+      - name: Checkout ci_libs repo
+        uses: actions/checkout@v4
+        with:
+          repository: internet-identity-labs/ci_libs
+          ref: main
+          path: ci_libs
+          token: ${{ secrets.PAT }}
+
+      - name: Install dfx
+        run: |
+          export DFX_VERSION=0.23.0
+          export DFXVM_INIT_YES=true
+          sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Versions
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_versions
+
+      - name: Checks branch and network_name
+        if: ${{ env.NETWORK_NAME == 'ic' }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
+            ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
+            exit 1
+          fi
+
+          if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
+            ci_echo_error "Releasing to IC not from tag not allowed." >&2
+            exit 1
+          fi
+
+          # https://semver.org/
+          if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
+            ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
+            exit 1
+          fi
+
+          ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
+
+      - name: PRE-DEPLOY => Populate env vars.
+        env:
+          DFX_ID_NAME: ${{ vars.DFX_ID_NAME }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          ci_echo_debug "Getting values from dfx.json" >&2
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.\"${CANISTER_NAME}\""); then
+            ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Populating env variables" >&2
+          CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
+          CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
+          CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
+
+          ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
+          DFX_ID_PATH="${HOME}/.config/dfx/identity/${DFX_ID_NAME}"
+
+          echo "DFX_ID_NAME=${DFX_ID_NAME}" >> $GITHUB_ENV
+          echo "DFX_ID_PATH=${DFX_ID_PATH}" >> $GITHUB_ENV
+
+          echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
+          echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
+          echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
+
+      - name: PRE-DEPLOY => Print Vars.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
+          ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
+          ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
+          ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
+          ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
+          ci_echo_info "DFX_ID_NAME=${DFX_ID_NAME}" >&2
+          ci_echo_info "DFX_ID_PATH=${DFX_ID_PATH}" >&2
+
+      - name: PRE-DEPLOY => Write identity.
+        env:
+          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          mkdir -p "${DFX_ID_PATH}"
+
+          ci_echo_warn "Preparing encoded key..." >&2
+          echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
+
+      - name: DEPLOY => Take snapshot.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          dfx identity use "${DFX_ID_NAME}"
+
+          ci_echo_info "Stopping the canister '${CANISTER_NAME}'" >&2
+          dfx canister stop --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+          ci_echo_info "Getting Snapshots" >&2
+          ci_echo_debug "dfx canister snapshot list '${CANISTER_NAME}' --network '${NETWORK_NAME}'" >&2
+          snapshots_list="$(dfx canister snapshot list "${CANISTER_NAME}" --network "${NETWORK_NAME}" 2>&1)"
+          ci_echo_debug "snapshots_list='${snapshots_list}'" >&2
+
+          if [ -n "${snapshots_list}" ]; then
+            snapshot_id="$(echo "${snapshots_list}"  | grep -o '[0-9a-z]\{36,\}' || true | head -n 1)"
+            ci_echo_debug "snapshot_id='${snapshot_id}'" >&2
+          fi
+
+          if [ -n "${snapshot_id}" ]; then
+            ci_echo_info "Deleting Snapshot '${snapshot_id}'" >&2
+            ci_echo_debug "dfx canister snapshot delete '${CANISTER_NAME}' --network '${NETWORK_NAME}' '${snapshot_id}'" >&2
+            dfx canister snapshot delete "${CANISTER_NAME}" --network "${NETWORK_NAME}" "$snapshot_id"
+          fi
+
+          ci_echo_info "Creating Snapshot" >&2
+          dfx canister snapshot create --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+          ci_echo_info "Starting the canister '${CANISTER_NAME}'" >&2
+          dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+      - name: DEPLOY => Load artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.CANISTER_WASM }}
+
+      - name: DEPLOY => Upgrade the canister.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          if [ "${NETWORK_NAME}" == 'ic' ]; then
+            CI_DEBUG="true"
+          fi
+
+          dfx identity use "${DFX_ID_NAME}"
+
+          ci_echo_debug "Getting Identity Manager canister ID from canister_ids.json" >&2
+          if ! im_canister_id=$(cat canister_ids.json | jq -er ".identity_manager.\"${NETWORK_NAME}\"") || [ -z "${im_canister_id}" ]; then
+            ci_echo_error "Can't found Identity Manager canister ID from canister_ids.json" >&2
+            exit 1
+          fi
+
+          ci_echo_warn "IM ${NETWORK_NAME} ID: ${im_canister_id}" >&2
+
+          ci_echo_debug "dfx canister install --yes --network '${NETWORK_NAME}' --mode upgrade --argument '( opt record { im_canister = principal "${im_canister_id}" })' '${CANISTER_NAME}'" >&2
+          if ! result=$(dfx canister install --yes --network "${NETWORK_NAME}" --mode upgrade --argument "( opt record { im_canister = principal \"${im_canister_id}\" })" "${CANISTER_NAME}"); then
+            ci_echo_error "Upgrade failed ${result}" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Command output was '${result}'" >&2
+
+          # If hash the same - than fail deploy
+          if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
+            ci_echo_error "${result}" >&2
+            exit 1
+          fi
+          ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
+
+      - name: POST-DEPLOY => Cleaning.
+        uses: geekyeggo/delete-artifact@f275313e70c08f6120db482d7a6b98377786765b # v5.1.0
+        with:
+          name: ${{ env.CANISTER_WASM }}
+          failOnError: false
+
+      - name: POST-DEPLOY => Upload to S3.
+        env:
+          ARTIFACT_BUCKET_NAME: ${{ vars.ARTIFACT_BUCKET_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ vars.S3_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          VERSION="${{github.sha}}"
+
+          if [ "${GITHUB_REF_TYPE}" == 'tag' ]; then
+            VERSION="${GITHUB_REF_NAME}"
+          fi
+
+          COMPRESS_FILE_NAME="${VERSION}-${{ env.CANISTER_WASM }}.tar.gz"
+
+          ci_echo_info "Compressing file '${COMPRESS_FILE_NAME}'" >&2
+          ci_echo_debug "tar -zcvf '${COMPRESS_FILE_NAME}' '${{ env.CANISTER_WASM }}'" >&2
+          if ! tar -zcvf "${COMPRESS_FILE_NAME}" "${{ env.CANISTER_WASM }}" >&2; then
+              ci_echo_error "Issue on compressing files" >&2
+              exit 1
+          fi
+
+          ci_echo_info "Uploading artifact to S3." >&2
+          if ! aws s3 cp \
+              --no-progress \
+              "${COMPRESS_FILE_NAME}" "s3://${ARTIFACT_BUCKET_NAME}/${CANISTER_NAME}/${COMPRESS_FILE_NAME}"; then
+
+              ci_echo_error "Can't upload artifact '${COMPRESS_FILE_NAME}' to s3://${ARTIFACT_BUCKET_NAME}/${CANISTER_NAME}/${COMPRESS_FILE_NAME}" >&2
+              exit 1
+          fi
+
+          ci_echo_success "Artifact file link: https://${ARTIFACT_BUCKET_NAME}.s3.${AWS_DEFAULT_REGION}.amazonaws.com/${CANISTER_NAME}/${COMPRESS_FILE_NAME}"
+          ci_echo_success "Upload Done" >&2
+
+  restore:
+    if: failure()
+    name: restore
+    needs: deploy
+    environment: ${{ github.event.inputs.network_name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout nfid-wallet-server repo
+        uses: actions/checkout@v4
+
+      - name: Checkout ci_libs repo
+        uses: actions/checkout@v4
+        with:
+          repository: internet-identity-labs/ci_libs
+          ref: main
+          path: ci_libs
+          token: ${{ secrets.PAT }}
+
+      - name: Install dfx
+        run: |
+          export DFX_VERSION=0.23.0
+          export DFXVM_INIT_YES=true
+          sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Versions
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_versions
+
+      - name: Checks branch and network_name
+        if: ${{ env.NETWORK_NAME == 'ic' }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
+            ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
+            exit 1
+          fi
+
+          if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
+            ci_echo_error "Releasing to IC not from tag not allowed." >&2
+            exit 1
+          fi
+
+          # https://semver.org/
+          if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
+            ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
+            exit 1
+          fi
+
+          ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
+
+      - name: PRE-RESTORE => Populate env vars.
+        env:
+          DFX_ID_NAME: ${{ vars.DFX_ID_NAME }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          ci_echo_debug "Getting values from dfx.json" >&2
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.\"${CANISTER_NAME}\""); then
+            ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Populating env variables" >&2
+          CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
+          CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
+          CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
+
+          ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
+          DFX_ID_PATH="${HOME}/.config/dfx/identity/${DFX_ID_NAME}"
+
+          echo "DFX_ID_NAME=${DFX_ID_NAME}" >> $GITHUB_ENV
+          echo "DFX_ID_PATH=${DFX_ID_PATH}" >> $GITHUB_ENV
+
+          echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
+          echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
+          echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
+
+      - name: PRE-RESTORE => Print Vars.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
+          ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
+          ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
+          ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
+          ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
+          ci_echo_info "DFX_ID_NAME=${DFX_ID_NAME}" >&2
+          ci_echo_info "DFX_ID_PATH=${DFX_ID_PATH}" >&2
+
+      - name: PRE-RESTORE => Write identity.
+        env:
+          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          mkdir -p "${DFX_ID_PATH}"
+
+          ci_echo_warn "Preparing encoded key..." >&2
+          echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
+
+      - name: RESTORE => Start the canister.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          dfx identity use "${DFX_ID_NAME}"
+
+          ci_echo_info "Starting the canister '${CANISTER_NAME}'" >&2
+          dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"
