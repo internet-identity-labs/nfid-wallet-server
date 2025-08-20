@@ -37,18 +37,18 @@ jobs:
                 shell: bash
 
         steps:
-            - name: Checkout repo.
+            - name: Checkout nfid-wallet-server repo
               uses: actions/checkout@v4
 
-            - name: Checkout CI repo.
+            - name: Checkout ci_libs repo
               uses: actions/checkout@v4
               with:
-                  token: ${{ secrets.PAT }}
                   repository: internet-identity-labs/ci_libs
                   ref: main
                   path: ci_libs
+                  token: ${{ secrets.PAT }}
 
-            - name: INPUT => Checks branch and network_name
+            - name: Checks branch and network_name
               if: ${{ env.NETWORK_NAME == 'ic' }}
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
@@ -71,22 +71,42 @@ jobs:
 
                   ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
 
-            - name: Cache Cargo dependencies.
+            - name: Install dfx
+              run: |
+                  export DFX_VERSION=0.22.0
+                  export DFXVM_INIT_YES=true
+                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+                  echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+            - name: Install Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+                  target: wasm32-unknown-unknown
+                  override: true
+
+            - name: Cache Cargo dependencies
               uses: actions/cache@v4
               with:
-                  key: cargo-canisters-identity-manager
+                  key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
                   restore-keys: |
-                      cargo-canisters-
+                      cargo-${{ runner.os }}-
                   path: |
-                      ${HOME}/.cargo/registry/
-                      ${HOME}/.cargo_target/
-                      src/**/target/
-                      target/
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                      target
+
+            - name: Cache Maven packages
+              uses: actions/cache@v4
+              with:
+                  path: ~/.m2/repository
+                  key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+                  restore-keys: |
+                      maven-${{ runner.os }}-
 
             - name: Versions
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
                   ci_versions
 
             - name: PRE-BUILD => Populate env vars.
@@ -138,13 +158,6 @@ jobs:
                   ci_echo_warn "Preparing encoded key..." >&2
                   echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
 
-            - name: Install dfx
-              run: |
-                  export DFX_VERSION=0.22.0
-                  export DFXVM_INIT_YES=true
-                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
-                  echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-
             - name: PRE-BUILD => Show current configuration.
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
@@ -184,18 +197,18 @@ jobs:
                 shell: bash
 
         steps:
-            - name: Checkout repo.
+            - name: Checkout nfid-wallet-server repo
               uses: actions/checkout@v4
 
-            - name: Checkout CI repo.
+            - name: Checkout ci_libs repo
               uses: actions/checkout@v4
               with:
-                  token: ${{ secrets.PAT }}
                   repository: internet-identity-labs/ci_libs
                   ref: main
                   path: ci_libs
+                  token: ${{ secrets.PAT }}
 
-            - name: INPUT => Checks branch and network_name
+            - name: Checks branch and network_name
               if: ${{ env.NETWORK_NAME == 'ic' }}
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
@@ -218,10 +231,23 @@ jobs:
 
                   ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
 
+            - name: Install dfx
+              run: |
+                  export DFX_VERSION=0.22.0
+                  export DFXVM_INIT_YES=true
+                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+                  echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+            - name: Install Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+                  target: wasm32-unknown-unknown
+                  override: true
+
             - name: Versions
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
                   ci_versions
 
             - name: PRE-DEPLOY => Populate env vars.
@@ -279,6 +305,7 @@ jobs:
                   name: ${{ env.CANISTER_WASM }}
 
             - name: DEPLOY => Take snapshot.
+              if: ${{ env.NETWORK_NAME == 'local' }}
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
@@ -546,18 +573,18 @@ jobs:
                 shell: bash
 
         steps:
-            - name: Checkout repo.
+            - name: Checkout nfid-wallet-server repo
               uses: actions/checkout@v4
 
-            - name: Checkout CI repo.
+            - name: Checkout ci_libs repo
               uses: actions/checkout@v4
               with:
-                  token: ${{ secrets.PAT }}
                   repository: internet-identity-labs/ci_libs
                   ref: main
                   path: ci_libs
+                  token: ${{ secrets.PAT }}
 
-            - name: INPUT => Checks branch and network_name
+            - name: Checks branch and network_name
               if: ${{ env.NETWORK_NAME == 'ic' }}
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
@@ -580,10 +607,23 @@ jobs:
 
                   ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
 
+            - name: Install dfx
+              run: |
+                  export DFX_VERSION=0.22.0
+                  export DFXVM_INIT_YES=true
+                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+                  echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+            - name: Install Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+                  target: wasm32-unknown-unknown
+                  override: true
+
             - name: Versions
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
                   ci_versions
 
             - name: PRE-RESTORE => Populate env vars.

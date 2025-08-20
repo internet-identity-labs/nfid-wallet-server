@@ -30,15 +30,15 @@ jobs:
                 shell: bash
 
         steps:
-            - name: Checkout CI repo.
+            - name: Checkout ci_libs repo
               uses: actions/checkout@v4
               with:
-                  token: ${{ secrets.PAT }}
                   repository: internet-identity-labs/ci_libs
                   ref: main
                   path: ci_libs
+                  token: ${{ secrets.PAT }}
 
-            - name: INPUT => Checks branch and network_name
+            - name: Checks branch and network_name
               if: ${{ env.NETWORK_NAME == 'ic' }}
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
@@ -59,7 +59,6 @@ jobs:
             - name: Versions
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-
                   ci_versions
 
     release:
