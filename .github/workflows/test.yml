@@ -25,7 +25,6 @@ jobs:
 
             - name: Install dfx
               run: |
-                  export DFX_VERSION=0.22.0
                   export DFXVM_INIT_YES=true
                   sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
                   echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH

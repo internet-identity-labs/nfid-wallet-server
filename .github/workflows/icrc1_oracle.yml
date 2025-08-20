@@ -71,16 +71,8 @@ jobs:
 
                   ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
 
-                  - name: Install dfx
-                  run: |
-                      export DFX_VERSION=0.22.0
-                      export DFXVM_INIT_YES=true
-                      sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
-                      echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-
             - name: Install dfx
               run: |
-                  export DFX_VERSION=0.22.0
                   export DFXVM_INIT_YES=true
                   sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
                   echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
@@ -231,7 +223,6 @@ jobs:
 
             - name: Install dfx
               run: |
-                  export DFX_VERSION=0.22.0
                   export DFXVM_INIT_YES=true
                   sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
                   echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
@@ -298,7 +289,6 @@ jobs:
                   echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
 
             - name: DEPLOY => Take snapshot.
-              if: ${{ env.NETWORK_NAME == 'local' }}
               run: |
                   source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
@@ -455,7 +445,6 @@ jobs:
 
             - name: Install dfx
               run: |
-                  export DFX_VERSION=0.22.0
                   export DFXVM_INIT_YES=true
                   sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
                   echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
