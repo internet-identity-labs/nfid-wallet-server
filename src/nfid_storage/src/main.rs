@@ -1,8 +1,8 @@
 use std::cell::{Cell, RefCell};
 use std::collections::{HashMap, HashSet};
 
-use candid::{candid_method, Principal};
 use candid::CandidType;
+use candid::{candid_method, Principal};
 use ic_cdk::{call, storage, trap};
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
 use serde::{Deserialize, Serialize};
@@ -13,12 +13,10 @@ thread_local! {
     static USER_KEYS: RefCell<HashMap<u64, Vec<String>>> = RefCell::new(HashMap::new());
 }
 
-
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
     pub im_canister: Principal,
 }
-
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct PasskeyData {
@@ -30,12 +28,9 @@ struct State {
     im_canister: Cell<Option<Principal>>,
 }
 
-
 impl Default for State {
     fn default() -> Self {
-        Self {
-            im_canister: Cell::new(None),
-        }
+        Self { im_canister: Cell::new(None) }
     }
 }
 
@@ -45,10 +40,11 @@ impl Default for State {
 #[candid_method(init)]
 fn init(maybe_arg: Option<InitArgs>) {
     if maybe_arg.is_some() {
-        init_im_canister(maybe_arg.expect("The maybe_arg failed after existence check.").im_canister);
+        init_im_canister(
+            maybe_arg.expect("The maybe_arg failed after existence check.").im_canister,
+        );
     }
 }
-
 
 /// Returns a passkey for the given array of keys.
 #[query]
@@ -92,7 +88,9 @@ async fn store_passkey(key: String, data: String, anchor: u64) -> u64 {
     let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
         .await
         .expect("Identity Manager canister returned an empty response for the get_anchor_by_principal method.");
-    if option_root.is_none() || option_root.expect("The option_root failed after existence check.") != anchor {
+    if option_root.is_none()
+        || option_root.expect("The option_root failed after existence check.") != anchor
+    {
         trap("Unauthorised");
     }
     PASSKEYS.with(|passkeys| {
@@ -108,13 +106,8 @@ async fn store_passkey(key: String, data: String, anchor: u64) -> u64 {
         } else {
             user_keys.insert(anchor, vec![key.clone()]);
         }
-
-
-
-
     });
     option_root.expect("The option_root failed after existence check.")
-
 }
 
 /// Removes the public data of a passkey using the specified key.
@@ -125,7 +118,9 @@ async fn remove_passkey(key: String, anchor: u64) -> u64 {
     let (option_root, ): (Option<u64>, ) = call(get_im_canister(), "get_anchor_by_principal", (caller.to_text(), ))
         .await
         .expect("Identity Manager canister returned an empty response for the get_anchor_by_principal method.");
-    if option_root.is_none() || option_root.expect("The option_root failed after existence check.") != anchor {
+    if option_root.is_none()
+        || option_root.expect("The option_root failed after existence check.") != anchor
+    {
         trap("Unauthorised");
     }
     PASSKEYS.with(|passkeys| {
@@ -153,11 +148,8 @@ async fn save_persistent_state() {
     save_to_temp_memory().await;
 }
 
-
 pub fn init_im_canister(im_canister: Principal) {
-    STATE.with(|s| {
-        s.im_canister.set(Some(im_canister))
-    });
+    STATE.with(|s| s.im_canister.set(Some(im_canister)));
 }
 
 fn main() {}
@@ -172,15 +164,12 @@ struct TempMemory {
     anchors_data: Option<HashMap<u64, Vec<String>>>,
 }
 
-
 pub fn get_im_canister() -> Principal {
-    STATE.with(|s| {
-        s.im_canister.get().expect("IM canister not set")
-    })
+    STATE.with(|s| s.im_canister.get().expect("IM canister not set"))
 }
 
 pub async fn init_from_memory() {
-    let (mo, ): (TempMemory, ) = storage::stable_restore()
+    let (mo,): (TempMemory,) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     STATE.with(|s| {
         s.im_canister.set(mo.im_canister);
@@ -196,18 +185,13 @@ pub async fn init_from_memory() {
 }
 
 pub async fn save_to_temp_memory() {
-    let (im_canister, ) = STATE.with(|s| {
-        (s.im_canister.get(), )
-    });
-    let passkeys = PASSKEYS.with(|passkeys| {
-        passkeys.borrow().clone()
-    });
+    let (im_canister,) = STATE.with(|s| (s.im_canister.get(),));
+    let passkeys = PASSKEYS.with(|passkeys| passkeys.borrow().clone());
 
-    let anchors_data = USER_KEYS.with(|user_keys| {
-        user_keys.borrow().clone()
-    });
+    let anchors_data = USER_KEYS.with(|user_keys| user_keys.borrow().clone());
 
-    let mo: TempMemory = TempMemory { im_canister, passkeys: Some(passkeys), anchors_data: Some(anchors_data) };
-    storage::stable_save((mo, ))
+    let mo: TempMemory =
+        TempMemory { im_canister, passkeys: Some(passkeys), anchors_data: Some(anchors_data) };
+    storage::stable_save((mo,))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }

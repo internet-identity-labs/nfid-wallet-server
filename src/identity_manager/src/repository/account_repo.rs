@@ -58,9 +58,7 @@ impl AccountRepoTrait for AccountRepo {
         let princ = ic_service::get_caller().to_text();
         PRINCIPAL_INDEX.with(|index| {
             ACCOUNTS.with(|accounts| match index.borrow().get(&princ) {
-                None => {
-                    self.find_in_temp_keys(princ.clone())
-                }
+                None => self.find_in_temp_keys(princ.clone()),
                 Some(key) => match accounts.borrow().get(key) {
                     None => None,
                     Some(acc) => Option::from(acc.to_owned()),
@@ -83,11 +81,7 @@ impl AccountRepoTrait for AccountRepo {
 
     fn get_account_by_anchor(&self, anchor: u64, wallet: WalletVariant) -> Option<Account> {
         ACCOUNTS.with(|accounts| {
-            match accounts
-                .borrow()
-                .iter()
-                .find(|l| l.1.anchor == anchor && l.1.wallet == wallet)
-            {
+            match accounts.borrow().iter().find(|l| l.1.anchor == anchor && l.1.wallet == wallet) {
                 None => None,
                 Some(pair) => Some(pair.1.to_owned()),
             }
@@ -118,9 +112,7 @@ impl AccountRepoTrait for AccountRepo {
                             .insert(ap.principal_id.clone(), account.principal_id.clone());
                         update_certify_keys(ap.principal_id.clone(), account.principal_id.clone());
                     }
-                    accounts
-                        .borrow_mut()
-                        .insert(account.principal_id.clone(), account.clone());
+                    accounts.borrow_mut().insert(account.principal_id.clone(), account.clone());
                     Some(account)
                 }
             })
@@ -129,9 +121,7 @@ impl AccountRepoTrait for AccountRepo {
 
     fn store_account(&self, account: Account) -> Option<Account> {
         ACCOUNTS.with(|accounts| {
-            accounts
-                .borrow_mut()
-                .insert(account.principal_id.clone(), account.clone());
+            accounts.borrow_mut().insert(account.principal_id.clone(), account.clone());
             Some(account)
         })
     }
@@ -158,22 +148,16 @@ impl AccountRepoTrait for AccountRepo {
     fn update_account_index_with_pub_key(&self, additional_principal_id: String, princ: String) {
         PRINCIPAL_INDEX.with(|index| {
             update_certify_keys(additional_principal_id.clone(), princ.clone());
-            index
-                .borrow_mut()
-                .insert(additional_principal_id.clone(), princ.clone());
+            index.borrow_mut().insert(additional_principal_id.clone(), princ.clone());
         })
     }
 
     fn update_account_index(&self, additional_principal_id: String) {
         PRINCIPAL_INDEX.with(|index| {
-            update_certify_keys(
-                additional_principal_id.clone(),
-                additional_principal_id.clone(),
-            );
-            index.borrow_mut().insert(
-                additional_principal_id.clone(),
-                additional_principal_id.clone(),
-            );
+            update_certify_keys(additional_principal_id.clone(), additional_principal_id.clone());
+            index
+                .borrow_mut()
+                .insert(additional_principal_id.clone(), additional_principal_id.clone());
         })
     }
 

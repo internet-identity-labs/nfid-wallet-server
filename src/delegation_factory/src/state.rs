@@ -5,11 +5,11 @@ use std::time::Duration;
 
 use asset_util::CertifiedAssets;
 use candid::{CandidType, Principal};
-use serde::{Deserialize, Serialize};
 use canister_sig_util::signature_map::SignatureMap;
 use ic_cdk::{storage, trap};
 use ic_stable_structures::DefaultMemoryImpl;
 use internet_identity_interface::internet_identity::types::*;
+use serde::{Deserialize, Serialize};
 
 use crate::random_salt;
 
@@ -19,7 +19,6 @@ thread_local! {
     static STATE: State = State::default();
     static ASSETS: RefCell<CertifiedAssets> = RefCell::new(CertifiedAssets::default());
 }
-
 
 #[cfg(not(test))]
 fn time() -> Timestamp {
@@ -77,9 +76,7 @@ pub fn ensure_settings_set() {
     }
 }
 pub fn get_salt() -> Salt {
-    STATE.with(|s| {
-        s.salt.get().expect("Salt not set")
-    })
+    STATE.with(|s| s.salt.get().expect("Salt not set"))
 }
 
 pub fn clean_state() {
@@ -92,9 +89,7 @@ pub fn clean_state() {
 }
 
 pub fn get_im_canister() -> Principal {
-    STATE.with(|s| {
-        s.im_canister.get().expect("IM canister not set")
-    })
+    STATE.with(|s| s.im_canister.get().expect("IM canister not set"))
 }
 
 pub async fn init_salt() {
@@ -108,25 +103,19 @@ pub async fn init_salt() {
 }
 
 pub fn init_im_canister(im_canister: Principal) {
-    STATE.with(|s| {
-        s.im_canister.set(Some(im_canister))
-    });
+    STATE.with(|s| s.im_canister.set(Some(im_canister)));
 }
 
 pub fn set_operator(operator: Principal) {
-    STATE.with(|s| {
-        s.operator.set(Some(operator))
-    });
+    STATE.with(|s| s.operator.set(Some(operator)));
 }
 
-pub fn get_operator() -> Principal{
-    STATE.with(|s| {
-        s.operator.get().expect("Operator not set")
-    })
+pub fn get_operator() -> Principal {
+    STATE.with(|s| s.operator.get().expect("Operator not set"))
 }
 
 pub async fn init_from_memory() {
-    let (mo, ): (TempMemory, ) = storage::stable_restore()
+    let (mo,): (TempMemory,) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     STATE.with(|s| {
         s.salt.set(mo.salt);
@@ -136,10 +125,9 @@ pub async fn init_from_memory() {
 }
 
 pub async fn save_to_temp_memory() {
-    let (salt, im_canister, operator) = STATE.with(|s| {
-        (s.salt.get(), s.im_canister.get(), s.operator.get())
-    });
+    let (salt, im_canister, operator) =
+        STATE.with(|s| (s.salt.get(), s.im_canister.get(), s.operator.get()));
     let mo: TempMemory = TempMemory { salt, im_canister, operator };
-    storage::stable_save((mo, ))
+    storage::stable_save((mo,))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }

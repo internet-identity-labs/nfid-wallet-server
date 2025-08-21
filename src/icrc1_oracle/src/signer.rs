@@ -2,25 +2,29 @@
 use std::sync::LazyLock;
 
 use candid::{Nat, Principal};
-use ic_cdk::api::{
-    call::{call_with_payment128}, management_canister::ecdsa::{ecdsa_public_key, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgument}, time,
-};
-use ic_cycles_ledger_client::{
-    Account, AllowanceArgs, ApproveArgs, CyclesLedgerService, DepositArgs, DepositResult,
-    ApproveError,
-};
 use ic_cdk::api::management_canister::bitcoin::{
     bitcoin_get_current_fee_percentiles, bitcoin_get_utxos, BitcoinNetwork,
     GetCurrentFeePercentilesRequest, GetUtxosRequest, GetUtxosResponse, MillisatoshiPerByte, Utxo,
     UtxoFilter,
 };
+use ic_cdk::api::{
+    call::call_with_payment128,
+    management_canister::ecdsa::{
+        ecdsa_public_key, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgument,
+    },
+    time,
+};
+use ic_cycles_ledger_client::{
+    Account, AllowanceArgs, ApproveArgs, ApproveError, CyclesLedgerService, DepositArgs,
+    DepositResult,
+};
 use serde::{Deserialize, Serialize};
 
+use bitcoin::{Address, CompressedPublicKey, Network};
 use ic_ledger_types::Subaccount;
 use serde_bytes::ByteBuf;
-use bitcoin::{Address, CompressedPublicKey, Network};
 
-use super::{CandidType};
+use super::CandidType;
 
 const SUB_ACCOUNT_ZERO: Subaccount = Subaccount([0; 32]);
 pub const DEFAULT_CYCLES_LEDGER_TOP_UP_THRESHOLD: u128 = 50_000_000_000_000; // 50T
@@ -75,13 +79,11 @@ pub struct Outpoint {
     pub vout: u32,
 }
 
-
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub enum SelectedUtxosFeeError {
     InternalError { msg: String },
     PendingTransactions,
 }
-
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct SelectedUtxosFeeResponse {
@@ -105,7 +107,6 @@ impl From<Result<SelectedUtxosFeeResponse, SelectedUtxosFeeError>> for BtcSelect
         }
     }
 }
-
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct SelectedUtxosFeeRequest {
@@ -157,15 +158,12 @@ impl TopUpCyclesLedgerRequest {
 
     #[must_use]
     pub fn threshold(&self) -> Nat {
-        self.threshold
-            .clone()
-            .unwrap_or(Nat::from(DEFAULT_CYCLES_LEDGER_TOP_UP_THRESHOLD))
+        self.threshold.clone().unwrap_or(Nat::from(DEFAULT_CYCLES_LEDGER_TOP_UP_THRESHOLD))
     }
 
     #[must_use]
     pub fn percentage(&self) -> u8 {
-        self.percentage
-            .unwrap_or(DEFAULT_CYCLES_LEDGER_TOP_UP_PERCENTAGE)
+        self.percentage.unwrap_or(DEFAULT_CYCLES_LEDGER_TOP_UP_PERCENTAGE)
     }
 }
 
@@ -187,14 +185,8 @@ pub async fn get_allowed_cycles() -> Result<Nat, GetAllowedCyclesError> {
     let signer: Principal = *SIGNER;
     let caller = ic_cdk::caller();
     let allowance_args = AllowanceArgs {
-        account: Account {
-            owner: ic_cdk::id(),
-            subaccount: None,
-        },
-        spender: Account {
-            owner: signer,
-            subaccount: Some(principal2account(&caller)),
-        },
+        account: Account { owner: ic_cdk::id(), subaccount: None },
+        spender: Account { owner: signer, subaccount: Some(principal2account(&caller)) },
     };
     let (allowance,) = CyclesLedgerService(cycles_ledger)
         .icrc_2_allowance(&allowance_args)
@@ -211,10 +203,7 @@ pub async fn allow_signing(allowed_cycles: Option<u64>) -> Result<Nat, AllowSign
     let amount = Nat::from(allowed_cycles.unwrap_or_else(per_user_cycles_allowance));
     CyclesLedgerService(cycles_ledger)
         .icrc_2_approve(&ApproveArgs {
-            spender: Account {
-                owner: signer,
-                subaccount: Some(principal2account(&caller)),
-            },
+            spender: Account { owner: signer, subaccount: Some(principal2account(&caller)) },
             amount: amount.clone(),
             created_at_time: None,
             expected_allowance: None,
@@ -230,20 +219,15 @@ pub async fn allow_signing(allowed_cycles: Option<u64>) -> Result<Nat, AllowSign
     Ok(amount)
 }
 
-
 #[must_use]
 pub fn principal2account(principal: &Principal) -> ByteBuf {
     let hex_str = ic_ledger_types::AccountIdentifier::new(principal, &SUB_ACCOUNT_ZERO).to_hex();
     hex::decode(&hex_str)
         .unwrap_or_else(|_| {
-            unreachable!(
-                "Failed to decode hex account identifier we just created: {}",
-                hex_str
-            )
+            unreachable!("Failed to decode hex account identifier we just created: {}", hex_str)
         })
         .into()
 }
-
 
 pub async fn top_up_cycles_ledger(request: TopUpCyclesLedgerRequest) -> TopUpCyclesLedgerResult {
     match request.check() {
@@ -251,10 +235,7 @@ pub async fn top_up_cycles_ledger(request: TopUpCyclesLedgerRequest) -> TopUpCyc
         Err(err) => return TopUpCyclesLedgerResult::Err(err),
     }
     let cycles_ledger = CyclesLedgerService(*CYCLES_LEDGER);
-    let account = Account {
-        owner: ic_cdk::id(),
-        subaccount: None,
-    };
+    let account = Account { owner: ic_cdk::id(), subaccount: None };
     let (ledger_balance,): (Nat,) = match cycles_ledger
         .icrc_1_balance_of(&account)
         .await
@@ -270,10 +251,7 @@ pub async fn top_up_cycles_ledger(request: TopUpCyclesLedgerRequest) -> TopUpCyc
         let to_send = backend_cycles.clone() / Nat::from(100u32) * Nat::from(request.percentage());
         let to_retain = backend_cycles.clone() - to_send.clone();
 
-        let arg = DepositArgs {
-            to: account,
-            memo: None,
-        };
+        let arg = DepositArgs { to: account, memo: None };
         let to_send_128: u128 =
             to_send.clone().0.try_into().unwrap_or_else(|err| {
                 unreachable!("Failed to convert cycle amount to u128: {}", err)
@@ -297,15 +275,10 @@ pub async fn top_up_cycles_ledger(request: TopUpCyclesLedgerRequest) -> TopUpCyc
         })
         .into()
     } else {
-        Ok(TopUpCyclesLedgerResponse {
-            ledger_balance,
-            backend_cycles,
-            topped_up: Nat::from(0u32),
-        })
-        .into()
+        Ok(TopUpCyclesLedgerResponse { ledger_balance, backend_cycles, topped_up: Nat::from(0u32) })
+            .into()
     }
 }
-
 
 pub trait Validate {
     /// Verifies that an object is semantically valid.
@@ -331,7 +304,6 @@ impl Validate for SelectedUtxosFeeResponse {
     }
 }
 
-
 fn validate_utxo(utxo: &Utxo) -> Result<(), candid::Error> {
     let len = utxo.outpoint.txid.len();
     if len > MAX_TXID_BYTES {
@@ -356,7 +328,6 @@ fn validate_utxo_vec(utxos: &[Utxo]) -> Result<(), candid::Error> {
     Ok(())
 }
 
-
 async fn cfs_ecdsa_pubkey_of(principal: &Principal) -> Result<Vec<u8>, String> {
     let cfs_canister_id = Principal::from_text(MAINNET_SIGNER_CANISTER_ID).unwrap();
     let ecdsa_key_name = "key_1";
@@ -365,10 +336,7 @@ async fn cfs_ecdsa_pubkey_of(principal: &Principal) -> Result<Vec<u8>, String> {
     if let Ok((key,)) = ecdsa_public_key(EcdsaPublicKeyArgument {
         canister_id: Some(cfs_canister_id),
         derivation_path,
-        key_id: EcdsaKeyId {
-            curve: EcdsaCurve::Secp256k1,
-            name: ecdsa_key_name.to_string(),
-        },
+        key_id: EcdsaKeyId { curve: EcdsaCurve::Secp256k1, name: ecdsa_key_name.to_string() },
     })
     .await
     {
@@ -403,13 +371,9 @@ async fn get_utxos(
     address: String,
     filter: Option<UtxoFilter>,
 ) -> Result<GetUtxosResponse, String> {
-    let utxos_res = bitcoin_get_utxos(GetUtxosRequest {
-        address,
-        network,
-        filter,
-    })
-    .await
-    .map_err(|err| err.1)?;
+    let utxos_res = bitcoin_get_utxos(GetUtxosRequest { address, network, filter })
+        .await
+        .map_err(|err| err.1)?;
 
     Ok(utxos_res.0)
 }
@@ -439,7 +403,6 @@ pub async fn get_all_utxos(
     Ok(all_utxos)
 }
 
-
 pub async fn get_fee_per_byte(network: BitcoinNetwork) -> Result<u64, String> {
     // Get fee percentiles from previous transactions to estimate our own fee.
     let fee_percentiles = get_current_fee_percentiles(network).await?;
@@ -455,7 +418,6 @@ pub async fn get_fee_per_byte(network: BitcoinNetwork) -> Result<u64, String> {
     }
 }
 
-
 async fn get_current_fee_percentiles(
     network: BitcoinNetwork,
 ) -> Result<Vec<MillisatoshiPerByte>, String> {
@@ -466,11 +428,9 @@ async fn get_current_fee_percentiles(
     Ok(res.0)
 }
 
-
 fn tx_vsize_estimate(input_count: u64, output_count: u64) -> u64 {
     input_count * INPUT_SIZE_VBYTES + output_count * OUTPUT_SIZE_VBYTES + TX_OVERHEAD_VBYTES
 }
-
 
 pub fn estimate_fee(
     selected_utxos_count: u64,

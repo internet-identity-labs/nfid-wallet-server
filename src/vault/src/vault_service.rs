@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
-use ic_cdk::export::{candid::{CandidType, Deserialize}};
+use ic_cdk::export::candid::{CandidType, Deserialize};
 use ic_cdk::trap;
-use serde::{Serialize};
+use serde::Serialize;
 
 use crate::enums::ObjectState;
 use crate::memory::VAULTS;
@@ -83,10 +83,8 @@ pub fn get(ids: HashSet<u64>) -> Vec<Vault> {
         let borrowed = vaults.borrow();
         for id in ids {
             match borrowed.get(&id) {
-                None => {
-                    trap("Nonexistent key error")
-                }
-                Some(v) => { result.push(v.clone()) }
+                None => trap("Nonexistent key error"),
+                Some(v) => result.push(v.clone()),
             }
         }
         result
@@ -94,26 +92,21 @@ pub fn get(ids: HashSet<u64>) -> Vec<Vault> {
 }
 
 pub fn get_by_id(id: &u64) -> Vault {
-    VAULTS.with(|vaults| {
-        match vaults.borrow().get(id) {
-            None => {
-                trap("Nonexistent key error")
-            }
-            Some(v) => {
-                v.clone()
-            }
-        }
+    VAULTS.with(|vaults| match vaults.borrow().get(id) {
+        None => trap("Nonexistent key error"),
+        Some(v) => v.clone(),
     })
 }
 
-pub fn add_vault_member(vault_id: u64, user: &User, role: VaultRole, name: Option<String>, state: ObjectState) -> Vault {
+pub fn add_vault_member(
+    vault_id: u64,
+    user: &User,
+    role: VaultRole,
+    name: Option<String>,
+    state: ObjectState,
+) -> Vault {
     let mut vault = get_by_id(&vault_id);
-    let vm = VaultMember {
-        user_uuid: user.address.clone(),
-        role,
-        name,
-        state,
-    };
+    let vm = VaultMember { user_uuid: user.address.clone(), role, name, state };
     vault.members.replace(vm);
     restore(&vault)
 }
@@ -123,16 +116,11 @@ pub fn restore(vault: &Vault) -> Vault {
         let mut v = vault.clone();
         v.modified_date = ic_cdk::api::time();
         match vaults.borrow_mut().insert(v.id, v.clone()) {
-            None => {
-                trap("No such vault")
-            }
-            Some(_) => {
-                v
-            }
+            None => trap("No such vault"),
+            Some(_) => v,
         }
     })
 }
-
 
 pub fn update(vault: Vault) -> Vault {
     let mut old = get_by_id(&vault.id);

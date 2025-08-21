@@ -2,19 +2,19 @@ use async_trait::async_trait;
 use ic_cdk::api::time;
 use ic_cdk::{print, trap};
 
+use super::email_validation_service;
 use crate::http::requests::{AccountResponse, ChallengeAttempt, DeviceType, WalletVariant};
 use crate::ic_service::KeyType;
 use crate::mapper::access_point_mapper::access_point_request_to_access_point;
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::repository::account_repo::AccountRepoTrait;
+use crate::repository::repo::{CAPTCHA_CAHLLENGES, TEMP_KEYS};
 use crate::requests::AccountRequest;
 use crate::response_mapper::to_error_response;
 use crate::response_mapper::to_success_response;
 use crate::service::ic_service;
 use crate::service::ic_service::DeviceData;
 use crate::{get_caller, AccessPointServiceTrait, Account, HttpResponse};
-use crate::repository::repo::{CAPTCHA_CAHLLENGES, TEMP_KEYS};
-use super::email_validation_service;
 
 #[async_trait(? Send)]
 pub trait AccountServiceTrait {
@@ -92,7 +92,11 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
         let mut acc = account_request_to_account(account_request.clone());
         if account_request.email.is_some() {
             if !email_validation_service::contains(
-                account_request.email.clone().expect("Failed to retrieve the email from the account request.").to_string(),
+                account_request
+                    .email
+                    .clone()
+                    .expect("Failed to retrieve the email from the account request.")
+                    .to_string(),
                 princ.clone(),
             ) {
                 trap("Email and principal are not valid.")
@@ -102,12 +106,10 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             match account_request.access_point.clone() {
                 None => trap("Device Data required"),
                 Some(dd) => {
-                    acc.access_points
-                        .insert(access_point_request_to_access_point(dd.clone()));
+                    acc.access_points.insert(access_point_request_to_access_point(dd.clone()));
                 }
             }
-            let device_type = account_request.access_point.
-                unwrap().device_type;
+            let device_type = account_request.access_point.unwrap().device_type;
             if account_request.email.is_none() && device_type.eq(&DeviceType::Email) {
                 trap("Email is empty");
             }
@@ -120,9 +122,10 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
         }
         if account_request.name.is_some() {
-            let challenge_attempt = account_request.challenge_attempt.clone().unwrap_or_else(|| {
-                trap("Challenge solution required");
-            });
+            let challenge_attempt =
+                account_request.challenge_attempt.clone().unwrap_or_else(|| {
+                    trap("Challenge solution required");
+                });
             self.validate_captcha(challenge_attempt);
             acc.name = account_request.name.clone();
             acc.is2fa_enabled = true;
@@ -136,9 +139,8 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
                         keys.borrow_mut().insert(princ.clone(), new_acc.anchor.clone(), time());
                     });
                 }
-                let recovery_device = devices
-                    .into_iter()
-                    .find(|dd| dd.key_type.eq(&KeyType::SeedPhrase));
+                let recovery_device =
+                    devices.into_iter().find(|dd| dd.key_type.eq(&KeyType::SeedPhrase));
                 match recovery_device {
                     None => {}
                     Some(rd) => {
@@ -217,8 +219,7 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             .iter()
             .find(|device_data| device_data.key_type.eq(&ic_service::KeyType::SeedPhrase))
             .map(|device_data| {
-                self.access_point_service
-                    .migrate_recovery_device(device_data.clone(), &account)
+                self.access_point_service.migrate_recovery_device(device_data.clone(), &account)
             })
             .map(|account| to_success_response(account_to_account_response(account)))
             .unwrap_or_else(|| {
@@ -228,22 +229,21 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
         account_response
     }
 
-
-     fn validate_captcha(&self, challenge_attempt: ChallengeAttempt) {
+    fn validate_captcha(&self, challenge_attempt: ChallengeAttempt) {
         CAPTCHA_CAHLLENGES.with(|challenges| {
             let mut challenges = challenges.borrow_mut();
             challenges.clean_expired_entries(time());
 
-            let challenge = challenges.remove(&challenge_attempt.challenge_key)
-                .unwrap_or_else(||
-                    { trap("Incorrect captcha key"); }
-                );
+            let challenge =
+                challenges.remove(&challenge_attempt.challenge_key).unwrap_or_else(|| {
+                    trap("Incorrect captcha key");
+                });
             match challenge {
                 None => {}
                 Some(challenge) => {
-                    let challenge_attempt_chars = challenge_attempt.chars.unwrap_or_else(||
-                        { trap("Solution is required"); }
-                    );
+                    let challenge_attempt_chars = challenge_attempt.chars.unwrap_or_else(|| {
+                        trap("Solution is required");
+                    });
                     if !challenge.eq(&challenge_attempt_chars) {
                         trap("Incorrect captcha solution");
                     }

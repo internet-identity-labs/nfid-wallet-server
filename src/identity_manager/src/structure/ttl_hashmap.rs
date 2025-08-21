@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use ic_cdk::api::time;
+use std::collections::HashMap;
 
 pub struct TtlHashMap<K, V> {
     map: HashMap<K, (V, u64)>,
@@ -11,10 +11,7 @@ where
     K: Eq + std::hash::Hash,
 {
     pub fn new(ttl_millis: u64) -> Self {
-        TtlHashMap {
-            map: HashMap::new(),
-            ttl_millis,
-        }
+        TtlHashMap { map: HashMap::new(), ttl_millis }
     }
 
     pub fn insert(&mut self, key: K, value: V, timestamp: u64) {
