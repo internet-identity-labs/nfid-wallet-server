@@ -69,9 +69,7 @@ jobs:
       - name: Cache Cargo dependencies
         uses: actions/cache@v4
         with:
-          key: cargo-canisters-signer_ic
-          restore-keys: |
-            cargo-canisters-
+          key: cargo-canisters
           path: |
             ~/.cargo/registry
             ~/.cargo/git
@@ -81,9 +79,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: maven-canisters-signer_ic
-          restore-keys: |
-            maven-canisters-
+          key: maven-canisters
 
       - name: Versions
         run: |
