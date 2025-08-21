@@ -69,7 +69,7 @@ jobs:
       - name: Cache Cargo dependencies
         uses: actions/cache@v4
         with:
-          key: cargo-canisters-${{ github.workflow }}
+          key: cargo-canisters-signer_ic
           restore-keys: |
             cargo-canisters-
           path: |
@@ -81,7 +81,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: maven-canisters-${{ github.workflow }}
+          key: maven-canisters-signer_ic
           restore-keys: |
             maven-canisters-
 
