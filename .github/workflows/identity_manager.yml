@@ -6,7 +6,7 @@ on:
         description: 'Choose applicable network'
         required: true
         type: choice
-        options: 
+        options:
           - dev
           - stage
           - ic
@@ -27,30 +27,62 @@ env:
   CI_DEBUG: 'true'
   RELEASE_TAG_REGEX: '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
 
-
 jobs:
   build:
     name: Build
     environment: ${{ github.event.inputs.network_name }}
-    runs-on:
-      group: dfx-runner
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
 
     steps:
-      - name: Checkout repo.
+      - name: Checkout nfid-wallet-server repo
         uses: actions/checkout@v4
 
-      - name: Checkout CI repo.
+      - name: Checkout ci_libs repo
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }}
           repository: internet-identity-labs/ci_libs
           ref: main
           path: ci_libs
+          token: ${{ secrets.PAT }}
 
-      - name: INPUT => Checks branch and network_name
+      - name: Install dfx
+        run: |
+          export DFX_VERSION=0.23.0
+          export DFXVM_INIT_YES=true
+          sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          key: cargo-canisters
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: maven-canisters
+
+      - name: Versions
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_versions
+
+      - name: Checks branch and network_name
         if: ${{ env.NETWORK_NAME == 'ic' }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
@@ -64,7 +96,7 @@ jobs:
             ci_echo_error "Releasing to IC not from tag not allowed." >&2
             exit 1
           fi
-  
+
           # https://semver.org/
           if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
             ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
@@ -72,24 +104,6 @@ jobs:
           fi
 
           ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
-
-      - name: Cache Cargo dependencies.
-        uses: actions/cache@v4
-        with:
-          key: cargo-canisters-identity-manager
-          restore-keys: |
-            cargo-canisters-
-          path: |
-            ${HOME}/.cargo/registry/
-            ${HOME}/.cargo_target/
-            src/**/target/
-            target/
-
-      - name: Versions
-        run: |
-          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-          
-          ci_versions
 
       - name: PRE-BUILD => Populate env vars.
         env:
@@ -158,7 +172,7 @@ jobs:
           rm -rf .dfx;
           ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
-      
+
       - name: POST-BUILD => Save artifact.
         uses: actions/upload-artifact@v4
         with:
@@ -169,30 +183,47 @@ jobs:
             ${{ env.CANISTER_WASM }}
             .dfx
 
-
   deploy:
     name: Deploy
     environment: ${{ github.event.inputs.network_name }}
     needs: build
-    runs-on:
-      group: dfx-runner
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
 
     steps:
-      - name: Checkout repo.
+      - name: Checkout nfid-wallet-server repo
         uses: actions/checkout@v4
 
-      - name: Checkout CI repo.
+      - name: Checkout ci_libs repo
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }}
           repository: internet-identity-labs/ci_libs
           ref: main
           path: ci_libs
+          token: ${{ secrets.PAT }}
 
-      - name: INPUT => Checks branch and network_name
+      - name: Install dfx
+        run: |
+          export DFX_VERSION=0.23.0
+          export DFXVM_INIT_YES=true
+          sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Versions
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_versions
+
+      - name: Checks branch and network_name
         if: ${{ env.NETWORK_NAME == 'ic' }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
@@ -206,7 +237,7 @@ jobs:
             ci_echo_error "Releasing to IC not from tag not allowed." >&2
             exit 1
           fi
-  
+
           # https://semver.org/
           if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
             ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
@@ -214,12 +245,6 @@ jobs:
           fi
 
           ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
-
-      - name: Versions
-        run: |
-          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-          
-          ci_versions
 
       - name: PRE-DEPLOY => Populate env vars.
         env:
@@ -269,7 +294,7 @@ jobs:
 
           ci_echo_warn "Preparing encoded key..." >&2
           echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
-    
+
       - name: DEPLOY => Load artifact
         uses: actions/download-artifact@v4
         with:
@@ -366,7 +391,7 @@ jobs:
                 ;;
             esac
           fi
-          
+
           # Sync command
           ci_echo_info "Synching controllers for the canister." >&2
           ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' sync_controllers" >&2
@@ -392,7 +417,7 @@ jobs:
             ci_echo_error "${result}" >&2
             exit 1
           fi
-          
+
           ci_echo_success "${result}" >&2
         env:
           CANISTER_CONFIG_DATA: >-
@@ -408,17 +433,17 @@ jobs:
               }
             )
           CANISTER_CONFIG_STAGE_DATA: >-
-              (
-                record {
-                  lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/staging";
-                  ii_canister_id = opt principal "rdmx6-jaaaa-aaaaa-aaadq-cai";
-                  lambda = opt principal "apgzn-tlsle-xhihn-z446h-hpedm-7w4oa-t7xru-7o2f2-skvrg-ruc6r-7qe";
-                  git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
-                  commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
-                  operator = opt principal "lh6kg-7ebfk-bwa26-zgl6l-l27vx-xnnr4-ow2n4-mm4cq-tfjky-rs5gq-5ae";
-                  whitelisted_canisters = opt vec { principal "gzqxf-kqaaa-aaaak-qakba-cai" };
-                }
-              )
+            (
+              record {
+                lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/staging";
+                ii_canister_id = opt principal "rdmx6-jaaaa-aaaaa-aaadq-cai";
+                lambda = opt principal "apgzn-tlsle-xhihn-z446h-hpedm-7w4oa-t7xru-7o2f2-skvrg-ruc6r-7qe";
+                git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
+                commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
+                operator = opt principal "lh6kg-7ebfk-bwa26-zgl6l-l27vx-xnnr4-ow2n4-mm4cq-tfjky-rs5gq-5ae";
+                whitelisted_canisters = opt vec { principal "gzqxf-kqaaa-aaaak-qakba-cai" };
+              }
+            )
           CANISTER_CONFIG_PROD_DATA: >-
             (
               record {
@@ -464,7 +489,7 @@ jobs:
           cycle=1
           while [ ${remaining_amount} -gt 0 ] && [ ${cycle} -lt ${cycles_limit} ]; do
             ci_echo_info "Cycle '${cycle}' of  '${cycles_limit}'" >&2
-            
+
             result=''
 
             ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' get_remaining_size_after_rebuild_device_index_slice_from_temp_stack" >&2
@@ -488,7 +513,7 @@ jobs:
             ci_echo_error "Index rebuild is not finished, amount of remaining entries: '${remaining_amount}'" >&2
             exit 1
           fi
-          
+
           ci_echo_success "Index rebuild has been completed." >&2
 
       - name: POST-DEPLOY => Cleaning.
@@ -537,25 +562,43 @@ jobs:
     name: restore
     needs: deploy
     environment: ${{ github.event.inputs.network_name }}
-    runs-on:
-      group: dfx-runner
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
 
     steps:
-      - name: Checkout repo.
+      - name: Checkout nfid-wallet-server repo
         uses: actions/checkout@v4
 
-      - name: Checkout CI repo.
+      - name: Checkout ci_libs repo
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }}
           repository: internet-identity-labs/ci_libs
           ref: main
           path: ci_libs
+          token: ${{ secrets.PAT }}
 
-      - name: INPUT => Checks branch and network_name
+      - name: Install dfx
+        run: |
+          export DFX_VERSION=0.23.0
+          export DFXVM_INIT_YES=true
+          sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Versions
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_versions
+
+      - name: Checks branch and network_name
         if: ${{ env.NETWORK_NAME == 'ic' }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
@@ -569,7 +612,7 @@ jobs:
             ci_echo_error "Releasing to IC not from tag not allowed." >&2
             exit 1
           fi
-  
+
           # https://semver.org/
           if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
             ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
@@ -577,12 +620,6 @@ jobs:
           fi
 
           ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
-
-      - name: Versions
-        run: |
-          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-          
-          ci_versions
 
       - name: PRE-RESTORE => Populate env vars.
         env:
@@ -632,12 +669,12 @@ jobs:
 
           ci_echo_warn "Preparing encoded key..." >&2
           echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
-  
+
       - name: RESTORE => Start the canister.
         run: |
-            source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-            dfx identity use "${DFX_ID_NAME}"
+          dfx identity use "${DFX_ID_NAME}"
 
-            ci_echo_info "Starting the canister '${CANISTER_NAME}'" >&2
-            dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+          ci_echo_info "Starting the canister '${CANISTER_NAME}'" >&2
+          dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"

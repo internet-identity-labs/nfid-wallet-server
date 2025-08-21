@@ -1,5 +1,5 @@
 #!/usr/bin/env ts-node
-import {AdminManager} from "./admin_manager";
+import { AdminManager } from "./admin_manager";
 
 async function run() {
     const adminManager = new AdminManager();
@@ -7,29 +7,29 @@ async function run() {
     const method = process.argv[2];
 
     switch (method) {
-        case 'formCSV':
+        case "formCSV":
             await adminManager.addICTokens();
             await adminManager.addToCSV();
-            console.log('CSV ready!!!');
+            console.log("Tokens oracle has been generated!!!");
             break;
-        case 'uploadCSV':
+        case "uploadCSV":
             await adminManager.addFromCSV();
-            console.log('CSV uploaded!!!');
+            console.log("Tokens oracle has been uploaded!!!");
             break;
-        case 'removeCanister':
+        case "removeCanister":
             await adminManager.removeCanister(process.argv[3]);
-            console.log('Canister removed!!!');
+            console.log("Token canister has been removed!!!");
             break;
-        case 'formNeuronsCSV':
+        case "formNeuronsCSV":
             await adminManager.formNeuronsCSV();
-            console.log('Neurons CSV ready!!!');
+            console.log("Neurons oracle has been generated!!!");
             break;
-        case 'replaceNeurons':
+        case "replaceNeurons":
             await adminManager.replaceNeuronsFromCSV();
-            console.log('Neurons replaced!!!');
+            console.log("Neuron to follow has been replaced!!!");
             break;
         default:
-            console.log('Invalid method');
+            console.log("Invalid method");
             break;
     }
 }
