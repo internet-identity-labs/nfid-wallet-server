@@ -65,9 +65,9 @@ jobs:
       - name: Cache Cargo dependencies
         uses: actions/cache@v4
         with:
-          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-canisters-${{ github.workflow }}
           restore-keys: |
-            cargo-${{ runner.os }}-
+            cargo-canisters-
           path: |
             ~/.cargo/registry
             ~/.cargo/git
@@ -77,9 +77,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+          key: maven-canisters-${{ github.workflow }}
           restore-keys: |
-            maven-${{ runner.os }}-
+            maven-canisters-
 
       - name: Versions
         run: |

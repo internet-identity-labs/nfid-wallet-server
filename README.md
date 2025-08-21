@@ -175,7 +175,7 @@ dfx deploy swap_trs_storage  --argument '(opt record { im_canister = principal "
 
 Install these dependencies before testing:
 
--   **NodeJS** `^22.10.0`
+-   **NodeJS** `^v20.19.4`
 -   **Yarn** `^v1.22.22`
 
 ### Run Integration Tests
