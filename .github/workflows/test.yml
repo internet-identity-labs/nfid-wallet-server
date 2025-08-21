@@ -1,108 +1,108 @@
 name: Integration tests
 on:
-    push:
-    workflow_dispatch:
+  push:
+  workflow_dispatch:
 
 jobs:
-    test:
-        name: Integration tests
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                shell: bash
+  test:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
 
-        steps:
-            - name: Checkout nfid-wallet-server repo
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout nfid-wallet-server repo
+        uses: actions/checkout@v4
 
-            - name: Checkout ci_libs repo
-              uses: actions/checkout@v4
-              with:
-                  repository: internet-identity-labs/ci_libs
-                  ref: main
-                  path: ci_libs
-                  token: ${{ secrets.PAT }}
+      - name: Checkout ci_libs repo
+        uses: actions/checkout@v4
+        with:
+          repository: internet-identity-labs/ci_libs
+          ref: main
+          path: ci_libs
+          token: ${{ secrets.PAT }}
 
-            - name: Install dfx
-              run: |
-                  export DFX_VERSION=0.23.0
-                  export DFXVM_INIT_YES=true
-                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
-                  echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+      - name: Install dfx
+        run: |
+          export DFX_VERSION=0.23.0
+          export DFXVM_INIT_YES=true
+          sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
-            - name: Install Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  toolchain: stable
-                  target: wasm32-unknown-unknown
-                  override: true
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
 
-            - name: Cache Cargo dependencies
-              uses: actions/cache@v4
-              with:
-                  key: cargo-canisters
-                  path: |
-                      ~/.cargo/registry
-                      ~/.cargo/git
-                      target
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          key: cargo-canisters
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
 
-            - name: Cache Maven packages
-              uses: actions/cache@v4
-              with:
-                  path: ~/.m2/repository
-                  key: maven-canisters
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: maven-canisters
 
-            - name: Versions
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-                  ci_versions
+      - name: Versions
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_versions
 
-            - name: Build and run JS integration tests
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+      - name: Build and run JS integration tests
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-                  # Setup DFX identity
-                  if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
-                    ci_echo_debug "Creating DFX test_admin identity" >&2
-                    dfx identity new test_admin --storage-mode plaintext
-                  fi
-                  cp -f identity-manager-itest/src/test/resources/identity/identity.pem \
-                     ${HOME}/.config/dfx/identity/test_admin
+          # Setup DFX identity
+          if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
+            ci_echo_debug "Creating DFX test_admin identity" >&2
+            dfx identity new test_admin --storage-mode plaintext
+          fi
+          cp -f identity-manager-itest/src/test/resources/identity/identity.pem \
+             ${HOME}/.config/dfx/identity/test_admin
 
-                  # Move to test directory
-                  pushd identity-manager-itest || { ci_echo_error "Cannot enter identity-manager-itest"; exit 1; }
+          # Move to test directory
+          pushd identity-manager-itest || { ci_echo_error "Cannot enter identity-manager-itest"; exit 1; }
 
-                  # Stop icx-proxy if running
-                  if pgrep icx-proxy > /dev/null; then
-                    ci_echo_warn "Stopping icx-proxy..." >&2
-                    kill -9 $(pgrep icx-proxy)
-                  fi
+          # Stop icx-proxy if running
+          if pgrep icx-proxy > /dev/null; then
+            ci_echo_warn "Stopping icx-proxy..." >&2
+            kill -9 $(pgrep icx-proxy)
+          fi
 
-                  # Install npm dependencies & run JS tests
-                  ci_echo_debug "npm install && npm run test" >&2
-                  npm ci && npm run test
+          # Install Yarn dependencies & run JS tests
+          ci_echo_debug "yarn install --frozen-lockfile && yarn test" >&2
+          yarn install --frozen-lockfile && yarn test
 
-            - name: Build and run Java integration tests
-              run: |
-                  source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+      - name: Build and run Java integration tests
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
-                  # Setup DFX identity
-                  if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
-                    ci_echo_debug "Creating DFX test_admin identity" >&2
-                    dfx identity new test_admin --storage-mode plaintext
-                  fi
-                  cp -f identity-manager-itest/src/test/resources/identity/identity.pem \
-                     ${HOME}/.config/dfx/identity/test_admin
+          # Setup DFX identity
+          if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
+            ci_echo_debug "Creating DFX test_admin identity" >&2
+            dfx identity new test_admin --storage-mode plaintext
+          fi
+          cp -f identity-manager-itest/src/test/resources/identity/identity.pem \
+             ${HOME}/.config/dfx/identity/test_admin
 
-                  # Move to test directory
-                  pushd identity-manager-itest || { ci_echo_error "Cannot enter identity-manager-itest"; exit 1; }
+          # Move to test directory
+          pushd identity-manager-itest || { ci_echo_error "Cannot enter identity-manager-itest"; exit 1; }
 
-                  # Stop icx-proxy if running
-                  if pgrep icx-proxy > /dev/null; then
-                    ci_echo_warn "Stopping icx-proxy..." >&2
-                    kill -9 $(pgrep icx-proxy)
-                  fi
+          # Stop icx-proxy if running
+          if pgrep icx-proxy > /dev/null; then
+            ci_echo_warn "Stopping icx-proxy..." >&2
+            kill -9 $(pgrep icx-proxy)
+          fi
 
-                  # Run Maven tests
-                  ci_echo_debug "mvn test --no-transfer-progress" >&2
-                  mvn test --no-transfer-progress
+          # Run Maven tests
+          ci_echo_debug "mvn test --no-transfer-progress" >&2
+          mvn test --no-transfer-progress
