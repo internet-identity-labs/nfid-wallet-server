@@ -1,23 +1,22 @@
-import {idlFactory as icrcOracle1Idl} from "../test/idl/icrc1_oracle_idl";
-import {Ed25519KeyIdentity} from "@dfinity/identity";
-import {SnsParser} from "./sns";
-import {NativeParser} from "./native";
-import {ChainFusionParser} from "./chain_fusion";
-import {ActorMethod} from "@dfinity/agent";
-import {ICRC1} from "../test/idl/icrc1_oracle";
-import {parse} from 'json2csv';
-import * as fs from 'fs';
-import {parse as csvParse} from 'csv-parse/sync';
-import {ICRC1CsvData} from "./types";
-import {getActor, mapCategory, mapCategoryCSVToCategory} from "./util";
-import {ChainFusionTestnetParser} from "./chain_fusion_testnet";
-import {CANISTER_ID, FILE_PATH, FILE_PATH_NEURON, KEY_PAIR} from "./constants";
-import {getMetadata} from "./metadata_service";
-import sharp from 'sharp'
+import { idlFactory as icrcOracle1Idl } from "../test/idl/icrc1_oracle_idl";
+import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { SnsParser } from "./sns";
+import { NativeParser } from "./native";
+import { ChainFusionParser } from "./chain_fusion";
+import { ActorMethod } from "@dfinity/agent";
+import { ICRC1 } from "../test/idl/icrc1_oracle";
+import { parse } from "json2csv";
+import * as fs from "fs";
+import { parse as csvParse } from "csv-parse/sync";
+import { ICRC1CsvData } from "./types";
+import { getActor, mapCategory, mapCategoryCSVToCategory } from "./util";
+import { ChainFusionTestnetParser } from "./chain_fusion_testnet";
+import { CANISTER_ID, FILE_PATH, FILE_PATH_NEURON, KEY_PAIR } from "./constants";
+import { getMetadata } from "./metadata_service";
+import sharp from "sharp";
 
 export class AdminManager {
-
-    private actor: Record<string, ActorMethod>
+    private actor: Record<string, ActorMethod>;
 
     constructor() {
         const adminEd = Ed25519KeyIdentity.fromParsedJson(KEY_PAIR);
@@ -29,10 +28,7 @@ export class AdminManager {
         const native = await new NativeParser().parseCanister();
         const chainFusion = await new ChainFusionParser().parseCanister();
         const chainFusionTestnet = await new ChainFusionTestnetParser().parseCanister();
-        const all = native
-            .concat(chainFusion)
-            .concat(chainFusionTestnet)
-            .concat(sns);
+        const all = native.concat(chainFusion).concat(chainFusionTestnet).concat(sns);
 
         const chunkArray = (arr: ICRC1[], chunkSize: number): ICRC1[][] => {
             const chunks: ICRC1[][] = [];
@@ -45,19 +41,18 @@ export class AdminManager {
         const batches = chunkArray(all, 25);
 
         for (const batch of batches) {
-            console.log("Rewriting SNS");
+            console.log("Importing and updating tokens metadata");
             await this.actor.store_new_icrc1_canisters(batch);
-
         }
     }
 
     async addToCSV() {
-        let canisters = await this.actor.count_icrc1_canisters() as number;
-        const offset = 25
+        let canisters = (await this.actor.count_icrc1_canisters()) as number;
+        const offset = 25;
         let amountOfRequests = Math.ceil(Number(canisters) / offset);
-        const canisters_from_oracle = await Promise.all(Array.from({length: amountOfRequests}, (_, i) =>
-            this.actor.get_icrc1_paginated(i * offset, offset)
-        )).then((res) => res.flat()) as Array<ICRC1>;
+        const canisters_from_oracle = (await Promise.all(
+            Array.from({ length: amountOfRequests }, (_, i) => this.actor.get_icrc1_paginated(i * offset, offset))
+        ).then((res) => res.flat())) as Array<ICRC1>;
 
         let updatedMetadata = new Map<string, any>();
         for (const c of canisters_from_oracle) {
@@ -69,12 +64,23 @@ export class AdminManager {
             }
         }
 
-        const fields = ['name', 'symbol', 'ledger', 'index', 'category', 'logo', 'fee', 'decimals', 'root_canister_id', 'date_added'];
-        const opts = {fields};
+        const fields = [
+            "name",
+            "symbol",
+            "ledger",
+            "index",
+            "category",
+            "logo",
+            "fee",
+            "decimals",
+            "root_canister_id",
+            "date_added",
+        ];
+        const opts = { fields };
         try {
-            const csv = (parse(await Promise.all(canisters_from_oracle
-                    .map(async (c) => {
-                        //update metadata. sometimes logo can be replaced
+            const csv = parse(
+                await Promise.all(
+                    canisters_from_oracle.map(async (c) => {
                         if (updatedMetadata.has(c.ledger)) {
                             let metadata = updatedMetadata.get(c.ledger);
                             c.name = metadata.name;
@@ -83,16 +89,22 @@ export class AdminManager {
                             c.decimals = metadata.decimals;
                             c.fee = metadata.fee;
                         }
-                        let logo;
+                        let logo: string | undefined;
                         if (c.logo.length > 0) {
                             try {
-                                logo = await compressLogo(c.logo[0])
+                                if (c.logo[0]) {
+                                    logo = await compressLogo(c.logo[0]);
+                                } else {
+                                    logo = undefined;
+                                }
                             } catch (e) {
-                                console.error(`Error while compressing logo for ledger ${c.ledger} and name ${c.name}: ${e}`);
-                                logo = c.logo[0]
+                                console.error(
+                                    `Error while compressing logo for ledger ${c.ledger} and name ${c.name}: ${e}`
+                                );
+                                logo = c.logo[0] || undefined;
                             }
                         } else {
-                            logo = undefined
+                            logo = undefined;
                         }
 
                         return {
@@ -105,38 +117,39 @@ export class AdminManager {
                             fee: c.fee.toString(),
                             decimals: c.decimals.toString(),
                             root_canister_id: c.root_canister_id.length > 0 ? c.root_canister_id[0] : undefined,
-                            date_added: c.date_added.toString()
-                        }
-                    }))
-                , opts));
+                            date_added: c.date_added.toString(),
+                        };
+                    })
+                ),
+                opts
+            );
             fs.writeFileSync(FILE_PATH, csv);
-            console.log('CSV file saved successfully!');
+            console.log("Tokens file saved successfully!");
         } catch (err) {
             console.error(err);
         }
     }
 
     async addFromCSV() {
-        const csvData = fs.readFileSync(FILE_PATH, 'utf8');
+        const csvData = fs.readFileSync(FILE_PATH, "utf8");
         const records: ICRC1CsvData[] = csvParse(csvData, {
             columns: true,
             skip_empty_lines: true,
         });
-        const asd: ICRC1[] = records
-            .map((record) => {
-                return {
-                    name: record.name,
-                    ledger: record.ledger,
-                    category: mapCategoryCSVToCategory(record.category),
-                    index: record.index === undefined || record.index.length < 2 ? [] : [record.index],
-                    symbol: record.symbol,
-                    logo: record.logo === undefined ? [] : [record.logo],
-                    fee: BigInt(record.fee),
-                    decimals: Number(record.decimals),
-                    root_canister_id: [record.root_canister_id],
-                    date_added: BigInt(record.date_added)
-                }
-            });
+        const icrc1Records: ICRC1[] = records.map((record) => {
+            return {
+                name: record.name,
+                ledger: record.ledger,
+                category: mapCategoryCSVToCategory(record.category),
+                index: record.index === undefined || record.index.length < 2 ? [] : [record.index],
+                symbol: record.symbol,
+                logo: record.logo === undefined ? [] : [record.logo],
+                fee: BigInt(record.fee),
+                decimals: Number(record.decimals),
+                root_canister_id: record.root_canister_id ? [record.root_canister_id] : [],
+                date_added: BigInt(record.date_added),
+            };
+        });
 
         const chunkArray = (arr: ICRC1[], chunkSize: number): ICRC1[][] => {
             const chunks: ICRC1[][] = [];
@@ -146,10 +159,10 @@ export class AdminManager {
             return chunks;
         };
 
-        const batches = chunkArray(asd, 10);
+        const batches = chunkArray(icrc1Records, 10);
 
         for (const batch of batches) {
-            console.log("Выгружаю CSV");
+            console.log("Exporting tokens metadata");
             await this.actor.replace_icrc1_canisters(batch);
         }
     }
@@ -159,50 +172,57 @@ export class AdminManager {
     }
 
     async formNeuronsCSV() {
-        const neurons = await this.actor.get_all_neurons() as Array<{ name: string, date_added: bigint, ledger: string, neuron_id: string }>;
-        const fields = ['name', 'ledger', 'neuron_id', 'date_added'];
-        const opts = {fields};
+        const neurons = (await this.actor.get_all_neurons()) as Array<{
+            name: string;
+            date_added: bigint;
+            ledger: string;
+            neuron_id: string;
+        }>;
+        const fields = ["name", "ledger", "neuron_id", "date_added"];
+        const opts = { fields };
         try {
-            const csv = (parse(neurons, opts));
+            const csv = parse(neurons, opts);
             fs.writeFileSync(FILE_PATH_NEURON, csv);
-            console.log('CSV file saved successfully!');
+            console.log("Neurons file saved successfully!");
         } catch (err) {
             console.error(err);
         }
     }
 
     async replaceNeuronsFromCSV() {
-        const csvData = fs.readFileSync(FILE_PATH_NEURON, 'utf8');
-        const records: Array<{ name: string, ledger: string, neuron_id: string, date_added: string }> = csvParse(csvData, {
-            columns: true,
-            skip_empty_lines: true,
+        const csvData = fs.readFileSync(FILE_PATH_NEURON, "utf8");
+        const records: Array<{ name: string; ledger: string; neuron_id: string; date_added: string }> = csvParse(
+            csvData,
+            {
+                columns: true,
+                skip_empty_lines: true,
+            }
+        );
+        const neuronsRecords = records.map((record) => {
+            return {
+                name: record.name,
+                ledger: record.ledger,
+                neuron_id: record.neuron_id,
+                date_added: BigInt(Date.now()),
+            };
         });
-        const asd = records
-            .map((record) => {
-                return {
-                    name: record.name,
-                    ledger: record.ledger,
-                    neuron_id: record.neuron_id,
-                    date_added: BigInt(Date.now())
-                }
-            });
-        await this.actor.replace_all_neurons(asd);
+        await this.actor.replace_all_neurons(neuronsRecords);
     }
 }
 
-
 export async function compressLogo(base64Logo: string): Promise<string> {
-    const uri = base64Logo.split(';base64,')
+    const uri = base64Logo.split(";base64,");
     if (uri.length < 2 || uri[0] === "data:image/svg+xml" || uri[0] === "data:image/gif") {
-        return base64Logo
+        return base64Logo;
     }
-    const buffer = Buffer.from(uri.pop(), 'base64');
+    if (uri.length === 0) {
+        throw new Error("URI array is empty.");
+    }
+    const buffer = Buffer.from(uri.pop() as string, "base64");
     if (buffer.length === 0) {
-        return base64Logo
+        return base64Logo;
     }
-    const resizedBuffer = await sharp(buffer)
-        .resize(100, 100)
-        .toBuffer();
-    let format = uri.pop()
-    return format + ";base64," + resizedBuffer.toString('base64');
+    const resizedBuffer = await sharp(buffer).resize(100, 100).toBuffer();
+    let format = uri.pop();
+    return format + ";base64," + resizedBuffer.toString("base64");
 }

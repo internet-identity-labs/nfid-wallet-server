@@ -9,7 +9,7 @@ on:
         description: 'Choose applicable network'
         required: true
         type: choice
-        options: 
+        options:
           - dev
           - stage
           - ic
@@ -19,7 +19,6 @@ env:
   CANISTER_NAME: identity_manager
   CI_DEBUG: 'true'
   RELEASE_TAG_REGEX: '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
-
 
 jobs:
   pre-release:
@@ -31,24 +30,24 @@ jobs:
         shell: bash
 
     steps:
-      - name: Checkout CI repo.
+      - name: Checkout ci_libs repo
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }}
           repository: internet-identity-labs/ci_libs
           ref: main
           path: ci_libs
+          token: ${{ secrets.PAT }}
 
-      - name: INPUT => Checks branch and network_name
+      - name: Checks branch and network_name
         if: ${{ env.NETWORK_NAME == 'ic' }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-  
+
           if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
             ci_echo_error "Releasing to IC not from tag not allowed." >&2
             exit 1
           fi
-  
+
           # https://semver.org/
           if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
             ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
@@ -60,7 +59,6 @@ jobs:
       - name: Versions
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
-          
           ci_versions
 
   release:
@@ -72,7 +70,7 @@ jobs:
         shell: bash
     strategy:
       fail-fast: false
-      matrix: 
+      matrix:
         canister_name:
           - identity_manager
           - icrc1_registry
