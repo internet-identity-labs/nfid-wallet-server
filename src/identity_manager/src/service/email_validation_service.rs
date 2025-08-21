@@ -1,7 +1,7 @@
 use crate::structure::ttl_hashmap::TtlHashMap;
-use crate::{HttpResponse, to_success_response};
-use std::cell::RefCell;
+use crate::{to_success_response, HttpResponse};
 use ic_cdk::trap;
+use std::cell::RefCell;
 
 thread_local! {
     static TOKENS_REPOSITORY: RefCell<TtlHashMap<String, String>> = RefCell::new(TtlHashMap::new(900000));
@@ -19,14 +19,12 @@ pub fn insert(key: String, value: String, timestamp: u64) -> HttpResponse<bool> 
     });
 
     to_success_response(true)
-} 
+}
 
 pub fn contains(key: String, value: String) -> bool {
-    TOKENS_REPOSITORY.with(|repository| {
-        match repository.borrow().get(&key) {
-            Some(val) => value.eq(val),
-            None => false,
-        }
+    TOKENS_REPOSITORY.with(|repository| match repository.borrow().get(&key) {
+        Some(val) => value.eq(val),
+        None => false,
     })
 }
 

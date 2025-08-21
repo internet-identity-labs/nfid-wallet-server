@@ -102,4 +102,3 @@ fn hash_val(val: Value<'_>) -> Hash {
         Value::Array(elements) => hash_array(elements),
     }
 }
-

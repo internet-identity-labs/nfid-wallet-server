@@ -1,37 +1,69 @@
-import { call, execute } from "../util/call.util"
+import { call, execute } from '../util/call.util';
 
 export const DFX = {
-    CREATE_TEST_PERSON: () => execute(`dfx identity new test --storage-mode plaintext`),
-    USE_TEST_ADMIN: () => execute(`dfx identity use test_admin`),
-    GET_PRINCIPAL: () => call(`dfx identity get-principal`),
-    INIT: () => execute(`dfx start --clean --background`),
-    DEPLOY: (x: string) => execute(`dfx deploy ${x} --no-wallet --mode reinstall -y`),
-    DEPLOY_SPECIFIED: (x: string, y: string) => execute(`dfx deploy ${x} --no-wallet --specified-id ${y} --mode reinstall -y`),
-    UPGRADE_FORCE: (x: string) => execute(`dfx canister install --mode upgrade --upgrade-unchanged ${x} `),
-    GET_CANISTER_ID: (x: string) => call(`dfx canister id ${x}`),
-    ADD_CONTROLLER: (x: string, y: string) => execute(`dfx canister update-settings --add-controller "${x}" ${y}`),
-    SYNC_CONTROLLER: () => execute(`dfx canister call identity_manager sync_controllers`),
-    DEPLOY_II: () => execute(`dfx deploy internet_identity_test --no-wallet --argument '(null)' --mode reinstall -y`),
-    INIT_SALT: () => call(`dfx canister call internet_identity_test init_salt`),
-    CONFIGURE: () => call(`dfx canister call identity_manager configure '(record {env = opt "test"})'`),
-    CONFIGURE_IM: (x: string) => call(`dfx canister call identity_manager configure '(record {${x}})'`),
-    CONFIGURE_REPLICA: (x: string) => call(`dfx canister call identity_manager_replica configure '(record {env = opt "test"; whitelisted_canisters = opt vec { principal "${x}" }})'`),
-    CREATE_ACCOUNT: (x: string) => call(`dfx canister call identity_manager create_account '( record { anchor = ${x} })'`),
-    CREATE_ACCOUNT_WITH_EMAIL: (x: string, y: string) => call(`dfx canister call identity_manager create_account '( record { anchor = ${x}; email = ${y} })'`),
-    CREATE_ACCOUNT_2: () => call(`dfx canister call identity_manager create_account '( record {anchor = 12345})'`),
-    CREATE_ACCOUNT_FULL: () => call(`dfx canister call identity_manager create_account '( record { anchor = 12345; phone_number = "1234567";  token = "1234"})'`),
-    GET_ACCOUNT: (x: string) => call(`dfx canister call ${x} get_account`),
-    GET_ACCOUNT_BY_PRINCIPAL: (x: string, y: string) => call(`dfx canister call ${x} get_account_by_principal '("${y}")'`),
-    GET_PN_SHA2: (x: string, y: string) => call(`dfx canister call ${x} certify_phone_number_sha2 '("${y}", "domain")'`),
-    UPDATE_ACCOUNT_NAME: () => call(`dfx canister call identity_manager update_account '( record {name = opt "TEST_USER_UPDATED";})'`),
-    UPDATE_ACCOUNT_EMAIL: (x: string) => call(`dfx canister call identity_manager update_account '( record { email = opt "${x}";})'`),
-    TOKEN: (x: string, y: string, z: string, d: string) => call(`dfx canister call identity_manager post_token '(record { phone_number_encrypted = "${x}"; phone_number_hash = "${y}"; token = "${z}"; principal_id = "${d}"})'`),
-    RECOVER_ACCOUNT: () => call(`dfx canister call identity_manager recover_account '(12_345:nat64, opt variant {II})'`),
-    REMOVE_ACCOUNT: (x: string) => call(`dfx canister call ${x} remove_account`), 
-    RESTORE_ACCOUNT: (x: string, y: string) => call(`dfx canister call ${x} restore_accounts '("${y}")'`),
-    INIT_ESS: () => call(`dfx canister call eth_secret_storage init '()'`),
-    LEDGER_FILL_BALANCE: (x:string) => call(`dfx canister call ledger transfer "(record { to=vec { ${x} };
+  CREATE_TEST_PERSON: () => execute(`dfx identity new test --storage-mode plaintext`),
+  USE_TEST_ADMIN: () => execute(`dfx identity use test_admin`),
+  GET_PRINCIPAL: () => call(`dfx identity get-principal`),
+  INIT: () => execute(`dfx start --clean --background`),
+  DEPLOY: (x: string) => execute(`dfx deploy ${x} --no-wallet --mode reinstall -y`),
+  DEPLOY_SPECIFIED: (x: string, y: string) =>
+    execute(`dfx deploy ${x} --no-wallet --specified-id ${y} --mode reinstall -y`),
+  UPGRADE_FORCE: (x: string) =>
+    execute(`dfx canister install --mode upgrade --upgrade-unchanged ${x} `),
+  GET_CANISTER_ID: (x: string) => call(`dfx canister id ${x}`),
+  ADD_CONTROLLER: (x: string, y: string) =>
+    execute(`dfx canister update-settings --add-controller "${x}" ${y}`),
+  SYNC_CONTROLLER: () => execute(`dfx canister call identity_manager sync_controllers`),
+  DEPLOY_II: () =>
+    execute(
+      `dfx deploy internet_identity_test --no-wallet --argument '(null)' --mode reinstall -y`
+    ),
+  INIT_SALT: () => call(`dfx canister call internet_identity_test init_salt`),
+  CONFIGURE: () =>
+    call(`dfx canister call identity_manager configure '(record {env = opt "test"})'`),
+  CONFIGURE_IM: (x: string) =>
+    call(`dfx canister call identity_manager configure '(record {${x}})'`),
+  CONFIGURE_REPLICA: (x: string) =>
+    call(
+      `dfx canister call identity_manager_replica configure '(record {env = opt "test"; whitelisted_canisters = opt vec { principal "${x}" }})'`
+    ),
+  CREATE_ACCOUNT: (x: string) =>
+    call(`dfx canister call identity_manager create_account '( record { anchor = ${x} })'`),
+  CREATE_ACCOUNT_WITH_EMAIL: (x: string, y: string) =>
+    call(
+      `dfx canister call identity_manager create_account '( record { anchor = ${x}; email = ${y} })'`
+    ),
+  CREATE_ACCOUNT_2: () =>
+    call(`dfx canister call identity_manager create_account '( record {anchor = 12345})'`),
+  CREATE_ACCOUNT_FULL: () =>
+    call(
+      `dfx canister call identity_manager create_account '( record { anchor = 12345; phone_number = "1234567";  token = "1234"})'`
+    ),
+  GET_ACCOUNT: (x: string) => call(`dfx canister call ${x} get_account`),
+  GET_ACCOUNT_BY_PRINCIPAL: (x: string, y: string) =>
+    call(`dfx canister call ${x} get_account_by_principal '("${y}")'`),
+  GET_PN_SHA2: (x: string, y: string) =>
+    call(`dfx canister call ${x} certify_phone_number_sha2 '("${y}", "domain")'`),
+  UPDATE_ACCOUNT_NAME: () =>
+    call(
+      `dfx canister call identity_manager update_account '( record {name = opt "TEST_USER_UPDATED";})'`
+    ),
+  UPDATE_ACCOUNT_EMAIL: (x: string) =>
+    call(`dfx canister call identity_manager update_account '( record { email = opt "${x}";})'`),
+  TOKEN: (x: string, y: string, z: string, d: string) =>
+    call(
+      `dfx canister call identity_manager post_token '(record { phone_number_encrypted = "${x}"; phone_number_hash = "${y}"; token = "${z}"; principal_id = "${d}"})'`
+    ),
+  RECOVER_ACCOUNT: () =>
+    call(`dfx canister call identity_manager recover_account '(12_345:nat64, opt variant {II})'`),
+  REMOVE_ACCOUNT: (x: string) => call(`dfx canister call ${x} remove_account`),
+  RESTORE_ACCOUNT: (x: string, y: string) =>
+    call(`dfx canister call ${x} restore_accounts '("${y}")'`),
+  INIT_ESS: () => call(`dfx canister call eth_secret_storage init '()'`),
+  LEDGER_FILL_BALANCE: (x: string) =>
+    call(`dfx canister call ledger transfer "(record { to=vec { ${x} };
           amount=record { e8s=200_000_000 }; fee=record { e8s=10_000 }; memo=0:nat64; } )"`),
-    DEPLOY_ECDSA: () => execute(`dfx deploy signer_ic --no-wallet --mode reinstall -y`),
-    DEPLOY_WITH_ARGUMENT: (x: string, y: string) => execute(`dfx deploy ${x} --no-wallet --argument '(${y})' --mode reinstall -y`),
-}
+  DEPLOY_ECDSA: () => execute(`dfx deploy signer_ic --no-wallet --mode reinstall -y`),
+  DEPLOY_WITH_ARGUMENT: (x: string, y: string) =>
+    execute(`dfx deploy ${x} --no-wallet --argument '(${y})' --mode reinstall -y`),
+};

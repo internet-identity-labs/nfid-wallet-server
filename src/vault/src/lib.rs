@@ -5,35 +5,38 @@ extern crate maplit;
 use candid::{candid_method, export_service, Principal};
 use ic_cdk::api::call::CallResult;
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
-use ic_cdk::{call, caller, id, trap};
 use ic_cdk::export::candid;
+use ic_cdk::{call, caller, id, trap};
 use ic_cdk_macros::*;
 
 use crate::enums::{Backup, TransactionState};
 use crate::memory::{Conf, CONF};
-use crate::policy_service::{Policy, PolicyType, ThresholdPolicy};
 use crate::policy_service::Currency::ICP;
-use crate::request::{CanisterIdRequest, PolicyRegisterRequest, TransactionApproveRequest, TransactionRegisterRequest, VaultMemberRequest, VaultRegisterRequest, WalletRegisterRequest};
+use crate::policy_service::{Policy, PolicyType, ThresholdPolicy};
+use crate::request::{
+    CanisterIdRequest, PolicyRegisterRequest, TransactionApproveRequest,
+    TransactionRegisterRequest, VaultMemberRequest, VaultRegisterRequest, WalletRegisterRequest,
+};
 use crate::security_service::{trap_if_not_permitted, verify_wallets};
 use crate::transaction_service::Transaction;
-use crate::TransactionState::Approved;
 use crate::transfer_service::transfer;
 use crate::user_service::{get_or_new_by_caller, User};
 use crate::util::{caller_to_address, to_array};
 use crate::vault_service::{Vault, VaultRole};
 use crate::wallet_service::{generate_address, Wallet};
+use crate::TransactionState::Approved;
 
+mod enums;
+mod memory;
+mod policy_service;
+mod request;
+mod security_service;
+mod transaction_service;
+mod transfer_service;
 mod user_service;
+mod util;
 mod vault_service;
 mod wallet_service;
-mod policy_service;
-mod transaction_service;
-mod util;
-mod enums;
-mod security_service;
-mod transfer_service;
-mod request;
-mod memory;
 
 #[init]
 #[candid_method(init)]
@@ -50,7 +53,8 @@ fn init(conf: Option<Conf>) {
 #[candid_method(update)]
 async fn register_vault(request: VaultRegisterRequest) -> Vault {
     let mut user = user_service::get_or_new_by_caller();
-    let mut vault = vault_service::register(user.address.clone(), request.name, request.description);
+    let mut vault =
+        vault_service::register(user.address.clone(), request.name, request.description);
     let threshold_policy = ThresholdPolicy {
         amount_threshold: 0,
         currency: ICP,
@@ -91,7 +95,13 @@ async fn get_vaults_by_address(address: String) -> Vec<Vault> {
 async fn store_member(request: VaultMemberRequest) -> Vault {
     trap_if_not_permitted(request.vault_id, vec![VaultRole::Admin]);
     let mut user = user_service::get_or_new_by_address(request.address);
-    let vault = vault_service::add_vault_member(request.vault_id, &user, request.role, request.name, request.state);
+    let vault = vault_service::add_vault_member(
+        request.vault_id,
+        &user,
+        request.role,
+        request.name,
+        request.state,
+    );
     user.vaults.insert(vault.id.clone());
     user_service::restore(user);
     vault_service::restore(&vault)
@@ -139,7 +149,6 @@ async fn get_wallets(vault_id: u64) -> Vec<Wallet> {
     wallet_service::get_wallets(vault[0].wallets.clone())
 }
 
-
 #[query]
 #[candid_method(query)]
 async fn get_policies(vault_id: u64) -> Vec<Policy> {
@@ -164,8 +173,15 @@ async fn register_transaction(request: TransactionRegisterRequest) -> Transactio
     let vaults = vault_service::get(wallet.vaults.clone());
     let vault = vaults.first().unwrap(); //for now one2one
     trap_if_not_permitted(vault.id, vec![VaultRole::Admin, VaultRole::Member]);
-    let policy = policy_service::define_correct_policy(vault.policies.clone(), request.amount, &wallet.uid);
-    let transaction = transaction_service::register_transaction(request.amount, request.address, wallet.uid, policy, vault.members.len());
+    let policy =
+        policy_service::define_correct_policy(vault.policies.clone(), request.amount, &wallet.uid);
+    let transaction = transaction_service::register_transaction(
+        request.amount,
+        request.address,
+        wallet.uid,
+        policy,
+        vault.members.len(),
+    );
     let approve = TransactionApproveRequest {
         transaction_id: transaction.id,
         state: TransactionState::Approved,
@@ -187,9 +203,12 @@ async fn approve_transaction(request: TransactionApproveRequest) -> Transaction 
     trap_if_not_permitted(ts.vault_id, vec![VaultRole::Admin, VaultRole::Member]);
     let mut approved_transaction = transaction_service::approve_transaction(ts, request.state);
     if Approved.eq(&approved_transaction.state) {
-        let result = transfer(approved_transaction.amount,
-                              approved_transaction.to.clone(),
-                              approved_transaction.from.clone()).await;
+        let result = transfer(
+            approved_transaction.amount,
+            approved_transaction.to.clone(),
+            approved_transaction.from.clone(),
+        )
+        .await;
         match result {
             Ok(block) => {
                 approved_transaction.block_index = Some(block);
@@ -207,13 +226,12 @@ async fn approve_transaction(request: TransactionApproveRequest) -> Transaction 
 
 #[update]
 async fn sync_controllers() -> Vec<String> {
-    let res: CallResult<(CanisterStatusResponse, )> = call(
+    let res: CallResult<(CanisterStatusResponse,)> = call(
         Principal::management_canister(),
         "canister_status",
-        (CanisterIdRequest {
-            canister_id: id(),
-        }, ),
-    ).await;
+        (CanisterIdRequest { canister_id: id() },),
+    )
+    .await;
 
     let controllers = res.unwrap().0.settings.controllers;
     CONF.with(|c| c.borrow_mut().controllers.replace(controllers.clone()));
@@ -241,26 +259,20 @@ fn export_candid() -> String {
     __export_service()
 }
 
-
 #[pre_upgrade]
 fn pre_upgrade() {
     memory::pre_upgrade()
 }
-
 
 #[post_upgrade]
 pub fn post_upgrade() {
     memory::post_upgrade()
 }
 
-
 fn trap_if_not_authenticated() {
     let princ = caller();
-    match CONF.with(|c| c.borrow_mut().controllers.clone())
-    {
-        None => {
-            trap("Unauthorised")
-        }
+    match CONF.with(|c| c.borrow_mut().controllers.clone()) {
+        None => trap("Unauthorised"),
         Some(controllers) => {
             if !controllers.contains(&princ) {
                 trap("Unauthorised")

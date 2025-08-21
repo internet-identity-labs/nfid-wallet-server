@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 
 use proc_macro2::Ident;
 use quote::{format_ident, quote};
-use syn::{FnArg, ItemFn, parse_macro_input, Pat, PatIdent, PatType, Signature};
+use syn::{parse_macro_input, FnArg, ItemFn, Pat, PatIdent, PatType, Signature};
 
 #[proc_macro_attribute]
 pub fn two_f_a(_: TokenStream, item: TokenStream) -> TokenStream {

@@ -27,6 +27,5 @@ pub fn get_access_point_service() -> AccessPointService<AccessPointRepo> {
 }
 
 pub fn get_account_repo() -> AccountRepo {
-    get!(&container![], AccountRepo)
-        .expect("No account repository found in the container.")
+    get!(&container![], AccountRepo).expect("No account repository found in the container.")
 }

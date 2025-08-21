@@ -1,14 +1,14 @@
+use crate::http::requests::Challenge;
+use crate::repository::repo::{CAPTCHA_CAHLLENGES, CONFIGURATION};
+use candid::Principal;
 use captcha::fonts::Default as DefaultFont;
 use captcha::fonts::Font;
+use ic_cdk::api::time;
 use ic_cdk::{call, print, trap};
 use lazy_static::lazy_static;
 use rand_core::{RngCore, SeedableRng};
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
-use candid::Principal;
-use ic_cdk::api::time;
-use crate::http::requests::Challenge;
-use crate::repository::repo::{CAPTCHA_CAHLLENGES, CONFIGURATION};
 
 // Some time helpers
 const fn secs_to_nanos(secs: u64) -> u64 {
@@ -67,7 +67,7 @@ lazy_static! {
 
 }
 
-pub async fn generate_captcha() -> Challenge{
+pub async fn generate_captcha() -> Challenge {
     let time = time();
     let mut rng = &mut make_rng().await;
     let key = random_string(&mut rng, 10);
@@ -77,29 +77,20 @@ pub async fn generate_captcha() -> Challenge{
     });
     let chars: Option<String>;
     let challenge: Challenge;
-    let max_free_captcha_per_minute = CONFIGURATION.with(|config| config.borrow().max_free_captcha_per_minute);
+    let max_free_captcha_per_minute =
+        CONFIGURATION.with(|config| config.borrow().max_free_captcha_per_minute);
     if challenges_in_progress <= max_free_captcha_per_minute as usize {
-        challenge = Challenge {
-            png_base64: None,
-            challenge_key: key.to_string(),
-        };
+        challenge = Challenge { png_base64: None, challenge_key: key.to_string() };
         chars = None;
     } else {
         let (Base64(png_base64), res_chars) = create_captcha(rng);
 
-        challenge = Challenge {
-            png_base64: Some(png_base64),
-            challenge_key: key.to_string(),
-        };
+        challenge = Challenge { png_base64: Some(png_base64), challenge_key: key.to_string() };
         chars = Some(res_chars);
     }
     CAPTCHA_CAHLLENGES.with(|challenges| {
         challenges.borrow_mut().clean_expired_entries(time);
-        challenges.borrow_mut().insert(
-            key.clone(),
-            chars,
-            time,
-        );
+        challenges.borrow_mut().insert(key.clone(), chars, time);
     });
     challenge
 }
@@ -184,7 +175,6 @@ pub fn check_captcha_solution(solution_attempt: String, solution: String) -> Res
     Ok(())
 }
 
-
 /// Calls raw rand to retrieve a random salt (32 bytes).
 async fn random_salt() -> Salt {
     let res: Vec<u8> = match call(Principal::management_canister(), "raw_rand", ()).await {
@@ -192,10 +182,7 @@ async fn random_salt() -> Salt {
         Err((_, err)) => trap(&format!("failed to get salt: {err}")),
     };
     let salt: Salt = res[..].try_into().unwrap_or_else(|_| {
-        trap(&format!(
-            "expected raw randomness to be of length 32, got {}",
-            res.len()
-        ));
+        trap(&format!("expected raw randomness to be of length 32, got {}", res.len()));
     });
     salt
 }

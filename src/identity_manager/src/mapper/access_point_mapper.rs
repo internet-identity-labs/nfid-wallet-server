@@ -1,9 +1,9 @@
-use candid::Principal;
 use crate::http::requests::DeviceType;
-use crate::ic_service::{DeviceData};
-use crate::repository::repo::{BasicEntity};
+use crate::ic_service::DeviceData;
 use crate::repository::access_point_repo::AccessPoint;
+use crate::repository::repo::BasicEntity;
 use crate::requests::{AccessPointRequest, AccessPointResponse};
+use candid::Principal;
 
 pub fn access_point_to_access_point_response(access_point: AccessPoint) -> AccessPointResponse {
     AccessPointResponse {
@@ -36,7 +36,7 @@ pub fn recovery_device_data_to_access_point(device: DeviceData) -> AccessPoint {
     let access_point = AccessPoint {
         principal_id: Principal::self_authenticating(device.pubkey).to_text(),
         credential_id: None,
-        icon:Some("document".to_string()),
+        icon: Some("document".to_string()),
         device: Some("Recovery phrase".to_string()),
         browser: Some("".to_string()),
         last_used: Some(basic.get_created_date().clone()),

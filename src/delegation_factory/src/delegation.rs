@@ -1,16 +1,16 @@
 use std::collections::HashMap;
 
 use candid::Principal;
-use canister_sig_util::CanisterSigPublicKey;
 use canister_sig_util::signature_map::SignatureMap;
-use ic_cdk::{id, print, trap};
+use canister_sig_util::CanisterSigPublicKey;
 use ic_cdk::api::time;
+use ic_cdk::{id, print, trap};
 use ic_certification::Hash;
 use internet_identity_interface::internet_identity::types::*;
 use serde_bytes::ByteBuf;
 
-use crate::{DAY_NS, hash, MINUTE_NS, state, update_root_hash};
 use crate::state::get_salt;
+use crate::{hash, state, update_root_hash, DAY_NS, MINUTE_NS};
 
 // The expiration used for delegations if none is specified
 // (calculated as now() + this)
@@ -42,12 +42,8 @@ pub fn prepare_delegation(
 
     update_root_hash();
 
-    (
-        ByteBuf::from(der_encode_canister_sig_key(seed.to_vec())),
-        expiration,
-    )
+    (ByteBuf::from(der_encode_canister_sig_key(seed.to_vec())), expiration)
 }
-
 
 pub fn get_delegation(
     anchor_number: AnchorNumber,
@@ -70,11 +66,7 @@ pub fn get_delegation(
             Some(certified_assets.root_hash()),
         ) {
             Ok(signature) => GetDelegationResponse::SignedDelegation(SignedDelegation {
-                delegation: Delegation {
-                    pubkey: session_key,
-                    expiration,
-                    targets,
-                },
+                delegation: Delegation { pubkey: session_key, expiration, targets },
                 signature: ByteBuf::from(signature),
             }),
             Err(_) => GetDelegationResponse::NoSuchDelegation,
@@ -136,11 +128,7 @@ fn add_delegation_signature(
     expiration: Timestamp,
     targets: Option<Vec<Principal>>,
 ) {
-    let msg_hash = delegation_signature_msg_hash(&Delegation {
-        pubkey: pk,
-        expiration,
-        targets,
-    });
+    let msg_hash = delegation_signature_msg_hash(&Delegation { pubkey: pk, expiration, targets });
     sigs.add_signature(seed, msg_hash);
 }
 

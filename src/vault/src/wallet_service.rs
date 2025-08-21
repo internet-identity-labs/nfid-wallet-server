@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use candid::{CandidType, Principal};
 use ic_cdk::{call, trap};
 use serde::Deserialize;
-use serde::{Serialize};
+use serde::Serialize;
 
 use crate::enums::ObjectState;
 use crate::memory::WALLETS;
@@ -53,15 +53,9 @@ pub fn update(wallet: Wallet) -> Wallet {
 }
 
 pub fn get_by_uid(uid: &String) -> Wallet {
-    WALLETS.with(|wallets| {
-        match wallets.borrow().get(uid) {
-            None => {
-                trap("Not registered")
-            }
-            Some(wallet) => {
-                wallet.clone()
-            }
-        }
+    WALLETS.with(|wallets| match wallets.borrow().get(uid) {
+        None => trap("Not registered"),
+        Some(wallet) => wallet.clone(),
     })
 }
 
@@ -70,12 +64,8 @@ pub fn get_wallets(uids: HashSet<String>) -> Vec<Wallet> {
         let mut result: Vec<Wallet> = Default::default();
         for key in uids {
             match wallets.borrow().get(&key) {
-                None => {
-                    trap("Not registered")
-                }
-                Some(wallet) => {
-                    result.push(wallet.clone())
-                }
+                None => trap("Not registered"),
+                Some(wallet) => result.push(wallet.clone()),
             }
         }
         result
@@ -84,11 +74,8 @@ pub fn get_wallets(uids: HashSet<String>) -> Vec<Wallet> {
 
 pub async fn generate_address() -> String {
     let raw_rand: Vec<u8> = match call(Principal::management_canister(), "raw_rand", ()).await {
-        Ok((res, )) => res,
+        Ok((res,)) => res,
         Err((_, err)) => trap(&format!("failed to get sub: {}", err)),
     };
     hex::encode(raw_rand)
 }
-
-
-

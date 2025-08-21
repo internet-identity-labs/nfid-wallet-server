@@ -11,7 +11,7 @@ import {
 import { Principal } from '@dfinity/principal';
 import { PipeArrayBuffer, lebDecode } from '@dfinity/candid';
 import { CertificateTimeError, CertificateVerificationError } from './error';
-import * as crypto from "crypto";
+import * as crypto from 'crypto';
 
 export interface VerifyCertificationParams {
   canisterId: Principal;
@@ -21,25 +21,31 @@ export interface VerifyCertificationParams {
   maxCertificateTimeOffsetMs: number;
 }
 
-export async function verifyCertifiedResponse(certificate: Uint8Array | number[], witness: Uint8Array | number[], principal: string, canisterId: string, newOwnedString: string) {
-  const agent = new HttpAgent({host: "http://127.0.0.1:8000"});
+export async function verifyCertifiedResponse(
+  certificate: Uint8Array | number[],
+  witness: Uint8Array | number[],
+  principal: string,
+  canisterId: string,
+  newOwnedString: string
+) {
+  const agent = new HttpAgent({ host: 'http://127.0.0.1:8000' });
   await agent.fetchRootKey();
   const tree = await verifyCertification({
-      canisterId: Principal.fromText(canisterId),
-      encodedCertificate: new Uint8Array(certificate).buffer,
-      encodedTree: new Uint8Array(witness).buffer,
-      rootKey: agent.rootKey,
-      maxCertificateTimeOffsetMs: 50000,
+    canisterId: Principal.fromText(canisterId),
+    encodedCertificate: new Uint8Array(certificate).buffer,
+    encodedTree: new Uint8Array(witness).buffer,
+    rootKey: agent.rootKey,
+    maxCertificateTimeOffsetMs: 50000,
   });
 
   const treeHash = lookup_path([principal], tree);
   if (!treeHash) {
-      throw new Error('Response not found in tree');
+    throw new Error('Response not found in tree');
   }
   const sha256Result = crypto.createHash('sha256').update(newOwnedString).digest();
   const byteArray = new Uint8Array(sha256Result);
   if (!equal(byteArray, (treeHash as LookupResultFound).value as ArrayBuffer)) {
-      throw new Error('Response hash does not match');
+    throw new Error('Response hash does not match');
   }
 }
 
@@ -67,22 +73,22 @@ export async function verifyCertification({
 function validateCertificateTime(
   certificate: Certificate,
   maxCertificateTimeOffsetMs: number,
-  nowMs: number,
+  nowMs: number
 ): void {
   const certificateTimeNs = lebDecode(
-    new PipeArrayBuffer((certificate.lookup(['time']) as LookupResultFound).value as ArrayBuffer),
+    new PipeArrayBuffer((certificate.lookup(['time']) as LookupResultFound).value as ArrayBuffer)
   );
   const certificateTimeMs = Number(certificateTimeNs / BigInt(1_000_000));
 
   if (certificateTimeMs - maxCertificateTimeOffsetMs > nowMs) {
     throw new CertificateTimeError(
-      `Invalid certificate: time ${certificateTimeMs} is too far in the future (current time: ${nowMs})`,
+      `Invalid certificate: time ${certificateTimeMs} is too far in the future (current time: ${nowMs})`
     );
   }
 
   if (certificateTimeMs + maxCertificateTimeOffsetMs < nowMs) {
     throw new CertificateTimeError(
-      `Invalid certificate: time ${certificateTimeMs} is too far in the past (current time: ${nowMs})`,
+      `Invalid certificate: time ${certificateTimeMs} is too far in the past (current time: ${nowMs})`
     );
   }
 }
@@ -90,7 +96,7 @@ function validateCertificateTime(
 async function validateTree(
   tree: HashTree,
   certificate: Certificate,
-  canisterId: Principal,
+  canisterId: Principal
 ): Promise<void> {
   const treeRootHash = await reconstruct(tree);
   const certifiedData = certificate.lookup([
@@ -100,14 +106,12 @@ async function validateTree(
   ]);
 
   if (!certifiedData) {
-    throw new CertificateVerificationError(
-      'Could not find certified data in the certificate.',
-    );
+    throw new CertificateVerificationError('Could not find certified data in the certificate.');
   }
 
   if (!equal((certifiedData as LookupResultFound).value as ArrayBuffer, treeRootHash)) {
     throw new CertificateVerificationError(
-      'Tree root hash did not match the certified data in the certificate.',
+      'Tree root hash did not match the certified data in the certificate.'
     );
   }
 }

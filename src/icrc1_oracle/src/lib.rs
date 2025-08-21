@@ -2,7 +2,7 @@ use core::hash::Hash;
 use std::cell::RefCell;
 use std::collections::HashSet;
 
-use candid::{export_service};
+use candid::export_service;
 use candid::{CandidType, Nat, Principal};
 use ic_cdk::api::call::CallResult;
 use ic_cdk::api::time;
@@ -145,10 +145,7 @@ pub async fn store_icrc1_canister(request: ICRC1Request) {
     });
     if request.index.is_some() {
         Principal::from_text(
-            request
-                .index
-                .clone()
-                .expect("The request.index failed after existence check."),
+            request.index.clone().expect("The request.index failed after existence check."),
         )
         .unwrap_or_else(|_| {
             trap("Invalid index principal");
@@ -209,12 +206,7 @@ pub async fn count_icrc1_canisters() -> u64 {
 pub async fn get_icrc1_paginated(offset: u64, limit: u64) -> Vec<ICRC1> {
     ICRC_REGISTRY.with(|registry| {
         let registry = registry.borrow();
-        registry
-            .iter()
-            .skip(offset as usize)
-            .take(limit as usize)
-            .cloned()
-            .collect()
+        registry.iter().skip(offset as usize).take(limit as usize).cloned().collect()
     })
 }
 
@@ -322,11 +314,7 @@ pub async fn btc_select_user_utxos_fee(
         let all_utxos = get_all_utxos(
             params.network,
             source_address.clone(),
-            Some(
-                params
-                    .min_confirmations
-                    .unwrap_or(MIN_CONFIRMATIONS_ACCEPTED_BTC_TX),
-            ),
+            Some(params.min_confirmations.unwrap_or(MIN_CONFIRMATIONS_ACCEPTED_BTC_TX)),
         )
         .await
         .map_err(|msg| SelectedUtxosFeeError::InternalError { msg })?;
@@ -346,10 +334,7 @@ pub async fn btc_select_user_utxos_fee(
         // But if there are no selcted utxos, no tx is possible. Therefore, no fee should be
         // present.
         if selected_utxos.is_empty() {
-            return Ok(SelectedUtxosFeeResponse {
-                utxos: selected_utxos,
-                fee_satoshis: 0,
-            });
+            return Ok(SelectedUtxosFeeResponse { utxos: selected_utxos, fee_satoshis: 0 });
         }
 
         let fee_satoshis = estimate_fee(
@@ -358,10 +343,7 @@ pub async fn btc_select_user_utxos_fee(
             output_count as u64,
         );
 
-        Ok(SelectedUtxosFeeResponse {
-            utxos: selected_utxos,
-            fee_satoshis,
-        })
+        Ok(SelectedUtxosFeeResponse { utxos: selected_utxos, fee_satoshis })
     }
     inner(params).await.into()
 }
@@ -428,11 +410,7 @@ pub fn stable_save() {
         let registry = registry.borrow();
         registry.clone()
     });
-    let mem = Memory {
-        registry,
-        config,
-        neurons: Some(neurons),
-    };
+    let mem = Memory { registry, config, neurons: Some(neurons) };
     storage::stable_save((mem,))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }

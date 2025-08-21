@@ -20,7 +20,9 @@ use crate::repository::account_repo::{
 };
 use crate::repository::application_repo::{Application, ApplicationRepo};
 use crate::repository::persona_repo::PersonaRepo;
-use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo, CAPTCHA_CAHLLENGES, CONFIGURATION};
+use crate::repository::repo::{
+    AdminRepo, Configuration, ConfigurationRepo, ControllersRepo, CAPTCHA_CAHLLENGES, CONFIGURATION,
+};
 use crate::requests::{
     AccessPointRemoveRequest, AccessPointRequest, AccessPointResponse, AccountRequest,
     ConfigurationRequest, ConfigurationResponse, PersonaResponse,
@@ -72,9 +74,7 @@ async fn configure(request: ConfigurationRequest) -> () {
         lambda: request.lambda.unwrap_or(default.lambda),
         token_ttl: if request.token_ttl.is_some() {
             Duration::from_secs(
-                request
-                    .token_ttl
-                    .expect("The request.token_ttl failed after existence check."),
+                request.token_ttl.expect("The request.token_ttl failed after existence check."),
             )
         } else {
             default.token_ttl
@@ -95,11 +95,7 @@ async fn configure(request: ConfigurationRequest) -> () {
         } else {
             default.whitelisted_phone_numbers
         },
-        heartbeat: if request.heartbeat.is_some() {
-            request.heartbeat
-        } else {
-            default.heartbeat
-        },
+        heartbeat: if request.heartbeat.is_some() { request.heartbeat } else { default.heartbeat },
         backup_canister_id: if request.backup_canister_id.is_some() {
             request.backup_canister_id
         } else {
@@ -117,11 +113,7 @@ async fn configure(request: ConfigurationRequest) -> () {
         } else {
             default.whitelisted_canisters
         },
-        env: if request.env.is_some() {
-            request.env
-        } else {
-            default.env
-        },
+        env: if request.env.is_some() { request.env } else { default.env },
         git_branch: if request.git_branch.is_some() {
             request.git_branch
         } else {
@@ -133,16 +125,16 @@ async fn configure(request: ConfigurationRequest) -> () {
             default.commit_hash
         },
         operator: if request.operator.is_some() {
-            request
-                .operator
-                .expect("The request.operator failed after existence check.")
+            request.operator.expect("The request.operator failed after existence check.")
         } else {
             default.operator
         },
         account_creation_paused: request
             .account_creation_paused
             .unwrap_or(default.account_creation_paused),
-        max_free_captcha_per_minute: request.max_free_captcha_per_minute.unwrap_or(default.max_free_captcha_per_minute),
+        max_free_captcha_per_minute: request
+            .max_free_captcha_per_minute
+            .unwrap_or(default.max_free_captcha_per_minute),
         test_captcha: request.test_captcha.unwrap_or(default.test_captcha),
     };
     CONFIGURATION.with(|config| {
@@ -203,9 +195,7 @@ async fn create_access_point(
     access_point_request: AccessPointRequest,
 ) -> HttpResponse<Vec<AccessPointResponse>> {
     let access_point_service = get_access_point_service();
-    let response = access_point_service
-        .create_access_point(access_point_request.clone())
-        .await;
+    let response = access_point_service.create_access_point(access_point_request.clone()).await;
     response
 }
 
@@ -240,7 +230,6 @@ async fn remove_access_point(
 #[update]
 #[paused]
 async fn create_account(account_request: AccountRequest) -> HttpResponse<AccountResponse> {
-
     let mut account_service = get_account_service();
     let response = account_service.create_account(account_request).await;
     response
@@ -269,10 +258,7 @@ async fn get_account_by_anchor(
 #[operator]
 async fn pause_account_creation(pause: bool) {
     let config = ConfigurationRepo::get();
-    ConfigurationRepo::save(Configuration {
-        account_creation_paused: pause,
-        ..config
-    });
+    ConfigurationRepo::save(Configuration { account_creation_paused: pause, ..config });
 }
 
 /// Adds the principal ID and email address to temporary storage for email validation during account creation.
@@ -376,11 +362,8 @@ async fn read_applications() -> HttpResponse<Vec<Application>> {
 async fn get_all_accounts_json(from: u32, mut to: u32) -> String {
     let account_repo = get_account_repo();
     let mut accounts: Vec<Account> = account_repo.get_all_accounts();
-    accounts.sort_by(|a, b| {
-        a.base_fields
-            .get_created_date()
-            .cmp(&b.base_fields.get_created_date())
-    });
+    accounts
+        .sort_by(|a, b| a.base_fields.get_created_date().cmp(&b.base_fields.get_created_date()));
     let len = accounts.len() as u32;
     if to > len {
         to = len;
@@ -444,9 +427,7 @@ async fn save_temp_stack_to_rebuild_device_index() -> String {
 #[update]
 async fn sync_recovery_phrase_from_internet_identity(anchor: u64) -> HttpResponse<AccountResponse> {
     let account_service = get_account_service();
-    account_service
-        .sync_recovery_phrase_from_internet_identity(anchor)
-        .await
+    account_service.sync_recovery_phrase_from_internet_identity(anchor).await
 }
 
 /// Returns a certified response.
@@ -466,11 +447,7 @@ async fn get_root_certified() -> CertifiedResponse {
             let certificate =
                 ic_cdk::api::data_certificate().expect("No data certificate available");
 
-            CertifiedResponse {
-                response: principal,
-                certificate,
-                witness,
-            }
+            CertifiedResponse { response: principal, certificate, witness }
         }
     }
 }

@@ -46,7 +46,7 @@ pub struct SwapTransaction {
     pub source_amount: Nat,
     pub target_amount: Nat,
     pub uid: String,
-    pub swap_provider: SwapProvider
+    pub swap_provider: SwapProvider,
 }
 
 impl Hash for SwapTransaction {
@@ -71,16 +71,13 @@ pub enum SwapStage {
     Completed,
 }
 
-
 struct State {
     im_canister: Cell<Option<Principal>>,
 }
 
 impl Default for State {
     fn default() -> Self {
-        Self {
-            im_canister: Cell::new(None),
-        }
+        Self { im_canister: Cell::new(None) }
     }
 }
 
@@ -90,10 +87,11 @@ impl Default for State {
 #[candid_method(init)]
 fn init(maybe_arg: Option<InitArgs>) {
     if maybe_arg.is_some() {
-        init_im_canister(maybe_arg.expect("The maybe_arg failed after existence check.").im_canister);
+        init_im_canister(
+            maybe_arg.expect("The maybe_arg failed after existence check.").im_canister,
+        );
     }
 }
-
 
 /// Returns all transactions for the specified caller ID.
 #[query]
@@ -131,11 +129,8 @@ async fn save_persistent_state() {
     save_to_temp_memory().await;
 }
 
-
 pub fn init_im_canister(im_canister: Principal) {
-    STATE.with(|s| {
-        s.borrow().im_canister.set(Some(im_canister))
-    });
+    STATE.with(|s| s.borrow().im_canister.set(Some(im_canister)));
 }
 
 fn main() {}
@@ -166,7 +161,7 @@ pub struct SwapTransactionTempMemory {
     pub source_amount: Nat,
     pub target_amount: Nat,
     pub uid: String,
-    pub swap_provider: Option<SwapProvider>
+    pub swap_provider: Option<SwapProvider>,
 }
 
 impl Hash for SwapTransactionTempMemory {
@@ -182,13 +177,11 @@ impl PartialEq for SwapTransactionTempMemory {
 }
 
 pub fn get_im_canister() -> Principal {
-    STATE.with(|s| {
-        s.borrow().im_canister.get().expect("IM canister not set")
-    })
+    STATE.with(|s| s.borrow().im_canister.get().expect("IM canister not set"))
 }
 
 pub async fn init_from_memory() {
-    let (mo, ): (TempMemory,) = storage::stable_restore()
+    let (mo,): (TempMemory,) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
     STATE.with(|s| {
         s.borrow_mut().im_canister.set(mo.im_canister);
@@ -197,24 +190,31 @@ pub async fn init_from_memory() {
         let mut map = trss.borrow_mut();
         if let Some(transactions) = mo.transactions {
             for (k, v) in transactions {
-                let swap_transactions: HashSet<SwapTransaction> = v.into_iter().map(|t| SwapTransaction {
-                    start_time: t.start_time,
-                    end_time: t.end_time,
-                    transfer_id: t.transfer_id,
-                    transfer_nfid_id: t.transfer_nfid_id,
-                    deposit: t.deposit,
-                    swap: t.swap,
-                    withdraw: t.withdraw,
-                    errors: t.error.map(|e| vec![Error { message: e, time: t.end_time.unwrap_or(t.start_time) }])
-                        .unwrap_or(t.errors.unwrap_or(Vec::new())),
-                    stage: t.stage,
-                    source_ledger: t.source_ledger,
-                    target_ledger: t.target_ledger,
-                    source_amount: t.source_amount,
-                    target_amount: t.target_amount,
-                    uid: t.uid,
-                    swap_provider: t.swap_provider.unwrap_or(SwapProvider::IcpSwap),
-                }).collect();
+                let swap_transactions: HashSet<SwapTransaction> = v
+                    .into_iter()
+                    .map(|t| SwapTransaction {
+                        start_time: t.start_time,
+                        end_time: t.end_time,
+                        transfer_id: t.transfer_id,
+                        transfer_nfid_id: t.transfer_nfid_id,
+                        deposit: t.deposit,
+                        swap: t.swap,
+                        withdraw: t.withdraw,
+                        errors: t
+                            .error
+                            .map(|e| {
+                                vec![Error { message: e, time: t.end_time.unwrap_or(t.start_time) }]
+                            })
+                            .unwrap_or(t.errors.unwrap_or(Vec::new())),
+                        stage: t.stage,
+                        source_ledger: t.source_ledger,
+                        target_ledger: t.target_ledger,
+                        source_amount: t.source_amount,
+                        target_amount: t.target_amount,
+                        uid: t.uid,
+                        swap_provider: t.swap_provider.unwrap_or(SwapProvider::IcpSwap),
+                    })
+                    .collect();
                 map.insert(k, swap_transactions);
             }
         }
@@ -222,45 +222,47 @@ pub async fn init_from_memory() {
 }
 
 pub async fn save_to_temp_memory() {
-    let (im_canister, ) = STATE.with(|s| {
-        (s.borrow_mut().im_canister.get(),)
-    });
-    let trs_current = TRANSACTIONS.with(|trs| {
-        trs.borrow().clone()
-    });
+    let (im_canister,) = STATE.with(|s| (s.borrow_mut().im_canister.get(),));
+    let trs_current = TRANSACTIONS.with(|trs| trs.borrow().clone());
 
-    let trs_m: HashMap<String, HashSet<SwapTransactionTempMemory>> = trs_current.into_iter()
-        .map(|(k, v)| (k, v.into_iter()
-            .map(|t| SwapTransactionTempMemory {
-                start_time: t.start_time,
-                end_time: t.end_time,
-                transfer_id: t.transfer_id,
-                transfer_nfid_id: t.transfer_nfid_id,
-                deposit: t.deposit,
-                swap: t.swap,
-                withdraw: t.withdraw,
-                errors: if t.errors.is_empty() { None } else { Some(t.errors) },
-                error: None,
-                stage: t.stage,
-                source_ledger: t.source_ledger,
-                target_ledger: t.target_ledger,
-                source_amount: t.source_amount,
-                target_amount: t.target_amount,
-                uid: t.uid,
-                swap_provider: Some(t.swap_provider),
-            }).collect::<HashSet<_>>())).collect();
+    let trs_m: HashMap<String, HashSet<SwapTransactionTempMemory>> = trs_current
+        .into_iter()
+        .map(|(k, v)| {
+            (
+                k,
+                v.into_iter()
+                    .map(|t| SwapTransactionTempMemory {
+                        start_time: t.start_time,
+                        end_time: t.end_time,
+                        transfer_id: t.transfer_id,
+                        transfer_nfid_id: t.transfer_nfid_id,
+                        deposit: t.deposit,
+                        swap: t.swap,
+                        withdraw: t.withdraw,
+                        errors: if t.errors.is_empty() { None } else { Some(t.errors) },
+                        error: None,
+                        stage: t.stage,
+                        source_ledger: t.source_ledger,
+                        target_ledger: t.target_ledger,
+                        source_amount: t.source_amount,
+                        target_amount: t.target_amount,
+                        uid: t.uid,
+                        swap_provider: Some(t.swap_provider),
+                    })
+                    .collect::<HashSet<_>>(),
+            )
+        })
+        .collect();
 
     let mo: TempMemory = TempMemory { im_canister, transactions: Some(trs_m) };
     storage::stable_save((mo,))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
 
-
 #[ic_cdk_macros::query(name = "__get_candid_interface_tmp_hack")]
 fn export_candid() -> String {
     __export_service()
 }
-
 
 async fn get_root_id() -> String {
     match STATE.with(|c| c.borrow_mut().im_canister.get()) {
@@ -268,8 +270,8 @@ async fn get_root_id() -> String {
         Some(canister) => {
             let princ = caller();
             match call(canister, "get_root_by_principal", (princ.to_text(), 0)).await {
-                Ok((Some(root_id), )) => root_id,
-                Ok((None, )) => trap("No root found for this principal"),
+                Ok((Some(root_id),)) => root_id,
+                Ok((None,)) => trap("No root found for this principal"),
                 Err((_, err)) => trap(&format!("Failed to request IM: {}", err)),
             }
         }

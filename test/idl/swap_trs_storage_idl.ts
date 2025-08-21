@@ -1,42 +1,38 @@
 export const idlFactory = ({ IDL }) => {
-    const InitArgs = IDL.Record({ 'im_canister' : IDL.Principal });
-    const Error = IDL.Record({ 'time' : IDL.Nat64, 'message' : IDL.Text });
-    const SwapStage = IDL.Variant({
-        'Withdraw' : IDL.Null,
-        'Deposit' : IDL.Null,
-        'Swap' : IDL.Null,
-        'Completed' : IDL.Null,
-        'TransferNFID' : IDL.Null,
-        'TransferSwap' : IDL.Null,
-    });
-    const SwapProvider = IDL.Variant({ 'Kong' : IDL.Null, 'IcpSwap' : IDL.Null });
-    const SwapTransaction = IDL.Record({
-        'uid' : IDL.Text,
-        'withdraw' : IDL.Opt(IDL.Nat),
-        'swap' : IDL.Opt(IDL.Nat),
-        'errors' : IDL.Vec(Error),
-        'deposit' : IDL.Opt(IDL.Nat),
-        'end_time' : IDL.Opt(IDL.Nat64),
-        'transfer_id' : IDL.Opt(IDL.Nat64),
-        'target_ledger' : IDL.Text,
-        'stage' : SwapStage,
-        'start_time' : IDL.Nat64,
-        'source_ledger' : IDL.Text,
-        'transfer_nfid_id' : IDL.Opt(IDL.Nat64),
-        'target_amount' : IDL.Nat,
-        'source_amount' : IDL.Nat,
-        'swap_provider' : SwapProvider,
-    });
-    return IDL.Service({
-        'get_transactions' : IDL.Func(
-            [IDL.Text],
-            [IDL.Vec(SwapTransaction)],
-            ['query'],
-        ),
-        'store_transaction' : IDL.Func([SwapTransaction], [], []),
-    });
+  const InitArgs = IDL.Record({ im_canister: IDL.Principal });
+  const Error = IDL.Record({ time: IDL.Nat64, message: IDL.Text });
+  const SwapStage = IDL.Variant({
+    Withdraw: IDL.Null,
+    Deposit: IDL.Null,
+    Swap: IDL.Null,
+    Completed: IDL.Null,
+    TransferNFID: IDL.Null,
+    TransferSwap: IDL.Null,
+  });
+  const SwapProvider = IDL.Variant({ Kong: IDL.Null, IcpSwap: IDL.Null });
+  const SwapTransaction = IDL.Record({
+    uid: IDL.Text,
+    withdraw: IDL.Opt(IDL.Nat),
+    swap: IDL.Opt(IDL.Nat),
+    errors: IDL.Vec(Error),
+    deposit: IDL.Opt(IDL.Nat),
+    end_time: IDL.Opt(IDL.Nat64),
+    transfer_id: IDL.Opt(IDL.Nat64),
+    target_ledger: IDL.Text,
+    stage: SwapStage,
+    start_time: IDL.Nat64,
+    source_ledger: IDL.Text,
+    transfer_nfid_id: IDL.Opt(IDL.Nat64),
+    target_amount: IDL.Nat,
+    source_amount: IDL.Nat,
+    swap_provider: SwapProvider,
+  });
+  return IDL.Service({
+    get_transactions: IDL.Func([IDL.Text], [IDL.Vec(SwapTransaction)], ['query']),
+    store_transaction: IDL.Func([SwapTransaction], [], []),
+  });
 };
 export const init = ({ IDL }) => {
-    const InitArgs = IDL.Record({ 'im_canister' : IDL.Principal });
-    return [IDL.Opt(InitArgs)];
+  const InitArgs = IDL.Record({ im_canister: IDL.Principal });
+  return [IDL.Opt(InitArgs)];
 };

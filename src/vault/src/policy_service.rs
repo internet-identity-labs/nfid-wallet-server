@@ -21,9 +21,8 @@ pub struct Policy {
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub enum PolicyType {
     #[serde(rename = "threshold_policy")]
-    ThresholdPolicy(ThresholdPolicy)
+    ThresholdPolicy(ThresholdPolicy),
 }
-
 
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct ThresholdPolicy {
@@ -61,7 +60,6 @@ pub fn restore_policy(mut policy: Policy) -> Policy {
     })
 }
 
-
 pub fn update_policy(ps: Policy) -> Policy {
     let mut old = get_by_id(ps.id);
     old.policy_type = ps.policy_type;
@@ -69,17 +67,10 @@ pub fn update_policy(ps: Policy) -> Policy {
     restore_policy(old.clone())
 }
 
-
 pub fn get_by_id(id: u64) -> Policy {
-    POLICIES.with(|policies| {
-        match policies.borrow().get(&id) {
-            None => {
-                trap("Not registered")
-            }
-            Some(policy) => {
-                policy.clone()
-            }
-        }
+    POLICIES.with(|policies| match policies.borrow().get(&id) {
+        None => trap("Not registered"),
+        Some(policy) => policy.clone(),
     })
 }
 
@@ -88,10 +79,8 @@ pub fn get(ids: HashSet<u64>) -> Vec<Policy> {
         let mut result: Vec<Policy> = Default::default();
         for id in ids {
             match policies.borrow_mut().get(&id) {
-                None => {
-                    trap("Nonexistent key error")
-                }
-                Some(v) => { result.push(v.clone()) }
+                None => trap("Nonexistent key error"),
+                Some(v) => result.push(v.clone()),
             }
         }
         result
@@ -158,11 +147,7 @@ pub fn define_correct_policy(ids: HashSet<u64>, amount: u64, wallet: &String) ->
         )
         .map(|l| l.0);
     match policy {
-        None => {
-            trap("Unable to find the policy!")
-        }
-        Some(required) => {
-            required
-        }
+        None => trap("Unable to find the policy!"),
+        Some(required) => required,
     }
 }

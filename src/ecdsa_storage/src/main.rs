@@ -1,8 +1,8 @@
 use std::cell::{Cell, RefCell};
 use std::collections::{HashMap, HashSet};
 
-use candid::{candid_method, Principal};
 use candid::CandidType;
+use candid::{candid_method, Principal};
 use hex::encode;
 use ic_cdk::{call, caller, storage, trap};
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
@@ -12,7 +12,6 @@ thread_local! {
     static STATE: State = State::default();
 }
 
-
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
     pub im_canister: Principal,
@@ -20,13 +19,11 @@ pub struct InitArgs {
     pub ecdsa_salt: String,
 }
 
-
 struct State {
     im_canister: Cell<Option<Principal>>,
     salt: RefCell<String>,
     ecdsa_salt: RefCell<String>,
 }
-
 
 impl Default for State {
     fn default() -> Self {
@@ -48,7 +45,6 @@ fn init(maybe_arg: Option<InitArgs>) {
     }
 }
 
-
 #[update]
 async fn get_salt() -> String {
     let root = get_root_id().await;
@@ -68,7 +64,6 @@ async fn get_anon_salt(data: String) -> String {
     sha2_data
 }
 
-
 /// Applies changes afterr the canister upgrade.
 #[post_upgrade]
 async fn post_upgrade(maybe_arg: Option<InitArgs>) {
@@ -80,7 +75,6 @@ async fn post_upgrade(maybe_arg: Option<InitArgs>) {
 async fn save_persistent_state() {
     save_to_temp_memory().await;
 }
-
 
 pub fn init_im_canister(args: InitArgs) {
     STATE.with(|s: &State| {
@@ -102,15 +96,12 @@ struct TempMemory {
     salt: Option<String>,
 }
 
-
 pub fn get_im_canister() -> Principal {
-    STATE.with(|s: &State| {
-        s.im_canister.get().expect("IM canister not set")
-    })
+    STATE.with(|s: &State| s.im_canister.get().expect("IM canister not set"))
 }
 
 pub async fn init_from_memory() {
-    let (mo, ): (TempMemory,) = storage::stable_restore()
+    let (mo,): (TempMemory,) = storage::stable_restore()
         .expect("Stable restore failed: unable to restore data from stable memory.");
     STATE.with(|s: &State| {
         s.im_canister.set(mo.im_canister);
@@ -141,8 +132,8 @@ async fn get_root_id() -> String {
         Some(canister) => {
             let princ = caller();
             match call(canister, "get_root_by_principal", (princ.to_text(), 0)).await {
-                Ok((Some(root_id), )) => root_id,
-                Ok((None, )) => trap("No root found for this principal"),
+                Ok((Some(root_id),)) => root_id,
+                Ok((None,)) => trap("No root found for this principal"),
                 Err((_, err)) => trap(&format!("Failed to request IM: {}", err)),
             }
         }

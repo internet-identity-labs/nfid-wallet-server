@@ -37,17 +37,17 @@
     "stage": "dqjl2-bqaaa-aaaak-ak5ya-cai",
     "ic": "zjahs-wyaaa-aaaal-qjuia-cai"
   },
-  "delegation_factory" : {
+  "delegation_factory": {
     "dev": "wklas-pyaaa-aaaak-akv3a-cai",
     "stage": "y76ws-vaaaa-aaaao-a3pgq-cai",
     "ic": "yak5f-6iaaa-aaaal-ajn2a-cai"
   },
-  "nfid_storage" : {
+  "nfid_storage": {
     "dev": "dy546-gqaaa-aaaak-akwiq-cai",
     "stage": "yw55o-diaaa-aaaao-a3pha-cai",
     "ic": "yvnmi-7aaaa-aaaal-ajnzq-cai"
   },
-  "ecdsa_storage" : {
+  "ecdsa_storage": {
     "dev": "zhr63-daaaa-aaaap-qbh4q-cai"
   },
   "swap_trs_storage": {

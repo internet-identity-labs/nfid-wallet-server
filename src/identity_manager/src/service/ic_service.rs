@@ -112,7 +112,6 @@ pub async fn get_controllers() -> Vec<Principal> {
     )
     .await;
 
-
     return res
         .expect("Get controllers function exited unexpectedly: inter-canister call to management canister for canister_status returned an empty result.")
         .0.settings.controllers;

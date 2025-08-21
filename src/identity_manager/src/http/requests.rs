@@ -14,7 +14,7 @@ pub struct AccountRequest {
     pub access_point: Option<AccessPointRequest>,
     pub email: Option<String>,
     pub name: Option<String>,
-    pub challenge_attempt: Option<ChallengeAttempt>
+    pub challenge_attempt: Option<ChallengeAttempt>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, Eq, PartialEq)]
