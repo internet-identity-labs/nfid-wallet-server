@@ -19,10 +19,8 @@ impl<T: PersonaRepoTrait, N: ApplicationServiceTrait> PersonaServiceTrait for Pe
     fn read_personas(&self) -> HttpResponse<Vec<PersonaResponse>> {
         match self.persona_repo.get_personas() {
             Some(personas) => {
-                let personas_r = personas
-                    .iter()
-                    .map(|l| persona_to_persona_response(l.to_owned()))
-                    .collect();
+                let personas_r =
+                    personas.iter().map(|l| persona_to_persona_response(l.to_owned())).collect();
                 to_success_response(personas_r)
             }
             None => to_error_response("Unable to find Account."),

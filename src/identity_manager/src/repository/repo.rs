@@ -78,10 +78,7 @@ impl BasicEntity {
         self.modified_date
     }
     pub fn new() -> BasicEntity {
-        BasicEntity {
-            created_date: ic_service::get_time(),
-            modified_date: ic_service::get_time(),
-        }
+        BasicEntity { created_date: ic_service::get_time(), modified_date: ic_service::get_time() }
     }
 }
 
@@ -162,10 +159,7 @@ impl ConfigurationRepo {
 
 pub fn is_anchor_exists(anchor: u64, wallet: WalletVariant) -> bool {
     ACCOUNTS.with(|accounts| {
-        accounts
-            .borrow()
-            .iter()
-            .any(|x| x.1.anchor == anchor && x.1.wallet.eq(&wallet))
+        accounts.borrow().iter().any(|x| x.1.anchor == anchor && x.1.wallet.eq(&wallet))
     })
 }
 
@@ -225,13 +219,7 @@ pub fn pre_upgrade() {
     let logs: Vec<Logs> = Vec::default(); //todo remove somehow
     let applications = APPLICATIONS.with(|apps| apps.borrow().clone());
     let configuration = CONFIGURATION.with(|config| config.borrow().clone());
-    match storage::stable_save((
-        accounts,
-        admin,
-        logs,
-        Some(applications),
-        Some(configuration),
-    )) {
+    match storage::stable_save((accounts, admin, logs, Some(applications), Some(configuration))) {
         _ => (),
     }; //todo migrate to object
 }
@@ -257,9 +245,7 @@ pub fn post_upgrade() {
 
         PRINCIPAL_INDEX.with(|index| {
             for x in u.access_points.clone().into_iter() {
-                index
-                    .borrow_mut()
-                    .insert(x.principal_id.clone(), princ.clone());
+                index.borrow_mut().insert(x.principal_id.clone(), princ.clone());
             }
         });
         ACCOUNTS.with(|accounts| {

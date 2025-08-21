@@ -13,8 +13,12 @@
     "node": ">=20"
   },
   "lint-staged": {
-    "*.{js,ts,tsx,css,md,json}": "prettier --write",
-    "*.rs": "cargo fmt --quiet"
+    "*.{js,ts,tsx,css,md,json}": [
+      "prettier --write"
+    ],
+    "*.rs": [
+      "rustfmt --edition 2021"
+    ]
   },
   "devDependencies": {
     "@dfinity/agent": "2.1.3",
