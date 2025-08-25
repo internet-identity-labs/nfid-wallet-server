@@ -1,65 +1,78 @@
 version: 2
 updates:
-  # This section configures Dependabot to update npm dependencies.
-  - package-ecosystem: "npm"  # We're managing dependencies installed with npm. 
-    target-branch: "main"  # Updates will be created on the "main" branch.
-    directory: "/"  # Search for dependencies in the entire project.
-    schedule:
-      interval: "weekly"  # Check for updates every week.
-    open-pull-requests-limit: 1  # Only create a maximum of 1 pull request at a time.
-    versioning-strategy: increase  # Always update to the latest recommended version.
-    commit-message:
-      prefix: "[npm]"  # Pull request titles will start with "[npm]".
-    assignees:
-      - "dmitriiIdentityLabs"  # Assign pull requests to "dmitriiIdentityLabs".
-    groups:
-      dependencies:  # Group all dependency updates under "dependencies".
-        patterns:  # Look for updates in any file or directory.
-          - "*"  # Wildcard (*) matches everything.
+    # This section configures Dependabot to update npm dependencies.
+    - package-ecosystem: "npm"
+      target-branch: "main"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+      open-pull-requests-limit: 1
+      versioning-strategy: increase
+      commit-message:
+          prefix: "[yarn]"
+      assignees:
+          - "dmytroidentitylabs"
+      groups:
+          dependencies:
+              patterns:
+                  - "*"
 
-  # This section configures Dependabot to update GitHub Actions dependencies.
-  - package-ecosystem: "github-actions"  # We're managing workflow dependencies.
-    directory: "/"  # Search for dependencies in the entire project (.github/workflows folder).
-    schedule:
-      interval: "weekly"  # Check for updates every week.
-    open-pull-requests-limit: 1  # Only create a maximum of 1 pull request at a time.
-    # versioning-strategy: increase Always update to the latest recommended version.
-    commit-message:
-      prefix: "[github-actions]"  # Pull request titles will start with "[github-actions]".
-    assignees:
-      - "DaniilIdentity"  # Assign pull requests to "DaniilIdentity".
-    groups:
-      dependencies:  # Group all dependency updates under "dependencies".
-        patterns:  # Look for updates in any file or directory.
-          - "*"  # Wildcard (*) matches everything.
+    # This section configures Dependabot to update GitHub Actions dependencies.
+    - package-ecosystem: "github-actions"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+      open-pull-requests-limit: 1
+      commit-message:
+          prefix: "[github-actions]"
+      assignees:
+          - "olsemeno"
+      groups:
+          dependencies:
+              patterns:
+                  - "*"
 
-  # This section configures Dependabot to update Docker dependencies.
-  - package-ecosystem: "docker"  # We're managing Docker dependencies.
-    directory: "/"  # Search for dependencies in the entire project.
-    schedule:
-      interval: "weekly"  # Check for updates every week.
-    open-pull-requests-limit: 1  # Only create a maximum of 1 pull request at a time.
-    # versioning-strategy: increase  # Always update to the latest recommended version.
-    commit-message:
-      prefix: "[docker]"  # Pull request titles will start with "[docker]".
-    assignees:
-      - "DaniilIdentity"  # Assign pull requests to "DaniilIdentity".
-    groups:
-      dependencies:  # Group all dependency updates under "dependencies".
-        patterns:  # Look for updates in any file or directory.
-          - "*"  # Wildcard (*) matches everything.
+    # This section configures Dependabot to update Docker dependencies.
+    - package-ecosystem: "docker"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+      open-pull-requests-limit: 1
+      commit-message:
+          prefix: "[docker]"
+      assignees:
+          - "olsemeno"
+      groups:
+          dependencies:
+              patterns:
+                  - "*"
 
-  # This section configures Dependabot to update Rust dependencies.
-  - package-ecosystem: "cargo"  # We're managing dependencies installed with Cargo.
-    directory: "/"  # Search for dependencies in the entire project.
-    schedule:
-      interval: "weekly"  # Check for updates every week.
-    open-pull-requests-limit: 1  # Only create a maximum of 1 pull request at a time.
-    commit-message:
-      prefix: "[cargo]"  # Pull request titles will start with "[cargo]".
-    assignees:
-      - "olsemeno"  # Assign pull requests to "vitaliipustovyi".
-    groups:
-      dependencies:  # Group all dependency updates under "dependencies".
-        patterns:  # Look for updates in any file or directory.
-          - "*"  # Wildcard (*) matches everything.
+    # This section configures Dependabot to update Rust dependencies.
+    - package-ecosystem: "cargo"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+      open-pull-requests-limit: 1
+      commit-message:
+          prefix: "[cargo]"
+      assignees:
+          - "olsemeno"
+      groups:
+          dependencies:
+              patterns:
+                  - "*"
+
+    # This section configures Dependabot to update Maven dependencies.
+    - package-ecosystem: "maven"
+      directory: "/identity-manager-itest"
+      schedule:
+          interval: "weekly"
+      open-pull-requests-limit: 1
+      commit-message:
+          prefix: "[maven]"
+      assignees:
+          - "olsemeno"
+      groups:
+          dependencies:
+              patterns:
+                  - "*"
