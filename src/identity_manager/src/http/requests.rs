@@ -90,6 +90,8 @@ pub enum DeviceType {
     Unknown,
     #[serde(rename = "Password")]
     Password,
+    #[serde(rename = "InternetIdentity")]
+    InternetIdentity,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
