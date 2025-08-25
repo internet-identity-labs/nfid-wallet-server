@@ -38,10 +38,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
@@ -194,10 +194,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
@@ -296,7 +296,7 @@ jobs:
           echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
 
       - name: DEPLOY => Load artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ env.CANISTER_WASM }}
 
@@ -569,10 +569,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: internet-identity-labs/ci_libs
           ref: main

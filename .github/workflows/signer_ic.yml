@@ -37,10 +37,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
@@ -189,10 +189,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
@@ -322,7 +322,7 @@ jobs:
           dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
       - name: DEPLOY => Load artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ env.CANISTER_WASM }}
 
@@ -412,10 +412,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
