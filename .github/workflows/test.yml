@@ -78,9 +78,9 @@ jobs:
             kill -9 $(pgrep icx-proxy)
           fi
 
-          # Install npm dependencies & run JS tests
-          ci_echo_debug "npm install && npm run test" >&2
-          npm ci && npm run test
+          # Install Yarn dependencies & run JS tests
+          ci_echo_debug "yarn install --frozen-lockfile && yarn test" >&2
+          yarn install --frozen-lockfile && yarn test
 
       - name: Build and run Java integration tests
         run: |

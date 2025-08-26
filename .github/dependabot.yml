@@ -1,78 +1,78 @@
 version: 2
 updates:
-    # This section configures Dependabot to update npm dependencies.
-    - package-ecosystem: "npm"
-      target-branch: "main"
-      directory: "/"
-      schedule:
-          interval: "weekly"
-      open-pull-requests-limit: 1
-      versioning-strategy: increase
-      commit-message:
-          prefix: "[yarn]"
-      assignees:
-          - "dmytroidentitylabs"
-      groups:
-          dependencies:
-              patterns:
-                  - "*"
+  # This section configures Dependabot to update npm dependencies.
+  - package-ecosystem: 'npm'
+    target-branch: 'main'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 1
+    versioning-strategy: increase
+    commit-message:
+      prefix: '[yarn]'
+    assignees:
+      - 'dmytroidentitylabs'
+    groups:
+      dependencies:
+        patterns:
+          - '*'
 
-    # This section configures Dependabot to update GitHub Actions dependencies.
-    - package-ecosystem: "github-actions"
-      directory: "/"
-      schedule:
-          interval: "weekly"
-      open-pull-requests-limit: 1
-      commit-message:
-          prefix: "[github-actions]"
-      assignees:
-          - "olsemeno"
-      groups:
-          dependencies:
-              patterns:
-                  - "*"
+  # This section configures Dependabot to update GitHub Actions dependencies.
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: '[github-actions]'
+    assignees:
+      - 'olsemeno'
+    groups:
+      dependencies:
+        patterns:
+          - '*'
 
-    # This section configures Dependabot to update Docker dependencies.
-    - package-ecosystem: "docker"
-      directory: "/"
-      schedule:
-          interval: "weekly"
-      open-pull-requests-limit: 1
-      commit-message:
-          prefix: "[docker]"
-      assignees:
-          - "olsemeno"
-      groups:
-          dependencies:
-              patterns:
-                  - "*"
+  # This section configures Dependabot to update Docker dependencies.
+  - package-ecosystem: 'docker'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: '[docker]'
+    assignees:
+      - 'olsemeno'
+    groups:
+      dependencies:
+        patterns:
+          - '*'
 
-    # This section configures Dependabot to update Rust dependencies.
-    - package-ecosystem: "cargo"
-      directory: "/"
-      schedule:
-          interval: "weekly"
-      open-pull-requests-limit: 1
-      commit-message:
-          prefix: "[cargo]"
-      assignees:
-          - "olsemeno"
-      groups:
-          dependencies:
-              patterns:
-                  - "*"
+  # This section configures Dependabot to update Rust dependencies.
+  - package-ecosystem: 'cargo'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: '[cargo]'
+    assignees:
+      - 'olsemeno'
+    groups:
+      dependencies:
+        patterns:
+          - '*'
 
-    # This section configures Dependabot to update Maven dependencies.
-    - package-ecosystem: "maven"
-      directory: "/identity-manager-itest"
-      schedule:
-          interval: "weekly"
-      open-pull-requests-limit: 1
-      commit-message:
-          prefix: "[maven]"
-      assignees:
-          - "olsemeno"
-      groups:
-          dependencies:
-              patterns:
-                  - "*"
+  # This section configures Dependabot to update Maven dependencies.
+  - package-ecosystem: 'maven'
+    directory: '/identity-manager-itest'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: '[maven]'
+    assignees:
+      - 'olsemeno'
+    groups:
+      dependencies:
+        patterns:
+          - '*'

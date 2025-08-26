@@ -44,10 +44,8 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
     fn read_access_points(&self) -> HttpResponse<Vec<AccessPointResponse>> {
         match self.access_point_repo.get_access_points() {
             Some(content) => {
-                let response: Vec<AccessPointResponse> = content
-                    .into_iter()
-                    .map(access_point_to_access_point_response)
-                    .collect();
+                let response: Vec<AccessPointResponse> =
+                    content.into_iter().map(access_point_to_access_point_response).collect();
                 to_success_response(response)
             }
             None => to_error_response("Unable to find Account."),
@@ -56,10 +54,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
 
     fn use_access_point(&self, browser: Option<String>) -> HttpResponse<AccessPointResponse> {
         let principal = ic_service::get_caller().to_text();
-        match self
-            .access_point_repo
-            .use_access_point(principal, ic_service::get_time(), browser)
-        {
+        match self.access_point_repo.use_access_point(principal, ic_service::get_time(), browser) {
             Some(access_point) => {
                 to_success_response(access_point_to_access_point_response(access_point))
             }
@@ -92,15 +87,11 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
                     return to_error_response("Access Point exists.");
                 }
                 access_points.insert(access_point.clone());
-                self.access_point_repo.store_access_points(
-                    access_points.clone()
-                );
+                self.access_point_repo.store_access_points(access_points.clone());
                 self.access_point_repo
                     .update_account_index(access_point.principal_id, acc.principal_id);
-                let response: Vec<AccessPointResponse> = access_points
-                    .into_iter()
-                    .map(access_point_to_access_point_response)
-                    .collect();
+                let response: Vec<AccessPointResponse> =
+                    access_points.into_iter().map(access_point_to_access_point_response).collect();
                 to_success_response(response)
             }
             None => to_error_response("Unable to find Account."),
@@ -113,11 +104,9 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
         let ap = recovery_device_data_to_access_point(device_data);
         let princ = ap.principal_id.clone();
         devices.insert(ap);
-        let acc = self
-            .access_point_repo
-            .store_access_points_by_anchor(devices, account.anchor.clone());
-        self.access_point_repo
-            .update_account_index(princ, account.principal_id.clone());
+        let acc =
+            self.access_point_repo.store_access_points_by_anchor(devices, account.anchor.clone());
+        self.access_point_repo.update_account_index(princ, account.principal_id.clone());
         acc.expect("Failed to store access points for the given principal.")
     }
 
@@ -134,10 +123,8 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
                 }
                 content.replace(access_point.clone());
                 self.access_point_repo.store_access_points(content.clone());
-                let response: Vec<AccessPointResponse> = content
-                    .into_iter()
-                    .map(access_point_to_access_point_response)
-                    .collect();
+                let response: Vec<AccessPointResponse> =
+                    content.into_iter().map(access_point_to_access_point_response).collect();
                 to_success_response(response)
             }
             None => to_error_response("Unable to find Account."),
@@ -165,20 +152,15 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
                     }
                 }
 
-                let aps: HashSet<AccessPoint> = content
-                    .iter()
-                    .filter(|x| x.principal_id != principal)
-                    .cloned()
-                    .collect();
+                let aps: HashSet<AccessPoint> =
+                    content.iter().filter(|x| x.principal_id != principal).cloned().collect();
                 if aps.len() == content.len() {
                     return to_error_response("Access Point not exists.");
                 }
                 self.access_point_repo.store_access_points(aps.clone());
                 self.access_point_repo.remove_ap_index(principal);
-                let response: Vec<AccessPointResponse> = aps
-                    .into_iter()
-                    .map(access_point_to_access_point_response)
-                    .collect();
+                let response: Vec<AccessPointResponse> =
+                    aps.into_iter().map(access_point_to_access_point_response).collect();
                 to_success_response(response)
             }
             None => to_error_response("Unable to find Account."),

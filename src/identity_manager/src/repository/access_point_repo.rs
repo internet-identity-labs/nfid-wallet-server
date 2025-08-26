@@ -64,19 +64,19 @@ pub struct AccessPointRepo {
 
 impl AccessPointRepoTrait for AccessPointRepo {
     fn get_access_points(&self) -> Option<HashSet<AccessPoint>> {
-        self.account_repo
-            .get_account()
-            .map(|x| x.access_points.clone()) //todo &
+        self.account_repo.get_account().map(|x| x.access_points.clone()) //todo &
     }
 
     fn get_wallet(&self) -> WalletVariant {
-        self.account_repo.get_account().expect("Failed to retrieve the account from the repository.").wallet
+        self.account_repo
+            .get_account()
+            .expect("Failed to retrieve the account from the repository.")
+            .wallet
     }
 
     fn get_access_points_by_principal(&self, princ: String) -> Option<HashSet<AccessPoint>> {
-        self.account_repo
-            .get_account_by_principal(princ)
-            .map(|x| x.access_points.clone()) //todo &
+        self.account_repo.get_account_by_principal(princ).map(|x| x.access_points.clone())
+        //todo &
     }
 
     fn use_access_point(
@@ -86,10 +86,7 @@ impl AccessPointRepoTrait for AccessPointRepo {
         browser: Option<String>,
     ) -> Option<AccessPoint> {
         let mut points = self.get_access_points().expect("Failed to retrieve access points.");
-        let updated = points
-            .clone()
-            .into_iter()
-            .find(|l| l.principal_id == ap_principal);
+        let updated = points.clone().into_iter().find(|l| l.principal_id == ap_principal);
         match updated {
             None => None,
             Some(mut ap) => {
@@ -103,7 +100,9 @@ impl AccessPointRepoTrait for AccessPointRepo {
     }
 
     fn store_access_points(&self, access_points: HashSet<AccessPoint>) -> Option<Account> {
-        let mut acc = self.account_repo.get_account()
+        let mut acc = self
+            .account_repo
+            .get_account()
             .expect("Failed to retrieve the account from the account repository.")
             .clone();
         acc.access_points = access_points.clone();
@@ -147,7 +146,6 @@ impl AccessPointRepoTrait for AccessPointRepo {
 
     fn update_account_index(&self, additional_principal_id: String, root_princ: String) {
         update_certify_keys(additional_principal_id.clone(), root_princ.clone());
-        self.account_repo
-            .update_account_index_with_pub_key(additional_principal_id, root_princ);
+        self.account_repo.update_account_index_with_pub_key(additional_principal_id, root_princ);
     }
 }

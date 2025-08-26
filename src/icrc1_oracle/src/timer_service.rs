@@ -1,7 +1,7 @@
-use std::cell::RefCell;
-use std::time::Duration;
 use candid::Nat;
 use ic_cdk_timers::TimerId;
+use std::cell::RefCell;
+use std::time::Duration;
 
 use crate::signer::{top_up_cycles_ledger, TopUpCyclesLedgerRequest};
 
@@ -9,10 +9,7 @@ thread_local! {
     static TIMER_ID: RefCell<Option<TimerId>> = RefCell::new(None);
 }
 
-fn set_timer_interval(
-    interval: Duration,
-    func: impl FnMut() + 'static,
-) -> TimerId {
+fn set_timer_interval(interval: Duration, func: impl FnMut() + 'static) -> TimerId {
     ic_cdk_timers::set_timer_interval(interval, func)
 }
 
@@ -22,7 +19,8 @@ pub fn start_timer(interval: u64) {
             top_up_cycles_ledger(TopUpCyclesLedgerRequest {
                 threshold: Some(Nat::from(2_000_000_000_000u128)),
                 percentage: None,
-            }).await;
+            })
+            .await;
         });
     });
 
@@ -38,4 +36,3 @@ pub fn stop_timer() {
         }
     });
 }
-
