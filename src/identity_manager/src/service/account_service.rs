@@ -118,8 +118,8 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
         } else {
             devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
         }
-        let device_type = account_request.access_point.clone().unwrap().device_type;
-        if account_request.name.is_some() && !device_type.eq(&DeviceType::InternetIdentity) {
+        let device_type = account_request.access_point.clone();
+        if account_request.name.is_some() && device_type.is_some() && !device_type.unwrap().device_type.eq(&DeviceType::InternetIdentity) {
             let challenge_attempt = account_request.challenge_attempt.clone().unwrap_or_else(|| {
                 trap("Challenge solution required");
             });
