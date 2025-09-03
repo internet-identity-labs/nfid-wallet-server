@@ -106,8 +106,7 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
                         .insert(access_point_request_to_access_point(dd.clone()));
                 }
             }
-            let device_type = account_request.access_point.
-                unwrap().device_type;
+            let device_type = account_request.access_point.clone().unwrap().device_type;
             if account_request.email.is_none() && device_type.eq(&DeviceType::Email) {
                 trap("Email is empty");
             }
@@ -119,7 +118,9 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
         } else {
             devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
         }
-        if account_request.name.is_some() {
+        let access_point = account_request.access_point.clone();
+        let is_ii_device = access_point.is_some() && access_point.unwrap().device_type.eq(&DeviceType::InternetIdentity);
+        if account_request.name.is_some() && !is_ii_device {
             let challenge_attempt = account_request.challenge_attempt.clone().unwrap_or_else(|| {
                 trap("Challenge solution required");
             });
