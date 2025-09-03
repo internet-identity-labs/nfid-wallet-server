@@ -1,8 +1,8 @@
-use captcha::fonts::Default as DefaultFont;
-use captcha::fonts::Font;
+use captcha::fonts::{Default as DefaultFont, Font};
+use captcha::filters::Wave;
 use ic_cdk::{call, print, trap};
 use lazy_static::lazy_static;
-use rand_core::{RngCore, SeedableRng};
+use rand_core::{RngCore, CryptoRng, SeedableRng};
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 use candid::Principal;
@@ -134,9 +134,10 @@ pub fn random_string<T: RngCore>(rng: &mut T, n: usize) -> String {
 }
 const CAPTCHA_LENGTH: usize = 5;
 
-pub fn create_captcha<T: RngCore>(rng: T) -> (Base64, String) {
-    use captcha::filters::Wave;
-
+pub fn create_captcha<T>(rng: T) -> (Base64, String)
+where
+    T: RngCore + CryptoRng,
+{
     let mut captcha = captcha::new_captcha_with(rng, CAPTCHA_FONT.clone());
 
     let is_test = CONFIGURATION.with(|c| c.borrow().test_captcha);
