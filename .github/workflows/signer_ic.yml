@@ -55,25 +55,17 @@ jobs:
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
-          override: true
+          components: clippy,rustfmt
+          cache: true
 
       - name: Install ic-wasm
         run: |
           cargo install ic-wasm --version 0.3.4
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Cache Cargo dependencies
-        uses: actions/cache@v4
-        with:
-          key: cargo-canisters
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
 
       - name: Cache Maven packages
         uses: actions/cache@v4
@@ -162,6 +154,8 @@ jobs:
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
+          export RUSTFLAGS=""
+
           dfx identity use "${DFX_ID_NAME}"
 
           rm -rf .dfx;
@@ -207,11 +201,11 @@ jobs:
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
-          override: true
+          components: clippy,rustfmt
 
       - name: Versions
         run: |
@@ -430,11 +424,11 @@ jobs:
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
-          override: true
+          components: clippy,rustfmt
 
       - name: Versions
         run: |
