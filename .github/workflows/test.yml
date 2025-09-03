@@ -53,6 +53,8 @@ jobs:
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
+          export RUSTFLAGS="-Awarnings"
+
           # Setup DFX identity
           if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then
             ci_echo_debug "Creating DFX test_admin identity" >&2
@@ -77,6 +79,8 @@ jobs:
       - name: Build and run Java integration tests
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          export RUSTFLAGS="-Awarnings"
 
           # Setup DFX identity
           if ! [ -f "${HOME}/.config/dfx/identity/test_admin/identity.pem" ]; then

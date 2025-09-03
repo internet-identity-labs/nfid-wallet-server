@@ -154,6 +154,8 @@ jobs:
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
+          export RUSTFLAGS="-Awarnings"
+
           dfx identity use "${DFX_ID_NAME}"
 
           rm -rf .dfx;
