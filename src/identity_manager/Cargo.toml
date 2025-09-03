@@ -36,7 +36,8 @@ ic0 = "0.23.0"
 ic-certified-map = "0.4.0"
 anyhow = "1.0.99"
 hex = "0.4.3"
-sha256 = "1.6.0"
 rand_core = { version = "0.9.3", default-features = false }
 rand_chacha = { version = "*", default-features = false }
 captcha = { git = "https://github.com/dfinity/captcha", rev = "9c0d2dd9bf519e255eaa239d9f4e9fdc83f65391" }
+sha256 = { version = "1.6.0", default-features = false }
+tokio = { version = "1.40", default-features = false, features = ["macros", "rt", "time"] }
