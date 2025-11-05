@@ -1,4 +1,5 @@
 name: Identity Manager Backup
+run-name: Identity Manager Backup ${{ inputs.network_name }}
 on:
   workflow_dispatch:
     inputs:
@@ -24,7 +25,7 @@ on:
         description: 'Batch size for fetching accounts'
         required: false
         type: string
-        default: '5000'
+        default: '2500'
       confirmation:
         description: 'For the ic deployment - confirm your choice by typing "Yes"'
         type: string
@@ -118,14 +119,26 @@ jobs:
 
       - name: Write identity.
         env:
-          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+          ID_KEY: ${{ github.event.inputs.network_name == 'ic' && secrets.OPERATOR_ID_KEY || secrets.DFX_ID_KEY }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
+          # Check if ID_KEY is empty
+          if [ -z "${ID_KEY}" ]; then
+            ci_echo_error "ID_KEY variable is empty. Check your secrets configuration." >&2
+            exit 1
+          fi
+
           mkdir -p "${DFX_ID_PATH}"
 
-          ci_echo_warn "Preparing encoded key..." >&2
-          echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
+          # For ic environment, write without base64 decoding
+          if [ "${{ github.event.inputs.network_name }}" = "ic" ]; then
+            ci_echo_warn "Writing identity key directly (ic environment)..." >&2
+            echo "${ID_KEY}" > "${DFX_ID_PATH}/identity.pem"
+          else
+            ci_echo_warn "Preparing encoded key..." >&2
+            echo "${ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
+          fi
 
       - name: Fetch all accounts from identity_manager.
         run: |
@@ -190,8 +203,8 @@ jobs:
             # Fetch batch and save to file
             ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' get_all_accounts_json '(${FROM}, ${TO})'" >&2
             if ! dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" get_all_accounts_json "(${FROM}, ${TO})" > "${OUTPUT_FILE}" 2>&1; then
-              ci_echo_warn "Error fetching batch $((i+1))" >&2
-              continue
+              ci_echo_error "Error fetching batch $((i+1))" >&2
+              exit 1
             fi
 
             ci_echo_success "Batch $((i+1)) saved to ${OUTPUT_FILE}" >&2

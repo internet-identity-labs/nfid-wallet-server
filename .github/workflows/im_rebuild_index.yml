@@ -1,4 +1,5 @@
 name: Identity Manager Rebuild Index
+run-name: Identity Manager Rebuild Index ${{ inputs.network_name }}
 on:
   workflow_dispatch:
     inputs:
@@ -104,14 +105,26 @@ jobs:
 
       - name: Write identity.
         env:
-          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+          ID_KEY: ${{ github.event.inputs.network_name == 'ic' && secrets.OPERATOR_ID_KEY || secrets.DFX_ID_KEY }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
+          # Check if ID_KEY is empty
+          if [ -z "${ID_KEY}" ]; then
+            ci_echo_error "ID_KEY variable is empty. Check your secrets configuration." >&2
+            exit 1
+          fi
+
           mkdir -p "${DFX_ID_PATH}"
 
-          ci_echo_warn "Preparing encoded key..." >&2
-          echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
+          # For ic environment, write without base64 decoding
+          if [ "${{ github.event.inputs.network_name }}" = "ic" ]; then
+            ci_echo_warn "Writing identity key directly (ic environment)..." >&2
+            echo "${ID_KEY}" > "${DFX_ID_PATH}/identity.pem"
+          else
+            ci_echo_warn "Preparing encoded key..." >&2
+            echo "${ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
+          fi
 
       - name: Rebuild device index.
         run: |
