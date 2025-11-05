@@ -1,0 +1,210 @@
+name: Identity Manager Backup
+on:
+  workflow_dispatch:
+    inputs:
+      network_name:
+        description: 'Choose applicable network'
+        required: true
+        type: choice
+        options:
+          - dev
+          - ic
+      canister_name:
+        description: 'Choose applicable canister'
+        required: true
+        type: choice
+        options:
+          - identity_manager
+      total_accounts:
+        description: 'Total number of accounts (if known, otherwise will query)'
+        required: false
+        type: string
+        default: '0'
+      batch_size:
+        description: 'Batch size for fetching accounts'
+        required: false
+        type: string
+        default: '5000'
+      confirmation:
+        description: 'For the ic deployment - confirm your choice by typing "Yes"'
+        type: string
+
+env:
+  NETWORK_NAME: ${{ github.event.inputs.network_name }}
+  CANISTER_NAME: ${{ github.event.inputs.canister_name }}
+  TOTAL_ACCOUNTS: ${{ github.event.inputs.total_accounts }}
+  BATCH_SIZE: ${{ github.event.inputs.batch_size }}
+  CI_DEBUG: 'true'
+
+jobs:
+  backup:
+    name: Backup Accounts
+    environment: ${{ github.event.inputs.network_name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout nfid-wallet-server repo
+        uses: actions/checkout@v5
+
+      - name: Checkout ci_libs repo
+        uses: actions/checkout@v5
+        with:
+          repository: internet-identity-labs/ci_libs
+          ref: main
+          path: ci_libs
+          token: ${{ secrets.PAT }}
+
+      - name: Install dfx
+        run: |
+          export DFX_VERSION=0.23.0
+          export DFXVM_INIT_YES=true
+          sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          components: clippy,rustfmt
+
+      - name: Versions
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_versions
+
+      - name: Checks network_name for ic
+        if: ${{ env.NETWORK_NAME == 'ic' }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
+            ci_echo_error "You have try to get accounts from network 'ic' without or with wrong confirmation phrase." >&2
+            exit 1
+          fi
+
+          ci_echo_success "Confirmation received for IC network"
+
+      - name: Populate env vars.
+        env:
+          DFX_ID_NAME: ${{ vars.DFX_ID_NAME }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          ci_echo_debug "Getting values from dfx.json" >&2
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.\"${CANISTER_NAME}\""); then
+            ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
+          DFX_ID_PATH="${HOME}/.config/dfx/identity/${DFX_ID_NAME}"
+
+          echo "DFX_ID_NAME=${DFX_ID_NAME}" >> $GITHUB_ENV
+          echo "DFX_ID_PATH=${DFX_ID_PATH}" >> $GITHUB_ENV
+
+      - name: Print Vars.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
+          ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
+          ci_echo_info "TOTAL_ACCOUNTS=${TOTAL_ACCOUNTS}" >&2
+          ci_echo_info "BATCH_SIZE=${BATCH_SIZE}" >&2
+          ci_echo_info "DFX_ID_NAME=${DFX_ID_NAME}" >&2
+          ci_echo_info "DFX_ID_PATH=${DFX_ID_PATH}" >&2
+
+      - name: Write identity.
+        env:
+          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          mkdir -p "${DFX_ID_PATH}"
+
+          ci_echo_warn "Preparing encoded key..." >&2
+          echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
+
+      - name: Fetch all accounts from identity_manager.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          dfx identity use "${DFX_ID_NAME}"
+
+          ci_echo_info "Getting all accounts from identity_manager..." >&2
+          ci_echo_info "Network: ${NETWORK_NAME}" >&2
+
+          # Create output directory for account batches
+          mkdir -p accounts_output
+          cd accounts_output
+
+          # Determine total accounts
+          TOTAL="${TOTAL_ACCOUNTS}"
+          if [ "${TOTAL}" = "0" ] || [ -z "${TOTAL}" ]; then
+            ci_echo_info "Querying total number of accounts using count_anchors..." >&2
+
+            # Query the canister for total count
+            TOTAL_RAW=$(dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" count_anchors '()' 2>&1)
+
+            if [ $? -ne 0 ]; then
+              ci_echo_error "Failed to query count_anchors: ${TOTAL_RAW}" >&2
+              exit 1
+            fi
+
+            # Extract the number from the response (format is typically "(1_234 : nat64)")
+            # Only look for numbers within parentheses to avoid matching timestamps or warnings
+            TOTAL=$(echo "${TOTAL_RAW}" | sed -n 's/.*(\([0-9_]*\) : nat64).*/\1/p' | head -1 | tr -d '_' | tr -d '\n' | tr -d ' ')
+
+            if [ -z "${TOTAL}" ]; then
+              ci_echo_error "Could not parse count from count_anchors response: ${TOTAL_RAW}" >&2
+              exit 1
+            fi
+
+            ci_echo_success "Fetched total accounts from canister: ${TOTAL}" >&2
+          fi
+
+          ci_echo_info "Total accounts to fetch: ${TOTAL}" >&2
+
+          if [ "${TOTAL}" = "0" ]; then
+            ci_echo_info "No accounts found" >&2
+            exit 0
+          fi
+
+          # Calculate batches
+          BATCH_SIZE_NUM="${BATCH_SIZE}"
+          TOTAL_BATCHES=$(( (TOTAL + BATCH_SIZE_NUM - 1) / BATCH_SIZE_NUM ))
+
+          ci_echo_info "Will execute ${TOTAL_BATCHES} requests with batch size ${BATCH_SIZE_NUM}" >&2
+
+          # Fetch accounts in batches
+          for ((i=0; i<TOTAL_BATCHES; i++)); do
+            FROM=$((i * BATCH_SIZE_NUM))
+            TO=$((FROM + BATCH_SIZE_NUM))
+            OUTPUT_FILE="${FROM}_${TO}.txt"
+
+            ci_echo_info "Fetching batch $((i+1))/${TOTAL_BATCHES} (from: ${FROM}, to: ${TO})" >&2
+            ci_echo_debug "Saving to file: ${OUTPUT_FILE}" >&2
+
+            # Fetch batch and save to file
+            ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' get_all_accounts_json '(${FROM}, ${TO})'" >&2
+            if ! dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" get_all_accounts_json "(${FROM}, ${TO})" > "${OUTPUT_FILE}" 2>&1; then
+              ci_echo_warn "Error fetching batch $((i+1))" >&2
+              continue
+            fi
+
+            ci_echo_success "Batch $((i+1)) saved to ${OUTPUT_FILE}" >&2
+
+            # Small delay between requests
+            sleep 0.5
+          done
+
+          ci_echo_success "All account batches have been fetched and saved." >&2
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: accounts-${{ env.NETWORK_NAME }}-${{ github.run_id }}
+          path: accounts_output/
+          retention-days: 1
