@@ -216,7 +216,7 @@ jobs:
           ci_echo_success "All account batches have been fetched and saved." >&2
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: accounts-${{ env.NETWORK_NAME }}-${{ github.run_id }}
           path: accounts_output/
