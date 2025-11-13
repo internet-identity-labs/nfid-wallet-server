@@ -4,7 +4,8 @@ type Conf = record {
 
 type ICRC1 = record {
     state : ICRC1State;
-    ledger : text
+    ledger : text;
+    network : opt nat32;
 };
 
 type ICRC1State = variant {
@@ -15,5 +16,5 @@ type ICRC1State = variant {
 service : (Conf) -> {
     get_canisters_by_root : (text) -> (vec ICRC1) query;
     remove_icrc1_canister : (text) -> ();
-    store_icrc1_canister : (text, ICRC1State) -> ();
+    store_icrc1_canister : (text, ICRC1State, opt nat32) -> ();
 }
