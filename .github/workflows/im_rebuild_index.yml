@@ -1,0 +1,192 @@
+name: Identity Manager Rebuild Index
+run-name: Identity Manager Rebuild Index ${{ inputs.network_name }}
+on:
+  workflow_dispatch:
+    inputs:
+      network_name:
+        description: 'Choose applicable network'
+        required: true
+        type: choice
+        options:
+          - dev
+          - ic
+      canister_name:
+        description: 'Choose applicable canister'
+        required: true
+        type: choice
+        options:
+          - identity_manager
+      confirmation:
+        description: 'For the ic deployment - confirm your choice by typing "Yes"'
+        type: string
+
+env:
+  NETWORK_NAME: ${{ github.event.inputs.network_name }}
+  CANISTER_NAME: ${{ github.event.inputs.canister_name }}
+  CI_DEBUG: 'true'
+
+jobs:
+  rebuild_index:
+    name: Rebuild Index
+    environment: ${{ github.event.inputs.network_name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout nfid-wallet-server repo
+        uses: actions/checkout@v5
+
+      - name: Checkout ci_libs repo
+        uses: actions/checkout@v5
+        with:
+          repository: internet-identity-labs/ci_libs
+          ref: main
+          path: ci_libs
+          token: ${{ secrets.PAT }}
+
+      - name: Install dfx
+        run: |
+          export DFX_VERSION=0.23.0
+          export DFXVM_INIT_YES=true
+          sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          components: clippy,rustfmt
+
+      - name: Versions
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_versions
+
+      - name: Checks network_name for ic
+        if: ${{ env.NETWORK_NAME == 'ic' }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
+            ci_echo_error "You have try to rebuild index on network 'ic' without or with wrong confirmation phrase." >&2
+            exit 1
+          fi
+
+          ci_echo_success "Confirmation received for IC network"
+
+      - name: Populate env vars.
+        env:
+          DFX_ID_NAME: ${{ vars.DFX_ID_NAME }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          ci_echo_debug "Getting values from dfx.json" >&2
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.\"${CANISTER_NAME}\""); then
+            ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
+          DFX_ID_PATH="${HOME}/.config/dfx/identity/${DFX_ID_NAME}"
+
+          echo "DFX_ID_NAME=${DFX_ID_NAME}" >> $GITHUB_ENV
+          echo "DFX_ID_PATH=${DFX_ID_PATH}" >> $GITHUB_ENV
+
+      - name: Print Vars.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
+          ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
+          ci_echo_info "DFX_ID_NAME=${DFX_ID_NAME}" >&2
+          ci_echo_info "DFX_ID_PATH=${DFX_ID_PATH}" >&2
+
+      - name: Write identity.
+        env:
+          ID_KEY: ${{ github.event.inputs.network_name == 'ic' && secrets.OPERATOR_ID_KEY || secrets.DFX_ID_KEY }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          # Check if ID_KEY is empty
+          if [ -z "${ID_KEY}" ]; then
+            ci_echo_error "ID_KEY variable is empty. Check your secrets configuration." >&2
+            exit 1
+          fi
+
+          mkdir -p "${DFX_ID_PATH}"
+
+          # For ic environment, write without base64 decoding
+          if [ "${{ github.event.inputs.network_name }}" = "ic" ]; then
+            ci_echo_warn "Writing identity key directly (ic environment)..." >&2
+            echo "${ID_KEY}" > "${DFX_ID_PATH}/identity.pem"
+          else
+            ci_echo_warn "Preparing encoded key..." >&2
+            echo "${ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
+          fi
+
+      - name: Rebuild device index.
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          dfx identity use "${DFX_ID_NAME}"
+
+          # Rebuild device index command
+          ci_echo_info "Starting rebuild device index operation." >&2
+
+          if [ "${NETWORK_NAME}" == 'ic' ] && [ "${CANISTER_NAME}" == 'identity_manager' ]; then
+            ci_echo_warn "Performing PROD index rebuild" >&2
+            CI_DEBUG="true"
+          fi
+
+          # Rebuild Device Index based on Accounts command
+          ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' rebuild_index" >&2
+          if ! result=$(dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" rebuild_index); then
+            ci_echo_error "Rebuild index failed ${result}" >&2
+            exit 1
+          fi
+
+          ci_echo_success "${result}" >&2
+
+          ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' save_temp_stack_to_rebuild_device_index" >&2
+          if ! result=$(dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" save_temp_stack_to_rebuild_device_index); then
+            ci_echo_warn "The operation of saving device index data to temp stack has been failed: ${result}" >&2
+          fi
+
+          ci_echo_success "${result}" >&2
+
+          remaining_amount=1
+          cycles_limit=180
+          cycle=1
+          while [ ${remaining_amount} -gt 0 ] && [ ${cycle} -lt ${cycles_limit} ]; do
+            ci_echo_info "Cycle '${cycle}' of '${cycles_limit}'" >&2
+
+            result=''
+
+            ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' get_remaining_size_after_rebuild_device_index_slice_from_temp_stack" >&2
+            if ! result=$(dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" get_remaining_size_after_rebuild_device_index_slice_from_temp_stack) || [ -z "${result}" ]; then
+              ci_echo_warn "The operation of rebuilding device index slice has been failed: ${result}" >&2
+              break
+            fi
+
+            ci_echo_debug "${result}" >&2
+
+            # Cleaning result output
+            cleaned_string="$(echo ${result#(} | cut -d' ' -f 1)"
+            cleaned_string="${cleaned_string//_/}"
+            remaining_amount=$((cleaned_string))
+
+            ci_echo_info "Index rebuild is in progress, amount of remaining entries: '${remaining_amount}'" >&2
+            cycle=$((cycle + 1))
+
+            # Small delay between cycles
+            sleep 1
+          done
+
+          if [ ${remaining_amount} -gt 0 ]; then
+            ci_echo_error "Index rebuild is not finished, amount of remaining entries: '${remaining_amount}'" >&2
+            exit 1
+          fi
+
+          ci_echo_success "Index rebuild has been completed successfully." >&2
