@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use candid::Principal;
 use canister_sig_util::CanisterSigPublicKey;
 use canister_sig_util::signature_map::SignatureMap;
-use ic_cdk::{id, print, trap};
+use ic_cdk::{id, trap};
 use ic_cdk::api::time;
 use ic_certification::Hash;
 use internet_identity_interface::internet_identity::types::*;

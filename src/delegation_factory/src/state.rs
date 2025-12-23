@@ -1,15 +1,10 @@
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
-use std::ops::{Deref, DerefMut};
-use std::time::Duration;
 
 use asset_util::CertifiedAssets;
 use candid::{CandidType, Principal};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize};
 use canister_sig_util::signature_map::SignatureMap;
 use ic_cdk::{storage, trap};
-use ic_stable_structures::DefaultMemoryImpl;
-use internet_identity_interface::internet_identity::types::*;
 
 use crate::random_salt;
 
@@ -20,11 +15,6 @@ thread_local! {
     static ASSETS: RefCell<CertifiedAssets> = RefCell::new(CertifiedAssets::default());
 }
 
-
-#[cfg(not(test))]
-fn time() -> Timestamp {
-    ic_cdk::api::time()
-}
 
 struct State {
     sigs: RefCell<SignatureMap>,
@@ -52,16 +42,8 @@ impl Default for State {
     }
 }
 
-pub fn assets_mut<R>(f: impl FnOnce(&mut CertifiedAssets) -> R) -> R {
-    ASSETS.with(|assets| f(&mut assets.borrow_mut()))
-}
-
 pub fn assets_and_signatures<R>(f: impl FnOnce(&CertifiedAssets, &SignatureMap) -> R) -> R {
     ASSETS.with(|assets| STATE.with(|s| f(&assets.borrow(), &s.sigs.borrow())))
-}
-
-pub fn signature_map<R>(f: impl FnOnce(&SignatureMap) -> R) -> R {
-    STATE.with(|s| f(&s.sigs.borrow()))
 }
 
 pub fn signature_map_mut<R>(f: impl FnOnce(&mut SignatureMap) -> R) -> R {
