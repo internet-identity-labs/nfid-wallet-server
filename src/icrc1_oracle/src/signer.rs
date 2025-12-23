@@ -3,10 +3,10 @@ use std::sync::LazyLock;
 
 use candid::{Nat, Principal};
 use ic_cdk::api::{
-    call::{call_with_payment128}, management_canister::ecdsa::{ecdsa_public_key, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgument}, time,
+    call::{call_with_payment128}, management_canister::ecdsa::{ecdsa_public_key, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgument},
 };
 use ic_cycles_ledger_client::{
-    Account, AllowanceArgs, ApproveArgs, CyclesLedgerService, DepositArgs, DepositResult,
+    Account, ApproveArgs, CyclesLedgerService, DepositArgs, DepositResult,
     ApproveError,
 };
 use ic_cdk::api::management_canister::bitcoin::{
@@ -36,8 +36,6 @@ const INPUT_SIZE_VBYTES: u64 = 68;
 const OUTPUT_SIZE_VBYTES: u64 = 31;
 const TX_OVERHEAD_VBYTES: u64 = 11;
 pub const MIN_CONFIRMATIONS_ACCEPTED_BTC_TX: u32 = 6;
-pub const MAX_UTXOS_LEN: usize = 128;
-pub const MAX_TXID_BYTES: usize = 32;
 
 pub static CYCLES_LEDGER: LazyLock<Principal> = LazyLock::new(|| {
     Principal::from_text(option_env!("CANISTER_ID_CYCLES_LEDGER").unwrap_or(MAINNET_CYCLES_LEDGER_CANISTER_ID))
@@ -57,22 +55,6 @@ pub enum TopUpCyclesLedgerError {
     CouldNotGetBalanceFromCyclesLedger,
     InvalidArgPercentageOutOfRange { percentage: u8, min: u8, max: u8 },
     CouldNotTopUpCyclesLedger { available: Nat, tried_to_send: Nat },
-}
-#[derive(CandidType, Deserialize, Debug, Clone, Eq, PartialEq)]
-pub enum GetAllowedCyclesError {
-    FailedToContactCyclesLedger,
-    Other(String),
-}
-
-/// Identifier of [Utxo].
-#[derive(
-    CandidType, Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Default,
-)]
-pub struct Outpoint {
-    /// Transaction Identifier.
-    pub txid: Vec<u8>,
-    /// A implicit index number.
-    pub vout: u32,
 }
 
 
@@ -182,28 +164,6 @@ impl From<Result<TopUpCyclesLedgerResponse, TopUpCyclesLedgerError>> for TopUpCy
         }
     }
 }
-pub async fn get_allowed_cycles() -> Result<Nat, GetAllowedCyclesError> {
-    let cycles_ledger: Principal = *CYCLES_LEDGER;
-    let signer: Principal = *SIGNER;
-    let caller = ic_cdk::caller();
-    let allowance_args = AllowanceArgs {
-        account: Account {
-            owner: ic_cdk::id(),
-            subaccount: None,
-        },
-        spender: Account {
-            owner: signer,
-            subaccount: Some(principal2account(&caller)),
-        },
-    };
-    let (allowance,) = CyclesLedgerService(cycles_ledger)
-        .icrc_2_allowance(&allowance_args)
-        .await
-        .map_err(|_| GetAllowedCyclesError::FailedToContactCyclesLedger)?;
-
-    Ok(allowance.allowance)
-}
-
 pub async fn allow_signing(allowed_cycles: Option<u64>) -> Result<Nat, AllowSigningError> {
     let cycles_ledger: Principal = *CYCLES_LEDGER;
     let signer: Principal = *SIGNER;
@@ -307,54 +267,6 @@ pub async fn top_up_cycles_ledger(request: TopUpCyclesLedgerRequest) -> TopUpCyc
 }
 
 
-pub trait Validate {
-    /// Verifies that an object is semantically valid.
-    ///
-    /// # Errors
-    /// - If the object is invalid.
-    fn validate(&self) -> Result<(), candid::Error>;
-    /// Returns the object if it is semantically valid.
-    ///
-    /// # Errors
-    /// - If the object is invalid.
-    fn validated(self) -> Result<Self, candid::Error>
-    where
-        Self: Sized,
-    {
-        self.validate().map(|()| self)
-    }
-}
-
-impl Validate for SelectedUtxosFeeResponse {
-    fn validate(&self) -> Result<(), candid::Error> {
-        validate_utxo_vec(&self.utxos)
-    }
-}
-
-
-fn validate_utxo(utxo: &Utxo) -> Result<(), candid::Error> {
-    let len = utxo.outpoint.txid.len();
-    if len > MAX_TXID_BYTES {
-        return Err(candid::Error::msg(format!(
-            "Transaction ID in utxo has too many bytes: {len} > {MAX_TXID_BYTES}"
-        )));
-    }
-    Ok(())
-}
-
-fn validate_utxo_vec(utxos: &[Utxo]) -> Result<(), candid::Error> {
-    if utxos.len() > MAX_UTXOS_LEN {
-        return Err(candid::Error::msg(format!(
-            "Too many UTXOs: {} > {}",
-            utxos.len(),
-            MAX_UTXOS_LEN
-        )));
-    }
-    for utxo in utxos {
-        validate_utxo(utxo)?;
-    }
-    Ok(())
-}
 
 
 async fn cfs_ecdsa_pubkey_of(principal: &Principal) -> Result<Vec<u8>, String> {
