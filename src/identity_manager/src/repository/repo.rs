@@ -1,6 +1,6 @@
 use crate::http::requests::{DeviceType, WalletVariant};
 use crate::ic_service;
-use crate::logger::logger::{Log, Logs};
+use crate::logger::logger::Logs;
 use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::account_repo::{Account, ACCOUNTS, PRINCIPAL_INDEX};
 use crate::repository::application_repo::Application;
@@ -45,7 +45,7 @@ pub struct Configuration {
 pub type Applications = BTreeSet<Application>;
 
 thread_local! {
-  pub static APPLICATIONS: RefCell<BTreeSet<Application>> = RefCell::new(BTreeSet::new());
+  pub static APPLICATIONS: RefCell<BTreeSet<Application>> = const { RefCell::new(BTreeSet::new()) };
   pub static TEMP_KEYS: RefCell<TtlHashMap<String, u64>> = RefCell::new(TtlHashMap::new(TEMP_KEY_EXPIRATION_NS));
   pub static CAPTCHA_CAHLLENGES: RefCell<TtlHashMap<String, Option<String>>> = RefCell::new(TtlHashMap::new(CAPTCHA_KEY_EXPIRATION_NS));
     pub static ADMINS: RefCell<HashSet<Principal>> = RefCell::new(HashSet::new());
@@ -88,16 +88,15 @@ impl BasicEntity {
 impl AdminRepo {
     pub fn get() -> Principal {
         ADMINS.with(|admins| {
-            admins
+            *admins
                 .borrow()
                 .iter()
                 .next()
                 .expect("Failed to retrieve an admin. The admin list is empty.")
-                .clone()
         })
     }
 
-    pub fn save(principal: Principal) -> () {
+    pub fn save(principal: Principal) {
         ADMINS.with(|admins| {
             admins.borrow_mut().insert(principal);
         });
@@ -106,10 +105,10 @@ impl AdminRepo {
 
 impl ControllersRepo {
     pub fn get() -> Vec<Principal> {
-        CONTROLLERS.with(|controllers| controllers.borrow().iter().map(|p| p.clone()).collect())
+        CONTROLLERS.with(|controllers| controllers.borrow().iter().copied().collect())
     }
 
-    pub fn save(principals: Vec<Principal>) -> () {
+    pub fn save(principals: Vec<Principal>) {
         CONTROLLERS.with(|controllers| {
             for p in principals {
                 controllers.borrow_mut().insert(p);
@@ -128,7 +127,7 @@ impl ConfigurationRepo {
         CONFIGURATION.with(|config| config.borrow().clone())
     }
 
-    pub fn save(configuration: Configuration) -> () {
+    pub fn save(configuration: Configuration) {
         CONFIGURATION.with(|config| {
             config.replace(configuration);
         });
@@ -140,7 +139,7 @@ impl ConfigurationRepo {
                 .expect("Failed to parse the lambda principal string.");
         Configuration {
             lambda_url: "https://d8m9ttp390ku4.cloudfront.net/dev".to_string(),
-            lambda: lambda,
+            lambda,
             token_ttl: Duration::from_secs(60),
             token_refresh_ttl: Duration::from_secs(60),
             whitelisted_phone_numbers: Vec::default(),
@@ -201,7 +200,7 @@ pub fn pre_upgrade() {
     ACCOUNTS.with(|accounts_struct| {
         for p in accounts_struct.borrow().iter() {
             accounts.push(AccountMemoryModel {
-                anchor: p.1.anchor.clone(),
+                anchor: p.1.anchor,
                 principal_id: p.1.principal_id.to_string(),
                 name: p.1.name.clone(),
                 personas: p.1.personas.clone(),
@@ -212,10 +211,10 @@ pub fn pre_upgrade() {
                     .access_points
                     .clone()
                     .into_iter()
-                    .map(|ap| access_point_to_memory_model(ap))
+                    .map(access_point_to_memory_model)
                     .collect(),
-                base_fields: p.1.base_fields.clone(),
-                wallet: Some(p.1.wallet.clone()),
+                base_fields: p.1.base_fields,
+                wallet: Some(p.1.wallet),
                 is2fa_enabled: Some(p.1.is2fa_enabled),
                 email: p.1.email.clone(),
             })
@@ -276,7 +275,7 @@ pub fn post_upgrade() {
                         .access_points
                         .clone()
                         .into_iter()
-                        .map(|ap| access_point_mm_to_ap(ap))
+                        .map(access_point_mm_to_ap)
                         .collect(),
                     base_fields: u.base_fields,
                     wallet: match u.wallet {
@@ -303,7 +302,7 @@ pub fn post_upgrade() {
 }
 
 fn access_point_to_memory_model(ap: AccessPoint) -> AccessPointMemoryModel {
-    return AccessPointMemoryModel {
+    AccessPointMemoryModel {
         principal_id: ap.principal_id,
         credential_id: ap.credential_id,
         icon: ap.icon,
@@ -312,11 +311,11 @@ fn access_point_to_memory_model(ap: AccessPoint) -> AccessPointMemoryModel {
         last_used: ap.last_used,
         device_type: Some(ap.device_type),
         base_fields: ap.base_fields,
-    };
+    }
 }
 
 fn access_point_mm_to_ap(ap: AccessPointMemoryModel) -> AccessPoint {
-    return AccessPoint {
+    AccessPoint {
         principal_id: ap.principal_id,
         credential_id: ap.credential_id,
         icon: ap.icon,
@@ -328,5 +327,5 @@ fn access_point_mm_to_ap(ap: AccessPointMemoryModel) -> AccessPoint {
             Some(x) => x,
         },
         base_fields: ap.base_fields,
-    };
+    }
 }

@@ -1,6 +1,6 @@
 use captcha::fonts::Default as DefaultFont;
 use captcha::fonts::Font;
-use ic_cdk::{call, print, trap};
+use ic_cdk::{call, trap};
 use lazy_static::lazy_static;
 use rand_core::{RngCore, SeedableRng};
 use std::collections::{HashMap, HashSet};

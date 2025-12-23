@@ -25,7 +25,7 @@ impl PartialEq for Application {
 
 impl Ord for Application {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        return *&self.domain.cmp(&other.domain);
+        self.domain.cmp(&other.domain)
     }
 }
 
@@ -46,7 +46,7 @@ impl ApplicationRepoTrait for ApplicationRepo {
     fn read_applications(&self) -> Vec<Application> {
         APPLICATIONS.with(|apps| {
             let applications = apps.borrow();
-            applications.iter().map(|p| p.clone()).collect()
+            applications.iter().cloned().collect()
         })
     }
 }
