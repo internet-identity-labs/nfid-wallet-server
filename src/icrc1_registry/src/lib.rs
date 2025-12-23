@@ -40,9 +40,9 @@ impl PartialEq for ICRC1 {
 }
 
 thread_local! {
-     static CONFIG: RefCell<Conf> = const { RefCell::new( Conf {
+     static CONFIG: RefCell<Conf> = RefCell::new( Conf {
         im_canister: None
-    }) };
+    });
     pub static ICRC_REGISTRY: RefCell<HashMap<String, HashSet<ICRC1>>> = RefCell::new(HashMap::default());
 }
 
@@ -135,11 +135,11 @@ pub fn stable_save() {
 pub fn stable_restore() {
     let (mo, ): (Memory, ) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
-    CONFIG.with(|config| {
+    CONFIG.with(|mut config| {
         let mut config = config.borrow_mut();
         *config = mo.config.clone();
     });
-    ICRC_REGISTRY.with(|registry| {
+    ICRC_REGISTRY.with(|mut registry| {
         let mut registry = registry.borrow_mut();
         *registry = mo.registry.into_iter().map(|(k, v)| (k, v.into_iter().map(|x| ICRC1 {
             state: x.state,
