@@ -115,7 +115,7 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
         devices.insert(ap);
         let acc = self
             .access_point_repo
-            .store_access_points_by_anchor(devices, account.anchor.clone());
+            .store_access_points_by_anchor(devices, account.anchor);
         self.access_point_repo
             .update_account_index(princ, account.principal_id.clone());
         acc.expect("Failed to store access points for the given principal.")

@@ -13,10 +13,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
@@ -39,7 +39,7 @@ jobs:
           cache: true
 
       - name: Cache Maven packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.m2/repository
           key: maven-canisters

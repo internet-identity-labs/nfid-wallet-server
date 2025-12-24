@@ -37,9 +37,7 @@ impl PersonaRepoTrait for PersonaRepo {
 
     fn store_persona(&self, persona: Persona) -> Option<Account> {
         let acc = self.account_repo.get_account();
-        if acc.is_none() {
-            return None;
-        }
+        acc.as_ref()?;
         let mut account = acc.expect("Failed to retrieve account. The account repository returned None.").clone();
         account.personas.push(persona);
         self.account_repo.store_account(account)
@@ -47,9 +45,7 @@ impl PersonaRepoTrait for PersonaRepo {
 
     fn store_personas(&self, personas: Vec<Persona>) -> Option<Account> {
         let acc = self.account_repo.get_account();
-        if acc.is_none() {
-            return None;
-        }
+        acc.as_ref()?;
         let mut account = acc.expect("Failed to retrieve account. The account repository returned None.").clone();
         account.personas = personas;
         self.account_repo.store_account(account)

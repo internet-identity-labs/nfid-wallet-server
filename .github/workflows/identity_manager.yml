@@ -38,10 +38,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
@@ -64,7 +64,7 @@ jobs:
           cache: true
 
       - name: Cache Maven packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.m2/repository
           key: maven-canisters
@@ -168,7 +168,7 @@ jobs:
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
       - name: POST-BUILD => Save artifact.
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.CANISTER_WASM }}
           include-hidden-files: true
@@ -188,10 +188,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
@@ -290,7 +290,7 @@ jobs:
           echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
 
       - name: DEPLOY => Load artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: ${{ env.CANISTER_WASM }}
 
@@ -563,10 +563,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: internet-identity-labs/ci_libs
           ref: main

@@ -1,11 +1,11 @@
 use std::cell::{Cell, RefCell};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use candid::{candid_method, Principal};
 use candid::CandidType;
 use ic_cdk::{call, storage, trap};
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 thread_local! {
     static STATE: State = State::default();
@@ -44,8 +44,8 @@ impl Default for State {
 #[init]
 #[candid_method(init)]
 fn init(maybe_arg: Option<InitArgs>) {
-    if maybe_arg.is_some() {
-        init_im_canister(maybe_arg.expect("The maybe_arg failed after existence check.").im_canister);
+    if let Some(arg) = maybe_arg {
+        init_im_canister(arg.im_canister);
     }
 }
 
@@ -143,7 +143,7 @@ async fn remove_passkey(key: String, anchor: u64) -> u64 {
 
 /// Applies changes after the canister upgrade.
 #[post_upgrade]
-async fn post_upgrade(maybe_arg: Option<InitArgs>) {
+async fn post_upgrade(_maybe_arg: Option<InitArgs>) {
     init_from_memory().await;
 }
 
@@ -187,11 +187,11 @@ pub async fn init_from_memory() {
     });
     PASSKEYS.with(|passkeys| {
         let mut map = passkeys.borrow_mut();
-        mo.passkeys.map(|b| map.extend(b));
+        if let Some(b) = mo.passkeys { map.extend(b) }
     });
     USER_KEYS.with(|user_keys| {
         let mut map = user_keys.borrow_mut();
-        mo.anchors_data.map(|b| map.extend(b));
+        if let Some(b) = mo.anchors_data { map.extend(b) }
     });
 }
 

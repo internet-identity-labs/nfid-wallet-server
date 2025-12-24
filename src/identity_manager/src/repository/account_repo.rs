@@ -4,17 +4,16 @@ use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::persona_repo::Persona;
 use crate::repository::repo::{is_anchor_exists, BasicEntity, TEMP_KEYS};
 use crate::service::certified_service::{remove_certify_keys, update_certify_keys};
-use candid::{CandidType, Deserialize, Principal};
+use candid::{CandidType, Deserialize};
 use ic_cdk::api::time;
-use ic_cdk::storage;
 use itertools::Itertools;
 use serde::Serialize;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 
 thread_local! {
-  pub static ACCOUNTS: RefCell<BTreeMap<String, Account>> = RefCell::new(BTreeMap::new());
-  pub static PRINCIPAL_INDEX: RefCell<BTreeMap<String, String>> = RefCell::new(BTreeMap::new());
+  pub static ACCOUNTS: RefCell<BTreeMap<String, Account>> = const { RefCell::new(BTreeMap::new()) };
+  pub static PRINCIPAL_INDEX: RefCell<BTreeMap<String, String>> = const { RefCell::new(BTreeMap::new()) };
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
@@ -83,14 +82,10 @@ impl AccountRepoTrait for AccountRepo {
 
     fn get_account_by_anchor(&self, anchor: u64, wallet: WalletVariant) -> Option<Account> {
         ACCOUNTS.with(|accounts| {
-            match accounts
+            accounts
                 .borrow()
                 .iter()
-                .find(|l| l.1.anchor == anchor && l.1.wallet == wallet)
-            {
-                None => None,
-                Some(pair) => Some(pair.1.to_owned()),
-            }
+                .find(|l| l.1.anchor == anchor && l.1.wallet == wallet).map(|pair| pair.1.to_owned())
         })
     }
 
@@ -105,8 +100,8 @@ impl AccountRepoTrait for AccountRepo {
                         return None;
                     }
                 }
-                if is_anchor_exists(account.anchor, account.wallet.clone()) {
-                    return None;
+                if is_anchor_exists(account.anchor, account.wallet) {
+                    None
                 } else {
                     index
                         .borrow_mut()
@@ -144,7 +139,7 @@ impl AccountRepoTrait for AccountRepo {
             ACCOUNTS.with(|accounts| match accounts.borrow_mut().remove(&princ) {
                 None => None,
                 Some(acc) => {
-                    (&acc.access_points).into_iter().for_each(|ap| {
+                    acc.access_points.iter().for_each(|ap| {
                         index.borrow_mut().remove(&ap.principal_id);
                     });
                     index.borrow_mut().remove(&acc.principal_id.clone());
@@ -212,7 +207,7 @@ impl AccountRepoTrait for AccountRepo {
             match keys.borrow().get(&princ) {
                 None => None,
                 Some(anchor) => {
-                    return self.get_account_by_anchor(anchor.clone(), WalletVariant::NFID);
+                    self.get_account_by_anchor(*anchor, WalletVariant::NFID)
                 }
             }
         })
