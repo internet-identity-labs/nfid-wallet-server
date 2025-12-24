@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use candid::{candid_method, Principal};
 use candid::CandidType;
 use ic_cdk::{call, id, storage, trap};
-use ic_cdk::api::call::CallResult;
+use ic_cdk::api::call::{CallResult, call_with_payment128};
 use ic_cdk::api::management_canister::main::{
     CreateCanisterArgument, CanisterIdRecord, CanisterSettings, CanisterStatusResponse,
 };
@@ -189,10 +189,11 @@ async fn create_canister() -> Result<Principal, String> {
         settings: Some(settings),
     };
 
-    let result: CallResult<(CanisterIdRecord,)> = call(
+    let result: CallResult<(CanisterIdRecord,)> = call_with_payment128(
         Principal::management_canister(),
         "create_canister",
         (arg,),
+        1_000_000_000_000,
     )
     .await;
 
