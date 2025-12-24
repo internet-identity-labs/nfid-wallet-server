@@ -1,0 +1,44 @@
+type Conf = record {
+    max_user_addresses : nat32;
+    max_name_length : nat32;
+};
+
+type AddressType = variant {
+    IcpAddress;
+    IcpPrincipal;
+    BTC;
+    ETH;
+};
+
+type Address = record {
+    address_type : AddressType;
+    value : text;
+};
+
+type UserAddress = record {
+    id : text;
+    name : text;
+    addresses : vec Address;
+};
+
+type User = record {
+    user_addresses : vec UserAddress;
+};
+
+type AddressBookError = variant {
+    NameTooLong;
+    MaxAddressesReached;
+    AddressNotFound;
+    DuplicateAddress;
+    DuplicateName;
+    Unauthorized;
+};
+
+service : {
+    save : (UserAddress) -> (variant { Ok : vec UserAddress; Err : AddressBookError });
+    delete : (text) -> (variant { Ok : vec UserAddress; Err : AddressBookError });
+    delete_all : () -> (variant { Ok; Err : AddressBookError });
+    find_all : () -> (variant { Ok : vec UserAddress; Err : AddressBookError }) query;
+    get_config : () -> (Conf) query;
+    set_config : (Conf) -> (variant { Ok; Err : AddressBookError });
+}
