@@ -5,7 +5,6 @@ use std::collections::HashSet;
 use candid::{export_service};
 use candid::{CandidType, Nat, Principal};
 use ic_cdk::api::call::CallResult;
-use ic_cdk::api::time;
 use ic_cdk::{call, caller, id, storage, trap};
 use ic_cdk_macros::*;
 use serde::{Deserialize, Serialize};
@@ -39,11 +38,11 @@ pub struct CanisterIdRequest {
 #[derive(Serialize, Deserialize, CandidType, Clone, PartialEq, Eq, Debug)]
 pub enum CanisterStatus {
     #[serde(rename = "running")]
-    running,
+    Running,
     #[serde(rename = "stopping")]
-    stopping,
+    Stopping,
     #[serde(rename = "stopped")]
-    stopped,
+    Stopped,
 }
 
 #[derive(Deserialize, CandidType, Clone, PartialEq, Eq, Debug)]
@@ -128,10 +127,10 @@ pub struct ICRC1Request {
 }
 
 thread_local! {
-     static CONFIG: RefCell<Conf> = RefCell::new( Conf {
+     static CONFIG: RefCell<Conf> = const { RefCell::new( Conf {
         im_canister: None,
         operator: None
-    });
+    }) };
     pub static ICRC_REGISTRY: RefCell<HashSet<ICRC1>> = RefCell::new(HashSet::default());
     pub static NEURON_REGISTRY: RefCell<HashSet<NeuronData>> = RefCell::new(HashSet::default());
 }
@@ -176,14 +175,11 @@ pub async fn store_icrc1_canister(request: ICRC1Request) {
 /// Initializes the application with `Conf` parameters and saves them to storage.
 #[init]
 pub async fn init(conf: Option<Conf>) {
-    match conf {
-        Some(conf) => {
-            CONFIG.with(|storage| {
-                storage.replace(conf);
-            });
-        }
-        _ => {}
-    };
+    if let Some(conf) = conf {
+        CONFIG.with(|storage| {
+            storage.replace(conf);
+        });
+    }
 }
 
 /// Returns all persisted ICRC1 canisters.
@@ -239,9 +235,9 @@ pub async fn store_new_icrc1_canisters(icrc1: Vec<ICRC1>) {
         for mut canister in icrc1 {
             let existent_canister = registry.get(&canister);
             //if canister exists - update metadata. Sometimes SNS logo can be updated silently
-            if existent_canister.is_some() {
-                canister.index = existent_canister.unwrap().index.clone();
-                canister.date_added = existent_canister.unwrap().date_added;
+            if let Some(existent) = existent_canister {
+                canister.index = existent.index.clone();
+                canister.date_added = existent.date_added;
                 registry.replace(canister);
             } else {
                 registry.insert(canister);
@@ -330,7 +326,6 @@ pub async fn btc_select_user_utxos_fee(
         )
         .await
         .map_err(|msg| SelectedUtxosFeeError::InternalError { msg })?;
-        let now_ns = time();
 
         let median_fee_millisatoshi_per_vbyte = get_fee_per_byte(params.network)
             .await
@@ -442,12 +437,12 @@ pub fn stable_save() {
 pub fn stable_restore() {
     let (mo,): (Memory,) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
-    CONFIG.with(|mut config| {
+    CONFIG.with(|config| {
         let mut config = config.borrow_mut();
         *config = mo.config.clone();
     });
     timer_service::start_timer(3600);
-    ICRC_REGISTRY.with(|mut registry| {
+    ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
         *registry = mo
             .registry
@@ -466,7 +461,7 @@ pub fn stable_restore() {
             })
             .collect()
     });
-    NEURON_REGISTRY.with(|mut registry| {
+    NEURON_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
         *registry = mo.neurons.unwrap_or_default().clone();
     });
@@ -482,7 +477,7 @@ fn export_candid() -> String {
 }
 
 async fn get_root_id() -> String {
-    match CONFIG.with(|c| c.borrow_mut().im_canister.clone()) {
+    match CONFIG.with(|c| c.borrow_mut().im_canister) {
         None => caller().to_text(), // Return caller for testing purposes when im_canister is None
         Some(canister) => {
             let princ = caller();

@@ -58,18 +58,13 @@ thread_local! {
         im_canister: None
     });
     static ECDSA_KEYS: RefCell<HashMap<String,KeyPairObject>> = RefCell::new(HashMap::new());
-    static TREE: RefCell<RbTree<String, Vec<u8>>> = RefCell::new(RbTree::new());
+    static TREE: RefCell<RbTree<String, Vec<u8>>> = const { RefCell::new(RbTree::new()) };
 }
 
 #[query]
 async fn get_kp_certified(key: String) -> CertifiedKeyPairResponse {
     trap_if_not_authenticated_admin();
-    let witness = match get_count_witness(key.clone()) {
-        Ok(tree) => tree,
-        Err(_) => {
-            Vec::default()
-        }
-    };
+    let witness = get_count_witness(key.clone()).unwrap_or_default();
 
     let response = ECDSA_KEYS.with(|keys| {
         match keys.borrow().get(&key) {
@@ -77,14 +72,13 @@ async fn get_kp_certified(key: String) -> CertifiedKeyPairResponse {
                 KeyPairResponse { key_pair: None, princ: key.clone() }
             }
             Some(kp) => {
-                let response = KeyPairResponse {
+                KeyPairResponse {
                     key_pair: Some(KeyPair {
                         public_key: kp.key_pair.public_key.clone(),
                         private_key_encrypted: kp.key_pair.private_key_encrypted.clone(),
                     }),
                     princ: key,
-                };
-                response
+                }
             }
         }
     });
@@ -107,14 +101,11 @@ pub struct Conf {
 
 #[init]
 async fn init(conf: Option<Conf>) -> () {
-    match conf {
-        Some(conf) => {
-            CONFIG.with(|storage| {
-                storage.replace(conf);
-            });
-        }
-        _ => {}
-    };
+    if let Some(conf) = conf {
+        CONFIG.with(|storage| {
+            storage.replace(conf);
+        });
+    }
 }
 
 #[update]
@@ -154,14 +145,7 @@ async fn sync_controllers() -> Vec<String> {
 #[candid_method(query)]
 async fn get_public_key(root_principal: String) -> Option<String> {
     ECDSA_KEYS.with(|keys| {
-        match keys.borrow().get(&root_principal) {
-            None => {
-                None
-            }
-            Some(kp) => {
-                Some(kp.key_pair.public_key.clone())
-            }
-        }
+        keys.borrow().get(&root_principal).map(|kp| kp.key_pair.public_key.clone())
     })
 }
 
@@ -178,14 +162,13 @@ async fn get_kp() -> KeyPairResponse {
                 KeyPairResponse { key_pair: None, princ: key }
             }
             Some(kp) => {
-                let response = KeyPairResponse {
+                KeyPairResponse {
                     key_pair: Some(KeyPair {
                         public_key: kp.key_pair.public_key.clone(),
                         private_key_encrypted: kp.key_pair.private_key_encrypted.clone(),
                     }),
                     princ: key,
-                };
-                response
+                }
             }
         }
     })
@@ -202,7 +185,7 @@ async fn add_kp(kp: KeyPair) {
     ECDSA_KEYS.with(|k| {
         let mut keys = k.borrow_mut();
         if keys.contains_key(&key) {
-            trap(&format!("Already registered {}", key))
+            trap(&format!("Already registered {key}"))
         }
         let kkp = KeyPairObject {
             key_pair: KeyPair {
@@ -237,7 +220,7 @@ fn pre_upgrade() {
             .map(|a| PrincipalKP {
                 public_key: a.1.key_pair.public_key.clone(),
                 private_key: a.1.key_pair.private_key_encrypted.clone(),
-                created_date: a.1.created_date.clone(),
+                created_date: a.1.created_date,
                 principal: a.0.clone(),
             })
             .collect();
@@ -247,7 +230,7 @@ fn pre_upgrade() {
     let pre_upgrade_data = PersistedData { conf: Some(conf), keys: Some(principal_key_pairs) };
     match storage::stable_save((pre_upgrade_data, 0)) {
         Ok(_) => (),
-        Err(_) => trap(&format!("Failed to pre_upgrade"))
+        Err(_) => trap("Failed to pre_upgrade")
     }
 }
 
@@ -260,7 +243,7 @@ async fn get_all_json(from: u32, mut to: u32) -> String {
             .map(|a| PrincipalKP {
                 public_key: a.1.key_pair.public_key.clone(),
                 private_key: a.1.key_pair.private_key_encrypted.clone(),
-                created_date: a.1.created_date.clone(),
+                created_date: a.1.created_date,
                 principal: a.0.clone(),
             })
             .collect();
@@ -272,8 +255,8 @@ async fn get_all_json(from: u32, mut to: u32) -> String {
         to = len;
     }
     let resp = &principal_key_pairs[from as usize..to as usize];
-    return serde_json::to_string(&resp)
-        .expect("Failed to serialize the response to JSON");
+    serde_json::to_string(&resp)
+        .expect("Failed to serialize the response to JSON")
 }
 
 #[query]

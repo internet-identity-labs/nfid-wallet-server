@@ -19,10 +19,8 @@ describe("ICRC1 canister Storage", () => {
         await dfx.icrc1.actor.store_icrc1_canister(one_more_canister_id, { 'Inactive': null }, [1]);
         let canisters = await dfx.icrc1.actor.get_canisters_by_root(dfx.user.identity.getPrincipal().toText()) as ICRC1[];
         expect(canisters.length).eq(2);
-        expect(canisters[0].ledger).eq(canister_id);
-        expect(canisters[0].state).deep.eq({ 'Active': null });
-        expect(canisters[1].ledger).eq(one_more_canister_id);
-        expect(canisters[1].state).deep.eq({ 'Inactive': null });
+        expect(canisters.find((c) => c.ledger === canister_id)?.state).deep.eq({ 'Active': null });
+        expect(canisters.find((c) => c.ledger === one_more_canister_id)?.state).deep.eq({ 'Inactive': null });
         await dfx.icrc1.actor.store_icrc1_canister(canister_id, { 'Inactive': null }, []);
         canisters = await dfx.icrc1.actor.get_canisters_by_root(dfx.user.identity.getPrincipal().toText()) as ICRC1[];
         expect(canisters.find((c) => c.ledger === canister_id).state).deep.eq({ 'Inactive': null });

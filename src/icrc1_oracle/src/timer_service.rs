@@ -6,7 +6,7 @@ use ic_cdk_timers::TimerId;
 use crate::signer::{top_up_cycles_ledger, TopUpCyclesLedgerRequest};
 
 thread_local! {
-    static TIMER_ID: RefCell<Option<TimerId>> = RefCell::new(None);
+    static TIMER_ID: RefCell<Option<TimerId>> = const { RefCell::new(None) };
 }
 
 fn set_timer_interval(
@@ -31,11 +31,4 @@ pub fn start_timer(interval: u64) {
     });
 }
 
-pub fn stop_timer() {
-    TIMER_ID.with(|timer_id| {
-        if let Some(timer_id) = timer_id.borrow_mut().take() {
-            ic_cdk_timers::clear_timer(timer_id);
-        }
-    });
-}
 

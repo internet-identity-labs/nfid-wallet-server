@@ -1,13 +1,13 @@
 use candid::{candid_method, Principal};
 use candid::CandidType;
 use canister_sig_util::signature_map::LABEL_SIG;
-use ic_cdk::{call, id, print, trap};
+use ic_cdk::{call, id, trap};
 use ic_cdk::api::call::CallResult;
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use ic_cdk::api::set_certified_data;
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
 use internet_identity_interface::internet_identity::types::*;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize};
 
 use crate::state::{get_im_canister, init_from_memory, init_im_canister, Salt, save_to_temp_memory, clean_state};
 

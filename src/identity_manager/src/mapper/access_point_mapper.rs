@@ -25,7 +25,7 @@ pub fn access_point_request_to_access_point(request: AccessPointRequest) -> Acce
         icon: Some(request.icon),
         device: Some(request.device),
         browser: Some(request.browser),
-        last_used: Some(basic.get_created_date().clone()),
+        last_used: Some(basic.get_created_date()),
         device_type: request.device_type,
         base_fields: basic,
     }
@@ -33,30 +33,30 @@ pub fn access_point_request_to_access_point(request: AccessPointRequest) -> Acce
 
 pub fn recovery_device_data_to_access_point(device: DeviceData) -> AccessPoint {
     let basic = BasicEntity::new();
-    let access_point = AccessPoint {
+    
+    AccessPoint {
         principal_id: Principal::self_authenticating(device.pubkey).to_text(),
         credential_id: None,
         icon:Some("document".to_string()),
         device: Some("Recovery phrase".to_string()),
         browser: Some("".to_string()),
-        last_used: Some(basic.get_created_date().clone()),
+        last_used: Some(basic.get_created_date()),
         device_type: DeviceType::Recovery,
         base_fields: basic,
-    };
-    access_point
+    }
 }
 
 pub fn device_data_to_access_point(device: DeviceData) -> AccessPoint {
     let basic = BasicEntity::new();
-    let access_point = AccessPoint {
+    
+    AccessPoint {
         principal_id: Principal::self_authenticating(device.pubkey.clone()).to_text(),
         credential_id: None,
         icon: Some("ii".to_string()),
         device: Some("Internet Identity Device".to_string()),
         browser: None,
-        last_used: Some(basic.get_created_date().clone()),
+        last_used: Some(basic.get_created_date()),
         device_type: DeviceType::Unknown,
         base_fields: basic,
-    };
-    access_point
+    }
 }
