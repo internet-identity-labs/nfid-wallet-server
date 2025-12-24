@@ -3,7 +3,11 @@ use std::collections::HashMap;
 
 use candid::{candid_method, Principal};
 use candid::CandidType;
-use ic_cdk::{call, storage, trap};
+use ic_cdk::{call, id, storage, trap};
+use ic_cdk::api::call::CallResult;
+use ic_cdk::api::management_canister::main::{
+    CreateCanisterArgument, CanisterIdRecord, CanisterSettings, CanisterStatusResponse,
+};
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
 use serde::Deserialize;
 
@@ -24,6 +28,12 @@ pub struct InitArgs {
 pub struct PasskeyData {
     pub key: String,
     pub data: String,
+}
+
+#[derive(CandidType, Debug, Clone, Deserialize)]
+pub struct CanisterIdRequest {
+    #[serde(rename = "canister_id")]
+    pub canister_id: Principal,
 }
 
 struct State {
@@ -160,6 +170,38 @@ pub fn init_im_canister(im_canister: Principal) {
     });
 }
 
+/// Creates a new canister on the same subnet.
+#[update]
+async fn create_canister() -> Result<Principal, String> {
+    let caller = ic_cdk::caller();
+
+    let current_controllers = get_controllers().await;
+    if !current_controllers.contains(&caller) {
+        return Err(format!("Unauthorized: caller {} is not a controller of this canister", caller));
+    }
+
+    let settings = CanisterSettings {
+        controllers: Some(current_controllers),
+        ..Default::default()
+    };
+
+    let arg = CreateCanisterArgument {
+        settings: Some(settings),
+    };
+
+    let result: CallResult<(CanisterIdRecord,)> = call(
+        Principal::management_canister(),
+        "create_canister",
+        (arg,),
+    )
+    .await;
+
+    match result {
+        Ok((canister_id_record,)) => Ok(canister_id_record.canister_id),
+        Err((code, msg)) => Err(format!("Failed to create canister: {:?} - {}", code, msg)),
+    }
+}
+
 fn main() {}
 
 // Order dependent: do not move above any function annotated with #[candid_method]!
@@ -210,4 +252,17 @@ pub async fn save_to_temp_memory() {
     let mo: TempMemory = TempMemory { im_canister, passkeys: Some(passkeys), anchors_data: Some(anchors_data) };
     storage::stable_save((mo, ))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
+}
+
+pub async fn get_controllers() -> Vec<Principal> {
+    let res: CallResult<(CanisterStatusResponse,)> = call(
+        Principal::management_canister(),
+        "canister_status",
+        (CanisterIdRequest { canister_id: id() },),
+    )
+    .await;
+
+    return res
+        .expect("Inter-canister call to management canister for canister_status returned an empty result.")
+        .0.settings.controllers;
 }

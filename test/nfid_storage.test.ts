@@ -5,8 +5,8 @@ import {expect} from "chai";
 import {AccessPointRequest, HTTPAccountRequest, HTTPAccountResponse} from "./idl/identity_manager";
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {idlFactory as nfidSIDL} from "./idl/nfid_storage_idl";
-import {execute} from "./util/call.util";
-import {PassKeyData} from "./idl/nfid_storage";
+import {call, execute} from "./util/call.util";
+import {PassKeyData, _SERVICE as NfidStorageService} from "./idl/nfid_storage";
 
 describe("NFID Storage test", () => {
     var dfx: Dfx;
@@ -70,5 +70,38 @@ describe("NFID Storage test", () => {
         const data = await storageActor.get_passkey_by_anchor(100000000n) as PassKeyData[]
 
         expect(data.length).eq(0)
+    })
+
+    it("should create canister with correct controllers", async function () {
+        // Given
+        // nfid_storage canister is deployed with user as controller
+
+        // When
+        const result = await dfx.nfid_storage.actor.create_canister();
+
+        // Then
+        expect(result, 'Expected Ok result').to.have.property('Ok');
+        if (!('Ok' in result)) return;
+
+        const canisterId = result.Ok.toString();
+        expect(canisterId).to.not.be.empty;
+
+        const canisterInfo = call(`dfx canister info ${canisterId}`);
+        expect(canisterInfo).to.include(dfx.user.principal);
+    })
+
+    it("should fail to create canister when caller is not a controller", async function () {
+        // Given
+        const unauthorizedIdentity = getIdentity("12345678123456781234567812345678");
+        const unauthorizedActor = await getTypedActor<NfidStorageService>(dfx.nfid_storage.id, unauthorizedIdentity, nfidSIDL);
+
+        // When
+        const result = await unauthorizedActor.create_canister();
+
+        // Then
+        expect(result, 'Expected Err result').to.have.property('Err');
+        if (!('Err' in result)) return;
+
+        expect(result.Err).to.include("Unauthorized");
     })
 })
