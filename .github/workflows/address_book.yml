@@ -1,0 +1,224 @@
+name: Address Book
+run-name: Address Book - ${{ github.event.inputs.network_name }}
+on:
+  workflow_dispatch:
+    inputs:
+      network_name:
+        description: 'Choose applicable network'
+        required: true
+        type: choice
+        options:
+          - dev
+          - ic
+      canister_name:
+        description: 'Choose applicable canister'
+        default: address_book
+        required: true
+        type: choice
+        options:
+          - address_book
+      confirmation:
+        description: 'For the ic deployment - confirm your choice by typing "Yes"'
+        type: string
+
+env:
+  NETWORK_NAME: ${{ github.event.inputs.network_name }}
+  CANISTER_NAME: ${{ github.event.inputs.canister_name }}
+  CI_DEBUG: 'true'
+  RELEASE_TAG_REGEX: '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
+
+jobs:
+  deploy:
+    name: Deploy
+    environment: ${{ github.event.inputs.network_name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout nfid-wallet-server repo
+        uses: actions/checkout@v5
+
+      - name: Checkout ci_libs repo
+        uses: actions/checkout@v5
+        with:
+          repository: internet-identity-labs/ci_libs
+          ref: main
+          path: ci_libs
+          token: ${{ secrets.PAT }}
+
+      - name: Install dfx
+        run: |
+          export DFX_VERSION=0.23.0
+          export DFXVM_INIT_YES=true
+          sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          components: clippy,rustfmt
+          cache: true
+
+      - name: Versions
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_versions
+
+      - name: Checks branch and network_name
+        if: ${{ env.NETWORK_NAME == 'ic' }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          if [ "${{ github.event.inputs.confirmation }}" != 'Yes' ]; then
+            ci_echo_error "You have try release to network 'ic' without or with wrong confirmation phrase." >&2
+            exit 1
+          fi
+
+          if [ "${GITHUB_REF_TYPE}" != 'tag' ]; then
+            ci_echo_error "Releasing to IC not from tag not allowed." >&2
+            exit 1
+          fi
+
+          # https://semver.org/
+          if ! [[ "${GITHUB_REF_NAME}" =~ ${RELEASE_TAG_REGEX} ]]; then
+            ci_echo_error "${GITHUB_REF_TYPE} : '${GITHUB_REF_NAME}' - is not SemVer correct (https://semver.org/)" >&2
+            exit 1
+          fi
+
+          ci_echo_success "${GITHUB_REF_TYPE} : ${GITHUB_REF_NAME}"
+
+      - name: Populate env vars
+        env:
+          DFX_ID_NAME: ${{ vars.DFX_ID_NAME }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          ci_echo_debug "Getting values from dfx.json" >&2
+          if ! canister_data=$(cat dfx.json | jq -er ".canisters.\"${CANISTER_NAME}\""); then
+            ci_echo_error "Can't found canister '${CANISTER_NAME}' data from dfx.json" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Populating env variables" >&2
+          CANISTER_DID="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.candid")"
+          CANISTER_WASM="$(cat dfx.json | jq -er ".canisters.${CANISTER_NAME}.wasm")"
+          CANISTER_BRANCH="${GITHUB_REF_NAME////-}"
+
+          ci_echo_debug "Getting dfx identity for network '${NETWORK_NAME}'" >&2
+          DFX_ID_PATH="${HOME}/.config/dfx/identity/${DFX_ID_NAME}"
+
+          echo "DFX_ID_NAME=${DFX_ID_NAME}" >> $GITHUB_ENV
+          echo "DFX_ID_PATH=${DFX_ID_PATH}" >> $GITHUB_ENV
+
+          echo "CANISTER_DID=${CANISTER_DID}" >> $GITHUB_ENV
+          echo "CANISTER_WASM=${CANISTER_WASM}" >> $GITHUB_ENV
+          echo "CANISTER_BRANCH=${CANISTER_BRANCH}" >> $GITHUB_ENV
+
+      - name: Print Vars
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+          ci_echo_info "NETWORK_NAME=${NETWORK_NAME}" >&2
+          ci_echo_info "CANISTER_NAME=${CANISTER_NAME}" >&2
+          ci_echo_info "CANISTER_DID=${CANISTER_DID}" >&2
+          ci_echo_info "CANISTER_WASM=${CANISTER_WASM}" >&2
+          ci_echo_info "CANISTER_BRANCH=${CANISTER_BRANCH}" >&2
+          ci_echo_info "DFX_ID_NAME=${DFX_ID_NAME}" >&2
+          ci_echo_info "DFX_ID_PATH=${DFX_ID_PATH}" >&2
+
+      - name: Write identity
+        env:
+          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          mkdir -p "${DFX_ID_PATH}"
+
+          ci_echo_warn "Preparing encoded key..." >&2
+          echo "${DFX_ID_KEY}" | base64 -d > "${DFX_ID_PATH}/identity.pem"
+
+      - name: Build
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          export RUSTFLAGS=""
+
+          dfx identity use "${DFX_ID_NAME}"
+
+          rm -rf .dfx;
+          ci_echo_debug "dfx build --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
+          dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+      - name: Take snapshot
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          export DFX_WARNING=-mainnet_plaintext_identity
+
+          dfx identity use "${DFX_ID_NAME}"
+
+          ci_echo_info "Stopping the canister '${CANISTER_NAME}'" >&2
+          dfx canister stop --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+          ci_echo_info "Getting Snapshots" >&2
+          ci_echo_debug "dfx canister snapshot list '${CANISTER_NAME}' --network '${NETWORK_NAME}'" >&2
+          snapshots_list="$(dfx canister snapshot list "${CANISTER_NAME}" --network "${NETWORK_NAME}" 2>&1)"
+          ci_echo_debug "snapshots_list='${snapshots_list}'" >&2
+
+          if [ -n "${snapshots_list}" ]; then
+            snapshot_id="$(echo "${snapshots_list}"  | grep -o '[0-9a-z]\{36,\}' || true | head -n 1)"
+            ci_echo_debug "snapshot_id='${snapshot_id}'" >&2
+          fi
+
+          if [ -n "${snapshot_id}" ]; then
+            ci_echo_info "Deleting Snapshot '${snapshot_id}'" >&2
+            ci_echo_debug "dfx canister snapshot delete '${CANISTER_NAME}' --network '${NETWORK_NAME}' '${snapshot_id}'" >&2
+            dfx canister snapshot delete "${CANISTER_NAME}" --network "${NETWORK_NAME}" "$snapshot_id"
+          fi
+
+          ci_echo_info "Creating Snapshot" >&2
+          dfx canister snapshot create --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+          ci_echo_info "Starting the canister '${CANISTER_NAME}'" >&2
+          dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"
+
+      - name: Deploy
+        run: |
+          source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
+
+          if [ "${NETWORK_NAME}" == 'ic' ]; then
+            CI_DEBUG="true"
+          fi
+
+          export DFX_WARNING=-mainnet_plaintext_identity
+
+          dfx identity use "${DFX_ID_NAME}"
+
+          ci_echo_debug "Upgrading canister without arguments" >&2
+          ci_echo_debug "dfx deploy --yes --no-wallet --network '${NETWORK_NAME}' '${CANISTER_NAME}'" >&2
+          if ! result=$(dfx deploy --yes --no-wallet --network "${NETWORK_NAME}" "${CANISTER_NAME}"); then
+            ci_echo_error "Upgrade failed ${result}" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Command output was '${result}'" >&2
+
+          # If hash the same - than fail deploy
+          if echo "${result}" | grep -q 'Module hash [[:alnum:]]+ is already installed'; then
+            ci_echo_error "${result}" >&2
+            exit 1
+          fi
+          ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
+
+          ci_echo_info "Setting configuration for '${CANISTER_NAME}'" >&2
+          ci_echo_debug "dfx canister call --network '${NETWORK_NAME}' '${CANISTER_NAME}' set_config '( record { max_user_addresses = 50; max_name_length = 200 })'" >&2
+          if ! config_result=$(dfx canister call --network "${NETWORK_NAME}" "${CANISTER_NAME}" set_config "( record { max_user_addresses = 50; max_name_length = 200 })"); then
+            ci_echo_error "Configuration failed ${config_result}" >&2
+            exit 1
+          fi
+
+          ci_echo_debug "Configuration command output was '${config_result}'" >&2
+          ci_echo_success "Canister '${CANISTER_NAME}' was configured" >&2

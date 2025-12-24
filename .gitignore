@@ -24,3 +24,5 @@ eth_secret_storage.wasm
 
 # Old dids
 src/eth_secret_storage/eth_secret_storage.old.did
+
+*.wasm
