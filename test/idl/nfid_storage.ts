@@ -4,7 +4,10 @@ import type { IDL } from '@dfinity/candid';
 
 export interface InitArgs { 'im_canister' : Principal }
 export interface PassKeyData { 'key' : string, 'data' : string }
+export type Result = { 'Ok' : Principal } |
+  { 'Err' : string };
 export interface _SERVICE {
+    'create_canister' : ActorMethod<[], Result>,
     'get_passkey' : ActorMethod<[Array<string>], Array<PassKeyData>>,
     'get_passkey_by_anchor' : ActorMethod<[bigint], Array<PassKeyData>>,
     'remove_passkey' : ActorMethod<[string, bigint], bigint>,

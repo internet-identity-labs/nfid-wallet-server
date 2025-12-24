@@ -12,4 +12,5 @@ service : (opt InitArgs) -> {
     store_passkey : (text, text, nat64) -> (nat64);
     remove_passkey : (text, nat64) -> (nat64);
     get_passkey_by_anchor : (nat64) -> (vec PassKeyData) query;
+    create_canister : () -> (variant { Ok : principal; Err : text });
 }
