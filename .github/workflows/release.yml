@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: internet-identity-labs/ci_libs
           ref: main

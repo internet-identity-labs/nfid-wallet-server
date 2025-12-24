@@ -48,10 +48,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
@@ -216,7 +216,7 @@ jobs:
           ci_echo_success "All account batches have been fetched and saved." >&2
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: accounts-${{ env.NETWORK_NAME }}-${{ github.run_id }}
           path: accounts_output/
