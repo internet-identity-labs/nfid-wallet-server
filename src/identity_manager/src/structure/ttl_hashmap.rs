@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use ic_cdk::api::time;
 
 pub struct TtlHashMap<K, V> {
     map: HashMap<K, (V, u64)>,
@@ -30,7 +29,7 @@ where
     }
 
     pub fn count(&self) -> usize {
-        self.map.iter().count()
+        self.map.len()
     }
 
     pub fn clean_expired_entries(&mut self, timestamp: u64) {

@@ -113,9 +113,9 @@ pub async fn get_controllers() -> Vec<Principal> {
     .await;
 
 
-    return res
+    res
         .expect("Get controllers function exited unexpectedly: inter-canister call to management canister for canister_status returned an empty result.")
-        .0.settings.controllers;
+        .0.settings.controllers
 }
 
 pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) -> Vec<DeviceData> {
@@ -132,7 +132,7 @@ pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) -> Vec
     let ii_canister = ConfigurationRepo::get().ii_canister_id;
 
     //TODO update when possible to query call
-    let res: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor.clone(), 0)).await {
+    let res: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor, 0)).await {
         Ok((res,)) => res,
         Err((_, err)) => trap(&format!("failed to request II: {}", err)),
     };
@@ -143,7 +143,7 @@ pub async fn trap_if_not_authenticated(anchor: u64, principal: Principal) -> Vec
 
 fn verify<'a>(princ: Principal, public_keys: impl Iterator<Item = &'a PublicKey>) {
     for pk in public_keys {
-        if princ.clone() == Principal::self_authenticating(pk) {
+        if princ == Principal::self_authenticating(pk) {
             return;
         }
     }
@@ -152,7 +152,7 @@ fn verify<'a>(princ: Principal, public_keys: impl Iterator<Item = &'a PublicKey>
 
 pub async fn get_device_data_vec(anchor: u64) -> Vec<DeviceData> {
     let ii_canister = ConfigurationRepo::get().ii_canister_id;
-    let res: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor.clone(), 0)).await {
+    let res: Vec<DeviceData> = match call(ii_canister, "lookup", (anchor, 0)).await {
         Ok((res,)) => res,
         Err((_, err)) => trap(&format!("failed to request II: {}", err)),
     };

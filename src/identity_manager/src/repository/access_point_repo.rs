@@ -107,8 +107,8 @@ impl AccessPointRepoTrait for AccessPointRepo {
             .expect("Failed to retrieve the account from the account repository.")
             .clone();
         acc.access_points = access_points.clone();
-        let resp = self.account_repo.store_account(acc);
-        resp
+        
+        self.account_repo.store_account(acc)
     }
 
     fn remove_ap_index(&self, access_point: String) {
@@ -126,8 +126,8 @@ impl AccessPointRepoTrait for AccessPointRepo {
             .expect("Failed to retrieve the account.")
             .clone();
         acc.access_points = access_points.clone();
-        let resp = self.account_repo.store_account(acc);
-        resp
+        
+        self.account_repo.store_account(acc)
     }
 
     fn store_access_points_by_anchor(
@@ -141,8 +141,8 @@ impl AccessPointRepoTrait for AccessPointRepo {
             .expect("Failed to retrieve the account.")
             .clone();
         acc.access_points = access_points.clone();
-        let resp = self.account_repo.store_account(acc);
-        resp
+        
+        self.account_repo.store_account(acc)
     }
 
     fn update_account_index(&self, additional_principal_id: String, root_princ: String) {

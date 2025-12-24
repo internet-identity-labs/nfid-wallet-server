@@ -1,13 +1,13 @@
 use std::{cell::RefCell, collections::VecDeque, convert::TryInto};
 
-use ic_cdk::{api::set_certified_data, storage};
+use ic_cdk::api::set_certified_data;
 use ic_certified_map::AsHashTree;
 
 use super::certified_service::TREE;
 use crate::repository::account_repo::PRINCIPAL_INDEX;
 
 thread_local! {
-    pub static DEVICE_INDEX_STACK: RefCell<VecDeque<(String, Vec<u8>)>> = RefCell::new(VecDeque::new());
+    pub static DEVICE_INDEX_STACK: RefCell<VecDeque<(String, Vec<u8>)>> = const { RefCell::new(VecDeque::new()) };
 }
 
 pub fn save_temp_stack() -> String {

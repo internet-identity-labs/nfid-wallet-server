@@ -5,7 +5,7 @@ use serde::Serialize;
 use std::cell::RefCell;
 
 thread_local! {
-  pub static TREE: RefCell<RbTree<String, Vec<u8>>> = RefCell::new(RbTree::new());
+  pub static TREE: RefCell<RbTree<String, Vec<u8>>> = const { RefCell::new(RbTree::new()) };
 }
 
 #[derive(CandidType)]

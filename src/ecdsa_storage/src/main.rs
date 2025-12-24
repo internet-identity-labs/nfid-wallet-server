@@ -1,12 +1,11 @@
 use std::cell::{Cell, RefCell};
-use std::collections::{HashMap, HashSet};
 
 use candid::{candid_method, Principal};
 use candid::CandidType;
 use hex::encode;
 use ic_cdk::{call, caller, storage, trap};
-use ic_cdk_macros::{init, post_upgrade, pre_upgrade, query, update};
-use serde::{Deserialize, Serialize};
+use ic_cdk_macros::{init, post_upgrade, pre_upgrade, update};
+use serde::Deserialize;
 use sha2::{Digest, Sha256};
 thread_local! {
     static STATE: State = State::default();
@@ -43,8 +42,8 @@ impl Default for State {
 #[init]
 #[candid_method(init)]
 fn init(maybe_arg: Option<InitArgs>) {
-    if maybe_arg.is_some() {
-        init_im_canister(maybe_arg.expect("The maybe_arg failed after existence check."));
+    if let Some(arg) = maybe_arg {
+        init_im_canister(arg);
     }
 }
 
@@ -54,8 +53,7 @@ async fn get_salt() -> String {
     let root = get_root_id().await;
     let ecdsa_salt = STATE.with(|s| s.ecdsa_salt.borrow().clone());
     let salted_key = format!("{}{}", root, ecdsa_salt);
-    let sha2_key = sha2(&salted_key);
-    sha2_key
+    sha2(&salted_key)
 }
 
 #[update]
@@ -64,14 +62,13 @@ async fn get_anon_salt(data: String) -> String {
     let ecdsa_salt = STATE.with(|s| s.ecdsa_salt.borrow().clone());
     let salt = STATE.with(|s: &State| s.salt.borrow().clone());
     let salted_data = format!("{}{}{}{}", root, data, salt, ecdsa_salt);
-    let sha2_data = sha2(&salted_data);
-    sha2_data
+    sha2(&salted_data)
 }
 
 
 /// Applies changes afterr the canister upgrade.
 #[post_upgrade]
-async fn post_upgrade(maybe_arg: Option<InitArgs>) {
+async fn post_upgrade(_maybe_arg: Option<InitArgs>) {
     init_from_memory().await;
 }
 

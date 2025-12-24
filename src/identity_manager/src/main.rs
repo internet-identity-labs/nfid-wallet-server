@@ -1,4 +1,3 @@
-use candid::{CandidType, Deserialize};
 use canister_api_macros::{admin, lambda, operator, paused, two_f_a};
 use http::response_mapper::DataResponse;
 use ic_cdk::{caller, trap};
@@ -20,7 +19,7 @@ use crate::repository::account_repo::{
 };
 use crate::repository::application_repo::{Application, ApplicationRepo};
 use crate::repository::persona_repo::PersonaRepo;
-use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo, CAPTCHA_CAHLLENGES, CONFIGURATION};
+use crate::repository::repo::{AdminRepo, Configuration, ConfigurationRepo, ControllersRepo, CONFIGURATION};
 use crate::requests::{
     AccessPointRemoveRequest, AccessPointRequest, AccessPointResponse, AccountRequest,
     ConfigurationRequest, ConfigurationResponse, PersonaResponse,
@@ -260,8 +259,8 @@ async fn get_account_by_anchor(
         None => WalletVariant::InternetIdentity,
         Some(x) => x,
     };
-    let response = account_service.get_account_by_anchor(anchor, wv);
-    response
+    
+    account_service.get_account_by_anchor(anchor, wv)
 }
 
 /// Pauses account creation to prevent new accounts from being created.
@@ -296,8 +295,8 @@ async fn add_email_and_principal_for_create_account_validation(
 #[operator]
 async fn get_account_by_principal(princ: String) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
-    let response = account_service.get_account_by_principal(princ);
-    response
+    
+    account_service.get_account_by_principal(princ)
 }
 
 /// Returns the root principal ID based on any of the access point principal IDs.
@@ -455,10 +454,7 @@ async fn sync_recovery_phrase_from_internet_identity(anchor: u64) -> HttpRespons
 async fn get_root_certified() -> CertifiedResponse {
     let caller = caller().to_text();
     secure_principal_2fa(&caller);
-    let witness = match get_witness(caller.clone()) {
-        Ok(tree) => tree,
-        Err(_) => Vec::default(),
-    };
+    let witness = get_witness(caller.clone()).unwrap_or_default();
     let mut account_service = get_account_service();
     match account_service.get_root_id_by_principal(caller) {
         None => trap("No such ap"),

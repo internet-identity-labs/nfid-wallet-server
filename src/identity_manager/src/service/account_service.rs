@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use ic_cdk::api::time;
-use ic_cdk::{print, trap};
+use ic_cdk::trap;
 
 use crate::http::requests::{AccountResponse, ChallengeAttempt, DeviceType, WalletVariant};
 use crate::ic_service::KeyType;
@@ -90,14 +90,13 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
         }
         let mut devices: Vec<DeviceData> = Vec::default();
         let mut acc = account_request_to_account(account_request.clone());
-        if account_request.email.is_some() {
-            if !email_validation_service::contains(
+        if account_request.email.is_some()
+            && !email_validation_service::contains(
                 account_request.email.clone().expect("Failed to retrieve the email from the account request.").to_string(),
                 princ.clone(),
             ) {
                 trap("Email and principal are not valid.")
             }
-        }
         if acc.wallet.eq(&WalletVariant::NFID) {
             match account_request.access_point.clone() {
                 None => trap("Device Data required"),
@@ -116,7 +115,7 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             let anchor = self.account_repo.find_next_nfid_anchor();
             acc.anchor = anchor;
         } else {
-            devices = ic_service::trap_if_not_authenticated(acc.anchor.clone(), get_caller()).await;
+            devices = ic_service::trap_if_not_authenticated(acc.anchor, get_caller()).await;
         }
         let access_point = account_request.access_point.clone();
         let is_ii_device = access_point.is_some() && access_point.unwrap().device_type.eq(&DeviceType::InternetIdentity);
@@ -128,13 +127,13 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             acc.name = account_request.name.clone();
             acc.is2fa_enabled = true;
         }
-        match { self.account_repo.create_account(acc) } {
+        match self.account_repo.create_account(acc) {
             None => to_error_response("Impossible to link this II anchor, please try another one."),
             Some(mut new_acc) => {
                 if new_acc.name.is_some() {
                     TEMP_KEYS.with(|keys| {
                         keys.borrow_mut().clean_expired_entries(time());
-                        keys.borrow_mut().insert(princ.clone(), new_acc.anchor.clone(), time());
+                        keys.borrow_mut().insert(princ.clone(), new_acc.anchor, time());
                     });
                 }
                 let recovery_device = devices
@@ -165,28 +164,28 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
         anchor: u64,
         wallet: WalletVariant,
     ) -> HttpResponse<AccountResponse> {
-        match { self.account_repo.get_account_by_anchor(anchor, wallet) } {
+        match self.account_repo.get_account_by_anchor(anchor, wallet) {
             None => to_error_response("Anchor not registered."),
             Some(acc) => to_success_response(account_to_account_response(acc)),
         }
     }
 
     fn get_account_by_principal(&mut self, princ: String) -> HttpResponse<AccountResponse> {
-        match { self.account_repo.get_account_by_principal(princ) } {
+        match self.account_repo.get_account_by_principal(princ) {
             None => to_error_response("Principal not registered."),
             Some(acc) => to_success_response(account_to_account_response(acc)),
         }
     }
 
     fn get_root_id_by_principal(&mut self, princ: String) -> Option<String> {
-        match { self.account_repo.get_account_by_principal(princ) } {
+        match self.account_repo.get_account_by_principal(princ) {
             None => None,
             Some(acc) => Some(acc.principal_id),
         }
     }
 
     fn get_anchor_by_principal(&mut self, princ: String) -> Option<u64> {
-        match { self.account_repo.get_account_by_principal(princ) } {
+        match self.account_repo.get_account_by_principal(princ) {
             None => None,
             Some(acc) => Some(acc.anchor),
         }
