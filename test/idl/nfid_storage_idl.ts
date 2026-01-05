@@ -1,7 +1,9 @@
 export const idlFactory = ({ IDL }) => {
     const InitArgs = IDL.Record({ 'im_canister' : IDL.Principal });
     const PassKeyData = IDL.Record({ 'key' : IDL.Text, 'data' : IDL.Text });
+    const Result = IDL.Variant({ 'Ok' : IDL.Principal, 'Err' : IDL.Text });
     return IDL.Service({
+        'create_canister' : IDL.Func([], [Result], []),
         'get_passkey' : IDL.Func(
             [IDL.Vec(IDL.Text)],
             [IDL.Vec(PassKeyData)],

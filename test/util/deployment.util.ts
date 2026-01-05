@@ -190,11 +190,12 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         }
         if (apps.includes(App.NFIDStorage)) {
             execute(`dfx deploy nfid_storage --mode reinstall -y --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
+            DFX.ADD_CONTROLLER(dfx.user.principal, "nfid_storage");
 
             dfx.nfid_storage.id = DFX.GET_CANISTER_ID("nfid_storage");
             console.log(">> ", dfx.nfid_storage.id);
 
-            dfx.nfid_storage.actor = await getActor(dfx.nfid_storage.id, dfx.user.identity, nfidStorageIDL);
+            dfx.nfid_storage.actor = await getTypedActor(dfx.nfid_storage.id, dfx.user.identity, nfidStorageIDL);
             return dfx;
         }
         if (apps.includes(App.SwapTrsStorage)) {
