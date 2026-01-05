@@ -52,8 +52,6 @@ pub fn stable_restore() {
 pub async fn save(user_address: UserAddress) -> Result<Vec<UserAddress>, AddressBookError> {
     let caller = caller().to_text();
 
-    validate_no_duplicate_addresses(&user_address.addresses)?;
-
     let (max_name_length, max_addresses) = CONFIG.with(|c| {
         let conf = c.borrow();
         (conf.max_name_length, conf.max_user_addresses)
@@ -69,17 +67,12 @@ pub async fn save(user_address: UserAddress) -> Result<Vec<UserAddress>, Address
             user_addresses: HashSet::new(),
         });
 
+        validate_no_duplicate_names(&user.user_addresses, &user_address)?;
+        validate_no_duplicate_addresses(&user.user_addresses, &user_address)?;
+
         let is_new = !user.user_addresses.contains(&user_address);
 
         if is_new {
-            let name_exists = user.user_addresses.iter().any(|addr| {
-                addr.id != user_address.id && addr.name == user_address.name
-            });
-
-            if name_exists {
-                return Err(AddressBookError::DuplicateName);
-            }
-
             if user.user_addresses.len() >= max_addresses as usize {
                 return Err(AddressBookError::MaxAddressesReached);
             }
@@ -170,13 +163,43 @@ fn get_user_addresses(book: &HashMap<String, User>, caller: &str) -> Vec<UserAdd
         .unwrap_or_default()
 }
 
-fn validate_no_duplicate_addresses(addresses: &[Address]) -> Result<(), AddressBookError> {
-    let mut seen = HashSet::new();
+fn validate_no_duplicate_names(
+    user_addresses: &HashSet<UserAddress>,
+    new_user_address: &UserAddress,
+) -> Result<(), AddressBookError> {
+    let has_duplicate = user_addresses
+        .iter()
+        .filter(|address| address.id != new_user_address.id)
+        .any(|address| address.name == new_user_address.name);
 
-    for address in addresses {
-        if !seen.insert(address) {
-            return Err(AddressBookError::DuplicateAddress);
-        }
+    if has_duplicate {
+        return Err(AddressBookError::DuplicateName);
+    }
+
+    Ok(())
+}
+
+fn validate_no_duplicate_addresses(
+    user_addresses: &HashSet<UserAddress>,
+    new_user_address: &UserAddress,
+) -> Result<(), AddressBookError> {
+    let addresses = new_user_address.addresses.iter()
+        .try_fold(HashSet::new(), |mut acc, address| {
+            if acc.insert(address) {
+                Ok(acc)
+            } else {
+                Err(AddressBookError::DuplicateAddress)
+            }
+        })?;
+
+    let has_duplicate = user_addresses
+        .iter()
+        .filter(|user_address| user_address.id != new_user_address.id)
+        .flat_map(|user_address| &user_address.addresses)
+        .any(|existing_address| addresses.contains(existing_address));
+
+    if has_duplicate {
+        return Err(AddressBookError::DuplicateAddress);
     }
 
     Ok(())

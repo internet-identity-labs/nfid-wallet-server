@@ -115,6 +115,34 @@ describe("Address Book", () => {
         expect(result).to.have.nested.property('Err.DuplicateAddress');
     });
 
+    it("should return an error when saving two user addresses with the same address value", async function () {
+        // Given
+        const address1: UserAddress = {
+            id: "addr1",
+            name: "First Bitcoin Wallet",
+            addresses: [
+                { address_type: { 'BTC': null }, value: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" }
+            ]
+        };
+        await dfx.address_book.actor.save(address1);
+
+        // When
+        const address2: UserAddress = {
+            id: "addr2",
+            name: "Second Bitcoin Wallet",
+            addresses: [
+                { address_type: { 'BTC': null }, value: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" }
+            ]
+        };
+        const result = await dfx.address_book.actor.save(address2);
+
+        // Then
+        expect(result).to.have.nested.property('Err.DuplicateAddress');
+        const addressesResult = await dfx.address_book.actor.find_all();
+        expect(addressesResult).to.have.nested.property('Ok.length', 1);
+        expect(addressesResult).to.have.nested.property('Ok[0]').that.deep.equals(address1);
+    });
+
     it("should return an error when saving a new address with a duplicate name", async function () {
         // Given
         const address1: UserAddress = {
@@ -141,6 +169,43 @@ describe("Address Book", () => {
         const addressesResult = await dfx.address_book.actor.find_all();
         expect(addressesResult).to.have.nested.property('Ok.length', 1);
         expect(addressesResult).to.have.nested.property('Ok[0]').that.deep.equals(address1);
+    });
+
+    it("should return an error when updating an address name to a duplicate", async function () {
+        // Given
+        const address1: UserAddress = {
+            id: "addr1",
+            name: "First Wallet",
+            addresses: [
+                { address_type: { 'BTC': null }, value: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" }
+            ]
+        };
+        const address2: UserAddress = {
+            id: "addr2",
+            name: "Second Wallet",
+            addresses: [
+                { address_type: { 'ETH': null }, value: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" }
+            ]
+        };
+        await dfx.address_book.actor.save(address1);
+        await dfx.address_book.actor.save(address2);
+
+        // When
+        const updatedAddress2: UserAddress = {
+            id: "addr2",
+            name: "First Wallet",
+            addresses: [
+                { address_type: { 'ETH': null }, value: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" }
+            ]
+        };
+        const result = await dfx.address_book.actor.save(updatedAddress2);
+
+        // Then
+        expect(result).to.have.nested.property('Err.DuplicateName');
+        const addressesResult = await dfx.address_book.actor.find_all();
+        expect(addressesResult).to.have.nested.property('Ok.length', 2);
+        expect(addressesResult).to.have.nested.property('Ok').that.deep.includes(address1);
+        expect(addressesResult).to.have.nested.property('Ok').that.deep.includes(address2);
     });
 
     it("should find all saved addresses", async function () {
