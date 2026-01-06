@@ -35,5 +35,4 @@ export const DFX = {
           amount=record { e8s=200_000_000 }; fee=record { e8s=10_000 }; memo=0:nat64; } )"`),
     DEPLOY_ECDSA: () => execute(`dfx deploy signer_ic --no-wallet --mode reinstall -y`),
     DEPLOY_WITH_ARGUMENT: (x: string, y: string) => execute(`dfx deploy ${x} --no-wallet --argument '(${y})' --mode reinstall -y`),
-    CONFIGURE_ADDRESS_BOOK: (x: string) => call(`dfx canister call address_book set_config '(${x})'`),
 }

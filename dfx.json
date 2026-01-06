@@ -100,17 +100,6 @@
         }
       ]
     },
-    "address_book": {
-      "type": "custom",
-      "candid": "src/address_book/address_book.did",
-      "wasm": "address_book.wasm",
-      "build": "src/address_book/build.sh",
-      "metadata": [
-        {
-          "name": "candid:service"
-        }
-      ]
-    },
     "ledger": {
       "type": "custom",
       "candid": "ledger.public.did",

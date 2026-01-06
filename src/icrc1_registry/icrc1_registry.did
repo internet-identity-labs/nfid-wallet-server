@@ -13,8 +13,45 @@ type ICRC1State = variant {
     Active
 };
 
+type AddressType = variant {
+    IcpAddress;
+    IcpPrincipal;
+    BTC;
+    ETH
+};
+
+type Address = record {
+    address_type : AddressType;
+    value : text
+};
+
+type UserAddress = record {
+    id : text;
+    name : text;
+    addresses : vec Address
+};
+
+type AddressBookError = variant {
+    NameTooLong;
+    MaxAddressesReached;
+    AddressNotFound;
+    DuplicateAddress;
+    DuplicateName
+};
+
+type AddressBookConf = record {
+    max_user_addresses : nat32;
+    max_name_length : nat32
+};
+
 service : (Conf) -> {
     get_canisters_by_root : (text) -> (vec ICRC1) query;
     remove_icrc1_canister : (text) -> ();
     store_icrc1_canister : (text, ICRC1State, opt nat32) -> ();
+
+    save : (UserAddress) -> (variant { Ok : vec UserAddress; Err : AddressBookError });
+    delete : (text) -> (variant { Ok : vec UserAddress; Err : AddressBookError });
+    delete_all : () -> (variant { Ok; Err : AddressBookError });
+    find_all : () -> (variant { Ok : vec UserAddress; Err : AddressBookError }) query;
+    get_address_book_config : () -> (AddressBookConf) query;
 }

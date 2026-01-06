@@ -3,7 +3,6 @@ import { Ed25519KeyIdentity } from "@dfinity/identity";
 import * as Agent from "@dfinity/agent"
 import {_SERVICE as IdentityManager} from "../idl/identity_manager";
 import {_SERVICE as InternetIdentityTest} from "../idl/internet_identity_test";
-import {_SERVICE as AddressBook} from "../idl/address_book";
 import {_SERVICE as NfidStorageService} from "../idl/nfid_storage";
 
 export interface Dfx {
@@ -63,10 +62,6 @@ export interface Dfx {
     swap_trs_storage?: {
         id: string;
         actor: Record<string, ActorMethod>;
-    };
-    address_book?: {
-        id: string;
-        actor: Agent.ActorSubclass<AddressBook>;
     };
 };
 

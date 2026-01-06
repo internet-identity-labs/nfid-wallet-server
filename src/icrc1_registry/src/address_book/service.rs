@@ -1,58 +1,13 @@
-mod types;
-
-use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use candid::Principal;
-use ic_cdk::{call, caller, id, storage};
-use ic_cdk::api::call::CallResult;
-use ic_cdk::api::management_canister::main::CanisterStatusResponse;
-use ic_cdk_macros::*;
+use ic_cdk::caller;
 
-pub use types::{Address, AddressBookError, AddressType, CanisterIdRequest, Conf, Memory, User, UserAddress};
+use super::types::{AddressBookError, AddressBookUser, AddressBookUserAddress};
+use crate::{ADDRESS_BOOK, ADDRESS_BOOK_CONFIG};
 
-thread_local! {
-    static CONFIG: RefCell<Conf> = const { RefCell::new(Conf {
-        max_user_addresses: 50,
-        max_name_length: 200,
-    }) };
-    static ADDRESS_BOOK: RefCell<HashMap<String, User>> = RefCell::new(HashMap::default());
-}
-
-#[pre_upgrade]
-pub fn stable_save() {
-    let data = ADDRESS_BOOK.with(|book| book.borrow().clone());
-    let config = CONFIG.with(|c| c.borrow().clone());
-
-    let mem = Memory {
-        data,
-        config,
-    };
-
-    storage::stable_save((mem,))
-        .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
-}
-
-#[post_upgrade]
-pub fn stable_restore() {
-    let (mem,): (Memory,) = storage::stable_restore()
-        .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
-
-    let Memory { config, data } = mem;
-
-    CONFIG.with(|c| {
-        *c.borrow_mut() = config;
-    });
-
-    ADDRESS_BOOK.with(|book| {
-        *book.borrow_mut() = data;
-    });
-}
-
-#[update]
-pub async fn save(user_address: UserAddress) -> Result<Vec<UserAddress>, AddressBookError> {
+pub async fn save(user_address: AddressBookUserAddress) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
     let caller = caller().to_text();
 
-    let (max_name_length, max_addresses) = CONFIG.with(|c| {
+    let (max_name_length, max_addresses) = ADDRESS_BOOK_CONFIG.with(|c| {
         let conf = c.borrow();
         (conf.max_name_length, conf.max_user_addresses)
     });
@@ -63,7 +18,7 @@ pub async fn save(user_address: UserAddress) -> Result<Vec<UserAddress>, Address
 
     ADDRESS_BOOK.with(|book| {
         let mut book = book.borrow_mut();
-        let user = book.entry(caller.clone()).or_insert_with(|| User {
+        let user = book.entry(caller.clone()).or_insert_with(|| AddressBookUser {
             user_addresses: HashSet::new(),
         });
 
@@ -85,15 +40,14 @@ pub async fn save(user_address: UserAddress) -> Result<Vec<UserAddress>, Address
     })
 }
 
-#[update]
-pub async fn delete(id: String) -> Result<Vec<UserAddress>, AddressBookError> {
+pub async fn delete(id: String) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
     let caller = caller().to_text();
 
     ADDRESS_BOOK.with(|book| {
         let mut book = book.borrow_mut();
 
         if let Some(user) = book.get_mut(&caller) {
-            let temp_address = UserAddress {
+            let temp_address = AddressBookUserAddress {
                 id: id.clone(),
                 name: String::new(),
                 addresses: Vec::new(),
@@ -111,8 +65,7 @@ pub async fn delete(id: String) -> Result<Vec<UserAddress>, AddressBookError> {
     })
 }
 
-#[query]
-pub fn find_all() -> Result<Vec<UserAddress>, AddressBookError> {
+pub async fn find_all() -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
     let caller = caller().to_text();
 
     Ok(ADDRESS_BOOK.with(|book| {
@@ -123,7 +76,6 @@ pub fn find_all() -> Result<Vec<UserAddress>, AddressBookError> {
     }))
 }
 
-#[update]
 pub async fn delete_all() -> Result<(), AddressBookError> {
     let caller = caller().to_text();
 
@@ -139,33 +91,15 @@ pub async fn delete_all() -> Result<(), AddressBookError> {
     })
 }
 
-#[query]
-pub fn get_config() -> Conf {
-    CONFIG.with(|c| c.borrow().clone())
-}
-
-#[update]
-pub async fn set_config(conf: Conf) -> Result<(), AddressBookError> {
-    let caller = caller();
-
-    let current_controllers = get_controllers().await;
-    if !current_controllers.contains(&caller) {
-        return Err(AddressBookError::Unauthorized);
-    }
-
-    CONFIG.with(|c| c.replace(conf));
-    Ok(())
-}
-
-fn get_user_addresses(book: &HashMap<String, User>, caller: &str) -> Vec<UserAddress> {
+fn get_user_addresses(book: &HashMap<String, AddressBookUser>, caller: &str) -> Vec<AddressBookUserAddress> {
     book.get(caller)
         .map(|user| user.user_addresses.iter().cloned().collect())
         .unwrap_or_default()
 }
 
 fn validate_no_duplicate_names(
-    user_addresses: &HashSet<UserAddress>,
-    new_user_address: &UserAddress,
+    user_addresses: &HashSet<AddressBookUserAddress>,
+    new_user_address: &AddressBookUserAddress,
 ) -> Result<(), AddressBookError> {
     let has_duplicate = user_addresses
         .iter()
@@ -180,8 +114,8 @@ fn validate_no_duplicate_names(
 }
 
 fn validate_no_duplicate_addresses(
-    user_addresses: &HashSet<UserAddress>,
-    new_user_address: &UserAddress,
+    user_addresses: &HashSet<AddressBookUserAddress>,
+    new_user_address: &AddressBookUserAddress,
 ) -> Result<(), AddressBookError> {
     let addresses = new_user_address.addresses.iter()
         .try_fold(HashSet::new(), |mut acc, address| {
@@ -204,17 +138,3 @@ fn validate_no_duplicate_addresses(
 
     Ok(())
 }
-
-pub async fn get_controllers() -> Vec<Principal> {
-    let res: CallResult<(CanisterStatusResponse,)> = call(
-        Principal::management_canister(),
-        "canister_status",
-        (CanisterIdRequest { canister_id: id() },),
-    )
-    .await;
-
-    return res
-        .expect("Inter-canister call to management canister for canister_status returned an empty result.")
-        .0.settings.controllers;
-}
-

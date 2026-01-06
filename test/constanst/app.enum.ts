@@ -8,6 +8,5 @@ export enum App {
     ICRC1Oracle,
     DelegationFactory,
     NFIDStorage,
-    SwapTrsStorage,
-    AddressBook
+    SwapTrsStorage
 }

@@ -11,7 +11,6 @@ import {idlFactory as esdsaIdl} from "../idl/ecdsa_idl";
 import {idlFactory as delegationFactoryIDL} from "../idl/delegation_factory_idl";
 import {idlFactory as nfidStorageIDL} from "../idl/nfid_storage_idl";
 import {idlFactory as swapTrsStorageIDL} from "../idl/swap_trs_storage_idl";
-import {idlFactory as addressBookIDL} from "../idl/address_book_idl";
 import {TextEncoder} from "util";
 import {App} from "../constanst/app.enum";
 import {IDL} from "@dfinity/candid";
@@ -19,7 +18,6 @@ import {DFX} from "../constanst/dfx.const";
 import {execute} from "./call.util";
 import {AccessPointRequest, HTTPAccountRequest, _SERVICE as IdentityManagerType} from "../idl/identity_manager"
 import {_SERVICE as InternetIdentityTest} from "../idl/internet_identity_test"
-import {_SERVICE as AddressBookType} from "../idl/address_book"
 
 const localhost: string = "http://127.0.0.1:8000";
 
@@ -73,10 +71,6 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             actor: null,
         },
         swap_trs_storage: {
-            id: null,
-            actor: null,
-        },
-        address_book: {
             id: null,
             actor: null,
         },
@@ -207,17 +201,6 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             dfx.swap_trs_storage.actor = await getActor(dfx.swap_trs_storage.id, dfx.user.identity, swapTrsStorageIDL);
             return dfx;
         }
-        if (apps.includes(App.AddressBook)) {
-            DFX.USE_TEST_ADMIN();
-            DFX.DEPLOY("address_book");
-            dfx.address_book.id = DFX.GET_CANISTER_ID("address_book");
-            console.log(">> ", dfx.address_book.id);
-
-            DFX.ADD_CONTROLLER(dfx.user.principal, "address_book");
-            dfx.address_book.actor = await getTypedActor<AddressBookType>(dfx.address_book.id, dfx.user.identity, addressBookIDL);
-            return dfx;
-        }
-
         DFX.CONFIGURE_IM(Array.from(imConfigurationArguments).join("; "));
 
         return dfx;

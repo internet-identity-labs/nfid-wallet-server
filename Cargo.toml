@@ -11,6 +11,5 @@ members = [
     "src/swap_trs_storage",
     "src/vault",
     "src/libraries/canister_api_macros",
-    "src/address_book",
 ]
 exclude = ["src/test_canister", "src/ecdsa_signer"]

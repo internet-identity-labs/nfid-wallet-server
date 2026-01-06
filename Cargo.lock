@@ -12,16 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "address_book"
-version = "0.1.0"
-dependencies = [
- "candid 0.10.14",
- "ic-cdk 0.13.5",
- "ic-cdk-macros 0.13.2",
- "serde",
-]
-
-[[package]]
 name = "adler2"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
