@@ -39,6 +39,6 @@ export interface _SERVICE {
     'address_book_save' : ActorMethod<[AddressBookUserAddress], Result_1>,
     'get_canisters_by_root' : ActorMethod<[string], Array<ICRC1>>,
     'remove_icrc1_canister' : ActorMethod<[string], undefined>,
-    'store_icrc1_canister' : ActorMethod<[string, [] | [ICRC1State], [] | [number]], undefined>,
+    'store_icrc1_canister' : ActorMethod<[string, ICRC1State, [] | [number]], undefined>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
