@@ -25,5 +25,5 @@ echo Repo dir ${REPO_DIR}
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_DIR/../../target/}"
 
 ic-wasm\
-  "$CARGO_TARGET_DIR/$TARGET/release/icrc1_registry.wasm" \
-  -o "$REPO_DIR/../../icrc1_registry.wasm" shrink
+  "$CARGO_TARGET_DIR/$TARGET/release/user_registry.wasm" \
+  -o "$REPO_DIR/../../user_registry.wasm" shrink

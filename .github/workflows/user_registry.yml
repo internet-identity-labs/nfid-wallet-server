@@ -1,4 +1,4 @@
-name: ICRC1 Registry
+name: User Registry
 on:
   workflow_dispatch:
     inputs:
@@ -12,11 +12,11 @@ on:
           - ic
       canister_name:
         description: 'Choose applicable canister'
-        default: icrc1_registry
+        default: user_registry
         required: true
         type: choice
         options:
-          - icrc1_registry
+          - user_registry
       confirmation:
         description: 'For the ic deployment - confirm your choice by typing "Yes"'
         type: string

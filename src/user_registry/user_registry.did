@@ -13,22 +13,22 @@ type ICRC1State = variant {
     Active
 };
 
-type AddressType = variant {
+type AddressBookAddressType = variant {
     IcpAddress;
     IcpPrincipal;
     BTC;
     ETH
 };
 
-type Address = record {
-    address_type : AddressType;
+type AddressBookAddress = record {
+    address_type : AddressBookAddressType;
     value : text
 };
 
-type UserAddress = record {
+type AddressBookUserAddress = record {
     id : text;
     name : text;
-    addresses : vec Address
+    addresses : vec AddressBookAddress
 };
 
 type AddressBookError = variant {
@@ -49,9 +49,9 @@ service : (Conf) -> {
     remove_icrc1_canister : (text) -> ();
     store_icrc1_canister : (text, ICRC1State, opt nat32) -> ();
 
-    save : (UserAddress) -> (variant { Ok : vec UserAddress; Err : AddressBookError });
-    delete : (text) -> (variant { Ok : vec UserAddress; Err : AddressBookError });
-    delete_all : () -> (variant { Ok; Err : AddressBookError });
-    find_all : () -> (variant { Ok : vec UserAddress; Err : AddressBookError }) query;
-    get_address_book_config : () -> (AddressBookConf) query;
+    address_book_save : (AddressBookUserAddress) -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError });
+    address_book_delete : (text) -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError });
+    address_book_delete_all : () -> (variant { Ok; Err : AddressBookError });
+    address_book_find_all : () -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError }) query;
+    address_book_get_config : () -> (AddressBookConf) query;
 }

@@ -4,7 +4,7 @@ import {Ed25519KeyIdentity} from "@dfinity/identity";
 import {Dfx} from "../type/dfx";
 import {idlFactory as imIdl} from "../idl/identity_manager_idl";
 import {idlFactory as vaultIdl} from "../idl/vault_idl";
-import {idlFactory as icrc1Idl} from "../idl/icrc1_registry_idl";
+import {idlFactory as userRegistryIdl} from "../idl/user_registry_idl";
 import {idlFactory as icrcOracle1Idl} from "../idl/icrc1_oracle_idl";
 import {idlFactory as iitIdl} from "../idl/internet_identity_test_idl";
 import {idlFactory as esdsaIdl} from "../idl/ecdsa_idl";
@@ -131,11 +131,11 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             imConfigurationArguments.add(`ii_canister_id = opt principal "${dfx.iit.id}"`);
         }
 
-        if (apps.includes(App.ICRC1Registry)) {
+        if (apps.includes(App.UserRegistry)) {
             DFX.USE_TEST_ADMIN();
-            DFX.DEPLOY_WITH_ARGUMENT("icrc1_registry", "(record { })");
-            dfx.icrc1.id = DFX.GET_CANISTER_ID("icrc1_registry");
-            dfx.icrc1.actor = await getActor(dfx.icrc1.id, dfx.user.identity, icrc1Idl);
+            DFX.DEPLOY_WITH_ARGUMENT("user_registry", "(record { })");
+            dfx.icrc1.id = DFX.GET_CANISTER_ID("user_registry");
+            dfx.icrc1.actor = await getActor(dfx.icrc1.id, dfx.user.identity, userRegistryIdl);
         }
 
         if (apps.includes(App.ICRC1Oracle)) {

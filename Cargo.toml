@@ -3,7 +3,7 @@ resolver = "2"
 
 members = [
     "src/identity_manager",
-    "src/icrc1_registry",
+    "src/user_registry",
     "src/icrc1_oracle",
     "src/delegation_factory",
     "src/nfid_storage",

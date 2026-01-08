@@ -2,14 +2,14 @@ import {Dfx} from "./type/dfx";
 import {deploy} from "./util/deployment.util";
 import {App} from "./constanst/app.enum";
 import {expect} from "chai";
-import {ICRC1, AddressBookUserAddress, AddressBookConf} from "./idl/icrc1_registry";
+import {ICRC1, AddressBookUserAddress, AddressBookConf} from "./idl/user_registry";
 import {DFX} from "./constanst/dfx.const";
 
-describe("ICRC1 Registry", () => {
+describe("User Registry", () => {
     var dfx: Dfx;
 
     before(async () => {
-        dfx = await deploy({apps: [App.ICRC1Registry]});
+        dfx = await deploy({apps: [App.UserRegistry]});
     });
 
     describe("ICRC1 canister Storage", () => {
@@ -40,7 +40,7 @@ describe("ICRC1 Registry", () => {
 
     describe("Address Book", () => {
         before(async () => {
-            DFX.UPGRADE_WITH_ARGUMENT('icrc1_registry', '(record { })');
+            DFX.UPGRADE_WITH_ARGUMENT('user_registry', '(record { })');
         });
 
         beforeEach(async () => {
@@ -377,7 +377,7 @@ describe("ICRC1 Registry", () => {
             await dfx.icrc1.actor.address_book_save(address2);
 
             // When
-            DFX.UPGRADE_WITH_ARGUMENT('icrc1_registry', '(record { })');
+            DFX.UPGRADE_WITH_ARGUMENT('user_registry', '(record { })');
 
             // Then
             const addressesAfterResult = await dfx.icrc1.actor.address_book_find_all();
@@ -408,7 +408,7 @@ describe("ICRC1 Registry", () => {
             };
 
             // When
-            DFX.UPGRADE_WITH_ARGUMENT('icrc1_registry', `(record { im_canister = "${dfx.icrc1.id}" })`);
+            DFX.UPGRADE_WITH_ARGUMENT('user_registry', `(record { im_canister = "${dfx.icrc1.id}" })`);
 
             // Then
             const configAfter = await dfx.icrc1.actor.address_book_get_config() as AddressBookConf;
