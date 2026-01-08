@@ -18,6 +18,7 @@ import {DFX} from "../constanst/dfx.const";
 import {execute} from "./call.util";
 import {AccessPointRequest, HTTPAccountRequest, _SERVICE as IdentityManagerType} from "../idl/identity_manager"
 import {_SERVICE as InternetIdentityTest} from "../idl/internet_identity_test"
+import {_SERVICE as UserRegistry} from "../idl/user_registry"
 
 const localhost: string = "http://127.0.0.1:8000";
 
@@ -54,7 +55,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             member_1: null,
             member_2: null
         },
-        icrc1: {
+        user_registry: {
             id: null,
             actor: null,
         },
@@ -133,9 +134,10 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
 
         if (apps.includes(App.UserRegistry)) {
             DFX.USE_TEST_ADMIN();
-            DFX.DEPLOY_WITH_ARGUMENT("user_registry", "(record { })");
-            dfx.icrc1.id = DFX.GET_CANISTER_ID("user_registry");
-            dfx.icrc1.actor = await getActor(dfx.icrc1.id, dfx.user.identity, userRegistryIdl);
+            DFX.DEPLOY_WITH_ARGUMENT("user_registry", `(record { })`);
+            DFX.ADD_CONTROLLER(dfx.user.principal, "user_registry");
+            dfx.user_registry.id = DFX.GET_CANISTER_ID("user_registry");
+            dfx.user_registry.actor = await getTypedActor<UserRegistry>(dfx.user_registry.id, dfx.user.identity, userRegistryIdl);
         }
 
         if (apps.includes(App.ICRC1Oracle)) {
@@ -232,4 +234,32 @@ export async function getTypedActor<T>(
     const agent: HttpAgent = new HttpAgent({host: localhost, identity: identity});
     await agent.fetchRootKey();
     return Actor.createActor(idl, {agent, canisterId: imCanisterId});
+}
+
+export async function createIdentityManagerAccount(dfx: Dfx): Promise<Agent.ActorSubclass<IdentityManagerType>> {
+    const identity = getIdentity("87654321876543218765432187654311");
+    const principal = identity.getPrincipal().toText();
+    const accessPoint: AccessPointRequest = {
+        icon: "Icon",
+        device: "Global",
+        pub_key: principal,
+        browser: "Browser",
+        device_type: {
+            Email: null,
+        },
+        credential_id: [],
+    };
+    var accountRequest: HTTPAccountRequest = {
+        access_point: [accessPoint],
+        wallet: [{NFID: null}],
+        anchor: 0n,
+        email: ["test@test.test"],
+        name: [],
+        challenge_attempt: []
+    };
+    const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
+    await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25n);
+    await actor.create_account(accountRequest)
+
+    return actor
 };

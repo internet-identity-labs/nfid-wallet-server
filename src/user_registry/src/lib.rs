@@ -6,7 +6,7 @@ use std::hash::Hash;
 
 use candid::{CandidType, Principal};
 use candid::export_service;
-use ic_cdk::{call, caller,storage, trap};
+use ic_cdk::{call, caller, storage, trap};
 use ic_cdk_macros::*;
 use serde::{Deserialize, Serialize};
 
@@ -118,14 +118,19 @@ pub async fn address_book_delete_all() -> Result<(), AddressBookError> {
     address_book::service::delete_all().await
 }
 
-#[query]
+#[query(composite = true)]
 pub async fn address_book_find_all() -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
     address_book::service::find_all().await
 }
 
 #[query]
 pub fn address_book_get_config() -> AddressBookConf {
-    ADDRESS_BOOK_CONFIG.with(|c| c.borrow().clone())
+    address_book::service::get_config()
+}
+
+#[update]
+pub async fn address_book_set_config(config: AddressBookConf) -> Result<(), AddressBookError> {
+    address_book::service::set_config(config).await
 }
 
 
@@ -195,10 +200,7 @@ pub fn stable_restore() {
         *book.borrow_mut() = address_book;
     });
     ADDRESS_BOOK_CONFIG.with(|c| {
-        *c.borrow_mut() = AddressBookConf {
-            max_user_addresses: if config.im_canister.is_none() { 2 } else { 50 },
-            max_name_length: address_book_config.max_name_length,
-        };
+        *c.borrow_mut() = address_book_config;
     });
 }
 
@@ -213,7 +215,7 @@ fn export_candid() -> String {
 }
 
 
-async fn get_root_id() -> String {
+pub(crate) async fn get_root_id() -> String {
     match CONFIG.with(|c| c.borrow_mut().im_canister.clone()) {
         None => caller().to_text(), // Return caller for testing purposes when im_canister is None
         Some(canister) => {

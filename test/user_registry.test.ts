@@ -1,15 +1,17 @@
 import {Dfx} from "./type/dfx";
-import {deploy} from "./util/deployment.util";
+import {deploy, createIdentityManagerAccount, getTypedActor, getIdentity} from "./util/deployment.util";
 import {App} from "./constanst/app.enum";
 import {expect} from "chai";
-import {ICRC1, AddressBookUserAddress, AddressBookConf} from "./idl/user_registry";
+import {AddressBookUserAddress, AddressBookConf, _SERVICE as UserRegistry} from "./idl/user_registry";
 import {DFX} from "./constanst/dfx.const";
+import {AccessPointRequest} from "./idl/identity_manager";
+import {idlFactory as userRegistryIdl} from "./idl/user_registry_idl";
 
 describe("User Registry", () => {
     var dfx: Dfx;
 
     before(async () => {
-        dfx = await deploy({apps: [App.UserRegistry]});
+        dfx = await deploy({apps: [App.IdentityManager, App.UserRegistry]});
     });
 
     describe("ICRC1 canister Storage", () => {
@@ -17,34 +19,53 @@ describe("User Registry", () => {
         let one_more_canister_id = "id2";
 
         it("Store/retrieve canister id", async function () {
-            await dfx.icrc1.actor.store_icrc1_canister(canister_id, { 'Active': null }, []);
-            await dfx.icrc1.actor.store_icrc1_canister(one_more_canister_id, { 'Inactive': null }, [1]);
-            let canisters = await dfx.icrc1.actor.get_canisters_by_root(dfx.user.identity.getPrincipal().toText()) as ICRC1[];
+            await dfx.user_registry.actor.store_icrc1_canister(canister_id, { 'Active': null }, []);
+            await dfx.user_registry.actor.store_icrc1_canister(one_more_canister_id, { 'Inactive': null }, [1]);
+            let canisters = await dfx.user_registry.actor.get_canisters_by_root(dfx.user.identity.getPrincipal().toText());
             expect(canisters.length).eq(2);
             expect(canisters.find((c) => c.ledger === canister_id)?.state).deep.eq({ 'Active': null });
             expect(canisters.find((c) => c.ledger === one_more_canister_id)?.state).deep.eq({ 'Inactive': null });
-            await dfx.icrc1.actor.store_icrc1_canister(canister_id, { 'Inactive': null }, []);
-            canisters = await dfx.icrc1.actor.get_canisters_by_root(dfx.user.identity.getPrincipal().toText()) as ICRC1[];
+            await dfx.user_registry.actor.store_icrc1_canister(canister_id, { 'Inactive': null }, []);
+            canisters = await dfx.user_registry.actor.get_canisters_by_root(dfx.user.identity.getPrincipal().toText());
             expect(canisters.find((c) => c.ledger === canister_id).state).deep.eq({ 'Inactive': null });
             expect(canisters.find((c) => c.ledger === canister_id).network).eq(0);
             expect(canisters.find((c) => c.ledger === one_more_canister_id).network).eq(1);
         })
 
         it("Remove canister", async function () {
-            await dfx.icrc1.actor.remove_icrc1_canister(canister_id);
-            let canisters = await dfx.icrc1.actor.get_canisters_by_root(dfx.user.identity.getPrincipal().toText()) as ICRC1[];
+            await dfx.user_registry.actor.remove_icrc1_canister(canister_id);
+            let canisters = await dfx.user_registry.actor.get_canisters_by_root(dfx.user.identity.getPrincipal().toText());
             expect(canisters.length).eq(1);
             expect(canisters[0].ledger).eq(one_more_canister_id);
         })
     });
 
     describe("Address Book", () => {
+
         before(async () => {
-            DFX.UPGRADE_WITH_ARGUMENT('user_registry', '(record { })');
+            DFX.DEPLOY_WITH_ARGUMENT("user_registry", `(record { im_canister = opt "${dfx.im.id}" })`);
+            const actor = await createIdentityManagerAccount(dfx)
+            const addressBookAccessPoint: AccessPointRequest = {
+                icon: "Passkey",
+                device: "Passkey",
+                pub_key: dfx.user.principal,
+                browser: "Passkey",
+                device_type: {
+                    Passkey: null,
+                },
+                credential_id: [],
+            };
+            await actor.create_access_point(addressBookAccessPoint);
         });
 
         beforeEach(async () => {
-            await dfx.icrc1.actor.address_book_delete_all();
+            await dfx.user_registry.actor.address_book_delete_all();
+
+            const config: AddressBookConf = {
+                max_user_addresses: 2,
+                max_name_length: 50
+            };
+            await dfx.user_registry.actor.address_book_set_config(config);
         });
 
         it("should save a new address successfully", async function () {
@@ -58,7 +79,7 @@ describe("User Registry", () => {
             };
 
             // When
-            const result = await dfx.icrc1.actor.address_book_save(address);
+            const result = await dfx.user_registry.actor.address_book_save(address);
 
             // Then
             expect(result).to.have.property('Ok');
@@ -76,7 +97,7 @@ describe("User Registry", () => {
                     { address_type: { 'BTC': null }, value: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" }
                 ]
             };
-            await dfx.icrc1.actor.address_book_save(originalAddress);
+            await dfx.user_registry.actor.address_book_save(originalAddress);
 
             // When
             const updatedAddress: AddressBookUserAddress = {
@@ -87,7 +108,7 @@ describe("User Registry", () => {
                     { address_type: { 'ETH': null }, value: "0x123abc" }
                 ]
             };
-            const result = await dfx.icrc1.actor.address_book_save(updatedAddress);
+            const result = await dfx.user_registry.actor.address_book_save(updatedAddress);
 
             // Then
             expect(result).to.have.property('Ok');
@@ -105,7 +126,7 @@ describe("User Registry", () => {
                     { address_type: { 'BTC': null }, value: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" }
                 ]
             };
-            await dfx.icrc1.actor.address_book_save(address1);
+            await dfx.user_registry.actor.address_book_save(address1);
 
             // When
             const address2: AddressBookUserAddress = {
@@ -115,7 +136,7 @@ describe("User Registry", () => {
                     { address_type: { 'ETH': null }, value: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" }
                 ]
             };
-            const result = await dfx.icrc1.actor.address_book_save(address2);
+            const result = await dfx.user_registry.actor.address_book_save(address2);
 
             // Then
             expect(result).to.have.property('Ok');
@@ -135,7 +156,7 @@ describe("User Registry", () => {
             };
 
             // When
-            const result = await dfx.icrc1.actor.address_book_save(duplicateAddress);
+            const result = await dfx.user_registry.actor.address_book_save(duplicateAddress);
 
             // Then
             expect(result).to.have.nested.property('Err.DuplicateAddress');
@@ -150,7 +171,7 @@ describe("User Registry", () => {
                     { address_type: { 'BTC': null }, value: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" }
                 ]
             };
-            await dfx.icrc1.actor.address_book_save(address1);
+            await dfx.user_registry.actor.address_book_save(address1);
 
             // When
             const address2: AddressBookUserAddress = {
@@ -160,11 +181,11 @@ describe("User Registry", () => {
                     { address_type: { 'BTC': null }, value: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" }
                 ]
             };
-            const result = await dfx.icrc1.actor.address_book_save(address2);
+            const result = await dfx.user_registry.actor.address_book_save(address2);
 
             // Then
             expect(result).to.have.nested.property('Err.DuplicateAddress');
-            const addressesResult = await dfx.icrc1.actor.address_book_find_all();
+            const addressesResult = await dfx.user_registry.actor.address_book_find_all();
             expect(addressesResult).to.have.nested.property('Ok.length', 1);
             expect(addressesResult).to.have.nested.property('Ok[0]').that.deep.equals(address1);
         });
@@ -178,7 +199,7 @@ describe("User Registry", () => {
                     { address_type: { 'BTC': null }, value: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" }
                 ]
             };
-            await dfx.icrc1.actor.address_book_save(address1);
+            await dfx.user_registry.actor.address_book_save(address1);
 
             // When
             const address2: AddressBookUserAddress = {
@@ -188,11 +209,11 @@ describe("User Registry", () => {
                     { address_type: { 'ETH': null }, value: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" }
                 ]
             };
-            const result = await dfx.icrc1.actor.address_book_save(address2);
+            const result = await dfx.user_registry.actor.address_book_save(address2);
 
             // Then
             expect(result).to.have.nested.property('Err.DuplicateName');
-            const addressesResult = await dfx.icrc1.actor.address_book_find_all();
+            const addressesResult = await dfx.user_registry.actor.address_book_find_all();
             expect(addressesResult).to.have.nested.property('Ok.length', 1);
             expect(addressesResult).to.have.nested.property('Ok[0]').that.deep.equals(address1);
         });
@@ -213,8 +234,8 @@ describe("User Registry", () => {
                     { address_type: { 'ETH': null }, value: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" }
                 ]
             };
-            await dfx.icrc1.actor.address_book_save(address1);
-            await dfx.icrc1.actor.address_book_save(address2);
+            await dfx.user_registry.actor.address_book_save(address1);
+            await dfx.user_registry.actor.address_book_save(address2);
 
             // When
             const updatedAddress2: AddressBookUserAddress = {
@@ -224,11 +245,11 @@ describe("User Registry", () => {
                     { address_type: { 'ETH': null }, value: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" }
                 ]
             };
-            const result = await dfx.icrc1.actor.address_book_save(updatedAddress2);
+            const result = await dfx.user_registry.actor.address_book_save(updatedAddress2);
 
             // Then
             expect(result).to.have.nested.property('Err.DuplicateName');
-            const addressesResult = await dfx.icrc1.actor.address_book_find_all();
+            const addressesResult = await dfx.user_registry.actor.address_book_find_all();
             expect(addressesResult).to.have.nested.property('Ok.length', 2);
             expect(addressesResult).to.have.nested.property('Ok').that.deep.includes(address1);
             expect(addressesResult).to.have.nested.property('Ok').that.deep.includes(address2);
@@ -250,11 +271,11 @@ describe("User Registry", () => {
                     { address_type: { 'ETH': null }, value: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" }
                 ]
             };
-            await dfx.icrc1.actor.address_book_save(address1);
-            await dfx.icrc1.actor.address_book_save(address2);
+            await dfx.user_registry.actor.address_book_save(address1);
+            await dfx.user_registry.actor.address_book_save(address2);
 
             // When
-            const result = await dfx.icrc1.actor.address_book_find_all();
+            const result = await dfx.user_registry.actor.address_book_find_all();
 
             // Then
             expect(result).to.have.property('Ok');
@@ -279,11 +300,11 @@ describe("User Registry", () => {
                     { address_type: { 'ETH': null }, value: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" }
                 ]
             };
-            await dfx.icrc1.actor.address_book_save(address1);
-            await dfx.icrc1.actor.address_book_save(address2);
+            await dfx.user_registry.actor.address_book_save(address1);
+            await dfx.user_registry.actor.address_book_save(address2);
 
             // When
-            const result = await dfx.icrc1.actor.address_book_delete(addressId2);
+            const result = await dfx.user_registry.actor.address_book_delete(addressId2);
 
             // Then
             expect(result).to.have.property('Ok');
@@ -297,15 +318,15 @@ describe("User Registry", () => {
             const nonExistentId = "nonexistent";
 
             // When
-            const result = await dfx.icrc1.actor.address_book_delete(nonExistentId);
+            const result = await dfx.user_registry.actor.address_book_delete(nonExistentId);
 
             // Then
             expect(result).to.have.nested.property('Err.AddressNotFound');
         });
 
         it("should return an error when saving an address with name exceeding max_name_length", async function () {
-            // Given - default max_name_length is 200
-            const longName = "a".repeat(201); // Create a name with 201 characters
+            // Given
+            const longName = "a".repeat(51); // Create a name with 201 characters
             const longNameAddress: AddressBookUserAddress = {
                 id: "addr1",
                 name: longName,
@@ -315,7 +336,7 @@ describe("User Registry", () => {
             };
 
             // When
-            const result = await dfx.icrc1.actor.address_book_save(longNameAddress);
+            const result = await dfx.user_registry.actor.address_book_save(longNameAddress);
 
             // Then
             expect(result).to.have.nested.property('Err.NameTooLong');
@@ -337,8 +358,8 @@ describe("User Registry", () => {
                     { address_type: { 'BTC': null }, value: "address2" }
                 ]
             };
-            await dfx.icrc1.actor.address_book_save(address1);
-            await dfx.icrc1.actor.address_book_save(address2);
+            await dfx.user_registry.actor.address_book_save(address1);
+            await dfx.user_registry.actor.address_book_save(address2);
 
             // When
             const address3: AddressBookUserAddress = {
@@ -348,11 +369,11 @@ describe("User Registry", () => {
                     { address_type: { 'BTC': null }, value: "address3" }
                 ]
             };
-            const result = await dfx.icrc1.actor.address_book_save(address3);
+            const result = await dfx.user_registry.actor.address_book_save(address3);
 
             // Then
             expect(result).to.have.nested.property('Err.MaxAddressesReached');
-            const addressesResult = await dfx.icrc1.actor.address_book_find_all();
+            const addressesResult = await dfx.user_registry.actor.address_book_find_all();
             expect(addressesResult).to.have.nested.property('Ok.length', 2);
         });
 
@@ -373,14 +394,14 @@ describe("User Registry", () => {
                     { address_type: { 'ETH': null }, value: "eth456" }
                 ]
             };
-            await dfx.icrc1.actor.address_book_save(address1);
-            await dfx.icrc1.actor.address_book_save(address2);
+            await dfx.user_registry.actor.address_book_save(address1);
+            await dfx.user_registry.actor.address_book_save(address2);
 
             // When
-            DFX.UPGRADE_WITH_ARGUMENT('user_registry', '(record { })');
+            DFX.UPGRADE_WITH_ARGUMENT('user_registry', `(record { im_canister = opt "${dfx.im.id}" })`);
 
             // Then
-            const addressesAfterResult = await dfx.icrc1.actor.address_book_find_all();
+            const addressesAfterResult = await dfx.user_registry.actor.address_book_find_all();
             expect(addressesAfterResult).to.have.property('Ok');
             const addresses = (addressesAfterResult as { Ok: Array<typeof address1> }).Ok;
             expect(addresses).to.have.deep.members([address1, address2]);
@@ -390,11 +411,11 @@ describe("User Registry", () => {
             // Given - address book uses default config (im_canister not set, so max_user_addresses is 2)
             const expectedConfig = {
                 max_user_addresses: 2,
-                max_name_length: 200
+                max_name_length: 50
             };
 
             // When
-            const config = await dfx.icrc1.actor.address_book_get_config() as AddressBookConf;
+            const config = await dfx.user_registry.actor.address_book_get_config();
 
             // Then
             expect(config).to.deep.equal(expectedConfig);
@@ -404,15 +425,105 @@ describe("User Registry", () => {
             // Given - default configuration (im_canister not set, so max_user_addresses is 2)
             const expectedConfig = {
                 max_user_addresses: 2,
-                max_name_length: 200
+                max_name_length: 50
             };
 
             // When
-            DFX.UPGRADE_WITH_ARGUMENT('user_registry', `(record { im_canister = "${dfx.icrc1.id}" })`);
+            DFX.UPGRADE_WITH_ARGUMENT('user_registry', `(record { im_canister = opt "${dfx.im.id}" })`);
 
             // Then
-            const configAfter = await dfx.icrc1.actor.address_book_get_config() as AddressBookConf;
+            const configAfter = await dfx.user_registry.actor.address_book_get_config();
             expect(configAfter).to.deep.equal(expectedConfig);
+        });
+
+        it("should return Unauthorized error when non-controller tries to set config", async function () {
+            // Given
+            const nonExistentIdentity = getIdentity("87654321876543218765432187654313");
+            const nonExistentActor = await getTypedActor<UserRegistry>(dfx.user_registry.id, nonExistentIdentity, userRegistryIdl);
+
+            const newConfig: AddressBookConf = {
+                max_user_addresses: 100,
+                max_name_length: 500
+            };
+
+            // When
+            const result = await nonExistentActor.address_book_set_config(newConfig);
+
+            // Then
+            expect(result).to.have.nested.property('Err.Unauthorized');
+            const currentConfig = await dfx.user_registry.actor.address_book_get_config();
+            expect(currentConfig).to.not.deep.equal(newConfig);
+        });
+
+        it("should allow controller to set config successfully", async function () {
+            // Given
+            const newConfig: AddressBookConf = {
+                max_user_addresses: 75,
+                max_name_length: 300
+            };
+
+            // When
+            const result = await dfx.user_registry.actor.address_book_set_config(newConfig);
+
+            // Then
+            expect(result).to.have.property('Ok');
+            const currentConfig = await dfx.user_registry.actor.address_book_get_config();
+            expect(currentConfig).to.deep.equal(newConfig);
+        });
+
+        it("should trap when user does not exist in IdentityManager", async function () {
+            // Given
+            const nonExistentIdentity = getIdentity("87654321876543218765432187654313");
+            const nonExistentActor = await getTypedActor<UserRegistry>(dfx.user_registry.id, nonExistentIdentity, userRegistryIdl);
+
+            const newConfig: AddressBookConf = {
+                max_user_addresses: 100,
+                max_name_length: 500
+            };
+            await dfx.user_registry.actor.address_book_set_config(newConfig);
+
+            const address: AddressBookUserAddress = {
+                id: "addr1",
+                name: "Test Wallet",
+                addresses: [
+                    { address_type: { 'BTC': null }, value: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" }
+                ]
+            };
+
+            // When
+            const savePromise = nonExistentActor.address_book_save(address);
+            const findAllPromise = nonExistentActor.address_book_find_all();
+            const deletePromise = nonExistentActor.address_book_delete("addr1");
+            const deleteAllPromise = nonExistentActor.address_book_delete_all();
+
+            // Then
+            try {
+                await savePromise;
+                expect.fail("Should have trapped");
+            } catch (error) {
+                expect(error.message).to.include("No root found for this principal");
+            }
+
+            try {
+                await findAllPromise;
+                expect.fail("Should have trapped");
+            } catch (error) {
+                expect(error.message).to.include("No root found for this principal");
+            }
+
+            try {
+                await deletePromise;
+                expect.fail("Should have trapped");
+            } catch (error) {
+                expect(error.message).to.include("No root found for this principal");
+            }
+
+            try {
+                await deleteAllPromise;
+                expect.fail("Should have trapped");
+            } catch (error) {
+                expect(error.message).to.include("No root found for this principal");
+            }
         });
     });
 });

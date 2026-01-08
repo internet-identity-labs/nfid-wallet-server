@@ -36,7 +36,8 @@ type AddressBookError = variant {
     MaxAddressesReached;
     AddressNotFound;
     DuplicateAddress;
-    DuplicateName
+    DuplicateName;
+    Unauthorized
 };
 
 type AddressBookConf = record {
@@ -54,4 +55,5 @@ service : (Conf) -> {
     address_book_delete_all : () -> (variant { Ok; Err : AddressBookError });
     address_book_find_all : () -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError }) query;
     address_book_get_config : () -> (AddressBookConf) query;
+    address_book_set_config : (AddressBookConf) -> (variant { Ok; Err : AddressBookError });
 }

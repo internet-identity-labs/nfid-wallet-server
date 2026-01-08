@@ -1,11 +1,15 @@
 use std::collections::{HashMap, HashSet};
-use ic_cdk::caller;
 
-use super::types::{AddressBookError, AddressBookUser, AddressBookUserAddress};
-use crate::{ADDRESS_BOOK, ADDRESS_BOOK_CONFIG};
+use candid::Principal;
+use ic_cdk::{call, caller, id};
+use ic_cdk::api::call::CallResult;
+use ic_cdk::api::management_canister::main::CanisterStatusResponse;
+
+use super::types::{AddressBookConf, AddressBookError, AddressBookUser, AddressBookUserAddress, CanisterIdRequest};
+use crate::{ADDRESS_BOOK, ADDRESS_BOOK_CONFIG, get_root_id};
 
 pub async fn save(user_address: AddressBookUserAddress) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
-    let caller = caller().to_text();
+    let caller = get_address_book_root().await?;
 
     let (max_name_length, max_addresses) = ADDRESS_BOOK_CONFIG.with(|c| {
         let conf = c.borrow();
@@ -41,7 +45,7 @@ pub async fn save(user_address: AddressBookUserAddress) -> Result<Vec<AddressBoo
 }
 
 pub async fn delete(id: String) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
-    let caller = caller().to_text();
+    let caller = get_address_book_root().await?;
 
     ADDRESS_BOOK.with(|book| {
         let mut book = book.borrow_mut();
@@ -66,7 +70,7 @@ pub async fn delete(id: String) -> Result<Vec<AddressBookUserAddress>, AddressBo
 }
 
 pub async fn find_all() -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
-    let caller = caller().to_text();
+    let caller = get_address_book_root().await?;
 
     Ok(ADDRESS_BOOK.with(|book| {
         let book = book.borrow();
@@ -77,7 +81,7 @@ pub async fn find_all() -> Result<Vec<AddressBookUserAddress>, AddressBookError>
 }
 
 pub async fn delete_all() -> Result<(), AddressBookError> {
-    let caller = caller().to_text();
+    let caller = get_address_book_root().await?;
 
     ADDRESS_BOOK.with(|book| {
         let mut book = book.borrow_mut();
@@ -137,4 +141,41 @@ fn validate_no_duplicate_addresses(
     }
 
     Ok(())
+}
+
+pub fn get_config() -> AddressBookConf {
+    ADDRESS_BOOK_CONFIG.with(|c| c.borrow().clone())
+}
+
+pub async fn set_config(config: AddressBookConf) -> Result<(), AddressBookError> {
+    let controllers = get_controllers().await;
+    let caller_principal = caller();
+
+    if !controllers.contains(&caller_principal) {
+        return Err(AddressBookError::Unauthorized);
+    }
+
+    ADDRESS_BOOK_CONFIG.with(|c| {
+        *c.borrow_mut() = config;
+    });
+
+    Ok(())
+}
+
+async fn get_address_book_root() -> Result<String, AddressBookError> {
+    let root_id = get_root_id().await;
+    Ok(root_id)
+}
+
+async fn get_controllers() -> Vec<Principal> {
+    let res: CallResult<(CanisterStatusResponse,)> = call(
+        Principal::management_canister(),
+        "canister_status",
+        (CanisterIdRequest { canister_id: id() },),
+    )
+        .await;
+
+    return res
+        .expect("Get controllers function exited unexpectedly: inter-canister call to management canister for canister_status returned an empty result.")
+        .0.settings.controllers;
 }

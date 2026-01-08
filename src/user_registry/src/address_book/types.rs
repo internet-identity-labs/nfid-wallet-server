@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::hash::Hash;
 
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, Hash, PartialEq)]
@@ -79,4 +79,11 @@ pub enum AddressBookError {
     AddressNotFound,
     DuplicateAddress,
     DuplicateName,
+    Unauthorized,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug, PartialEq, Eq, Hash)]
+pub(crate) struct CanisterIdRequest {
+    #[serde(rename = "canister_id")]
+    pub canister_id: Principal,
 }

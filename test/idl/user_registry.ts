@@ -17,7 +17,8 @@ export type AddressBookError = { 'NameTooLong' : null } |
     { 'DuplicateName' : null } |
     { 'MaxAddressesReached' : null } |
     { 'DuplicateAddress' : null } |
-    { 'AddressNotFound' : null };
+    { 'AddressNotFound' : null } |
+    { 'Unauthorized' : null };
 export interface AddressBookUserAddress {
     'id' : string,
     'name' : string,
@@ -37,6 +38,7 @@ export interface _SERVICE {
     'address_book_find_all' : ActorMethod<[], Result_1>,
     'address_book_get_config' : ActorMethod<[], AddressBookConf>,
     'address_book_save' : ActorMethod<[AddressBookUserAddress], Result_1>,
+    'address_book_set_config' : ActorMethod<[AddressBookConf], Result>,
     'get_canisters_by_root' : ActorMethod<[string], Array<ICRC1>>,
     'remove_icrc1_canister' : ActorMethod<[string], undefined>,
     'store_icrc1_canister' : ActorMethod<[string, ICRC1State, [] | [number]], undefined>,

@@ -20,6 +20,7 @@ export const idlFactory = ({ IDL }) => {
         'AddressNotFound' : IDL.Null,
         'DuplicateAddress' : IDL.Null,
         'DuplicateName' : IDL.Null,
+        'Unauthorized' : IDL.Null,
     });
     const Result_1 = IDL.Variant({
         'Ok' : IDL.Vec(AddressBookUserAddress),
@@ -46,6 +47,7 @@ export const idlFactory = ({ IDL }) => {
         'address_book_find_all' : IDL.Func([], [Result_1], ['query']),
         'address_book_get_config' : IDL.Func([], [AddressBookConf], ['query']),
         'address_book_save' : IDL.Func([AddressBookUserAddress], [Result_1], []),
+        'address_book_set_config' : IDL.Func([AddressBookConf], [Result], []),
         'get_canisters_by_root' : IDL.Func([IDL.Text], [IDL.Vec(ICRC1)], ['query']),
         'remove_icrc1_canister' : IDL.Func([IDL.Text], [], []),
         'store_icrc1_canister' : IDL.Func([IDL.Text, ICRC1State, IDL.Opt(IDL.Nat32)], [], []),
