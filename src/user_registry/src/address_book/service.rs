@@ -6,10 +6,9 @@ use ic_cdk::api::call::CallResult;
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 
 use super::types::{AddressBookConf, AddressBookError, AddressBookUser, AddressBookUserAddress, CanisterIdRequest};
-use crate::{ADDRESS_BOOK, ADDRESS_BOOK_CONFIG, get_root_id};
+use crate::{ADDRESS_BOOK, ADDRESS_BOOK_CONFIG};
 
-pub async fn save(user_address: AddressBookUserAddress) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
-    let caller = get_address_book_root().await?;
+pub async fn save(caller: String, user_address: AddressBookUserAddress) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
 
     let (max_name_length, max_addresses) = ADDRESS_BOOK_CONFIG.with(|c| {
         let conf = c.borrow();
@@ -44,8 +43,7 @@ pub async fn save(user_address: AddressBookUserAddress) -> Result<Vec<AddressBoo
     })
 }
 
-pub async fn delete(id: String) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
-    let caller = get_address_book_root().await?;
+pub async fn delete(caller: String, id: String) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
 
     ADDRESS_BOOK.with(|book| {
         let mut book = book.borrow_mut();
@@ -69,8 +67,7 @@ pub async fn delete(id: String) -> Result<Vec<AddressBookUserAddress>, AddressBo
     })
 }
 
-pub async fn find_all() -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
-    let caller = get_address_book_root().await?;
+pub async fn find_all(caller: String) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
 
     Ok(ADDRESS_BOOK.with(|book| {
         let book = book.borrow();
@@ -80,8 +77,7 @@ pub async fn find_all() -> Result<Vec<AddressBookUserAddress>, AddressBookError>
     }))
 }
 
-pub async fn delete_all() -> Result<(), AddressBookError> {
-    let caller = get_address_book_root().await?;
+pub async fn delete_all(caller: String) -> Result<(), AddressBookError> {
 
     ADDRESS_BOOK.with(|book| {
         let mut book = book.borrow_mut();
@@ -160,11 +156,6 @@ pub async fn set_config(config: AddressBookConf) -> Result<(), AddressBookError>
     });
 
     Ok(())
-}
-
-async fn get_address_book_root() -> Result<String, AddressBookError> {
-    let root_id = get_root_id().await;
-    Ok(root_id)
 }
 
 async fn get_controllers() -> Vec<Principal> {

@@ -105,22 +105,26 @@ pub async fn get_canisters_by_root(root: String) -> Vec<ICRC1> {
 
 #[update]
 pub async fn address_book_save(user_address: AddressBookUserAddress) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
-    address_book::service::save(user_address).await
+    let root_id = get_root_id().await;
+    address_book::service::save(root_id, user_address).await
 }
 
 #[update]
 pub async fn address_book_delete(id: String) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
-    address_book::service::delete(id).await
+    let root_id = get_root_id().await;
+    address_book::service::delete(root_id, id).await
 }
 
 #[update]
 pub async fn address_book_delete_all() -> Result<(), AddressBookError> {
-    address_book::service::delete_all().await
+    let root_id = get_root_id().await;
+    address_book::service::delete_all(root_id).await
 }
 
 #[query(composite = true)]
 pub async fn address_book_find_all() -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
-    address_book::service::find_all().await
+    let root_id = get_root_id().await;
+    address_book::service::find_all(root_id).await
 }
 
 #[query]
@@ -215,7 +219,7 @@ fn export_candid() -> String {
 }
 
 
-pub(crate) async fn get_root_id() -> String {
+async fn get_root_id() -> String {
     match CONFIG.with(|c| c.borrow_mut().im_canister.clone()) {
         None => caller().to_text(), // Return caller for testing purposes when im_canister is None
         Some(canister) => {
