@@ -1,0 +1,59 @@
+type Conf = record {
+    im_canister : opt text
+};
+
+type ICRC1 = record {
+    state : ICRC1State;
+    ledger : text;
+    network : opt nat32;
+};
+
+type ICRC1State = variant {
+    Inactive;
+    Active
+};
+
+type AddressBookAddressType = variant {
+    IcpAddress;
+    IcpPrincipal;
+    BTC;
+    ETH
+};
+
+type AddressBookAddress = record {
+    address_type : AddressBookAddressType;
+    value : text
+};
+
+type AddressBookUserAddress = record {
+    id : text;
+    name : text;
+    addresses : vec AddressBookAddress
+};
+
+type AddressBookError = variant {
+    NameTooLong;
+    MaxAddressesReached;
+    AddressNotFound;
+    DuplicateAddress;
+    DuplicateName;
+    Unauthorized
+};
+
+type AddressBookConf = record {
+    max_user_addresses : nat32;
+    max_name_length : nat32
+};
+
+service : (Conf) -> {
+    get_canisters_by_root : (text) -> (vec ICRC1) query;
+    remove_icrc1_canister : (text) -> ();
+    store_icrc1_canister : (text, ICRC1State, opt nat32) -> ();
+
+    address_book_save : (AddressBookUserAddress) -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError });
+    address_book_delete : (text) -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError });
+    address_book_delete_all : () -> (variant { Ok; Err : AddressBookError });
+    address_book_find_all : () -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError }) query;
+    address_book_get_config : () -> (AddressBookConf) query;
+    address_book_set_config : (AddressBookConf) -> (variant { Ok; Err : AddressBookError });
+}

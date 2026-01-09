@@ -1,12 +1,16 @@
+mod address_book;
+
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
 use candid::{CandidType, Principal};
 use candid::export_service;
-use ic_cdk::{call, caller,storage, trap};
+use ic_cdk::{call, caller, storage, trap};
 use ic_cdk_macros::*;
 use serde::{Deserialize, Serialize};
+
+pub use address_book::*;
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, Hash, PartialEq)]
 pub struct Conf {
@@ -44,6 +48,12 @@ thread_local! {
         im_canister: None
     }) };
     pub static ICRC_REGISTRY: RefCell<HashMap<String, HashSet<ICRC1>>> = RefCell::new(HashMap::default());
+
+    pub(crate) static ADDRESS_BOOK: RefCell<HashMap<String, AddressBookUser>> = RefCell::new(HashMap::default());
+    pub(crate) static ADDRESS_BOOK_CONFIG: RefCell<AddressBookConf> = const { RefCell::new(AddressBookConf {
+        max_user_addresses: 50,
+        max_name_length: 200,
+    }) };
 }
 
 
@@ -93,6 +103,40 @@ pub async fn get_canisters_by_root(root: String) -> Vec<ICRC1> {
     })
 }
 
+#[update]
+pub async fn address_book_save(user_address: AddressBookUserAddress) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
+    let root_id = get_root_id().await;
+    address_book::service::save(root_id, user_address).await
+}
+
+#[update]
+pub async fn address_book_delete(id: String) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
+    let root_id = get_root_id().await;
+    address_book::service::delete(root_id, id).await
+}
+
+#[update]
+pub async fn address_book_delete_all() -> Result<(), AddressBookError> {
+    let root_id = get_root_id().await;
+    address_book::service::delete_all(root_id).await
+}
+
+#[query(composite = true)]
+pub async fn address_book_find_all() -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
+    let root_id = get_root_id().await;
+    address_book::service::find_all(root_id).await
+}
+
+#[query]
+pub fn address_book_get_config() -> AddressBookConf {
+    address_book::service::get_config()
+}
+
+#[update]
+pub async fn address_book_set_config(config: AddressBookConf) -> Result<(), AddressBookError> {
+    address_book::service::set_config(config).await
+}
+
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, PartialEq, Eq, Hash)]
 pub struct ICRC1Memory {
@@ -105,6 +149,8 @@ pub struct ICRC1Memory {
 struct Memory {
     registry: HashMap<String, HashSet<ICRC1Memory>>,
     config: Conf,
+    address_book: HashMap<String, AddressBookUser>,
+    address_book_config: AddressBookConf,
 }
 
 /// Applies changes before the canister upgrade.
@@ -118,6 +164,9 @@ pub fn stable_save() {
         let config = config.borrow();
         config.clone()
     });
+    let address_book = ADDRESS_BOOK.with(|book| book.borrow().clone());
+    let address_book_config = ADDRESS_BOOK_CONFIG.with(|c| c.borrow().clone());
+
     let registry: HashMap<String, HashSet<ICRC1Memory>> = registry.into_iter().map(|(k, v)| (k, v.into_iter().map(|x| ICRC1Memory {
         state: x.state,
         ledger: x.ledger.clone(),
@@ -126,6 +175,8 @@ pub fn stable_save() {
     let mem = Memory {
         registry,
         config,
+        address_book,
+        address_book_config,
     };
     storage::stable_save((mem,)).expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
@@ -133,19 +184,27 @@ pub fn stable_save() {
 /// Applies changes after the canister upgrade.
 #[post_upgrade]
 pub fn stable_restore() {
-    let (mo, ): (Memory, ) = storage::stable_restore()
+    let (mem, ): (Memory, ) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
-    CONFIG.with(|config| {
-        let mut config = config.borrow_mut();
-        *config = mo.config.clone();
+
+    let Memory { config, registry, address_book, address_book_config } = mem;
+
+    CONFIG.with(|c| {
+        *c.borrow_mut() = config.clone();
     });
-    ICRC_REGISTRY.with(|registry| {
-        let mut registry = registry.borrow_mut();
-        *registry = mo.registry.into_iter().map(|(k, v)| (k, v.into_iter().map(|x| ICRC1 {
+    ICRC_REGISTRY.with(|reg| {
+        let mut reg = reg.borrow_mut();
+        *reg = registry.into_iter().map(|(k, v)| (k, v.into_iter().map(|x| ICRC1 {
             state: x.state,
             ledger: x.ledger,
             network: x.network.unwrap_or(0),
         }).collect())).collect();
+    });
+    ADDRESS_BOOK.with(|book| {
+        *book.borrow_mut() = address_book;
+    });
+    ADDRESS_BOOK_CONFIG.with(|c| {
+        *c.borrow_mut() = address_book_config;
     });
 }
 
