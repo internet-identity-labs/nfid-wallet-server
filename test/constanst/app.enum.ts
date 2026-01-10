@@ -4,7 +4,7 @@ export enum App {
     IdentityManagerReplica,
     Vault,
     ECDSASigner,
-    ICRC1Registry,
+    UserRegistry,
     ICRC1Oracle,
     DelegationFactory,
     NFIDStorage,

@@ -78,11 +78,11 @@
         }
       ]
     },
-    "icrc1_registry": {
+    "user_registry": {
       "type": "custom",
-      "candid": "src/icrc1_registry/icrc1_registry.did",
-      "wasm": "icrc1_registry.wasm",
-      "build": "src/icrc1_registry/build.sh",
+      "candid": "src/user_registry/user_registry.did",
+      "wasm": "user_registry.wasm",
+      "build": "src/user_registry/build.sh",
       "metadata": [
         {
           "name": "candid:service"

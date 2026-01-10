@@ -73,7 +73,7 @@ jobs:
       matrix:
         canister_name:
           - identity_manager
-          - icrc1_registry
+          - user_registry
           - delegation_factory
           - nfid_storage
           - swap_trs_storage
@@ -81,8 +81,8 @@ jobs:
         include:
           - canister_name: identity_manager
             workflow_file_name: identity_manager.yml
-          - canister_name: icrc1_registry
-            workflow_file_name: icrc1_registry.yml
+          - canister_name: user_registry
+            workflow_file_name: user_registry.yml
           - canister_name: delegation_factory
             workflow_file_name: delegation_factory.yml
           - canister_name: nfid_storage

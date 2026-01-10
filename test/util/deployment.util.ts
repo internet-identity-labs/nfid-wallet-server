@@ -4,7 +4,7 @@ import {Ed25519KeyIdentity} from "@dfinity/identity";
 import {Dfx} from "../type/dfx";
 import {idlFactory as imIdl} from "../idl/identity_manager_idl";
 import {idlFactory as vaultIdl} from "../idl/vault_idl";
-import {idlFactory as icrc1Idl} from "../idl/icrc1_registry_idl";
+import {idlFactory as userRegistryIdl} from "../idl/user_registry_idl";
 import {idlFactory as icrcOracle1Idl} from "../idl/icrc1_oracle_idl";
 import {idlFactory as iitIdl} from "../idl/internet_identity_test_idl";
 import {idlFactory as esdsaIdl} from "../idl/ecdsa_idl";
@@ -16,8 +16,9 @@ import {App} from "../constanst/app.enum";
 import {IDL} from "@dfinity/candid";
 import {DFX} from "../constanst/dfx.const";
 import {execute} from "./call.util";
-import {_SERVICE as IdentityManagerType} from "../idl/identity_manager"
+import {AccessPointRequest, HTTPAccountRequest, _SERVICE as IdentityManagerType} from "../idl/identity_manager"
 import {_SERVICE as InternetIdentityTest} from "../idl/internet_identity_test"
+import {_SERVICE as UserRegistry} from "../idl/user_registry"
 
 const localhost: string = "http://127.0.0.1:8000";
 
@@ -54,7 +55,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             member_1: null,
             member_2: null
         },
-        icrc1: {
+        user_registry: {
             id: null,
             actor: null,
         },
@@ -80,7 +81,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         dfx.user.identity = getIdentity("87654321876543218765432187654321");
         dfx.user.principal = dfx.user.identity.getPrincipal().toString();
 
-        if (clean) {            
+        if (clean) {
             DFX.CREATE_TEST_PERSON();
             DFX.USE_TEST_ADMIN();
         }
@@ -131,11 +132,12 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             imConfigurationArguments.add(`ii_canister_id = opt principal "${dfx.iit.id}"`);
         }
 
-        if (apps.includes(App.ICRC1Registry)) {
+        if (apps.includes(App.UserRegistry)) {
             DFX.USE_TEST_ADMIN();
-            DFX.DEPLOY_WITH_ARGUMENT("icrc1_registry", "(record { })");
-            dfx.icrc1.id = DFX.GET_CANISTER_ID("icrc1_registry");
-            dfx.icrc1.actor = await getActor(dfx.icrc1.id, dfx.user.identity, icrc1Idl);
+            DFX.DEPLOY_WITH_ARGUMENT("user_registry", `(record { })`);
+            DFX.ADD_CONTROLLER(dfx.user.principal, "user_registry");
+            dfx.user_registry.id = DFX.GET_CANISTER_ID("user_registry");
+            dfx.user_registry.actor = await getTypedActor<UserRegistry>(dfx.user_registry.id, dfx.user.identity, userRegistryIdl);
         }
 
         if (apps.includes(App.ICRC1Oracle)) {
@@ -184,11 +186,12 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         }
         if (apps.includes(App.NFIDStorage)) {
             execute(`dfx deploy nfid_storage --mode reinstall -y --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
+            DFX.ADD_CONTROLLER(dfx.user.principal, "nfid_storage");
 
             dfx.nfid_storage.id = DFX.GET_CANISTER_ID("nfid_storage");
             console.log(">> ", dfx.nfid_storage.id);
 
-            dfx.nfid_storage.actor = await getActor(dfx.nfid_storage.id, dfx.user.identity, nfidStorageIDL);
+            dfx.nfid_storage.actor = await getTypedActor(dfx.nfid_storage.id, dfx.user.identity, nfidStorageIDL);
             return dfx;
         }
         if (apps.includes(App.SwapTrsStorage)) {
@@ -200,7 +203,6 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             dfx.swap_trs_storage.actor = await getActor(dfx.swap_trs_storage.id, dfx.user.identity, swapTrsStorageIDL);
             return dfx;
         }
-
         DFX.CONFIGURE_IM(Array.from(imConfigurationArguments).join("; "));
 
         return dfx;
@@ -232,4 +234,32 @@ export async function getTypedActor<T>(
     const agent: HttpAgent = new HttpAgent({host: localhost, identity: identity});
     await agent.fetchRootKey();
     return Actor.createActor(idl, {agent, canisterId: imCanisterId});
+}
+
+export async function createIdentityManagerAccount(dfx: Dfx): Promise<Agent.ActorSubclass<IdentityManagerType>> {
+    const identity = getIdentity("87654321876543218765432187654311");
+    const principal = identity.getPrincipal().toText();
+    const accessPoint: AccessPointRequest = {
+        icon: "Icon",
+        device: "Global",
+        pub_key: principal,
+        browser: "Browser",
+        device_type: {
+            Email: null,
+        },
+        credential_id: [],
+    };
+    var accountRequest: HTTPAccountRequest = {
+        access_point: [accessPoint],
+        wallet: [{NFID: null}],
+        anchor: 0n,
+        email: ["test@test.test"],
+        name: [],
+        challenge_attempt: []
+    };
+    const actor = await getTypedActor<IdentityManagerType>(dfx.im.id, identity, imIdl);
+    await dfx.im.actor.add_email_and_principal_for_create_account_validation("test@test.test", principal, 25n);
+    await actor.create_account(accountRequest)
+
+    return actor
 };

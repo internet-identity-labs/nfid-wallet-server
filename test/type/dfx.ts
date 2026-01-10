@@ -3,6 +3,8 @@ import { Ed25519KeyIdentity } from "@dfinity/identity";
 import * as Agent from "@dfinity/agent"
 import {_SERVICE as IdentityManager} from "../idl/identity_manager";
 import {_SERVICE as InternetIdentityTest} from "../idl/internet_identity_test";
+import {_SERVICE as NfidStorageService} from "../idl/nfid_storage";
+import {_SERVICE as UserRegistry} from "../idl/user_registry"
 
 export interface Dfx {
     root: string;
@@ -42,9 +44,9 @@ export interface Dfx {
         id: string;
         actor: Record<string, ActorMethod>;
     };
-    icrc1?: {
+    user_registry?: {
         id: string;
-        actor: Record<string, ActorMethod>;
+        actor: Agent.ActorSubclass<UserRegistry>;
     };
     icrc1_oracle?: {
         id: string;
@@ -56,7 +58,7 @@ export interface Dfx {
     };
     nfid_storage?: {
         id: string;
-        actor: Record<string, ActorMethod>;
+        actor: Agent.ActorSubclass<NfidStorageService>;
     };
     swap_trs_storage?: {
         id: string;

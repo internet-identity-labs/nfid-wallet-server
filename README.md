@@ -16,7 +16,7 @@
 **ICRC1 public token registry API tests**
 <br/>
 [![GitHub ICRC1 Oracle Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/icrc1_oracle.yml?logo=github&label=ICRC1%20Oracle%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/icrc1_oracle.yml)
-[![GitHub ICRC1 Registry Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/icrc1_registry.yml?logo=github&label=ICRC1%20Registry%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/icrc1_registry.yml)
+[![GitHub User Registry Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/internet-identity-labs/nfid-wallet-server/user_registry.yml?logo=github&label=User%20Registry%20Tests)](https://github.com/internet-identity-labs/nfid-wallet-server/actions/workflows/user_registry.yml)
 
 # NFID Wallet
 
@@ -159,7 +159,7 @@ dfx canister call identity_manager sync_controllers
 Deploy additional canisters with these commands:
 
 ```bash
-dfx deploy icrc1_registry  --argument '( record { im_canister = opt "74gpt-tiaaa-aaaak-aacaa-cai" })'
+dfx deploy user_registry  --argument '( record { im_canister = opt "74gpt-tiaaa-aaaak-aacaa-cai" })'
 dfx deploy icrc1_oracle  --argument '(opt record { im_canister = opt principal "74gpt-tiaaa-aaaak-aacaa-cai" })'
 dfx deploy signer_ic  --argument '(opt record { im_canister = principal "74gpt-tiaaa-aaaak-aacaa-cai" })'
 dfx deploy delegation_factory  --argument '(opt record { im_canister = principal "74gpt-tiaaa-aaaak-aacaa-cai" })'
