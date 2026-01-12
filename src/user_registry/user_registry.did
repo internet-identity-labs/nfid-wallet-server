@@ -47,7 +47,7 @@ type AddressBookConf = record {
 
 service : (Conf) -> {
     get_canisters_by_root : (text) -> (vec ICRC1) query;
-    remove_icrc1_canister : (text) -> ();
+    remove_icrc1_canister : (text, opt nat32) -> ();
     store_icrc1_canister : (text, ICRC1State, opt nat32) -> ();
 
     address_book_save : (AddressBookUserAddress) -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError });
