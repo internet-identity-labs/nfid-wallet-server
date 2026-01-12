@@ -76,12 +76,12 @@ pub async fn store_icrc1_canister(ledger_id: String, state: ICRC1State, network:
 }
 
 #[update]
-pub async fn remove_icrc1_canister(ledger_id: String) {
+pub async fn remove_icrc1_canister(ledger_id: String, network: Option<u32>) {
     let caller = get_root_id().await;
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
         if let Some(canisters) = registry.get_mut(&caller) {
-            canisters.retain(|existing_canister| !(existing_canister.ledger == ledger_id && existing_canister.network == network_value));
+            canisters.retain(|existing_canister| !(existing_canister.ledger == ledger_id && existing_canister.network == network.unwrap_or(0)));
         }
     });
 }
