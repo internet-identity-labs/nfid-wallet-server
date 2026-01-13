@@ -63,25 +63,25 @@ pub async fn store_icrc1_canister(ledger_id: String, state: ICRC1State, network:
     let caller = get_root_id().await;
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
-        let canister_id = ICRC1 {
+        let canister = ICRC1 {
             state,
             ledger: ledger_id.clone(),
             network: network.unwrap_or(0),
         };
         let canisters = registry.entry(caller).or_insert_with(HashSet::new);
-        canisters.retain(|existing_canister| existing_canister.ledger != ledger_id);
-        canisters.insert(canister_id);
+        let network_value = network.unwrap_or(0);
+        canisters.retain(|existing_canister| !(existing_canister.ledger == ledger_id && existing_canister.network == network_value));
+        canisters.insert(canister);
     });
 }
 
-/// Removes the ICRC1 canister for a specified user ledger ID principal.
 #[update]
-pub async fn remove_icrc1_canister(ledger_id: String) {
+pub async fn remove_icrc1_canister(ledger_id: String, network: Option<u32>) {
     let caller = get_root_id().await;
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
         if let Some(canisters) = registry.get_mut(&caller) {
-            canisters.retain(|canister| canister.ledger != ledger_id);
+            canisters.retain(|existing_canister| !(existing_canister.ledger == ledger_id && existing_canister.network == network.unwrap_or(0)));
         }
     });
 }
