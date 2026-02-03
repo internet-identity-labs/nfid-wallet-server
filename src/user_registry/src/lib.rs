@@ -151,7 +151,7 @@ pub struct ICRC1Memory {
 struct Memory {
     registry: HashMap<String, HashSet<ICRC1Memory>>,
     config: Conf,
-    address_book: HashMap<String, AddressBookUser>,
+    address_book: Option<HashMap<String, AddressBookUser>>,
     address_book_config: Option<AddressBookConf>,
 }
 
@@ -177,7 +177,7 @@ pub fn stable_save() {
     let mem = Memory {
         registry,
         config,
-        address_book,
+        address_book: Some(address_book),
         address_book_config: Some(address_book_config),
     };
     storage::stable_save((mem,)).expect("Stable save exited unexpectedly: unable to save data to stable memory.");
@@ -203,7 +203,7 @@ pub fn stable_restore() {
         }).collect())).collect();
     });
     ADDRESS_BOOK.with(|book| {
-        *book.borrow_mut() = address_book;
+        *book.borrow_mut() = address_book.unwrap_or_default();
     });
     ADDRESS_BOOK_CONFIG.with(|c| {
         *c.borrow_mut() = address_book_config.unwrap_or(DEFAULT_ADDRESS_BOOK_CONFIG);
