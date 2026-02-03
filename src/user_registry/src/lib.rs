@@ -43,6 +43,11 @@ impl PartialEq for ICRC1 {
     }
 }
 
+const DEFAULT_ADDRESS_BOOK_CONFIG: AddressBookConf = AddressBookConf {
+    max_user_addresses: 50,
+    max_name_length: 200,
+};
+
 thread_local! {
      static CONFIG: RefCell<Conf> = const { RefCell::new( Conf {
         im_canister: None
@@ -50,10 +55,7 @@ thread_local! {
     pub static ICRC_REGISTRY: RefCell<HashMap<String, HashSet<ICRC1>>> = RefCell::new(HashMap::default());
 
     pub(crate) static ADDRESS_BOOK: RefCell<HashMap<String, AddressBookUser>> = RefCell::new(HashMap::default());
-    pub(crate) static ADDRESS_BOOK_CONFIG: RefCell<AddressBookConf> = const { RefCell::new(AddressBookConf {
-        max_user_addresses: 50,
-        max_name_length: 200,
-    }) };
+    pub(crate) static ADDRESS_BOOK_CONFIG: RefCell<AddressBookConf> = const { RefCell::new(DEFAULT_ADDRESS_BOOK_CONFIG) };
 }
 
 
@@ -150,7 +152,7 @@ struct Memory {
     registry: HashMap<String, HashSet<ICRC1Memory>>,
     config: Conf,
     address_book: HashMap<String, AddressBookUser>,
-    address_book_config: AddressBookConf,
+    address_book_config: Option<AddressBookConf>,
 }
 
 /// Applies changes before the canister upgrade.
@@ -176,7 +178,7 @@ pub fn stable_save() {
         registry,
         config,
         address_book,
-        address_book_config,
+        address_book_config: Some(address_book_config),
     };
     storage::stable_save((mem,)).expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
@@ -204,7 +206,7 @@ pub fn stable_restore() {
         *book.borrow_mut() = address_book;
     });
     ADDRESS_BOOK_CONFIG.with(|c| {
-        *c.borrow_mut() = address_book_config;
+        *c.borrow_mut() = address_book_config.unwrap_or(DEFAULT_ADDRESS_BOOK_CONFIG);
     });
 }
 
