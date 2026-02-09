@@ -15,15 +15,15 @@ internet_identity_interface = { git = "https://github.com/dfinity/internet-ident
 
 # ic dependencies
 candid = "0.10"
-candid_parser = "0.1.2"
-ic-cdk = "0.16.0"
+candid_parser = "0.3.0"
+ic-cdk = "0.16.1"
 ic-cdk-macros = "0.16.0"
 ic-cdk-timers = "0.10.0"
-ic-certification = "2.2"
-ic-http-certification = "2.2"
+ic-certification = "3.1"
+ic-http-certification = "3.1"
 ic-metrics-encoder = "1"
-ic-representation-independent-hash = "2.2"
-ic-response-verification = "2.2"
+ic-representation-independent-hash = "3.1"
+ic-response-verification = "3.1"
 ic-stable-structures = "0.6"
 ic-test-state-machine-client = "3"
 ic-crypto-standalone-sig-verifier = { git = "https://github.com/dfinity/ic", rev = "e69bcc7b319cbb3ebc22ec55af35287741244db6" }
@@ -31,11 +31,11 @@ ic-types = { git = "https://github.com/dfinity/ic", rev = "e69bcc7b319cbb3ebc22e
 
 # other dependencies
 assert_matches = "1.5.0"
-base64 = "0.21"
+base64 = "0.22"
 hex = "0.4"
 include_dir = "0.7"
 lazy_static = "1.4"
-regex = "1.9"
+regex = "1.12"
 serde = "1"
 serde_bytes = "0.11"
 serde_cbor = "0.11"
@@ -56,7 +56,7 @@ captcha = { git = "https://github.com/dfinity/captcha", rev = "9c0d2dd9bf519e255
 getrandom = { version = "0.2", features = ["custom"] }
 
 [dev-dependencies]
-hex-literal = "0.4"
+hex-literal = "1.1"
 identity_jose = { git = "https://github.com/dfinity/identity.rs.git", rev = "63d3683cf6b6e48136ffb6812125dd8addfbbe75", default-features = false }
 
 

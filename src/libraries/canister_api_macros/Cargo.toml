@@ -10,9 +10,9 @@ proc-macro = true
 
 [dependencies]
 proc-macro2 = "1.0"
-quote = "1.0.10"
+quote = "1.0.44"
 syn = "2.0.79"
-ic-cdk = "0.16.0"
+ic-cdk = "0.16.1"
 ic-cdk-macros = "0.16.0"
 ic-types = "0.7.0"
 serde = "1"
