@@ -159,7 +159,7 @@ jobs:
           dfx build --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
       - name: POST-BUILD => Save artifact.
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.CANISTER_WASM }}
           include-hidden-files: true
@@ -312,7 +312,7 @@ jobs:
           dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
       - name: DEPLOY => Load artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.CANISTER_WASM }}
 
