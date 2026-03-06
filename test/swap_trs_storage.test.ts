@@ -97,4 +97,40 @@ describe("Swap Trs Storage test", () => {
         expect(trsFromMemory.length).eq(1)
         expect(trsFromMemory[0].errors.length).eq(1)
     })
+
+    it("Store/Get notes", async function () {
+        const identity = getIdentity("87654321876543218765432187654311");
+        storageActor = await getTypedActor<_SERVICE>(dfx.swap_trs_storage.id, identity, swapStorageIDL);
+
+        // bytes32 key: 32 bytes computed from chainId + transactionId
+        const key = new Uint8Array(32).fill(0);
+        key[0] = 1;
+        key[31] = 255;
+
+        const noteText = "Test note for transaction";
+
+        const key2 = new Uint8Array(32).fill(2);
+        const noteText2 = "Second note";
+
+        await storageActor.store_note(key, noteText);
+        await storageActor.store_note(key2, noteText2);
+
+        // Query both keys at once
+        const results = await storageActor.get_notes([key, key2]);
+        expect(results.length).eq(2);
+        const found1 = results.find(e => e.value === noteText);
+        const found2 = results.find(e => e.value === noteText2);
+        expect(found1).to.exist;
+        expect(found2).to.exist;
+
+        // Missing key returns no entry
+        const unknownKey = new Uint8Array(32).fill(42);
+        const missing = await storageActor.get_notes([unknownKey]);
+        expect(missing.length).eq(0);
+
+        // Verify notes survive upgrade
+        execute(`dfx deploy swap_trs_storage  --argument '(opt record { im_canister = principal "${dfx.im.id}" })' --upgrade-unchanged`)
+        const notesAfterUpgrade = await storageActor.get_notes([key, key2]);
+        expect(notesAfterUpgrade.length).eq(2);
+    })
 })

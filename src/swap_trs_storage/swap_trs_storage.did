@@ -40,4 +40,6 @@ type SwapTransaction = record {
 };service : (opt InitArgs) -> {
     get_transactions : (text) -> (vec SwapTransaction) query;
     store_transaction : (SwapTransaction) -> ();
+    get_notes : (vec blob) -> (vec record { key : blob; value : text }) query;
+    store_note : (blob, text) -> ();
 }
