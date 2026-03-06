@@ -34,6 +34,12 @@ export const idlFactory = ({ IDL }) => {
             ['query'],
         ),
         'store_transaction' : IDL.Func([SwapTransaction], [], []),
+        'get_notes' : IDL.Func(
+            [IDL.Vec(IDL.Vec(IDL.Nat8))],
+            [IDL.Vec(IDL.Record({ 'key' : IDL.Vec(IDL.Nat8), 'value' : IDL.Text }))],
+            ['query'],
+        ),
+        'store_note' : IDL.Func([IDL.Vec(IDL.Nat8), IDL.Text], [], []),
     });
 };
 export const init = ({ IDL }) => {
