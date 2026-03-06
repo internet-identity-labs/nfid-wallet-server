@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 thread_local! {
     static STATE: RefCell<State> = RefCell::new(State::default());
     static TRANSACTIONS: RefCell<HashMap<String, HashSet<SwapTransaction>>> = RefCell::new(HashMap::new());
+    static NOTES: RefCell<HashMap<Vec<u8>, String>> = RefCell::new(HashMap::new());
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -119,6 +120,44 @@ async fn store_transaction(data: SwapTransaction) {
     })
 }
 
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
+pub struct NoteEntry {
+    pub key: Vec<u8>,
+    pub value: String,
+}
+
+/// Returns notes for the given list of bytes32 keys. Missing keys are omitted from the result.
+#[query]
+#[candid_method(query)]
+fn get_notes(keys: Vec<Vec<u8>>) -> Vec<NoteEntry> {
+    NOTES.with(|notes| {
+        let map = notes.borrow();
+        keys.into_iter()
+            .filter_map(|k| map.get(&k).map(|v| NoteEntry { key: k, value: v.clone() }))
+            .collect()
+    })
+}
+
+/// Stores a note for the given bytes32 key. Key must be exactly 32 bytes; value max 180 characters.
+#[update]
+#[candid_method(update)]
+async fn store_note(key: Vec<u8>, value: String) {
+    get_root_id().await;
+    if key.len() != 32 {
+        trap("Key must be exactly 32 bytes");
+    }
+    if value.chars().count() > 180 {
+        trap("Value must not exceed 180 characters");
+    }
+    NOTES.with(|notes| {
+        let mut map = notes.borrow_mut();
+        if map.contains_key(&key) {
+            trap("Note with this key already exists");
+        }
+        map.insert(key, value);
+    });
+}
+
 /// Applies changes after the canister upgrade.
 #[post_upgrade]
 async fn post_upgrade(_: Option<InitArgs>) {
@@ -147,6 +186,7 @@ candid::export_service!();
 struct TempMemory {
     im_canister: Option<Principal>,
     transactions: Option<HashMap<String, HashSet<SwapTransactionTempMemory>>>,
+    notes: Option<HashMap<Vec<u8>, String>>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize, Eq)]
@@ -219,6 +259,11 @@ pub async fn init_from_memory() {
             }
         }
     });
+    if let Some(notes) = mo.notes {
+        NOTES.with(|n| {
+            *n.borrow_mut() = notes;
+        });
+    }
 }
 
 pub async fn save_to_temp_memory() {
@@ -250,7 +295,8 @@ pub async fn save_to_temp_memory() {
                 swap_provider: Some(t.swap_provider),
             }).collect::<HashSet<_>>())).collect();
 
-    let mo: TempMemory = TempMemory { im_canister, transactions: Some(trs_m) };
+    let notes_current = NOTES.with(|n| n.borrow().clone());
+    let mo: TempMemory = TempMemory { im_canister, transactions: Some(trs_m), notes: Some(notes_current) };
     storage::stable_save((mo,))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
