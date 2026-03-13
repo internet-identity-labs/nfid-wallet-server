@@ -1,6 +1,7 @@
 {
+    "import": "tsx/esm",
     "require": [
-      "ts-node/register",
+      "tsx/cjs",
       "test/hooks.mjs"
     ],
     "extensions": ["ts", "tsx"],
