@@ -4,4 +4,4 @@ export type {
   DiscoveryAppResponse,
   DiscoveryService,
 } from "./types";
-export { discoveryService } from "./discovery.container";
+export { discoveryService } from "./discovery.service";
