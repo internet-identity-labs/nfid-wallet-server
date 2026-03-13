@@ -28,6 +28,12 @@ jobs:
         with:
           node-version: '25'
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
       - name: Install dfx
         run: |
           export DFX_VERSION=0.23.0

@@ -31,6 +31,7 @@ public class BaseDFXITest {
 
 
     @AfterClass
+    @SneakyThrows
     public void stopDfx() {
         call("common/dfx_stop");
         call("common/dfx_stop_2");
@@ -101,10 +102,12 @@ public class BaseDFXITest {
         return execute(bashScript);
     }
 
+    @SneakyThrows
     public String call(String file, Object... params) {
         return callDfxCommand(String.format(getScript(file).trim(), params)).trim();
     }
 
+    @SneakyThrows
     public String command(String file, Object... params) {
         return callDfxCommand(String.format(getScript(file).trim(), params)).trim().replaceAll("[\\n\\t ]", "");
     }
