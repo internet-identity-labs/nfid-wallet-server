@@ -90,9 +90,9 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
 
         if (apps.includes(App.IdentityManager)) {
             if (clean) {
-                DFX.DEPLOY_SPECIFIED("identity_manager", "74gpt-tiaaa-aaaak-aacaa-cai" );
+                DFX.DEPLOY(App.IdentityManager).run();
             } else {
-                DFX.UPGRADE_FORCE("identity_manager");
+                DFX.UPGRADE_FORCE(App.IdentityManager);
             }
             imConfigurationArguments.add(`operator = opt principal "${dfx.user.principal}"`);
             imConfigurationArguments.add(`lambda = opt principal "${dfx.user.principal}"`);
@@ -102,13 +102,13 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
                 continue;
             }
 
-            dfx.im.id = DFX.GET_CANISTER_ID("identity_manager");
+            dfx.im.id = DFX.GET_CANISTER_ID(App.IdentityManager);
             console.debug(">> ", dfx.im.id);
 
             dfx.im.actor = await getTypedActor<IdentityManagerType>(dfx.im.id, dfx.user.identity, imIdl);
 
-            DFX.ADD_CONTROLLER(dfx.im.id, "identity_manager");
-            DFX.ADD_CONTROLLER(dfx.user.principal, "identity_manager");
+            DFX.ADD_CONTROLLER(dfx.im.id, App.IdentityManager);
+            DFX.ADD_CONTROLLER(dfx.user.principal, App.IdentityManager);
             DFX.SYNC_CONTROLLER();
 
             if (!apps.includes(App.InternetIdentityTest)) {
@@ -117,14 +117,14 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
         }
 
         if (apps.includes(App.InternetIdentityTest)) {
-            DFX.DEPLOY_II();
+            DFX.DEPLOY(App.InternetIdentityTest).withArgument("(null)").run();
             var response = DFX.INIT_SALT();
 
             if (response !== "()") {
                 continue;
             }
 
-            dfx.iit.id = DFX.GET_CANISTER_ID("internet_identity_test");
+            dfx.iit.id = DFX.GET_CANISTER_ID(App.InternetIdentityTest);
             console.debug(">> ", dfx.iit.id);
 
             dfx.iit.actor = await getTypedActor<InternetIdentityTest>(dfx.iit.id, dfx.user.identity, iitIdl);
@@ -134,18 +134,19 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
 
         if (apps.includes(App.UserRegistry)) {
             DFX.USE_TEST_ADMIN();
-            DFX.DEPLOY_WITH_ARGUMENT("user_registry", `(record { })`);
-            DFX.ADD_CONTROLLER(dfx.user.principal, "user_registry");
-            dfx.user_registry.id = DFX.GET_CANISTER_ID("user_registry");
+            DFX.DEPLOY(App.UserRegistry).withArgument("(record { })").run();
+
+            DFX.ADD_CONTROLLER(dfx.user.principal, App.UserRegistry);
+            dfx.user_registry.id = DFX.GET_CANISTER_ID(App.UserRegistry);
             dfx.user_registry.actor = await getTypedActor<UserRegistry>(dfx.user_registry.id, dfx.user.identity, userRegistryIdl);
         }
 
         if (apps.includes(App.ICRC1Oracle)) {
             DFX.USE_TEST_ADMIN();
-            DFX.DEPLOY_WITH_ARGUMENT("icrc1_oracle", "(opt record { })");
-            dfx.icrc1_oracle.id = DFX.GET_CANISTER_ID("icrc1_oracle");
+            DFX.DEPLOY(App.ICRC1Oracle).withArgument("(opt record { })").run();
+            dfx.icrc1_oracle.id = DFX.GET_CANISTER_ID(App.ICRC1Oracle);
             dfx.icrc1_oracle.actor = await getActor(dfx.icrc1_oracle.id, dfx.user.identity, icrcOracle1Idl);
-            DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), "icrc1_oracle");
+            DFX.ADD_CONTROLLER(dfx.user.identity.getPrincipal().toText(), App.ICRC1Oracle);
         }
 
         if (apps.includes(App.IdentityManager)) {
@@ -156,7 +157,7 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             await console.log(execute(`./test/resource/ledger.sh`))
             await console.log(execute(`./test/resource/vault.sh`))
 
-            dfx.vault.id = DFX.GET_CANISTER_ID("vault");
+            dfx.vault.id = DFX.GET_CANISTER_ID(App.Vault);
             console.log(">> ", dfx.vault.id);
 
             dfx.vault.admin_actor = await getActor(dfx.vault.id, dfx.user.identity, vaultIdl);
@@ -167,37 +168,37 @@ export const deploy = async ({clean = true, apps}: { clean?: boolean, apps: App[
             return dfx;
         }
         if (apps.includes(App.ECDSASigner)) {
-            DFX.DEPLOY_ECDSA();
+            DFX.DEPLOY(App.ECDSASigner).run();
 
-            dfx.ic_signer.id = DFX.GET_CANISTER_ID("signer_ic");
+            dfx.ic_signer.id = DFX.GET_CANISTER_ID(App.ECDSASigner);
             console.log(">> ", dfx.ic_signer.id);
 
             dfx.ic_signer.actor = await getActor(dfx.ic_signer.id, dfx.user.identity, esdsaIdl);
             return dfx;
         }
         if (apps.includes(App.DelegationFactory)) {
-            execute(`dfx deploy delegation_factory --mode reinstall -y --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
+            DFX.DEPLOY(App.DelegationFactory).withArgument(`(opt record { im_canister = principal "${dfx.im.id}" })`).run();
 
-            dfx.delegation_factory.id = DFX.GET_CANISTER_ID("delegation_factory");
+            dfx.delegation_factory.id = DFX.GET_CANISTER_ID(App.DelegationFactory);
             console.log(">> ", dfx.delegation_factory.id);
 
             dfx.delegation_factory.actor = await getActor(dfx.delegation_factory.id, dfx.user.identity, delegationFactoryIDL);
             return dfx;
         }
         if (apps.includes(App.NFIDStorage)) {
-            execute(`dfx deploy nfid_storage --mode reinstall -y --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
-            DFX.ADD_CONTROLLER(dfx.user.principal, "nfid_storage");
+            DFX.DEPLOY(App.NFIDStorage).withArgument(`(opt record { im_canister = principal "${dfx.im.id}" })`).run();
+            DFX.ADD_CONTROLLER(dfx.user.principal, App.NFIDStorage);
 
-            dfx.nfid_storage.id = DFX.GET_CANISTER_ID("nfid_storage");
+            dfx.nfid_storage.id = DFX.GET_CANISTER_ID(App.NFIDStorage);
             console.log(">> ", dfx.nfid_storage.id);
 
             dfx.nfid_storage.actor = await getTypedActor(dfx.nfid_storage.id, dfx.user.identity, nfidStorageIDL);
             return dfx;
         }
         if (apps.includes(App.SwapTrsStorage)) {
-            execute(`dfx deploy swap_trs_storage --mode reinstall -y --argument '(opt record { im_canister = principal "${dfx.im.id}" })'`)
+            DFX.DEPLOY(App.SwapTrsStorage).withArgument(`(opt record { im_canister = principal "${dfx.im.id}" })`).run();
 
-            dfx.swap_trs_storage.id = DFX.GET_CANISTER_ID("swap_trs_storage");
+            dfx.swap_trs_storage.id = DFX.GET_CANISTER_ID(App.SwapTrsStorage);
             console.log(">> ", dfx.swap_trs_storage.id);
 
             dfx.swap_trs_storage.actor = await getActor(dfx.swap_trs_storage.id, dfx.user.identity, swapTrsStorageIDL);

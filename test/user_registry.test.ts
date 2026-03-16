@@ -43,7 +43,7 @@ describe("User Registry", () => {
     describe("Address Book", () => {
 
         before(async () => {
-            DFX.DEPLOY_WITH_ARGUMENT("user_registry", `(record { im_canister = opt "${dfx.im.id}" })`);
+            DFX.DEPLOY(App.UserRegistry).withArgument(`(record { im_canister = opt "${dfx.im.id}" })`).run();
             const actor = await createIdentityManagerAccount(dfx)
             const addressBookAccessPoint: AccessPointRequest = {
                 icon: "Passkey",
@@ -157,6 +157,7 @@ describe("User Registry", () => {
 
             // When
             const result = await dfx.user_registry.actor.address_book_save(duplicateAddress);
+            const addressesResult = await dfx.user_registry.actor.address_book_find_all();
 
             // Then
             expect(result).to.have.nested.property('Err.DuplicateAddress');
