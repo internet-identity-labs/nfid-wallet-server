@@ -1,6 +1,6 @@
 use core::hash::Hash;
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use candid::{export_service};
 use candid::{CandidType, Nat, Principal};
@@ -126,6 +126,56 @@ pub struct ICRC1Request {
     pub fee: Nat,
 }
 
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug, Hash, PartialEq, Eq)]
+pub enum DiscoveryStatus {
+    New,
+    Updated,
+    Verified,
+    Spam,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub struct DiscoveryApp {
+    pub id: u32,
+    pub derivation_origin: Option<String>,
+    pub hostname: String,
+    pub url: Option<String>,
+    pub name: Option<String>,
+    pub icon: Option<String>,
+    pub desc: Option<String>,
+    pub is_global: bool,
+    pub is_anonymous: bool,
+    pub unique_users: u64,
+    pub status: DiscoveryStatus,
+}
+
+impl Hash for DiscoveryApp {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
+
+impl PartialEq for DiscoveryApp {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for DiscoveryApp {}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug, Hash, PartialEq, Eq)]
+pub enum LoginType {
+    Global,
+    Anonymous,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub struct DiscoveryVisitRequest {
+    pub derivation_origin: Option<String>,
+    pub hostname: String,
+    pub login: LoginType,
+}
+
 thread_local! {
      static CONFIG: RefCell<Conf> = const { RefCell::new( Conf {
         im_canister: None,
@@ -133,6 +183,9 @@ thread_local! {
     }) };
     pub static ICRC_REGISTRY: RefCell<HashSet<ICRC1>> = RefCell::new(HashSet::default());
     pub static NEURON_REGISTRY: RefCell<HashSet<NeuronData>> = RefCell::new(HashSet::default());
+    pub static DISCOVERY_REGISTRY: RefCell<HashSet<DiscoveryApp>> = RefCell::new(HashSet::default());
+    // Key: app id, Value: set of root_id strings (unique visitors per app)
+    pub static DISCOVERY_VISITORS: RefCell<HashMap<u32, HashSet<String>>> = RefCell::new(HashMap::new());
 }
 
 /// Persists a single ICRC1 canister's metadata into the canister's storage.
@@ -253,6 +306,115 @@ pub async fn remove_icrc1_canister(ledger: String) {
     ICRC_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
         registry.retain(|canister| canister.ledger != ledger);
+    });
+}
+
+/// Tracks a visit to a dapp by hostname. Updates unique_users, is_global, is_anonymous.
+#[update]
+pub async fn store_discovery_app(request: DiscoveryVisitRequest) {
+    let root_id = get_root_id().await;
+
+    let found_app = DISCOVERY_REGISTRY.with(|registry| {
+        registry
+            .borrow()
+            .iter()
+            .find(|app| app.hostname == request.hostname)
+            .cloned()
+    });
+
+    let Some(mut app) = found_app else { return };
+
+    let is_new_visitor = DISCOVERY_VISITORS.with(|visitors| {
+        visitors
+            .borrow_mut()
+            .entry(app.id)
+            .or_insert_with(HashSet::new)
+            .insert(root_id)
+    });
+
+    if is_new_visitor {
+        app.unique_users += 1;
+    }
+
+    match request.login {
+        LoginType::Global if !app.is_global => app.is_global = true,
+        LoginType::Anonymous if !app.is_anonymous => app.is_anonymous = true,
+        _ => {}
+    }
+
+    DISCOVERY_REGISTRY.with(|registry| {
+        registry.borrow_mut().replace(app);
+    });
+}
+
+/// Returns true if calling store_discovery_app would result in any state change:
+/// caller is a new unique visitor, or the login type would flip is_global / is_anonymous.
+/// Uses caller() directly (no inter-canister call) — suitable for a query.
+#[query]
+pub fn is_unique(request: DiscoveryVisitRequest) -> bool {
+    let visitor_id = caller().to_text();
+
+    let found_app = DISCOVERY_REGISTRY.with(|registry| {
+        registry
+            .borrow()
+            .iter()
+            .find(|app| app.hostname == request.hostname)
+            .cloned()
+    });
+
+    let Some(app) = found_app else { return false };
+
+    let is_new_visitor = DISCOVERY_VISITORS.with(|visitors| {
+        !visitors
+            .borrow()
+            .get(&app.id)
+            .map(|s| s.contains(&visitor_id))
+            .unwrap_or(false)
+    });
+
+    if is_new_visitor {
+        return true;
+    }
+
+    match request.login {
+        LoginType::Global if !app.is_global => true,
+        LoginType::Anonymous if !app.is_anonymous => true,
+        _ => false,
+    }
+}
+
+/// Returns a paginated list of DiscoveryApps.
+#[query]
+pub fn get_discovery_app_paginated(offset: u64, limit: u64) -> Vec<DiscoveryApp> {
+    DISCOVERY_REGISTRY.with(|registry| {
+        registry
+            .borrow()
+            .iter()
+            .skip(offset as usize)
+            .take(limit as usize)
+            .cloned()
+            .collect()
+    })
+}
+
+/// Upserts a batch of DiscoveryApps by id (admin-facing). Does not clear existing entries.
+#[update]
+pub async fn replace_all_discovery_app(apps: Vec<DiscoveryApp>) {
+    trap_if_not_authenticated_admin();
+    DISCOVERY_REGISTRY.with(|registry| {
+        let mut registry = registry.borrow_mut();
+        for app in apps {
+            registry.replace(app);
+        }
+    });
+}
+
+/// Clears all DiscoveryApps from the registry (admin-facing).
+#[update]
+pub async fn clear_discovery_apps() {
+    trap_if_not_authenticated_admin();
+    DISCOVERY_REGISTRY.with(|registry| {
+        registry.borrow_mut().clear();
     });
 }
 
@@ -392,6 +554,8 @@ struct Memory {
     registry: HashSet<ICRC1Memory>,
     neurons: Option<HashSet<NeuronData>>,
     config: Conf,
+    discovery_apps: Option<HashSet<DiscoveryApp>>,
+    discovery_visitors: Option<HashMap<u32, HashSet<String>>>,
 }
 
 /// Applies changes prior to the canister upgrade.
@@ -423,10 +587,14 @@ pub fn stable_save() {
         let registry = registry.borrow();
         registry.clone()
     });
+    let discovery_apps = DISCOVERY_REGISTRY.with(|registry| registry.borrow().clone());
+    let discovery_visitors = DISCOVERY_VISITORS.with(|v| v.borrow().clone());
     let mem = Memory {
         registry,
         config,
         neurons: Some(neurons),
+        discovery_apps: Some(discovery_apps),
+        discovery_visitors: Some(discovery_visitors),
     };
     storage::stable_save((mem,))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
@@ -464,6 +632,13 @@ pub fn stable_restore() {
     NEURON_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
         *registry = mo.neurons.unwrap_or_default().clone();
+    });
+    DISCOVERY_REGISTRY.with(|registry| {
+        let mut registry = registry.borrow_mut();
+        *registry = mo.discovery_apps.unwrap_or_default();
+    });
+    DISCOVERY_VISITORS.with(|visitors| {
+        *visitors.borrow_mut() = mo.discovery_visitors.unwrap_or_default();
     });
 }
 

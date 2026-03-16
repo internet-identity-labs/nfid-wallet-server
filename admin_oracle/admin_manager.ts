@@ -8,10 +8,13 @@ import { ICRC1 } from "../test/idl/icrc1_oracle";
 import { parse } from "json2csv";
 import * as fs from "fs";
 import { parse as csvParse } from "csv-parse/sync";
-import { ICRC1CsvData } from "./types";
+import { ICRC1CsvData, DiscoveryAppCsvData } from "./types";
 import { getActor, mapCategory, mapCategoryCSVToCategory } from "./util";
 import { ChainFusionTestnetParser } from "./chain_fusion_testnet";
-import { CANISTER_ID, FILE_PATH, FILE_PATH_NEURON, KEY_PAIR } from "./constants";
+import { CANISTER_ID, FILE_PATH, FILE_PATH_NEURON, FILE_PATH_DISCOVERY, KEY_PAIR } from "./constants";
+import { DiscoveryApp } from "../test/idl/icrc1_oracle";
+import { DiscoveryStatus, DiscoveryApp as LocalDiscoveryApp } from "./discovery/types";
+import { discoveryService } from "./discovery/discovery.service";
 import { getMetadata } from "./metadata_service";
 import sharp from "sharp";
 
@@ -207,6 +210,152 @@ export class AdminManager {
             };
         });
         await this.actor.replace_all_neurons(neuronsRecords);
+    }
+
+    async formDiscoveryCSV() {
+        const offset = 50;
+        let page = 0;
+        const all: DiscoveryApp[] = [];
+        while (true) {
+            const batch = (await this.actor.get_discovery_app_paginated(BigInt(page * offset), BigInt(offset))) as DiscoveryApp[];
+            all.push(...batch);
+            if (batch.length < offset) break;
+            page++;
+        }
+        const fields = ["id", "derivation_origin", "hostname", "url", "name", "icon", "desc", "is_global", "is_anonymous", "unique_users", "status"];
+        const opts = { fields };
+        try {
+            const csv = parse(
+                all.map((app) => ({
+                    id: app.id.toString(),
+                    derivation_origin: app.derivation_origin.length > 0 ? app.derivation_origin[0] : undefined,
+                    hostname: app.hostname,
+                    url: app.url.length > 0 ? app.url[0] : undefined,
+                    name: app.name.length > 0 ? app.name[0] : undefined,
+                    icon: app.icon.length > 0 ? app.icon[0] : undefined,
+                    desc: app.desc.length > 0 ? app.desc[0] : undefined,
+                    is_global: app.is_global.toString(),
+                    is_anonymous: app.is_anonymous.toString(),
+                    unique_users: app.unique_users.toString(),
+                    status: Object.keys(app.status)[0],
+                })),
+                opts
+            );
+            fs.writeFileSync(FILE_PATH_DISCOVERY, csv);
+            console.log("Discovery apps file saved successfully!");
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async replaceDiscoveryFromCSV() {
+        const csvData = fs.readFileSync(FILE_PATH_DISCOVERY, "utf8");
+        const records: DiscoveryAppCsvData[] = csvParse(csvData, {
+            columns: true,
+            skip_empty_lines: true,
+        });
+        const apps: DiscoveryApp[] = records.map((record) => ({
+            id: Number(record.id),
+            derivation_origin: record.derivation_origin ? [record.derivation_origin] : [],
+            hostname: record.hostname,
+            url: record.url ? [record.url] : [],
+            name: record.name ? [record.name] : [],
+            icon: record.icon ? [record.icon] : [],
+            desc: record.desc ? [record.desc] : [],
+            is_global: record.is_global === "true",
+            is_anonymous: record.is_anonymous === "true",
+            unique_users: BigInt(record.unique_users),
+            status: csvStatusToCandid(record.status),
+        }));
+
+        const chunkArray = (arr: DiscoveryApp[], chunkSize: number): DiscoveryApp[][] => {
+            const chunks: DiscoveryApp[][] = [];
+            for (let i = 0; i < arr.length; i += chunkSize) {
+                chunks.push(arr.slice(i, i + chunkSize));
+            }
+            return chunks;
+        };
+
+        console.log("Clearing existing discovery apps");
+        await this.actor.clear_discovery_apps();
+
+        const batches = chunkArray(apps, 25);
+        for (const batch of batches) {
+            console.log("Uploading discovery apps batch");
+            await this.actor.replace_all_discovery_app(batch);
+        }
+    }
+
+    async enrichNewDiscoveryApps() {
+        const csvData = fs.readFileSync(FILE_PATH_DISCOVERY, "utf8");
+        const records: DiscoveryAppCsvData[] = csvParse(csvData, {
+            columns: true,
+            skip_empty_lines: true,
+        });
+
+        const newRecords = records.filter((r) => r.status === DiscoveryStatus.New);
+        if (newRecords.length === 0) {
+            console.log("No apps with status=New found.");
+            return;
+        }
+
+        console.log(`Enriching ${newRecords.length} app(s) with status=New...`);
+
+        const localApps: LocalDiscoveryApp[] = newRecords.map((r) => ({
+            id: Number(r.id),
+            derivationOrigin: r.derivation_origin,
+            hostname: r.hostname,
+            url: r.url,
+            name: r.name,
+            icon: r.icon,
+            desc: r.desc,
+            isGlobal: r.is_global === "true",
+            isAnonymous: r.is_anonymous === "true",
+            uniqueUsers: Number(r.unique_users),
+            status: (r.status as DiscoveryStatus) ?? DiscoveryStatus.New,
+        }));
+
+        const responses = await discoveryService.getApps(localApps);
+
+        const enriched: DiscoveryApp[] = [];
+        for (const resp of responses) {
+            if (resp.isError) {
+                console.error(`Failed to enrich app: ${resp.error.error} for app ${resp.error.request}`);
+                continue;
+            }
+            const app = resp.data;
+            enriched.push({
+                id: app.id,
+                derivation_origin: app.derivationOrigin ? [app.derivationOrigin] : [],
+                hostname: app.hostname,
+                url: app.url ? [app.url] : [],
+                name: app.name ? [app.name] : [],
+                icon: app.icon ? [app.icon] : [],
+                desc: app.desc ? [app.desc] : [],
+                is_global: app.isGlobal,
+                is_anonymous: app.isAnonymous,
+                unique_users: BigInt(app.uniqueUsers),
+                status: { Updated: null },
+            });
+        }
+
+        if (enriched.length === 0) {
+            console.log("No apps were successfully enriched.");
+            return;
+        }
+
+        console.log(`Uploading ${enriched.length} enriched app(s)...`);
+        await this.actor.replace_all_discovery_app(enriched);
+        console.log("Enrichment complete.");
+    }
+}
+
+function csvStatusToCandid(status: string | undefined): { New: null } | { Updated: null } | { Verified: null } | { Spam: null } {
+    switch (status) {
+        case DiscoveryStatus.Updated:  return { Updated: null };
+        case DiscoveryStatus.Verified: return { Verified: null };
+        case DiscoveryStatus.Spam:     return { Spam: null };
+        default:                       return { New: null };
     }
 }
 

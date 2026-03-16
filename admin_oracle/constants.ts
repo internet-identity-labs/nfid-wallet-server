@@ -7,3 +7,4 @@ export const KEY_PAIR: JsonnableEd25519KeyIdentity = [
 ];
 export const FILE_PATH = "icrc1.csv";
 export const FILE_PATH_NEURON = "neurons.csv";
+export const FILE_PATH_DISCOVERY = "discovery_apps.csv";

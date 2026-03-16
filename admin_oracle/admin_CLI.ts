@@ -28,6 +28,18 @@ async function run() {
             await adminManager.replaceNeuronsFromCSV();
             console.log("Neuron to follow has been replaced!!!");
             break;
+        case "formDiscoveryCSV":
+            await adminManager.formDiscoveryCSV();
+            console.log("Discovery apps CSV has been generated!!!");
+            break;
+        case "uploadDiscoveryCSV":
+            await adminManager.replaceDiscoveryFromCSV();
+            console.log("Discovery apps have been uploaded!!!");
+            break;
+        case "enrichDiscovery":
+            await adminManager.enrichNewDiscoveryApps();
+            console.log("New discovery apps have been enriched and uploaded!!!");
+            break;
         default:
             console.log("Invalid method");
             break;

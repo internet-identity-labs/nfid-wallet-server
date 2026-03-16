@@ -40,6 +40,26 @@ export interface NeuronData {
     'ledger' : string,
     'neuron_id' : string,
 }
+export type LoginType = { 'Global' : null } | { 'Anonymous' : null };
+export type DiscoveryStatus = { 'New' : null } | { 'Updated' : null } | { 'Verified' : null } | { 'Spam' : null };
+export interface DiscoveryVisitRequest {
+    'derivation_origin' : [] | [string],
+    'hostname' : string,
+    'login' : LoginType,
+}
+export interface DiscoveryApp {
+    'id' : number,
+    'derivation_origin' : [] | [string],
+    'hostname' : string,
+    'url' : [] | [string],
+    'name' : [] | [string],
+    'icon' : [] | [string],
+    'desc' : [] | [string],
+    'is_global' : boolean,
+    'is_anonymous' : boolean,
+    'unique_users' : bigint,
+    'status' : DiscoveryStatus,
+}
 export interface _SERVICE {
     'count_icrc1_canisters' : ActorMethod<[], bigint>,
     'get_all_icrc1_canisters' : ActorMethod<[], Array<ICRC1>>,
@@ -51,6 +71,11 @@ export interface _SERVICE {
     'set_operator' : ActorMethod<[Principal], undefined>,
     'store_icrc1_canister' : ActorMethod<[ICRC1Request], undefined>,
     'store_new_icrc1_canisters' : ActorMethod<[Array<ICRC1>], undefined>,
+    'store_discovery_app' : ActorMethod<[DiscoveryVisitRequest], undefined>,
+    'is_unique' : ActorMethod<[DiscoveryVisitRequest], boolean>,
+    'get_discovery_app_paginated' : ActorMethod<[bigint, bigint], Array<DiscoveryApp>>,
+    'replace_all_discovery_app' : ActorMethod<[Array<DiscoveryApp>], undefined>,
+    'clear_discovery_apps' : ActorMethod<[], undefined>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

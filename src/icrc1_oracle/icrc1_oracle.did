@@ -71,6 +71,30 @@ type SelectedUtxosFeeError = variant {
 };
 
 
+type DiscoveryStatus = variant { New; Updated; Verified; Spam };
+
+type DiscoveryApp = record {
+    id : nat32;
+    derivation_origin : opt text;
+    hostname : text;
+    url : opt text;
+    name : opt text;
+    icon : opt text;
+    desc : opt text;
+    is_global : bool;
+    is_anonymous : bool;
+    unique_users : nat64;
+    status : DiscoveryStatus;
+};
+
+type LoginType = variant { Global; Anonymous };
+
+type DiscoveryVisitRequest = record {
+    derivation_origin : opt text;
+    hostname : text;
+    login : LoginType;
+};
+
 service : (opt Conf) -> {
     count_icrc1_canisters : () -> (nat64) query;
     get_all_icrc1_canisters : () -> (vec ICRC1) query;
@@ -83,7 +107,10 @@ service : (opt Conf) -> {
     replace_all_neurons : (vec NeuronData) -> ();
     store_new_icrc1_canisters : (vec ICRC1) -> ();
     allow_signing : () -> ();
-	btc_select_user_utxos_fee : (SelectedUtxosFeeRequest) -> (
-		BtcSelectUserUtxosFeeResult
-	);
+    btc_select_user_utxos_fee : (SelectedUtxosFeeRequest) -> (BtcSelectUserUtxosFeeResult);
+    store_discovery_app : (DiscoveryVisitRequest) -> ();
+    is_unique : (DiscoveryVisitRequest) -> (bool) query;
+    get_discovery_app_paginated : (nat64, nat64) -> (vec DiscoveryApp) query;
+    replace_all_discovery_app : (vec DiscoveryApp) -> ();
+    clear_discovery_apps : () -> ();
 }
