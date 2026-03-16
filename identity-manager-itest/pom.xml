@@ -16,7 +16,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.42</version>
+            <version>${lombok.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -39,23 +39,43 @@
             <groupId>org.ic4j</groupId>
             <artifactId>ic4j-candid</artifactId>
             <version>${ic4j.version}</version>
-        </dependency> 
+        </dependency>
         <dependency>
             <groupId>org.ic4j</groupId>
             <artifactId>ic4j-internetidentity</artifactId>
             <version>${ic4j.version}</version>
-        </dependency>      
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
     </dependencies>
-    
+
     <properties>
-        <maven.compiler.source>13</maven.compiler.source>
-        <maven.compiler.target>13</maven.compiler.target>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
         <ic4j.version>0.7.4</ic4j.version>
         <slf4j.version>2.0.17</slf4j.version>
+        <lombok.version>1.18.44</lombok.version>
     </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
