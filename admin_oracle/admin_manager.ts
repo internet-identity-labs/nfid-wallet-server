@@ -317,36 +317,42 @@ export class AdminManager {
 
         const responses = await discoveryService.getApps(localApps);
 
-        const enriched: DiscoveryApp[] = [];
+        // Merge enriched data back into the full records list
+        const enrichedById = new Map<number, DiscoveryAppCsvData>();
         for (const resp of responses) {
             if (resp.isError) {
-                console.error(`Failed to enrich app: ${resp.error.error} for app ${resp.error.request}`);
+                console.error(`Failed to enrich app: ${resp.error.error}`);
                 continue;
             }
             const app = resp.data;
-            enriched.push({
-                id: app.id,
-                derivation_origin: app.derivationOrigin ? [app.derivationOrigin] : [],
+            enrichedById.set(app.id, {
+                id: app.id.toString(),
+                derivation_origin: app.derivationOrigin,
                 hostname: app.hostname,
-                url: app.url ? [app.url] : [],
-                name: app.name ? [app.name] : [],
-                icon: app.icon ? [app.icon] : [],
-                desc: app.desc ? [app.desc] : [],
-                is_global: app.isGlobal,
-                is_anonymous: app.isAnonymous,
-                unique_users: BigInt(app.uniqueUsers),
-                status: { Updated: null },
+                url: app.url,
+                name: app.name,
+                icon: app.icon,
+                desc: app.desc,
+                is_global: app.isGlobal.toString(),
+                is_anonymous: app.isAnonymous.toString(),
+                unique_users: app.uniqueUsers.toString(),
+                status: DiscoveryStatus.Updated,
             });
         }
 
-        if (enriched.length === 0) {
+        if (enrichedById.size === 0) {
             console.log("No apps were successfully enriched.");
             return;
         }
 
-        console.log(`Uploading ${enriched.length} enriched app(s)...`);
-        await this.actor.replace_all_discovery_app(enriched);
-        console.log("Enrichment complete.");
+        const updatedRecords = records.map((r) =>
+            enrichedById.has(Number(r.id)) ? enrichedById.get(Number(r.id))! : r
+        );
+
+        const fields = ["id", "derivation_origin", "hostname", "url", "name", "icon", "desc", "is_global", "is_anonymous", "unique_users", "status"];
+        const csv = parse(updatedRecords, { fields });
+        fs.writeFileSync(FILE_PATH_DISCOVERY, csv);
+        console.log(`Enriched ${enrichedById.size} app(s) and saved to ${FILE_PATH_DISCOVERY}. Run uploadDiscoveryCSV to push to canister.`);
     }
 }
 
