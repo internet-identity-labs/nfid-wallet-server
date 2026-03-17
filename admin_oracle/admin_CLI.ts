@@ -38,7 +38,7 @@ async function run() {
             break;
         case "enrichDiscovery":
             await adminManager.enrichNewDiscoveryApps();
-            console.log("New discovery apps have been enriched and uploaded!!!");
+            console.log("New discovery apps have been enriched!!!");
             break;
         default:
             console.log("Invalid method");
