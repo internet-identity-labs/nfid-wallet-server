@@ -35,6 +35,10 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
+  "overrides": {
+    "serialize-javascript": ">=7.0.3",
+    "minimatch": ">=9.0.7"
+  },
   "type": "module",
   "license": "MIT"
 }
