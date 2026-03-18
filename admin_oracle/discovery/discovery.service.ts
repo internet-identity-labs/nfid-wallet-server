@@ -1,7 +1,7 @@
 import metascraper from "metascraper";
 import metascraperTitle from "metascraper-title";
 import metascraperDescription from "metascraper-description";
-import metascraperFavicon from "metascraper-logo-favicon";
+import metascraperImage from "metascraper-image";
 import metascraperUrl from "metascraper-url";
 import type {
   DiscoveryApp,
@@ -17,7 +17,7 @@ export class DefaultDiscoveryService implements DiscoveryService {
     this.scraper = metascraper([
       metascraperTitle(),
       metascraperDescription(),
-      metascraperFavicon({ google: false }),
+      metascraperImage(),
       metascraperUrl(),
     ]);
   }
@@ -36,7 +36,7 @@ export class DefaultDiscoveryService implements DiscoveryService {
     return {
       url: meta.url ?? undefined,
       name: meta.title ?? undefined,
-      icon: meta.logo ?? undefined,
+      image: meta.image ?? undefined,
       desc: meta.description ?? undefined,
     };
   }

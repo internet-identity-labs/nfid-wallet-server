@@ -4,7 +4,7 @@ export interface DiscoveryApp {
   hostname: string;
   url?: string;
   name?: string;
-  icon?: string;
+  image?: string;
   desc?: string;
   isGlobal: boolean;
   isAnonymous: boolean;
@@ -31,6 +31,6 @@ export interface DiscoveryService {
 export interface HtmlMeta {
   url: string;
   name?: string;
-  icon?: string;
+  image?: string;
   desc?: string;
 }
