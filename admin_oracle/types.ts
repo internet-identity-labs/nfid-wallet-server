@@ -5,7 +5,7 @@ export interface DiscoveryAppCsvData {
     hostname: string;
     url: string | undefined;
     name: string | undefined;
-    icon: string | undefined;
+    image: string | undefined;
     desc: string | undefined;
     is_global: string;
     is_anonymous: string;

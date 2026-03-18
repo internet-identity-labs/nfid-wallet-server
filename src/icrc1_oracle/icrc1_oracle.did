@@ -79,7 +79,7 @@ type DiscoveryApp = record {
     hostname : text;
     url : opt text;
     name : opt text;
-    icon : opt text;
+    image : opt text;
     desc : opt text;
     is_global : bool;
     is_anonymous : bool;

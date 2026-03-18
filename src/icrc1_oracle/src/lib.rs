@@ -141,7 +141,7 @@ pub struct DiscoveryApp {
     pub hostname: String,
     pub url: Option<String>,
     pub name: Option<String>,
-    pub icon: Option<String>,
+    pub image: Option<String>,
     pub desc: Option<String>,
     pub is_global: bool,
     pub is_anonymous: bool,

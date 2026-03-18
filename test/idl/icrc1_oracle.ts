@@ -53,7 +53,7 @@ export interface DiscoveryApp {
     'hostname' : string,
     'url' : [] | [string],
     'name' : [] | [string],
-    'icon' : [] | [string],
+    'image' : [] | [string],
     'desc' : [] | [string],
     'is_global' : boolean,
     'is_anonymous' : boolean,

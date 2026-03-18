@@ -52,7 +52,7 @@ export const idlFactory = ({ IDL }) => {
         'hostname' : IDL.Text,
         'url' : IDL.Opt(IDL.Text),
         'name' : IDL.Opt(IDL.Text),
-        'icon' : IDL.Opt(IDL.Text),
+        'image' : IDL.Opt(IDL.Text),
         'desc' : IDL.Opt(IDL.Text),
         'is_global' : IDL.Bool,
         'is_anonymous' : IDL.Bool,

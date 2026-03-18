@@ -222,7 +222,7 @@ export class AdminManager {
             if (batch.length < offset) break;
             page++;
         }
-        const fields = ["id", "derivation_origin", "hostname", "url", "name", "icon", "desc", "is_global", "is_anonymous", "unique_users", "status"];
+        const fields = ["id", "derivation_origin", "hostname", "url", "name", "image", "desc", "is_global", "is_anonymous", "unique_users", "status"];
         const opts = { fields };
         try {
             const csv = parse(
@@ -232,7 +232,7 @@ export class AdminManager {
                     hostname: app.hostname,
                     url: app.url.length > 0 ? app.url[0] : undefined,
                     name: app.name.length > 0 ? app.name[0] : undefined,
-                    icon: app.icon.length > 0 ? app.icon[0] : undefined,
+                    image: app.image.length > 0 ? app.image[0] : undefined,
                     desc: app.desc.length > 0 ? app.desc[0] : undefined,
                     is_global: app.is_global.toString(),
                     is_anonymous: app.is_anonymous.toString(),
@@ -260,7 +260,7 @@ export class AdminManager {
             hostname: record.hostname,
             url: record.url ? [record.url] : [],
             name: record.name ? [record.name] : [],
-            icon: record.icon ? [record.icon] : [],
+            image: record.image ? [record.image] : [],
             desc: record.desc ? [record.desc] : [],
             is_global: record.is_global === "true",
             is_anonymous: record.is_anonymous === "true",
@@ -307,7 +307,7 @@ export class AdminManager {
             hostname: r.hostname,
             url: r.url,
             name: r.name,
-            icon: r.icon,
+            image: r.image,
             desc: r.desc,
             isGlobal: r.is_global === "true",
             isAnonymous: r.is_anonymous === "true",
@@ -331,7 +331,7 @@ export class AdminManager {
                 hostname: app.hostname,
                 url: app.url,
                 name: app.name,
-                icon: app.icon,
+                icon: app.image,
                 desc: app.desc,
                 is_global: app.isGlobal.toString(),
                 is_anonymous: app.isAnonymous.toString(),
