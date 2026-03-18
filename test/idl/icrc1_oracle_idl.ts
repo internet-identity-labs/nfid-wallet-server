@@ -39,6 +39,26 @@ export const idlFactory = ({ IDL }) => {
         'index' : IDL.Opt(IDL.Text),
         'symbol' : IDL.Text,
     });
+    const LoginType = IDL.Variant({ 'Global' : IDL.Null, 'Anonymous' : IDL.Null });
+    const DiscoveryStatus = IDL.Variant({ 'New' : IDL.Null, 'Updated' : IDL.Null, 'Verified' : IDL.Null, 'Spam' : IDL.Null });
+    const DiscoveryVisitRequest = IDL.Record({
+        'derivation_origin' : IDL.Opt(IDL.Text),
+        'hostname' : IDL.Text,
+        'login' : LoginType,
+    });
+    const DiscoveryApp = IDL.Record({
+        'id' : IDL.Nat32,
+        'derivation_origin' : IDL.Opt(IDL.Text),
+        'hostname' : IDL.Text,
+        'url' : IDL.Opt(IDL.Text),
+        'name' : IDL.Opt(IDL.Text),
+        'image' : IDL.Opt(IDL.Text),
+        'desc' : IDL.Opt(IDL.Text),
+        'is_global' : IDL.Bool,
+        'is_anonymous' : IDL.Bool,
+        'unique_users' : IDL.Nat64,
+        'status' : DiscoveryStatus,
+    });
     return IDL.Service({
         'count_icrc1_canisters' : IDL.Func([], [IDL.Nat64], ['query']),
         'get_all_icrc1_canisters' : IDL.Func([], [IDL.Vec(ICRC1)], ['query']),
@@ -54,6 +74,15 @@ export const idlFactory = ({ IDL }) => {
         'set_operator' : IDL.Func([IDL.Principal], [], []),
         'store_icrc1_canister' : IDL.Func([ICRC1Request], [], []),
         'store_new_icrc1_canisters' : IDL.Func([IDL.Vec(ICRC1)], [], []),
+        'store_discovery_app' : IDL.Func([DiscoveryVisitRequest], [], []),
+        'is_unique' : IDL.Func([DiscoveryVisitRequest], [IDL.Bool], ['query']),
+        'get_discovery_app_paginated' : IDL.Func(
+            [IDL.Nat64, IDL.Nat64],
+            [IDL.Vec(DiscoveryApp)],
+            ['query'],
+        ),
+        'replace_all_discovery_app' : IDL.Func([IDL.Vec(DiscoveryApp)], [], []),
+        'clear_discovery_apps' : IDL.Func([], [], []),
     });
 };
 export const init = ({ IDL }) => {

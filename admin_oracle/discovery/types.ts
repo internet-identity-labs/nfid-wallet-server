@@ -1,3 +1,10 @@
+export enum DiscoveryStatus {
+  New = "New",
+  Updated = "Updated",
+  Verified = "Verified",
+  Spam = "Spam",
+}
+
 export interface DiscoveryApp {
   id: number;
   derivationOrigin?: string;
@@ -9,6 +16,7 @@ export interface DiscoveryApp {
   isGlobal: boolean;
   isAnonymous: boolean;
   uniqueUsers: number;
+  status: DiscoveryStatus;
 }
 
 export interface DiscoveryAppError {

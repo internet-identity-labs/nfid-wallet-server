@@ -1,4 +1,18 @@
 
+export interface DiscoveryAppCsvData {
+    id: string;
+    derivation_origin: string | undefined;
+    hostname: string;
+    url: string | undefined;
+    name: string | undefined;
+    image: string | undefined;
+    desc: string | undefined;
+    is_global: string;
+    is_anonymous: string;
+    unique_users: string;
+    status: string;
+}
+
 export interface ICRC1CsvData {
     logo: string | undefined
     name: string

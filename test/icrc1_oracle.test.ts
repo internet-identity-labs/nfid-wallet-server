@@ -2,7 +2,7 @@ import {Dfx} from "./type/dfx";
 import {deploy, getActor, getIdentity} from "./util/deployment.util";
 import {App} from "./constanst/app.enum";
 import {expect} from "chai";
-import {ICRC1, NeuronData} from "./idl/icrc1_oracle";
+import {ICRC1, NeuronData, DiscoveryApp, DiscoveryVisitRequest} from "./idl/icrc1_oracle";
 import {idlFactory} from "./idl/icrc1_oracle_idl";
 import {fail} from "assert";
 import {DFX} from "./constanst/dfx.const";
@@ -124,6 +124,171 @@ describe("ICRC1 canister Oracle", () => {
         await dfx.icrc1_oracle.actor.replace_all_neurons(neurons);
         let allNeurons = await dfx.icrc1_oracle.actor.get_all_neurons() as Array<NeuronData>;
         expect(allNeurons.length).eq(2);
+    })
+
+    it("Store/get discovery apps (client)", async function () {
+        const app1: DiscoveryApp = {
+            id: 1,
+            derivation_origin: [],
+            hostname: "app1.example.com",
+            url: ["https://app1.example.com"],
+            name: ["App One"],
+            image: ["https://app1.example.com/image.png"],
+            desc: ["First test app"],
+            is_global: false,
+            is_anonymous: false,
+            unique_users: 0n,
+            status: { New: null },
+        };
+        const app2: DiscoveryApp = {
+            id: 2,
+            derivation_origin: ["https://origin.example.com"],
+            hostname: "app2.example.com",
+            url: [],
+            name: ["App Two"],
+            image: [],
+            desc: [],
+            is_global: false,
+            is_anonymous: false,
+            unique_users: 0n,
+            status: { New: null },
+        };
+        await dfx.icrc1_oracle.actor.replace_all_discovery_app([app1, app2]);
+
+        const visit1: DiscoveryVisitRequest = {
+            derivation_origin: [],
+            hostname: "app1.example.com",
+            login: { Global: null },
+        };
+        await dfx.icrc1_oracle.actor.store_discovery_app(visit1);
+
+        let page = await dfx.icrc1_oracle.actor.get_discovery_app_paginated(0n, 10n) as Array<DiscoveryApp>;
+        const found1 = page.find((a) => a.id === 1);
+        expect(found1).to.exist;
+        expect(found1.unique_users).eq(1n);
+        expect(found1.is_global).eq(true);
+        expect(found1.is_anonymous).eq(false);
+
+        await dfx.icrc1_oracle.actor.store_discovery_app(visit1);
+        page = await dfx.icrc1_oracle.actor.get_discovery_app_paginated(0n, 10n) as Array<DiscoveryApp>;
+        expect(page.find((a) => a.id === 1).unique_users).eq(1n);
+
+        const visit1Anon: DiscoveryVisitRequest = {
+            derivation_origin: [],
+            hostname: "app1.example.com",
+            login: { Anonymous: null },
+        };
+        await dfx.icrc1_oracle.actor.store_discovery_app(visit1Anon);
+        page = await dfx.icrc1_oracle.actor.get_discovery_app_paginated(0n, 10n) as Array<DiscoveryApp>;
+        const updated1 = page.find((a) => a.id === 1);
+        expect(updated1.unique_users).eq(1n);
+        expect(updated1.is_anonymous).eq(true);
+
+        const visitUnknown: DiscoveryVisitRequest = {
+            derivation_origin: [],
+            hostname: "unknown.example.com",
+            login: { Global: null },
+        };
+        await dfx.icrc1_oracle.actor.store_discovery_app(visitUnknown);
+        page = await dfx.icrc1_oracle.actor.get_discovery_app_paginated(0n, 10n) as Array<DiscoveryApp>;
+        expect(page.length).eq(2);
+
+        const firstPage = await dfx.icrc1_oracle.actor.get_discovery_app_paginated(0n, 1n) as Array<DiscoveryApp>;
+        expect(firstPage.length).eq(1);
+        const secondPage = await dfx.icrc1_oracle.actor.get_discovery_app_paginated(1n, 1n) as Array<DiscoveryApp>;
+        expect(secondPage.length).eq(1);
+        expect(firstPage[0].id).not.eq(secondPage[0].id);
+    })
+
+    it("Replace all discovery apps (admin)", async function () {
+        const apps: DiscoveryApp[] = [
+            {
+                id: 10,
+                derivation_origin: [],
+                hostname: "admin-app.example.com",
+                url: ["https://admin-app.example.com"],
+                name: ["Admin App"],
+                image: [],
+                desc: ["Admin-replaced app"],
+                is_global: true,
+                is_anonymous: false,
+                unique_users: 999n,
+                status: { Verified: null },
+            },
+        ];
+
+        await dfx.icrc1_oracle.actor.clear_discovery_apps();
+        await dfx.icrc1_oracle.actor.replace_all_discovery_app(apps);
+        const page = await dfx.icrc1_oracle.actor.get_discovery_app_paginated(0n, 10n) as Array<DiscoveryApp>;
+        expect(page.length).eq(1);
+        expect(page[0].id).eq(10);
+        expect(page[0].hostname).eq("admin-app.example.com");
+        expect(page[0].unique_users).eq(999n);
+    })
+
+    it("Replace all discovery apps - unauthorised", async function () {
+        const notAdmin = getIdentity("87654321876543218765432187654377");
+        const actor = await getActor(dfx.icrc1_oracle.id, notAdmin, idlFactory);
+        try {
+            await actor.replace_all_discovery_app([]);
+            fail("Should throw an error");
+        } catch (e) {
+            expect(e.message).contains("Unauthorised");
+        }
+    })
+
+    it("is_unique query", async function () {
+        const app: DiscoveryApp = {
+            id: 20,
+            derivation_origin: [],
+            hostname: "unique-test.example.com",
+            url: [], name: ["Unique Test"], image: [], desc: [],
+            is_global: false, is_anonymous: false, unique_users: 0n,
+            status: { New: null },
+        };
+        await dfx.icrc1_oracle.actor.replace_all_discovery_app([app]);
+
+        const visit: DiscoveryVisitRequest = {
+            derivation_origin: [],
+            hostname: "unique-test.example.com",
+            login: { Global: null },
+        };
+
+        let needsUpdate = await dfx.icrc1_oracle.actor.is_unique(visit) as boolean;
+        expect(needsUpdate).eq(true);
+
+        await dfx.icrc1_oracle.actor.store_discovery_app(visit);
+        needsUpdate = await dfx.icrc1_oracle.actor.is_unique(visit) as boolean;
+        expect(needsUpdate).eq(false);
+
+        const visitAnon: DiscoveryVisitRequest = {
+            derivation_origin: [],
+            hostname: "unique-test.example.com",
+            login: { Anonymous: null },
+        };
+        needsUpdate = await dfx.icrc1_oracle.actor.is_unique(visitAnon) as boolean;
+        expect(needsUpdate).eq(true);
+
+        await dfx.icrc1_oracle.actor.store_discovery_app(visitAnon);
+        needsUpdate = await dfx.icrc1_oracle.actor.is_unique(visitAnon) as boolean;
+        expect(needsUpdate).eq(false);
+
+        const visitUnknown: DiscoveryVisitRequest = {
+            derivation_origin: [],
+            hostname: "no-such-app.example.com",
+            login: { Global: null },
+        };
+        needsUpdate = await dfx.icrc1_oracle.actor.is_unique(visitUnknown) as boolean;
+        expect(needsUpdate).eq(false);
+    })
+
+    it("store_discovery_app - visit to unknown hostname is a no-op", async function () {
+        const visit: DiscoveryVisitRequest = {
+            derivation_origin: [],
+            hostname: "does-not-exist.example.com",
+            login: { Global: null },
+        };
+        await dfx.icrc1_oracle.actor.store_discovery_app(visit);
     })
 
 })
