@@ -55,7 +55,7 @@
     <properties>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
-        <ic4j.version>0.7.4</ic4j.version>
+        <ic4j.version>0.8.0</ic4j.version>
         <slf4j.version>2.0.17</slf4j.version>
         <lombok.version>1.18.44</lombok.version>
     </properties>
