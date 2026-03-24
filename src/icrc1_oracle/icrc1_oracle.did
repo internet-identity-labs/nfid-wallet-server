@@ -113,4 +113,5 @@ service : (opt Conf) -> {
     get_discovery_app_paginated : (nat64, nat64) -> (vec DiscoveryApp) query;
     replace_all_discovery_app : (vec DiscoveryApp) -> ();
     clear_discovery_apps : () -> ();
+    count_discovery_apps : () -> (nat64) query;
 }

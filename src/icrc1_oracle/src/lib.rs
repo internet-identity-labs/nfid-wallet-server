@@ -398,6 +398,13 @@ pub fn is_unique(request: DiscoveryVisitRequest) -> bool {
     }
 }
 
+#[query]
+pub fn count_discovery_apps() -> u64 {
+    DISCOVERY_REGISTRY.with(|registry| {
+        registry.borrow().len() as u64
+    })
+}
+
 /// Returns a paginated list of DiscoveryApps.
 #[query]
 pub fn get_discovery_app_paginated(offset: u64, limit: u64) -> Vec<DiscoveryApp> {
