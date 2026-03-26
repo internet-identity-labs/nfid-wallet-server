@@ -310,19 +310,34 @@ pub async fn remove_icrc1_canister(ledger: String) {
 }
 
 /// Tracks a visit to a dapp by hostname. Updates unique_users, is_global, is_anonymous.
+/// Creates a new DiscoveryApp entry if none exists for the given hostname.
 #[update]
 pub async fn store_discovery_app(request: DiscoveryVisitRequest) {
     let root_id = get_root_id().await;
 
-    let found_app = DISCOVERY_REGISTRY.with(|registry| {
+    let mut app = DISCOVERY_REGISTRY.with(|registry| {
         registry
             .borrow()
             .iter()
             .find(|app| app.hostname == request.hostname)
             .cloned()
+    })
+    .unwrap_or_else(|| {
+        let new_id = DISCOVERY_REGISTRY.with(|registry| registry.borrow().len() as u32 + 1);
+        DiscoveryApp {
+            id: new_id,
+            derivation_origin: request.derivation_origin.clone(),
+            hostname: request.hostname.clone(),
+            url: None,
+            name: None,
+            image: None,
+            desc: None,
+            is_global: false,
+            is_anonymous: false,
+            unique_users: 0,
+            status: DiscoveryStatus::New,
+        }
     });
-
-    let Some(mut app) = found_app else { return };
 
     let is_new_visitor = DISCOVERY_VISITORS.with(|visitors| {
         visitors
@@ -362,7 +377,7 @@ pub fn is_unique(request: DiscoveryVisitRequest) -> bool {
             .cloned()
     });
 
-    let Some(app) = found_app else { return false };
+    let Some(app) = found_app else { return true };
 
     let is_new_visitor = DISCOVERY_VISITORS.with(|visitors| {
         !visitors
@@ -381,6 +396,13 @@ pub fn is_unique(request: DiscoveryVisitRequest) -> bool {
         LoginType::Anonymous if !app.is_anonymous => true,
         _ => false,
     }
+}
+
+#[query]
+pub fn count_discovery_apps() -> u64 {
+    DISCOVERY_REGISTRY.with(|registry| {
+        registry.borrow().len() as u64
+    })
 }
 
 /// Returns a paginated list of DiscoveryApps.

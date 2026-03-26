@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env -S npx tsx
 import { AdminManager } from "./admin_manager";
 
 async function run() {

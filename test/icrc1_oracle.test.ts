@@ -191,7 +191,7 @@ describe("ICRC1 canister Oracle", () => {
         };
         await dfx.icrc1_oracle.actor.store_discovery_app(visitUnknown);
         page = await dfx.icrc1_oracle.actor.get_discovery_app_paginated(0n, 10n) as Array<DiscoveryApp>;
-        expect(page.length).eq(2);
+        expect(page.length).eq(3);
 
         const firstPage = await dfx.icrc1_oracle.actor.get_discovery_app_paginated(0n, 1n) as Array<DiscoveryApp>;
         expect(firstPage.length).eq(1);
@@ -279,10 +279,10 @@ describe("ICRC1 canister Oracle", () => {
             login: { Global: null },
         };
         needsUpdate = await dfx.icrc1_oracle.actor.is_unique(visitUnknown) as boolean;
-        expect(needsUpdate).eq(false);
+        expect(needsUpdate).eq(true);
     })
 
-    it("store_discovery_app - visit to unknown hostname is a no-op", async function () {
+    it("store_discovery_app - visit to unknown hostname creates a new entry", async function () {
         const visit: DiscoveryVisitRequest = {
             derivation_origin: [],
             hostname: "does-not-exist.example.com",
