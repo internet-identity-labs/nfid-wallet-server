@@ -38,7 +38,7 @@
   "overrides": {
     "serialize-javascript": ">=7.0.3",
     "minimatch": ">=9.0.7",
-    "picomatch": ">=4.0.4"
+    "picomatch": ">=4.0.3"
   },
   "type": "module",
   "license": "MIT"
