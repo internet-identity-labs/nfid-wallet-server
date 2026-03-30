@@ -349,7 +349,7 @@ export class AdminManager {
             enrichedById.has(Number(r.id)) ? enrichedById.get(Number(r.id))! : r
         );
 
-        const fields = ["id", "derivation_origin", "hostname", "url", "name", "icon", "desc", "is_global", "is_anonymous", "unique_users", "status"];
+        const fields = ["id", "derivation_origin", "hostname", "url", "name", "image", "desc", "is_global", "is_anonymous", "unique_users", "status"];
         const csv = parse(updatedRecords, { fields });
         fs.writeFileSync(FILE_PATH_DISCOVERY, csv);
         console.log(`Enriched ${enrichedById.size} app(s) and saved to ${FILE_PATH_DISCOVERY}. Run uploadDiscoveryCSV to push to canister.`);
