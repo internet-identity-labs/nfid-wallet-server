@@ -331,7 +331,7 @@ export class AdminManager {
                 hostname: app.hostname,
                 url: app.url,
                 name: app.name,
-                icon: app.image,
+                image: app.image,
                 desc: app.desc,
                 is_global: app.isGlobal.toString(),
                 is_anonymous: app.isAnonymous.toString(),
