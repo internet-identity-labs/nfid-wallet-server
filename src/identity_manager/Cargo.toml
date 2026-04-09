@@ -13,8 +13,8 @@ getrandom = { version = "0.2", features = ["custom"] }
 [dependencies]
 candid = "0.10"
 candid_parser = "0.1.2"
-ic-cdk = "0.16.0"
-ic-cdk-macros = "0.16.0"
+ic-cdk = "0.17"
+ic-cdk-macros = "0.17"
 ic-types = "0.7.0"
 serde = "1"
 regex = "1"
