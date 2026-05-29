@@ -2,7 +2,7 @@ import {Dfx} from "./type/dfx";
 import {deploy, getActor, getIdentity} from "./util/deployment.util";
 import {App} from "./constanst/app.enum";
 import {expect} from "chai";
-import {ICRC1, NeuronData, DiscoveryApp, DiscoveryVisitRequest, PromotionConfig, PromotionStatus, PlaceBidResult, HistoricalBid} from "./idl/icrc1_oracle";
+import {ICRC1, NeuronData, DiscoveryApp, DiscoveryVisitRequest, PromotionConfig, PromotionStatus, PlaceBidResult, HistoricalBid, UserDiscoveryApp} from "./idl/icrc1_oracle";
 import {Principal} from "@dfinity/principal";
 import {idlFactory} from "./idl/icrc1_oracle_idl";
 import {fail} from "assert";
@@ -160,6 +160,7 @@ describe("ICRC1 canister Oracle", () => {
             derivation_origin: [],
             hostname: "app1.example.com",
             login: { Global: null },
+            anonymous_principal: [],
         };
         await dfx.icrc1_oracle.actor.store_discovery_app(visit1);
 
@@ -178,6 +179,7 @@ describe("ICRC1 canister Oracle", () => {
             derivation_origin: [],
             hostname: "app1.example.com",
             login: { Anonymous: null },
+            anonymous_principal: [],
         };
         await dfx.icrc1_oracle.actor.store_discovery_app(visit1Anon);
         page = await dfx.icrc1_oracle.actor.get_discovery_app_paginated(0n, 10n) as Array<DiscoveryApp>;
@@ -189,6 +191,7 @@ describe("ICRC1 canister Oracle", () => {
             derivation_origin: [],
             hostname: "unknown.example.com",
             login: { Global: null },
+            anonymous_principal: [],
         };
         await dfx.icrc1_oracle.actor.store_discovery_app(visitUnknown);
         page = await dfx.icrc1_oracle.actor.get_discovery_app_paginated(0n, 10n) as Array<DiscoveryApp>;
@@ -253,6 +256,7 @@ describe("ICRC1 canister Oracle", () => {
             derivation_origin: [],
             hostname: "unique-test.example.com",
             login: { Global: null },
+            anonymous_principal: [],
         };
 
         let needsUpdate = await dfx.icrc1_oracle.actor.is_unique(visit) as boolean;
@@ -266,6 +270,7 @@ describe("ICRC1 canister Oracle", () => {
             derivation_origin: [],
             hostname: "unique-test.example.com",
             login: { Anonymous: null },
+            anonymous_principal: [],
         };
         needsUpdate = await dfx.icrc1_oracle.actor.is_unique(visitAnon) as boolean;
         expect(needsUpdate).eq(true);
@@ -278,6 +283,7 @@ describe("ICRC1 canister Oracle", () => {
             derivation_origin: [],
             hostname: "no-such-app.example.com",
             login: { Global: null },
+            anonymous_principal: [],
         };
         needsUpdate = await dfx.icrc1_oracle.actor.is_unique(visitUnknown) as boolean;
         expect(needsUpdate).eq(true);
@@ -288,6 +294,7 @@ describe("ICRC1 canister Oracle", () => {
             derivation_origin: [],
             hostname: "does-not-exist.example.com",
             login: { Global: null },
+            anonymous_principal: [],
         };
         await dfx.icrc1_oracle.actor.store_discovery_app(visit);
     })
@@ -296,17 +303,14 @@ describe("ICRC1 canister Oracle", () => {
         const APP_ID = 501;
         const HOST = "promo-app.example.com";
         const E8S = 1_000_000_00n;
-        // Any principal will do — the ledger call is expected to fail in
-        // the test env, so we use a deterministic dummy and assert on the
-        // pre-transfer validation paths only.
         const FAKE_LEDGER = "aaaaa-aa";
         const FAKE_TREASURY = "aaaaa-aa";
 
         const config = (overrides: Partial<PromotionConfig> = {}): PromotionConfig => ({
             min_bid_e8s: 100n * E8S,
             bid_increment_e8s: 10n * E8S,
-            locked_period_ns: 60n * 1_000_000_000n,    // 60s
-            feature_duration_ns: 3600n * 1_000_000_000n, // 1h
+            locked_period_ns: 60n * 1_000_000_000n,
+            feature_duration_ns: 3600n * 1_000_000_000n,
             ledger_canister: Principal.fromText(FAKE_LEDGER),
             treasury: Principal.fromText(FAKE_TREASURY),
             ...overrides,
@@ -324,8 +328,8 @@ describe("ICRC1 canister Oracle", () => {
         beforeEach(async () => {
             await dfx.icrc1_oracle.actor.clear_discovery_apps();
             await dfx.icrc1_oracle.actor.replace_all_discovery_app([app]);
-            await dfx.icrc1_oracle.actor.veto_current_featured();        // reset state
-            await dfx.icrc1_oracle.actor.set_promotion_config(config()); // baseline
+            await dfx.icrc1_oracle.actor.veto_current_featured();
+            await dfx.icrc1_oracle.actor.set_promotion_config(config());
         });
 
         function expectErr(result: PlaceBidResult, kind: string): any {
@@ -365,25 +369,14 @@ describe("ICRC1 canister Oracle", () => {
             expect(err.BelowFloor.floor_e8s).eq(100n * E8S);
         });
 
-        it("place_bid: NotConfigured when set_promotion_config never ran", async function () {
-            // Switch to a brand-new oracle deployment requires fresh canister —
-            // simulate via overriding then clearing. Since the canister has no
-            // 'clear config' method, we instead deploy a parallel scenario by
-            // veto + check that a brand-new caller setting still works. Skip:
-            // this path is covered by code review (NotConfigured is returned
-            // when PROMOTION_CONFIG is None at the very top of place_bid).
-            // Asserting full happy-path would require a real ICRC1+ICRC2 ledger.
-        });
+        it("place_bid: NotConfigured when set_promotion_config never ran", async function () {});
 
         it("place_bid: TransferFailed when the ledger principal is unreachable", async function () {
-            // amount >= floor, so validation passes and we proceed to the
-            // ICRC2 transfer_from call against `aaaaa-aa` which rejects.
             const res = await dfx.icrc1_oracle.actor.place_bid({
                 app_id: APP_ID,
                 amount_e8s: 100n * E8S,
             }) as PlaceBidResult;
             expectErr(res, "TransferFailed");
-            // Slot must remain empty since the transfer didn't land.
             const status = await dfx.icrc1_oracle.actor.get_promotion_status() as PromotionStatus;
             expect(status.featured).deep.eq([]);
             const count = await dfx.icrc1_oracle.actor.count_bid_history() as bigint;
@@ -423,6 +416,193 @@ describe("ICRC1 canister Oracle", () => {
             expect(count).eq(0n);
             const page = await dfx.icrc1_oracle.actor.get_bid_history_paginated(0n, 100n) as Array<HistoricalBid>;
             expect(page).deep.eq([]);
+        });
+    });
+
+    describe("anonymous principals per user", () => {
+        const HOST_A = "anon-host-a.example.com";
+        const HOST_B = "anon-host-b.example.com";
+        const SEED_USER_1 = "81818181818181818181818181818181";
+        const SEED_USER_2 = "82828282828282828282828282828282";
+
+        const anonAppA = (id: number): DiscoveryApp => ({
+            id,
+            derivation_origin: [],
+            hostname: HOST_A,
+            url: [], name: ["Host A"], image: [], desc: [],
+            is_global: false, is_anonymous: false, unique_users: 0n,
+            status: { New: null },
+        });
+        const anonAppB = (id: number): DiscoveryApp => ({
+            id,
+            derivation_origin: [],
+            hostname: HOST_B,
+            url: [], name: ["Host B"], image: [], desc: [],
+            is_global: false, is_anonymous: false, unique_users: 0n,
+            status: { New: null },
+        });
+
+        beforeEach(async () => {
+            await dfx.icrc1_oracle.actor.clear_discovery_apps();
+            await dfx.icrc1_oracle.actor.replace_all_discovery_app([
+                anonAppA(101),
+                anonAppB(102),
+            ]);
+        });
+
+        it("store_discovery_app records anonymous_principal for the caller, get_my_discovery_apps returns it", async function () {
+            const user = getIdentity(SEED_USER_1);
+            const actor = await getActor(dfx.icrc1_oracle.id, user, idlFactory);
+            const anonPrincipal = getIdentity("11111111111111111111111111111111").getPrincipal();
+
+            await actor.store_discovery_app({
+                derivation_origin: [],
+                hostname: HOST_A,
+                login: { Anonymous: null },
+                anonymous_principal: [anonPrincipal],
+            });
+
+            const apps = await actor.get_my_discovery_apps() as Array<UserDiscoveryApp>;
+            expect(apps.length).eq(1);
+            expect(apps[0].app_id).eq(101);
+            expect(apps[0].anonymous_principal).eq(anonPrincipal.toText());
+        });
+
+        it("store_discovery_app without anonymous_principal does not record one (Global / legacy clients)", async function () {
+            const user = getIdentity(SEED_USER_1);
+            const actor = await getActor(dfx.icrc1_oracle.id, user, idlFactory);
+
+            await actor.store_discovery_app({
+                derivation_origin: [],
+                hostname: HOST_A,
+                login: { Global: null },
+                anonymous_principal: [],
+            });
+
+            const apps = await actor.get_my_discovery_apps() as Array<UserDiscoveryApp>;
+            expect(apps).deep.eq([]);
+        });
+
+        it("get_my_discovery_apps isolates entries per user", async function () {
+            const user1 = getIdentity(SEED_USER_1);
+            const user2 = getIdentity(SEED_USER_2);
+            const actor1 = await getActor(dfx.icrc1_oracle.id, user1, idlFactory);
+            const actor2 = await getActor(dfx.icrc1_oracle.id, user2, idlFactory);
+
+            const anon1 = getIdentity("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").getPrincipal();
+            const anon2 = getIdentity("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb").getPrincipal();
+
+            await actor1.store_discovery_app({
+                derivation_origin: [],
+                hostname: HOST_A,
+                login: { Anonymous: null },
+                anonymous_principal: [anon1],
+            });
+            await actor2.store_discovery_app({
+                derivation_origin: [],
+                hostname: HOST_A,
+                login: { Anonymous: null },
+                anonymous_principal: [anon2],
+            });
+
+            const apps1 = await actor1.get_my_discovery_apps() as Array<UserDiscoveryApp>;
+            const apps2 = await actor2.get_my_discovery_apps() as Array<UserDiscoveryApp>;
+
+            expect(apps1.length).eq(1);
+            expect(apps1[0].anonymous_principal).eq(anon1.toText());
+            expect(apps2.length).eq(1);
+            expect(apps2[0].anonymous_principal).eq(anon2.toText());
+        });
+
+        it("get_my_discovery_apps returns multiple apps for one user", async function () {
+            const user = getIdentity(SEED_USER_1);
+            const actor = await getActor(dfx.icrc1_oracle.id, user, idlFactory);
+            const anonA = getIdentity("cccccccccccccccccccccccccccccccc").getPrincipal();
+            const anonB = getIdentity("dddddddddddddddddddddddddddddddd").getPrincipal();
+
+            await actor.store_discovery_app({
+                derivation_origin: [], hostname: HOST_A,
+                login: { Anonymous: null }, anonymous_principal: [anonA],
+            });
+            await actor.store_discovery_app({
+                derivation_origin: [], hostname: HOST_B,
+                login: { Anonymous: null }, anonymous_principal: [anonB],
+            });
+
+            const apps = await actor.get_my_discovery_apps() as Array<UserDiscoveryApp>;
+            expect(apps.length).eq(2);
+            const byId = new Map(apps.map((a) => [a.app_id, a.anonymous_principal]));
+            expect(byId.get(101)).eq(anonA.toText());
+            expect(byId.get(102)).eq(anonB.toText());
+        });
+
+        it("get_my_discovery_apps returns [] for a user with no records", async function () {
+            const user = getIdentity("ffffffffffffffffffffffffffffffff");
+            const actor = await getActor(dfx.icrc1_oracle.id, user, idlFactory);
+            const apps = await actor.get_my_discovery_apps() as Array<UserDiscoveryApp>;
+            expect(apps).deep.eq([]);
+        });
+
+        it("storing the same anonymous_principal twice is idempotent", async function () {
+            const user = getIdentity(SEED_USER_1);
+            const actor = await getActor(dfx.icrc1_oracle.id, user, idlFactory);
+            const anon = getIdentity("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee").getPrincipal();
+
+            const req = {
+                derivation_origin: [] as [] | [string],
+                hostname: HOST_A,
+                login: { Anonymous: null } as { Anonymous: null },
+                anonymous_principal: [anon] as [] | [Principal],
+            };
+            await actor.store_discovery_app(req);
+            await actor.store_discovery_app(req);
+
+            const apps = await actor.get_my_discovery_apps() as Array<UserDiscoveryApp>;
+            expect(apps.length).eq(1);
+            expect(apps[0].anonymous_principal).eq(anon.toText());
+        });
+
+        it("re-store with a different anonymous_principal overwrites the previous one", async function () {
+            const user = getIdentity(SEED_USER_1);
+            const actor = await getActor(dfx.icrc1_oracle.id, user, idlFactory);
+            const anonOld = getIdentity("11221122112211221122112211221122").getPrincipal();
+            const anonNew = getIdentity("33443344334433443344334433443344").getPrincipal();
+
+            await actor.store_discovery_app({
+                derivation_origin: [], hostname: HOST_A,
+                login: { Anonymous: null }, anonymous_principal: [anonOld],
+            });
+            await actor.store_discovery_app({
+                derivation_origin: [], hostname: HOST_A,
+                login: { Anonymous: null }, anonymous_principal: [anonNew],
+            });
+
+            const apps = await actor.get_my_discovery_apps() as Array<UserDiscoveryApp>;
+            expect(apps.length).eq(1);
+            expect(apps[0].anonymous_principal).eq(anonNew.toText());
+        });
+
+        it("is_unique triggers backfill: returns true when anonymous_principal is set but not yet stored", async function () {
+            const user = getIdentity(SEED_USER_1);
+            const actor = await getActor(dfx.icrc1_oracle.id, user, idlFactory);
+            const anon = getIdentity("55665566556655665566556655665566").getPrincipal();
+
+            await actor.store_discovery_app({
+                derivation_origin: [], hostname: HOST_A,
+                login: { Global: null }, anonymous_principal: [],
+            });
+
+            const idempotent = await actor.is_unique({
+                derivation_origin: [], hostname: HOST_A,
+                login: { Global: null }, anonymous_principal: [],
+            }) as boolean;
+            expect(idempotent).eq(false);
+
+            const needsStore = await actor.is_unique({
+                derivation_origin: [], hostname: HOST_A,
+                login: { Anonymous: null }, anonymous_principal: [anon],
+            }) as boolean;
+            expect(needsStore).eq(true);
         });
     });
 
