@@ -45,6 +45,11 @@ export const idlFactory = ({ IDL }) => {
         'derivation_origin' : IDL.Opt(IDL.Text),
         'hostname' : IDL.Text,
         'login' : LoginType,
+        'anonymous_principal' : IDL.Opt(IDL.Principal),
+    });
+    const UserDiscoveryApp = IDL.Record({
+        'app_id' : IDL.Nat32,
+        'anonymous_principal' : IDL.Text,
     });
     const DiscoveryApp = IDL.Record({
         'id' : IDL.Nat32,
@@ -121,6 +126,7 @@ export const idlFactory = ({ IDL }) => {
         'store_new_icrc1_canisters' : IDL.Func([IDL.Vec(ICRC1)], [], []),
         'store_discovery_app' : IDL.Func([DiscoveryVisitRequest], [], []),
         'is_unique' : IDL.Func([DiscoveryVisitRequest], [IDL.Bool], ['query']),
+        'get_my_discovery_apps' : IDL.Func([], [IDL.Vec(UserDiscoveryApp)], []),
         'get_discovery_app_paginated' : IDL.Func(
             [IDL.Nat64, IDL.Nat64],
             [IDL.Vec(DiscoveryApp)],

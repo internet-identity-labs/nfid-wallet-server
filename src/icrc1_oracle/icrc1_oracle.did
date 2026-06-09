@@ -93,6 +93,12 @@ type DiscoveryVisitRequest = record {
     derivation_origin : opt text;
     hostname : text;
     login : LoginType;
+    anonymous_principal : opt principal;
+};
+
+type UserDiscoveryApp = record {
+    app_id : nat32;
+    anonymous_principal : text;
 };
 
 type PromotionConfig = record {
@@ -162,6 +168,7 @@ service : (opt Conf) -> {
     btc_select_user_utxos_fee : (SelectedUtxosFeeRequest) -> (BtcSelectUserUtxosFeeResult);
     store_discovery_app : (DiscoveryVisitRequest) -> ();
     is_unique : (DiscoveryVisitRequest) -> (bool) query;
+    get_my_discovery_apps : () -> (vec UserDiscoveryApp);
     get_discovery_app_paginated : (nat64, nat64) -> (vec DiscoveryApp) query;
     replace_all_discovery_app : (vec DiscoveryApp) -> ();
     clear_discovery_apps : () -> ();

@@ -174,6 +174,13 @@ pub struct DiscoveryVisitRequest {
     pub derivation_origin: Option<String>,
     pub hostname: String,
     pub login: LoginType,
+    pub anonymous_principal: Option<Principal>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub struct UserDiscoveryApp {
+    pub app_id: u32,
+    pub anonymous_principal: String,
 }
 
 // ── Promotion (Discovery Monetization) ─────────────────────────────────────
@@ -285,6 +292,8 @@ thread_local! {
     pub static DISCOVERY_REGISTRY: RefCell<HashSet<DiscoveryApp>> = RefCell::new(HashSet::default());
     // Key: app id, Value: set of root_id strings (unique visitors per app)
     pub static DISCOVERY_VISITORS: RefCell<HashMap<u32, HashSet<String>>> = RefCell::new(HashMap::new());
+    // Key: root_id, Value: app id -> anonymous principal (text) the user uses for that app.
+    pub static DISCOVERY_USER_PRINCIPALS: RefCell<HashMap<String, HashMap<u32, String>>> = RefCell::new(HashMap::new());
     pub static PROMOTION_CONFIG: RefCell<Option<PromotionConfig>> = RefCell::new(None);
     pub static FEATURED_SLOT: RefCell<Option<FeaturedSlot>> = RefCell::new(None);
     pub static BID_HISTORY: RefCell<Vec<HistoricalBid>> = RefCell::new(Vec::new());
@@ -449,7 +458,7 @@ pub async fn store_discovery_app(request: DiscoveryVisitRequest) {
             .borrow_mut()
             .entry(app.id)
             .or_insert_with(HashSet::new)
-            .insert(root_id)
+            .insert(root_id.clone())
     });
 
     if is_new_visitor {
@@ -460,6 +469,15 @@ pub async fn store_discovery_app(request: DiscoveryVisitRequest) {
         LoginType::Global if !app.is_global => app.is_global = true,
         LoginType::Anonymous if !app.is_anonymous => app.is_anonymous = true,
         _ => {}
+    }
+
+    if let Some(anon) = request.anonymous_principal {
+        DISCOVERY_USER_PRINCIPALS.with(|map| {
+            map.borrow_mut()
+                .entry(root_id)
+                .or_insert_with(HashMap::new)
+                .insert(app.id, anon.to_text());
+        });
     }
 
     DISCOVERY_REGISTRY.with(|registry| {
@@ -492,17 +510,59 @@ pub fn is_unique(request: DiscoveryVisitRequest) -> bool {
         return true;
     }
 
-    match request.login {
+    let needs_flag_flip = match request.login {
         LoginType::Global if !app.is_global => true,
         LoginType::Anonymous if !app.is_anonymous => true,
         _ => false,
+    };
+
+    if needs_flag_flip {
+        return true;
     }
+
+    // Backfill: if the caller passed an anonymous principal that we don't yet have
+    // recorded for this app, signal that a follow-up store_discovery_app call is needed.
+    if let Some(anon) = &request.anonymous_principal {
+        let already_recorded = DISCOVERY_USER_PRINCIPALS.with(|map| {
+            map.borrow()
+                .get(&visitor_id)
+                .and_then(|apps| apps.get(&app.id))
+                .map(|p| p == &anon.to_text())
+                .unwrap_or(false)
+        });
+        if !already_recorded {
+            return true;
+        }
+    }
+
+    false
 }
 
 #[query]
 pub fn count_discovery_apps() -> u64 {
     DISCOVERY_REGISTRY.with(|registry| {
         registry.borrow().len() as u64
+    })
+}
+
+/// Returns the (app_id, anonymous_principal) pairs recorded for the calling user.
+/// Requires an inter-canister call to the identity manager to resolve the caller's
+/// root id, hence #[update].
+#[update]
+pub async fn get_my_discovery_apps() -> Vec<UserDiscoveryApp> {
+    let root_id = get_root_id().await;
+    DISCOVERY_USER_PRINCIPALS.with(|map| {
+        map.borrow()
+            .get(&root_id)
+            .map(|apps| {
+                apps.iter()
+                    .map(|(id, p)| UserDiscoveryApp {
+                        app_id: *id,
+                        anonymous_principal: p.clone(),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
     })
 }
 
@@ -536,9 +596,9 @@ pub async fn replace_all_discovery_app(apps: Vec<DiscoveryApp>) {
 #[update]
 pub async fn clear_discovery_apps() {
     trap_if_not_authenticated_admin();
-    DISCOVERY_REGISTRY.with(|registry| {
-        registry.borrow_mut().clear();
-    });
+    DISCOVERY_REGISTRY.with(|registry| registry.borrow_mut().clear());
+    DISCOVERY_VISITORS.with(|v| v.borrow_mut().clear());
+    DISCOVERY_USER_PRINCIPALS.with(|m| m.borrow_mut().clear());
 }
 
 // ── Promotion endpoints ───────────────────────────────────────────────────
@@ -834,6 +894,7 @@ struct Memory {
     config: Conf,
     discovery_apps: Option<HashSet<DiscoveryApp>>,
     discovery_visitors: Option<HashMap<u32, HashSet<String>>>,
+    discovery_user_principals: Option<HashMap<String, HashMap<u32, String>>>,
     promotion_config: Option<PromotionConfig>,
     featured_slot: Option<FeaturedSlot>,
     bid_history: Option<Vec<HistoricalBid>>,
@@ -870,6 +931,7 @@ pub fn stable_save() {
     });
     let discovery_apps = DISCOVERY_REGISTRY.with(|registry| registry.borrow().clone());
     let discovery_visitors = DISCOVERY_VISITORS.with(|v| v.borrow().clone());
+    let discovery_user_principals = DISCOVERY_USER_PRINCIPALS.with(|m| m.borrow().clone());
     let promotion_config = PROMOTION_CONFIG.with(|c| c.borrow().clone());
     let featured_slot = FEATURED_SLOT.with(|s| s.borrow().clone());
     let bid_history = BID_HISTORY.with(|h| h.borrow().clone());
@@ -879,6 +941,7 @@ pub fn stable_save() {
         neurons: Some(neurons),
         discovery_apps: Some(discovery_apps),
         discovery_visitors: Some(discovery_visitors),
+        discovery_user_principals: Some(discovery_user_principals),
         promotion_config,
         featured_slot,
         bid_history: Some(bid_history),
@@ -927,6 +990,9 @@ pub fn stable_restore() {
     DISCOVERY_VISITORS.with(|visitors| {
         *visitors.borrow_mut() = mo.discovery_visitors.unwrap_or_default();
     });
+    DISCOVERY_USER_PRINCIPALS.with(|m| {
+        *m.borrow_mut() = mo.discovery_user_principals.unwrap_or_default();
+    });
     PROMOTION_CONFIG.with(|c| {
         *c.borrow_mut() = mo.promotion_config;
     });
@@ -967,6 +1033,7 @@ mod discovery_dedup_tests {
             hostname: hostname.to_string(),
             derivation_origin: derivation_origin.map(String::from),
             login: LoginType::Global,
+            anonymous_principal: None,
         }
     }
 
