@@ -176,6 +176,105 @@ pub struct DiscoveryVisitRequest {
     pub login: LoginType,
 }
 
+// ── Promotion (Discovery Monetization) ─────────────────────────────────────
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub struct PromotionConfig {
+    pub min_bid_e8s: Nat,
+    pub bid_increment_e8s: Nat,
+    pub locked_period_ns: u64,
+    pub feature_duration_ns: u64,
+    pub ledger_canister: Principal,
+    pub treasury: Principal,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub struct FeaturedSlot {
+    pub app_id: u32,
+    pub bidder: Principal,
+    pub bid_amount_e8s: Nat,
+    pub bid_time_ns: u64,
+    pub locked_until_ns: u64,
+    pub expires_at_ns: u64,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub struct HistoricalBid {
+    pub app_id: u32,
+    pub bidder: Principal,
+    pub bid_amount_e8s: Nat,
+    pub bid_time_ns: u64,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub struct PromotionStatus {
+    pub config: PromotionConfig,
+    pub featured: Option<FeaturedSlot>,
+    pub min_next_bid_e8s: Nat,
+    pub locked: bool,
+    pub now_ns: u64,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub struct PlaceBidArg {
+    pub app_id: u32,
+    pub amount_e8s: Nat,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub enum PlaceBidError {
+    Locked { until_ns: u64 },
+    BelowFloor { floor_e8s: Nat },
+    BelowIncrement { required_e8s: Nat },
+    UnknownApp,
+    TransferFailed(String),
+    NotConfigured,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub enum PlaceBidResult {
+    Ok(FeaturedSlot),
+    Err(PlaceBidError),
+}
+
+// Minimal ICRC2 types for inter-canister transfer_from.
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+struct IcrcAccount {
+    owner: Principal,
+    subaccount: Option<Vec<u8>>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+struct Icrc2TransferFromArgs {
+    spender_subaccount: Option<Vec<u8>>,
+    from: IcrcAccount,
+    to: IcrcAccount,
+    amount: Nat,
+    fee: Option<Nat>,
+    memo: Option<Vec<u8>>,
+    created_at_time: Option<u64>,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+enum Icrc2TransferFromError {
+    BadFee { expected_fee: Nat },
+    BadBurn { min_burn_amount: Nat },
+    InsufficientFunds { balance: Nat },
+    InsufficientAllowance { allowance: Nat },
+    TooOld,
+    CreatedInFuture { ledger_time: u64 },
+    Duplicate { duplicate_of: Nat },
+    TemporarilyUnavailable,
+    GenericError { error_code: Nat, message: String },
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+enum Icrc2TransferFromResult {
+    Ok(Nat),
+    Err(Icrc2TransferFromError),
+}
+
 thread_local! {
      static CONFIG: RefCell<Conf> = const { RefCell::new( Conf {
         im_canister: None,
@@ -186,6 +285,9 @@ thread_local! {
     pub static DISCOVERY_REGISTRY: RefCell<HashSet<DiscoveryApp>> = RefCell::new(HashSet::default());
     // Key: app id, Value: set of root_id strings (unique visitors per app)
     pub static DISCOVERY_VISITORS: RefCell<HashMap<u32, HashSet<String>>> = RefCell::new(HashMap::new());
+    pub static PROMOTION_CONFIG: RefCell<Option<PromotionConfig>> = RefCell::new(None);
+    pub static FEATURED_SLOT: RefCell<Option<FeaturedSlot>> = RefCell::new(None);
+    pub static BID_HISTORY: RefCell<Vec<HistoricalBid>> = RefCell::new(Vec::new());
 }
 
 /// Persists a single ICRC1 canister's metadata into the canister's storage.
@@ -309,18 +411,21 @@ pub async fn remove_icrc1_canister(ledger: String) {
     });
 }
 
+fn find_app_for_request(registry: &std::collections::HashSet<DiscoveryApp>, request: &DiscoveryVisitRequest) -> Option<DiscoveryApp> {
+    registry.iter().find(|app| match &request.derivation_origin {
+        Some(req_do) => app.derivation_origin.as_deref() == Some(req_do.as_str()),
+        None => app.hostname == request.hostname && app.derivation_origin.is_none(),
+    }).cloned()
+}
+
 /// Tracks a visit to a dapp by hostname. Updates unique_users, is_global, is_anonymous.
-/// Creates a new DiscoveryApp entry if none exists for the given hostname.
+/// Creates a new DiscoveryApp entry if none exists for the given derivation_origin (or hostname).
 #[update]
 pub async fn store_discovery_app(request: DiscoveryVisitRequest) {
     let root_id = get_root_id().await;
 
     let mut app = DISCOVERY_REGISTRY.with(|registry| {
-        registry
-            .borrow()
-            .iter()
-            .find(|app| app.hostname == request.hostname)
-            .cloned()
+        find_app_for_request(&registry.borrow(), &request)
     })
     .unwrap_or_else(|| {
         let new_id = DISCOVERY_REGISTRY.with(|registry| registry.borrow().len() as u32 + 1);
@@ -370,11 +475,7 @@ pub fn is_unique(request: DiscoveryVisitRequest) -> bool {
     let visitor_id = caller().to_text();
 
     let found_app = DISCOVERY_REGISTRY.with(|registry| {
-        registry
-            .borrow()
-            .iter()
-            .find(|app| app.hostname == request.hostname)
-            .cloned()
+        find_app_for_request(&registry.borrow(), &request)
     });
 
     let Some(app) = found_app else { return true };
@@ -438,6 +539,161 @@ pub async fn clear_discovery_apps() {
     DISCOVERY_REGISTRY.with(|registry| {
         registry.borrow_mut().clear();
     });
+}
+
+// ── Promotion endpoints ───────────────────────────────────────────────────
+
+/// Configures the promotion module. Admin-only. Idempotent — overwrites
+/// existing config. Must be called once before `place_bid` becomes usable.
+#[update]
+pub async fn set_promotion_config(config: PromotionConfig) {
+    trap_if_not_authenticated_admin();
+    PROMOTION_CONFIG.with(|c| *c.borrow_mut() = Some(config));
+}
+
+/// Returns the effective promotion status. Expired slots are reported as
+/// `featured = None` without mutating storage.
+#[query]
+pub fn get_promotion_status() -> PromotionStatus {
+    let cfg = PROMOTION_CONFIG
+        .with(|c| c.borrow().clone())
+        .expect("promotion not configured");
+    let now = ic_cdk::api::time();
+    let effective = FEATURED_SLOT
+        .with(|s| s.borrow().clone())
+        .filter(|s| s.expires_at_ns > now);
+    let locked = effective
+        .as_ref()
+        .map(|s| s.locked_until_ns > now)
+        .unwrap_or(false);
+    let min_next_bid_e8s = match &effective {
+        Some(s) => s.bid_amount_e8s.clone() + cfg.bid_increment_e8s.clone(),
+        None => cfg.min_bid_e8s.clone(),
+    };
+    PromotionStatus {
+        config: cfg,
+        featured: effective,
+        min_next_bid_e8s,
+        locked,
+        now_ns: now,
+    }
+}
+
+/// Places a bid for the Featured slot. Pulls `amount_e8s` from the caller
+/// via ICRC2 transfer_from on the configured ledger; on success, replaces
+/// the slot with a fresh winner and resets both timers.
+#[update]
+pub async fn place_bid(arg: PlaceBidArg) -> PlaceBidResult {
+    let cfg = match PROMOTION_CONFIG.with(|c| c.borrow().clone()) {
+        Some(c) => c,
+        None => return PlaceBidResult::Err(PlaceBidError::NotConfigured),
+    };
+    let now = ic_cdk::api::time();
+    let bidder = ic_cdk::caller();
+
+    let app_exists =
+        DISCOVERY_REGISTRY.with(|r| r.borrow().iter().any(|a| a.id == arg.app_id));
+    if !app_exists {
+        return PlaceBidResult::Err(PlaceBidError::UnknownApp);
+    }
+
+    let current = FEATURED_SLOT
+        .with(|s| s.borrow().clone())
+        .filter(|s| s.expires_at_ns > now);
+
+    let min_required = match &current {
+        Some(s) if s.locked_until_ns > now => {
+            return PlaceBidResult::Err(PlaceBidError::Locked {
+                until_ns: s.locked_until_ns,
+            });
+        }
+        Some(s) => s.bid_amount_e8s.clone() + cfg.bid_increment_e8s.clone(),
+        None => cfg.min_bid_e8s.clone(),
+    };
+    if arg.amount_e8s < min_required {
+        return PlaceBidResult::Err(if current.is_some() {
+            PlaceBidError::BelowIncrement {
+                required_e8s: min_required,
+            }
+        } else {
+            PlaceBidError::BelowFloor {
+                floor_e8s: min_required,
+            }
+        });
+    }
+
+    let transfer_args = Icrc2TransferFromArgs {
+        spender_subaccount: None,
+        from: IcrcAccount {
+            owner: bidder,
+            subaccount: None,
+        },
+        to: IcrcAccount {
+            owner: cfg.treasury,
+            subaccount: None,
+        },
+        amount: arg.amount_e8s.clone(),
+        fee: None,
+        memo: None,
+        created_at_time: None,
+    };
+    let transfer_call: CallResult<(Icrc2TransferFromResult,)> =
+        call(cfg.ledger_canister, "icrc2_transfer_from", (transfer_args,)).await;
+    match transfer_call {
+        Ok((Icrc2TransferFromResult::Ok(_),)) => {}
+        Ok((Icrc2TransferFromResult::Err(e),)) => {
+            return PlaceBidResult::Err(PlaceBidError::TransferFailed(format!("{e:?}")));
+        }
+        Err((_, msg)) => {
+            return PlaceBidResult::Err(PlaceBidError::TransferFailed(msg));
+        }
+    }
+
+    let slot = FeaturedSlot {
+        app_id: arg.app_id,
+        bidder,
+        bid_amount_e8s: arg.amount_e8s.clone(),
+        bid_time_ns: now,
+        locked_until_ns: now + cfg.locked_period_ns,
+        expires_at_ns: now + cfg.feature_duration_ns,
+    };
+    FEATURED_SLOT.with(|s| *s.borrow_mut() = Some(slot.clone()));
+    BID_HISTORY.with(|h| {
+        h.borrow_mut().push(HistoricalBid {
+            app_id: slot.app_id,
+            bidder: slot.bidder,
+            bid_amount_e8s: slot.bid_amount_e8s.clone(),
+            bid_time_ns: slot.bid_time_ns,
+        })
+    });
+
+    PlaceBidResult::Ok(slot)
+}
+
+/// Clears the current featured slot unconditionally. Admin-only.
+/// One-shot: history is preserved, no deny-list is created — the same
+/// app can be re-promoted immediately by a fresh bid.
+#[update]
+pub fn veto_current_featured() {
+    trap_if_not_authenticated_admin();
+    FEATURED_SLOT.with(|s| *s.borrow_mut() = None);
+}
+
+#[query]
+pub fn count_bid_history() -> u64 {
+    BID_HISTORY.with(|h| h.borrow().len() as u64)
+}
+
+#[query]
+pub fn get_bid_history_paginated(offset: u64, limit: u64) -> Vec<HistoricalBid> {
+    BID_HISTORY.with(|h| {
+        h.borrow()
+            .iter()
+            .skip(offset as usize)
+            .take(limit as usize)
+            .cloned()
+            .collect()
+    })
 }
 
 /// Sets the operator principal.
@@ -578,6 +834,9 @@ struct Memory {
     config: Conf,
     discovery_apps: Option<HashSet<DiscoveryApp>>,
     discovery_visitors: Option<HashMap<u32, HashSet<String>>>,
+    promotion_config: Option<PromotionConfig>,
+    featured_slot: Option<FeaturedSlot>,
+    bid_history: Option<Vec<HistoricalBid>>,
 }
 
 /// Applies changes prior to the canister upgrade.
@@ -611,12 +870,18 @@ pub fn stable_save() {
     });
     let discovery_apps = DISCOVERY_REGISTRY.with(|registry| registry.borrow().clone());
     let discovery_visitors = DISCOVERY_VISITORS.with(|v| v.borrow().clone());
+    let promotion_config = PROMOTION_CONFIG.with(|c| c.borrow().clone());
+    let featured_slot = FEATURED_SLOT.with(|s| s.borrow().clone());
+    let bid_history = BID_HISTORY.with(|h| h.borrow().clone());
     let mem = Memory {
         registry,
         config,
         neurons: Some(neurons),
         discovery_apps: Some(discovery_apps),
         discovery_visitors: Some(discovery_visitors),
+        promotion_config,
+        featured_slot,
+        bid_history: Some(bid_history),
     };
     storage::stable_save((mem,))
         .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
@@ -662,10 +927,101 @@ pub fn stable_restore() {
     DISCOVERY_VISITORS.with(|visitors| {
         *visitors.borrow_mut() = mo.discovery_visitors.unwrap_or_default();
     });
+    PROMOTION_CONFIG.with(|c| {
+        *c.borrow_mut() = mo.promotion_config;
+    });
+    FEATURED_SLOT.with(|s| {
+        *s.borrow_mut() = mo.featured_slot;
+    });
+    BID_HISTORY.with(|h| {
+        *h.borrow_mut() = mo.bid_history.unwrap_or_default();
+    });
 }
 
 #[test]
 fn sub_account_test() {}
+
+#[cfg(test)]
+mod discovery_dedup_tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    fn make_app(id: u32, hostname: &str, derivation_origin: Option<&str>) -> DiscoveryApp {
+        DiscoveryApp {
+            id,
+            hostname: hostname.to_string(),
+            derivation_origin: derivation_origin.map(String::from),
+            url: None,
+            name: None,
+            image: None,
+            desc: None,
+            is_global: false,
+            is_anonymous: false,
+            unique_users: 0,
+            status: DiscoveryStatus::New,
+        }
+    }
+
+    fn make_request(hostname: &str, derivation_origin: Option<&str>) -> DiscoveryVisitRequest {
+        DiscoveryVisitRequest {
+            hostname: hostname.to_string(),
+            derivation_origin: derivation_origin.map(String::from),
+            login: LoginType::Global,
+        }
+    }
+
+    fn registry_from(apps: Vec<DiscoveryApp>) -> HashSet<DiscoveryApp> {
+        apps.into_iter().collect()
+    }
+
+    // Same hostname, different derivation_origins → each request resolves to its own app.
+    #[test]
+    fn find_by_derivation_origin_ignores_hostname_collision() {
+        let shared_host = "https://7p3gx-jaaaa-aaaal-acbda-cai.ic0.app";
+        let app1 = make_app(1, shared_host, Some("https://5pati-hyaaa-aaaal-qb3yq-cai.raw.icp.io"));
+        let app2 = make_app(2, shared_host, Some("https://awcae-maaaa-aaaam-abmyq-cai.icp0.io"));
+        let registry = registry_from(vec![app1.clone(), app2.clone()]);
+
+        let req1 = make_request(shared_host, Some("https://5pati-hyaaa-aaaal-qb3yq-cai.raw.icp.io"));
+        let req2 = make_request(shared_host, Some("https://awcae-maaaa-aaaam-abmyq-cai.icp0.io"));
+
+        assert_eq!(find_app_for_request(&registry, &req1).map(|a| a.id), Some(1));
+        assert_eq!(find_app_for_request(&registry, &req2).map(|a| a.id), Some(2));
+    }
+
+    // No derivation_origin → fall back to hostname match (only when app also has no derivation_origin).
+    #[test]
+    fn find_by_hostname_when_no_derivation_origin() {
+        let app = make_app(1, "https://nfid.one", None);
+        let registry = registry_from(vec![app]);
+
+        let req = make_request("https://nfid.one", None);
+        assert_eq!(find_app_for_request(&registry, &req).map(|a| a.id), Some(1));
+    }
+
+    // Request with derivation_origin must NOT match an app that only has a hostname entry.
+    #[test]
+    fn derivation_origin_request_does_not_match_hostname_only_app() {
+        let shared_host = "https://7p3gx-jaaaa-aaaal-acbda-cai.ic0.app";
+        let app = make_app(1, shared_host, None);
+        let registry = registry_from(vec![app]);
+
+        let req = make_request(shared_host, Some("https://some-other-origin.icp0.io"));
+        assert!(find_app_for_request(&registry, &req).is_none());
+    }
+
+    // Request without derivation_origin must NOT match an app that has one.
+    #[test]
+    fn no_derivation_origin_request_does_not_match_app_with_derivation_origin() {
+        let shared_host = "https://7p3gx-jaaaa-aaaal-acbda-cai.ic0.app";
+        let app = make_app(1, shared_host, Some("https://pingow.xyz"));
+        let registry = registry_from(vec![app]);
+
+        let req = make_request(shared_host, None);
+        assert!(find_app_for_request(&registry, &req).is_none());
+    }
+}
+
 export_service!();
 
 #[ic_cdk_macros::query(name = "__get_candid_interface")]
