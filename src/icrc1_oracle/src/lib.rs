@@ -596,9 +596,9 @@ pub async fn replace_all_discovery_app(apps: Vec<DiscoveryApp>) {
 #[update]
 pub async fn clear_discovery_apps() {
     trap_if_not_authenticated_admin();
-    DISCOVERY_REGISTRY.with(|registry| {
-        registry.borrow_mut().clear();
-    });
+    DISCOVERY_REGISTRY.with(|registry| registry.borrow_mut().clear());
+    DISCOVERY_VISITORS.with(|v| v.borrow_mut().clear());
+    DISCOVERY_USER_PRINCIPALS.with(|m| m.borrow_mut().clear());
 }
 
 // ── Promotion endpoints ───────────────────────────────────────────────────
@@ -1033,6 +1033,7 @@ mod discovery_dedup_tests {
             hostname: hostname.to_string(),
             derivation_origin: derivation_origin.map(String::from),
             login: LoginType::Global,
+            anonymous_principal: None,
         }
     }
 
