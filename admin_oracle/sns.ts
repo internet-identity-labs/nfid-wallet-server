@@ -1,10 +1,5 @@
-import * as chai from "chai";
-import chaiHttp from "chai-http";
 import {ICRC1} from "../test/idl/icrc1_oracle";
 import {CanisterObject} from "./types";
-
-chai.use(chaiHttp);
-
 
 export class SnsParser {
 
@@ -13,12 +8,12 @@ export class SnsParser {
         let isRequestNeeded = true
         let data = []
         while (isRequestNeeded) {
-            const response = await chai.request(`https://3r4gx-wqaaa-aaaaq-aaaia-cai.icp0.io/v1/sns/list/page/${page}/slow.json`
-            ).get("")
-
-            const generalCanisterInfos = response.body as any;
+            const response = await fetch(
+                `https://3r4gx-wqaaa-aaaaq-aaaia-cai.icp0.io/v1/sns/list/page/${page}/slow.json`
+            );
+            const generalCanisterInfos = await response.json() as any;
             page = page + 1
-            if (generalCanisterInfos.length === 0 || generalCanisterInfos.length === undefined) {
+            if (!generalCanisterInfos || generalCanisterInfos.length === 0) {
                 isRequestNeeded = false
             } else {
                 data = data.concat(generalCanisterInfos)
@@ -28,9 +23,9 @@ export class SnsParser {
             if (l.derived_state.sns_tokens_per_icp === 0) {
                 return undefined
             }
-            return chai.request(`https://sns-api.internetcomputer.org`)
-                .get(`/api/v1/snses/${l.canister_ids.root_canister_id}`).then((a) => {
-                    const c = a.body as CanisterObject;
+            return fetch(`https://sns-api.internetcomputer.org/api/v1/snses/${l.canister_ids.root_canister_id}`)
+                .then((a) => a.json())
+                .then((c: CanisterObject) => {
                     if (c.enabled === false) {
                         return undefined
                     }

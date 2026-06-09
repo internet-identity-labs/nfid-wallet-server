@@ -411,18 +411,21 @@ pub async fn remove_icrc1_canister(ledger: String) {
     });
 }
 
+fn find_app_for_request(registry: &std::collections::HashSet<DiscoveryApp>, request: &DiscoveryVisitRequest) -> Option<DiscoveryApp> {
+    registry.iter().find(|app| match &request.derivation_origin {
+        Some(req_do) => app.derivation_origin.as_deref() == Some(req_do.as_str()),
+        None => app.hostname == request.hostname && app.derivation_origin.is_none(),
+    }).cloned()
+}
+
 /// Tracks a visit to a dapp by hostname. Updates unique_users, is_global, is_anonymous.
-/// Creates a new DiscoveryApp entry if none exists for the given hostname.
+/// Creates a new DiscoveryApp entry if none exists for the given derivation_origin (or hostname).
 #[update]
 pub async fn store_discovery_app(request: DiscoveryVisitRequest) {
     let root_id = get_root_id().await;
 
     let mut app = DISCOVERY_REGISTRY.with(|registry| {
-        registry
-            .borrow()
-            .iter()
-            .find(|app| app.hostname == request.hostname)
-            .cloned()
+        find_app_for_request(&registry.borrow(), &request)
     })
     .unwrap_or_else(|| {
         let new_id = DISCOVERY_REGISTRY.with(|registry| registry.borrow().len() as u32 + 1);
@@ -472,11 +475,7 @@ pub fn is_unique(request: DiscoveryVisitRequest) -> bool {
     let visitor_id = caller().to_text();
 
     let found_app = DISCOVERY_REGISTRY.with(|registry| {
-        registry
-            .borrow()
-            .iter()
-            .find(|app| app.hostname == request.hostname)
-            .cloned()
+        find_app_for_request(&registry.borrow(), &request)
     });
 
     let Some(app) = found_app else { return true };
@@ -941,6 +940,88 @@ pub fn stable_restore() {
 
 #[test]
 fn sub_account_test() {}
+
+#[cfg(test)]
+mod discovery_dedup_tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    fn make_app(id: u32, hostname: &str, derivation_origin: Option<&str>) -> DiscoveryApp {
+        DiscoveryApp {
+            id,
+            hostname: hostname.to_string(),
+            derivation_origin: derivation_origin.map(String::from),
+            url: None,
+            name: None,
+            image: None,
+            desc: None,
+            is_global: false,
+            is_anonymous: false,
+            unique_users: 0,
+            status: DiscoveryStatus::New,
+        }
+    }
+
+    fn make_request(hostname: &str, derivation_origin: Option<&str>) -> DiscoveryVisitRequest {
+        DiscoveryVisitRequest {
+            hostname: hostname.to_string(),
+            derivation_origin: derivation_origin.map(String::from),
+            login: LoginType::Global,
+        }
+    }
+
+    fn registry_from(apps: Vec<DiscoveryApp>) -> HashSet<DiscoveryApp> {
+        apps.into_iter().collect()
+    }
+
+    // Same hostname, different derivation_origins → each request resolves to its own app.
+    #[test]
+    fn find_by_derivation_origin_ignores_hostname_collision() {
+        let shared_host = "https://7p3gx-jaaaa-aaaal-acbda-cai.ic0.app";
+        let app1 = make_app(1, shared_host, Some("https://5pati-hyaaa-aaaal-qb3yq-cai.raw.icp.io"));
+        let app2 = make_app(2, shared_host, Some("https://awcae-maaaa-aaaam-abmyq-cai.icp0.io"));
+        let registry = registry_from(vec![app1.clone(), app2.clone()]);
+
+        let req1 = make_request(shared_host, Some("https://5pati-hyaaa-aaaal-qb3yq-cai.raw.icp.io"));
+        let req2 = make_request(shared_host, Some("https://awcae-maaaa-aaaam-abmyq-cai.icp0.io"));
+
+        assert_eq!(find_app_for_request(&registry, &req1).map(|a| a.id), Some(1));
+        assert_eq!(find_app_for_request(&registry, &req2).map(|a| a.id), Some(2));
+    }
+
+    // No derivation_origin → fall back to hostname match (only when app also has no derivation_origin).
+    #[test]
+    fn find_by_hostname_when_no_derivation_origin() {
+        let app = make_app(1, "https://nfid.one", None);
+        let registry = registry_from(vec![app]);
+
+        let req = make_request("https://nfid.one", None);
+        assert_eq!(find_app_for_request(&registry, &req).map(|a| a.id), Some(1));
+    }
+
+    // Request with derivation_origin must NOT match an app that only has a hostname entry.
+    #[test]
+    fn derivation_origin_request_does_not_match_hostname_only_app() {
+        let shared_host = "https://7p3gx-jaaaa-aaaal-acbda-cai.ic0.app";
+        let app = make_app(1, shared_host, None);
+        let registry = registry_from(vec![app]);
+
+        let req = make_request(shared_host, Some("https://some-other-origin.icp0.io"));
+        assert!(find_app_for_request(&registry, &req).is_none());
+    }
+
+    // Request without derivation_origin must NOT match an app that has one.
+    #[test]
+    fn no_derivation_origin_request_does_not_match_app_with_derivation_origin() {
+        let shared_host = "https://7p3gx-jaaaa-aaaal-acbda-cai.ic0.app";
+        let app = make_app(1, shared_host, Some("https://pingow.xyz"));
+        let registry = registry_from(vec![app]);
+
+        let req = make_request(shared_host, None);
+        assert!(find_app_for_request(&registry, &req).is_none());
+    }
+}
+
 export_service!();
 
 #[ic_cdk_macros::query(name = "__get_candid_interface")]
