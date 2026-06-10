@@ -11,7 +11,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.21.0</version>
+            <version>2.22.0</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -56,8 +56,8 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <ic4j.version>0.8.0</ic4j.version>
-        <slf4j.version>2.0.17</slf4j.version>
-        <lombok.version>1.18.44</lombok.version>
+        <slf4j.version>2.0.18</slf4j.version>
+        <lombok.version>1.18.46</lombok.version>
     </properties>
 
     <build>
