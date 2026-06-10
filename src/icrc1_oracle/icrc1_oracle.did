@@ -93,6 +93,64 @@ type DiscoveryVisitRequest = record {
     derivation_origin : opt text;
     hostname : text;
     login : LoginType;
+    anonymous_principal : opt principal;
+};
+
+type UserDiscoveryApp = record {
+    app_id : nat32;
+    anonymous_principal : text;
+};
+
+type PromotionConfig = record {
+    min_bid_e8s : nat;
+    bid_increment_e8s : nat;
+    locked_period_ns : nat64;
+    feature_duration_ns : nat64;
+    ledger_canister : principal;
+    treasury : principal;
+};
+
+type FeaturedSlot = record {
+    app_id : nat32;
+    bidder : principal;
+    bid_amount_e8s : nat;
+    bid_time_ns : nat64;
+    locked_until_ns : nat64;
+    expires_at_ns : nat64;
+};
+
+type HistoricalBid = record {
+    app_id : nat32;
+    bidder : principal;
+    bid_amount_e8s : nat;
+    bid_time_ns : nat64;
+};
+
+type PromotionStatus = record {
+    config : PromotionConfig;
+    featured : opt FeaturedSlot;
+    min_next_bid_e8s : nat;
+    locked : bool;
+    now_ns : nat64;
+};
+
+type PlaceBidArg = record {
+    app_id : nat32;
+    amount_e8s : nat;
+};
+
+type PlaceBidError = variant {
+    Locked : record { until_ns : nat64 };
+    BelowFloor : record { floor_e8s : nat };
+    BelowIncrement : record { required_e8s : nat };
+    UnknownApp;
+    TransferFailed : text;
+    NotConfigured;
+};
+
+type PlaceBidResult = variant {
+    Ok : FeaturedSlot;
+    Err : PlaceBidError;
 };
 
 service : (opt Conf) -> {
@@ -110,8 +168,15 @@ service : (opt Conf) -> {
     btc_select_user_utxos_fee : (SelectedUtxosFeeRequest) -> (BtcSelectUserUtxosFeeResult);
     store_discovery_app : (DiscoveryVisitRequest) -> ();
     is_unique : (DiscoveryVisitRequest) -> (bool) query;
+    get_my_discovery_apps : () -> (vec UserDiscoveryApp);
     get_discovery_app_paginated : (nat64, nat64) -> (vec DiscoveryApp) query;
     replace_all_discovery_app : (vec DiscoveryApp) -> ();
     clear_discovery_apps : () -> ();
     count_discovery_apps : () -> (nat64) query;
+    set_promotion_config : (PromotionConfig) -> ();
+    get_promotion_status : () -> (PromotionStatus) query;
+    place_bid : (PlaceBidArg) -> (PlaceBidResult);
+    veto_current_featured : () -> ();
+    count_bid_history : () -> (nat64) query;
+    get_bid_history_paginated : (nat64, nat64) -> (vec HistoricalBid) query;
 }
