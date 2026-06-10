@@ -1,5 +1,14 @@
 #!/usr/bin/env -S npx tsx
 import { AdminManager } from "./admin_manager";
+import { PromotionEnv } from "./constants";
+
+function jsonStringify(value: unknown): string {
+    return JSON.stringify(
+        value,
+        (_, v) => (typeof v === "bigint" ? v.toString() : v),
+        2,
+    );
+}
 
 async function run() {
     const adminManager = new AdminManager();
@@ -40,6 +49,26 @@ async function run() {
             await adminManager.enrichNewDiscoveryApps();
             console.log("New discovery apps have been enriched!!!");
             break;
+        case "setPromotionConfig": {
+            const env = process.argv[3] as PromotionEnv;
+            await adminManager.setPromotionConfig(env);
+            console.log(`Promotion config (${env}) has been uploaded!!!`);
+            break;
+        }
+        case "vetoFeatured":
+            await adminManager.vetoFeatured();
+            console.log("Current featured slot has been cleared!!!");
+            break;
+        case "getFeatured": {
+            const status = await adminManager.getPromotionStatus();
+            console.log(jsonStringify(status));
+            break;
+        }
+        case "getBidHistory": {
+            const history = await adminManager.getBidHistory();
+            console.log(jsonStringify(history));
+            break;
+        }
         default:
             console.log("Invalid method");
             break;

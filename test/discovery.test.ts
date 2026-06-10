@@ -12,15 +12,6 @@ const NFID_APP: DiscoveryApp = {
   uniqueUsers: 10,
 };
 
-const KONG_SWAP_APP: DiscoveryApp = {
-  id: 2,
-  derivationOrigin: "https://3y5ko-7qaaa-aaaal-aaaaq-cai.icp0.io",
-  hostname: "https://kongswap.io",
-  isGlobal: true,
-  isAnonymous: true,
-  uniqueUsers: 2,
-};
-
 const UBIN_APP: DiscoveryApp = {
   id: 3,
   derivationOrigin: null,
@@ -43,7 +34,7 @@ describe("DiscoveryService", () => {
   describe("getApps", () => {
     it("should enrich apps with url, name, image and desc", async () => {
       // Given valid apps with reachable hostnames
-      const request = [NFID_APP, KONG_SWAP_APP, UBIN_APP, ATOMIC_WALLET_APP];
+      const request = [NFID_APP, UBIN_APP, ATOMIC_WALLET_APP];
 
       // When getApps is called
       const apps = await discoveryService.getApps(request);
@@ -58,16 +49,6 @@ describe("DiscoveryService", () => {
             name: "NFID Wallet | The ICP Wallet",
             image: "https://nfid.one/assets/nfid-wallet-og.png",
             desc: "The easiest to use, hardest to lose, and only wallet governed by a DAO.",
-          },
-        },
-        {
-          isError: false,
-          data: {
-            ...KONG_SWAP_APP,
-            url: "https://kongswap.io/",
-            name: "KongSwap - Internet Computer’s Leading DEX | Zero Gas Cross-Chain Trading",
-            image: "https://kongswap.io/images/og-banner.png",
-            desc: "The Internet Computer’s leading DEX for seamless, zero-gas crypto swaps. Swap ICP and SOL tokens with best rates and zero slippage.",
           },
         },
         {

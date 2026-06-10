@@ -45,6 +45,11 @@ export const idlFactory = ({ IDL }) => {
         'derivation_origin' : IDL.Opt(IDL.Text),
         'hostname' : IDL.Text,
         'login' : LoginType,
+        'anonymous_principal' : IDL.Opt(IDL.Principal),
+    });
+    const UserDiscoveryApp = IDL.Record({
+        'app_id' : IDL.Nat32,
+        'anonymous_principal' : IDL.Text,
     });
     const DiscoveryApp = IDL.Record({
         'id' : IDL.Nat32,
@@ -58,6 +63,51 @@ export const idlFactory = ({ IDL }) => {
         'is_anonymous' : IDL.Bool,
         'unique_users' : IDL.Nat64,
         'status' : DiscoveryStatus,
+    });
+    const PromotionConfig = IDL.Record({
+        'min_bid_e8s' : IDL.Nat,
+        'bid_increment_e8s' : IDL.Nat,
+        'locked_period_ns' : IDL.Nat64,
+        'feature_duration_ns' : IDL.Nat64,
+        'ledger_canister' : IDL.Principal,
+        'treasury' : IDL.Principal,
+    });
+    const FeaturedSlot = IDL.Record({
+        'app_id' : IDL.Nat32,
+        'bidder' : IDL.Principal,
+        'bid_amount_e8s' : IDL.Nat,
+        'bid_time_ns' : IDL.Nat64,
+        'locked_until_ns' : IDL.Nat64,
+        'expires_at_ns' : IDL.Nat64,
+    });
+    const HistoricalBid = IDL.Record({
+        'app_id' : IDL.Nat32,
+        'bidder' : IDL.Principal,
+        'bid_amount_e8s' : IDL.Nat,
+        'bid_time_ns' : IDL.Nat64,
+    });
+    const PromotionStatus = IDL.Record({
+        'config' : PromotionConfig,
+        'featured' : IDL.Opt(FeaturedSlot),
+        'min_next_bid_e8s' : IDL.Nat,
+        'locked' : IDL.Bool,
+        'now_ns' : IDL.Nat64,
+    });
+    const PlaceBidArg = IDL.Record({
+        'app_id' : IDL.Nat32,
+        'amount_e8s' : IDL.Nat,
+    });
+    const PlaceBidError = IDL.Variant({
+        'Locked' : IDL.Record({ 'until_ns' : IDL.Nat64 }),
+        'BelowFloor' : IDL.Record({ 'floor_e8s' : IDL.Nat }),
+        'BelowIncrement' : IDL.Record({ 'required_e8s' : IDL.Nat }),
+        'UnknownApp' : IDL.Null,
+        'TransferFailed' : IDL.Text,
+        'NotConfigured' : IDL.Null,
+    });
+    const PlaceBidResult = IDL.Variant({
+        'Ok' : FeaturedSlot,
+        'Err' : PlaceBidError,
     });
     return IDL.Service({
         'count_icrc1_canisters' : IDL.Func([], [IDL.Nat64], ['query']),
@@ -76,6 +126,7 @@ export const idlFactory = ({ IDL }) => {
         'store_new_icrc1_canisters' : IDL.Func([IDL.Vec(ICRC1)], [], []),
         'store_discovery_app' : IDL.Func([DiscoveryVisitRequest], [], []),
         'is_unique' : IDL.Func([DiscoveryVisitRequest], [IDL.Bool], ['query']),
+        'get_my_discovery_apps' : IDL.Func([], [IDL.Vec(UserDiscoveryApp)], []),
         'get_discovery_app_paginated' : IDL.Func(
             [IDL.Nat64, IDL.Nat64],
             [IDL.Vec(DiscoveryApp)],
@@ -83,6 +134,17 @@ export const idlFactory = ({ IDL }) => {
         ),
         'replace_all_discovery_app' : IDL.Func([IDL.Vec(DiscoveryApp)], [], []),
         'clear_discovery_apps' : IDL.Func([], [], []),
+        'count_discovery_apps' : IDL.Func([], [IDL.Nat64], ['query']),
+        'set_promotion_config' : IDL.Func([PromotionConfig], [], []),
+        'get_promotion_status' : IDL.Func([], [PromotionStatus], ['query']),
+        'place_bid' : IDL.Func([PlaceBidArg], [PlaceBidResult], []),
+        'veto_current_featured' : IDL.Func([], [], []),
+        'count_bid_history' : IDL.Func([], [IDL.Nat64], ['query']),
+        'get_bid_history_paginated' : IDL.Func(
+            [IDL.Nat64, IDL.Nat64],
+            [IDL.Vec(HistoricalBid)],
+            ['query'],
+        ),
     });
 };
 export const init = ({ IDL }) => {

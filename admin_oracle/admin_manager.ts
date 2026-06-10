@@ -11,8 +11,8 @@ import { parse as csvParse } from "csv-parse/sync";
 import { ICRC1CsvData, DiscoveryAppCsvData } from "./types";
 import { getActor, mapCategory, mapCategoryCSVToCategory } from "./util";
 import { ChainFusionTestnetParser } from "./chain_fusion_testnet";
-import { CANISTER_ID, FILE_PATH, FILE_PATH_NEURON, FILE_PATH_DISCOVERY, KEY_PAIR } from "./constants";
-import { DiscoveryApp } from "../test/idl/icrc1_oracle";
+import { CANISTER_ID, FILE_PATH, FILE_PATH_NEURON, FILE_PATH_DISCOVERY, KEY_PAIR, PROMOTION_CONFIG, PromotionEnv } from "./constants";
+import { DiscoveryApp, HistoricalBid, PromotionStatus } from "../test/idl/icrc1_oracle";
 import { DiscoveryStatus, DiscoveryApp as LocalDiscoveryApp } from "./discovery/types";
 import { discoveryService } from "./discovery/discovery.service";
 import { getMetadata } from "./metadata_service";
@@ -331,7 +331,7 @@ export class AdminManager {
                 hostname: app.hostname,
                 url: app.url,
                 name: app.name,
-                icon: app.image,
+                image: app.image,
                 desc: app.desc,
                 is_global: app.isGlobal.toString(),
                 is_anonymous: app.isAnonymous.toString(),
@@ -349,10 +349,42 @@ export class AdminManager {
             enrichedById.has(Number(r.id)) ? enrichedById.get(Number(r.id))! : r
         );
 
-        const fields = ["id", "derivation_origin", "hostname", "url", "name", "icon", "desc", "is_global", "is_anonymous", "unique_users", "status"];
+        const fields = ["id", "derivation_origin", "hostname", "url", "name", "image", "desc", "is_global", "is_anonymous", "unique_users", "status"];
         const csv = parse(updatedRecords, { fields });
         fs.writeFileSync(FILE_PATH_DISCOVERY, csv);
         console.log(`Enriched ${enrichedById.size} app(s) and saved to ${FILE_PATH_DISCOVERY}. Run uploadDiscoveryCSV to push to canister.`);
+    }
+
+    // ── Promotion ──────────────────────────────────────────────────────
+
+    async setPromotionConfig(env: PromotionEnv): Promise<void> {
+        const config = PROMOTION_CONFIG[env];
+        if (!config) {
+            throw new Error(`Unknown promotion env "${env}". Use "prod" or "dev".`);
+        }
+        await this.actor.set_promotion_config(config);
+    }
+
+    async vetoFeatured(): Promise<void> {
+        await this.actor.veto_current_featured();
+    }
+
+    async getPromotionStatus(): Promise<PromotionStatus> {
+        return (await this.actor.get_promotion_status()) as PromotionStatus;
+    }
+
+    async getBidHistory(pageSize = 100): Promise<HistoricalBid[]> {
+        const total = (await this.actor.count_bid_history()) as bigint;
+        const pages = Math.ceil(Number(total) / pageSize);
+        const all: HistoricalBid[] = [];
+        for (let i = 0; i < pages; i++) {
+            const batch = (await this.actor.get_bid_history_paginated(
+                BigInt(i * pageSize),
+                BigInt(pageSize),
+            )) as HistoricalBid[];
+            all.push(...batch);
+        }
+        return all;
     }
 }
 
