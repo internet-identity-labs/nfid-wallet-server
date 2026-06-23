@@ -289,6 +289,34 @@ describe("Account", () => {
             expect(response.error).empty;
         });
 
+        it("should remove account when called from an access point identity.", async function () {
+            const ownerIdentity = getIdentity("11111111111111111111111111111111");
+            const accessPointIdentity = getIdentity("22222222222222222222222222222222");
+            const ownerActor = await getActor(dfx.im.id, ownerIdentity, imIdl);
+            const accessPointActor = await getActor(dfx.im.id, accessPointIdentity, imIdl);
+
+            await dfx.im.actor.add_email_and_principal_for_create_account_validation("remove-ap@test.test", ownerIdentity.getPrincipal().toText(), 25n);
+            await ownerActor.create_account({
+                access_point: [{ icon: "Icon", device: "Device", pub_key: ownerIdentity.getPrincipal().toText(), browser: "Browser", device_type: { Email: null }, credential_id: [] }],
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: ["remove-ap@test.test"],
+                name: [],
+                challenge_attempt: [],
+            });
+            await ownerActor.create_access_point({ icon: "Icon", device: "Device", pub_key: accessPointIdentity.getPrincipal().toText(), browser: "Browser", device_type: { Recovery: null }, credential_id: [] });
+
+            const removeResponse: BoolHttpResponse = (await accessPointActor.remove_account()) as BoolHttpResponse;
+            expect(removeResponse.status_code).eq(200);
+            expect(removeResponse.data[0]).eq(true);
+            expect(removeResponse.error).empty;
+
+            const getResponse: HTTPAccountResponse = (await ownerActor.get_account()) as HTTPAccountResponse;
+            expect(getResponse.status_code).eq(404);
+            expect(getResponse.data).empty;
+            expect(getResponse.error[0]).eq("Unable to find Account");
+        });
+
         it("should backup and restore account.", async function () {
             let anchorNew = await register(dfx.iit.actor, dfx.user.identity);
             var accountRequest: HTTPAccountRequest = {

@@ -132,11 +132,9 @@ impl AccountRepoTrait for AccountRepo {
     }
 
     fn remove_account(&self) -> Option<Account> {
-        //todo not properly tested, used for e2e tests
-        self.get_account(); //security call
-        let princ = ic_service::get_caller().to_text();
+        let owner_key = self.get_account()?.principal_id;
         PRINCIPAL_INDEX.with(|index| {
-            ACCOUNTS.with(|accounts| match accounts.borrow_mut().remove(&princ) {
+            ACCOUNTS.with(|accounts| match accounts.borrow_mut().remove(&owner_key) {
                 None => None,
                 Some(acc) => {
                     acc.access_points.iter().for_each(|ap| {
