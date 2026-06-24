@@ -139,6 +139,7 @@ impl AccountRepoTrait for AccountRepo {
                 Some(acc) => {
                     acc.access_points.iter().for_each(|ap| {
                         index.borrow_mut().remove(&ap.principal_id);
+                        remove_certify_keys(ap.principal_id.clone());
                     });
                     index.borrow_mut().remove(&acc.principal_id.clone());
                     remove_certify_keys(acc.principal_id.clone());
