@@ -311,15 +311,15 @@ describe("Account", () => {
             expect(removeResponse.data[0]).eq(true);
             expect(removeResponse.error).empty;
 
-            const getOwnerResponse: HTTPAccountResponse = (await ownerActor.get_account()) as HTTPAccountResponse;
-            expect(getOwnerResponse.status_code).eq(404);
-            expect(getOwnerResponse.data).empty;
-            expect(getOwnerResponse.error[0]).eq("Unable to find Account");
+            const ownerResponse: HTTPAccountResponse = (await ownerActor.get_account()) as HTTPAccountResponse;
+            expect(ownerResponse.status_code).eq(404);
+            expect(ownerResponse.data).empty;
+            expect(ownerResponse.error[0]).eq("Unable to find Account");
 
-            const getAccessPointResponse: HTTPAccountResponse = (await accessPointActor.get_account()) as HTTPAccountResponse;
-            expect(getAccessPointResponse.status_code).eq(404);
-            expect(getAccessPointResponse.data).empty;
-            expect(getAccessPointResponse.error[0]).eq("Unable to find Account");
+            const accessPointResponse: HTTPAccountResponse = (await accessPointActor.get_account()) as HTTPAccountResponse;
+            expect(accessPointResponse.status_code).eq(404);
+            expect(accessPointResponse.data).empty;
+            expect(accessPointResponse.error[0]).eq("Unable to find Account");
         });
 
         it("should backup and restore account.", async function () {
