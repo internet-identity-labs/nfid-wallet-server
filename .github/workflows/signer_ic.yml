@@ -25,6 +25,7 @@ env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   CANISTER_NAME: ${{ github.event.inputs.canister_name }}
   CI_DEBUG: 'true'
+  DFX_WARNING: -mainnet_plaintext_identity
 
 jobs:
   build:
