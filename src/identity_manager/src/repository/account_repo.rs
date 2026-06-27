@@ -3,10 +3,10 @@ use crate::ic_service;
 use crate::repository::access_point_repo::AccessPoint;
 use crate::repository::persona_repo::Persona;
 use crate::repository::repo::{is_anchor_exists, BasicEntity, TEMP_KEYS};
+use itertools::Itertools;
 use crate::service::certified_service::{remove_certify_keys, update_certify_keys};
 use candid::{CandidType, Deserialize};
 use ic_cdk::api::time;
-use itertools::Itertools;
 use serde::Serialize;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
@@ -132,21 +132,34 @@ impl AccountRepoTrait for AccountRepo {
     }
 
     fn remove_account(&self) -> Option<Account> {
-        let owner_key = self.get_account()?.principal_id;
+        let acc = self.get_account()?;
         PRINCIPAL_INDEX.with(|index| {
-            ACCOUNTS.with(|accounts| match accounts.borrow_mut().remove(&owner_key) {
-                None => None,
-                Some(acc) => {
-                    acc.access_points.iter().for_each(|ap| {
-                        index.borrow_mut().remove(&ap.principal_id);
-                        remove_certify_keys(ap.principal_id.clone());
-                    });
-                    index.borrow_mut().remove(&acc.principal_id.clone());
-                    remove_certify_keys(acc.principal_id.clone());
-                    Option::from(acc.to_owned())
-                }
-            })
-        })
+            acc.access_points.iter().for_each(|ap| {
+                index.borrow_mut().remove(&ap.principal_id);
+                remove_certify_keys(ap.principal_id.clone());
+            });
+            index.borrow_mut().remove(&acc.principal_id);
+            remove_certify_keys(acc.principal_id.clone());
+        });
+        TEMP_KEYS.with(|keys| {
+            keys.borrow_mut().remove(&acc.principal_id);
+        });
+        ACCOUNTS.with(|accounts| {
+            accounts.borrow_mut().insert(acc.principal_id.clone(), Account {
+                anchor: acc.anchor,
+                principal_id: acc.principal_id.clone(),
+                name: None,
+                phone_number: None,
+                phone_number_sha2: None,
+                personas: vec![],
+                access_points: HashSet::new(),
+                base_fields: acc.base_fields.with_modified_now(),
+                wallet: acc.wallet,
+                is2fa_enabled: false,
+                email: None,
+            });
+        });
+        Some(acc)
     }
 
     fn update_account_index_with_pub_key(&self, additional_principal_id: String, princ: String) {
