@@ -11,6 +11,7 @@ use crate::requests::AccountRequest;
 use crate::response_mapper::{to_error_response, to_success_response, ErrorResponse};
 use crate::service::ic_service;
 use crate::service::ic_service::DeviceData;
+use crate::repository::access_point_repo::AccessPoint;
 use crate::{get_caller, AccessPointServiceTrait, Account, HttpResponse};
 use crate::repository::repo::{CAPTCHA_CAHLLENGES, TEMP_KEYS};
 use super::email_validation_service;
@@ -156,10 +157,20 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             Some(account) => account,
         };
 
-        if account.is2fa_enabled && !is_authorized_for_device_type(&account, &principal, DeviceType::Passkey) {
-            return HttpResponse::error(403, "Unauthorised: passkey required to delete account");
-        } else if !is_authorized_for_device_type(&account, &principal, DeviceType::Recovery) {
-            return HttpResponse::error(403, "Unauthorised: seed phrase required to delete account");
+        if account.is2fa_enabled {
+            match find_access_point(&account, &DeviceType::Passkey) {
+                None => return HttpResponse::error(403, "Unauthorised: no passkey found"),
+                Some(device) if !device.principal_id.eq(&principal) => {
+                    return HttpResponse::error(403, "Unauthorised: passkey required to delete account");
+                }
+                _ => {}
+            }
+        } else {
+            if let Some(device) = find_access_point(&account, &DeviceType::Recovery) {
+                if !device.principal_id.eq(&principal) {
+                    return HttpResponse::error(403, "Unauthorised: seed phrase required to delete account");
+                }
+            }
         }
 
         match self.account_repo.remove_account() {
@@ -262,8 +273,6 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
     }
 }
 
-fn is_authorized_for_device_type(account: &Account, principal: &str, required: DeviceType) -> bool {
-    account.access_points.iter()
-        .find(|ap| ap.device_type.eq(&required))
-        .map_or(true, |device| device.principal_id.eq(principal))
+fn find_access_point<'a>(account: &'a Account, device_type: &DeviceType) -> Option<&'a AccessPoint> {
+    account.access_points.iter().find(|ap| ap.device_type.eq(device_type))
 }
