@@ -808,6 +808,37 @@ describe("Account", () => {
             expect(removeResponse.data[0]).eq(true);
         });
 
+        it("should return 403 no passkey found when 2FA enabled but passkey removed.", async function () {
+            // Given: account with email + passkey + recovery, 2FA enabled, then passkey removed
+            const emailIdentity = getIdentity("0".repeat(30) + "09");
+            const passkeyIdentity = getIdentity("0".repeat(30) + "10");
+            const recoveryIdentity = getIdentity("0".repeat(30) + "11");
+            const emailActor = await getActor(dfx.im!.id, emailIdentity, imIdl);
+            const passkeyActor = await getActor(dfx.im!.id, passkeyIdentity, imIdl);
+            const recoveryActor = await getActor(dfx.im!.id, recoveryIdentity, imIdl);
+
+            await dfx.im!.actor.add_email_and_principal_for_create_account_validation("no-passkey-2fa@test.test", emailIdentity.getPrincipal().toText(), 25n);
+            await emailActor.create_account({
+                access_point: [{ icon: "Icon", device: "Device", pub_key: emailIdentity.getPrincipal().toText(), browser: "Browser", device_type: { Email: null }, credential_id: [] }],
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: ["no-passkey-2fa@test.test"],
+                name: [],
+                challenge_attempt: [],
+            });
+            await emailActor.create_access_point({ icon: "Icon", device: "Passkey", pub_key: passkeyIdentity.getPrincipal().toText(), browser: "", device_type: { Passkey: null }, credential_id: ["pk-cred-3"] });
+            await emailActor.create_access_point({ icon: "document", device: "seedphrase", pub_key: recoveryIdentity.getPrincipal().toText(), browser: "", device_type: { Recovery: null }, credential_id: [] });
+            await emailActor.update_2fa(true);
+
+            // When: passkey removes itself, leaving 2FA enabled with no passkey
+            await passkeyActor.remove_access_point({ pub_key: passkeyIdentity.getPrincipal().toText() });
+
+            // Then: recovery calls remove_account and gets 403 no passkey found
+            const removeResponse: BoolHttpResponse = (await recoveryActor.remove_account()) as BoolHttpResponse;
+            expect(removeResponse.status_code).eq(403);
+            expect(removeResponse.error[0]).contains("Unauthorised: no passkey found");
+        });
+
         it("Not test captcha should fail on create acc attempt", async function () {
             const request = {
                 'env': ["dev2"],
