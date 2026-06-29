@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use ic_cdk::api::time;
-use ic_cdk::trap;
+use ic_cdk::{caller, trap};
 
 use crate::http::requests::{AccountResponse, ChallengeAttempt, DeviceType, WalletVariant};
 use crate::ic_service::KeyType;
@@ -8,8 +8,7 @@ use crate::mapper::access_point_mapper::access_point_request_to_access_point;
 use crate::mapper::account_mapper::{account_request_to_account, account_to_account_response};
 use crate::repository::account_repo::AccountRepoTrait;
 use crate::requests::AccountRequest;
-use crate::response_mapper::to_error_response;
-use crate::response_mapper::to_success_response;
+use crate::response_mapper::{to_error_response, to_success_response, ErrorResponse};
 use crate::service::ic_service;
 use crate::service::ic_service::DeviceData;
 use crate::{get_caller, AccessPointServiceTrait, Account, HttpResponse};
@@ -151,12 +150,24 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
     }
 
     fn remove_account(&mut self) -> HttpResponse<bool> {
-        let result = self.account_repo.remove_account();
-        if result.is_none() {
-            return to_error_response("Unable to remove Account");
+        let principal = caller().to_text();
+        let account = match self.account_repo.get_account() {
+            None => return HttpResponse::error(404, "Unable to remove Account"),
+            Some(account) => account,
+        };
+
+        if account.is2fa_enabled {
+            if !has_principal_for_device_type(&account, &principal, DeviceType::Passkey) {
+                return HttpResponse::error(403, "Unauthorised: passkey required to delete account");
+            }
+        } else if !has_principal_for_device_type(&account, &principal, DeviceType::Recovery) {
+            return HttpResponse::error(403, "Unauthorised: seed phrase required to delete account");
         }
 
-        to_success_response(true)
+        match self.account_repo.remove_account() {
+            None => to_error_response("Unable to remove Account"),
+            Some(_) => to_success_response(true),
+        }
     }
 
     fn get_account_by_anchor(
@@ -251,4 +262,10 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             }
         });
     }
+}
+
+fn has_principal_for_device_type(account: &Account, principal: &str, required: DeviceType) -> bool {
+    account.access_points.iter()
+        .find(|ap| ap.device_type.eq(&required))
+        .map_or(true, |device| device.principal_id.eq(principal))
 }

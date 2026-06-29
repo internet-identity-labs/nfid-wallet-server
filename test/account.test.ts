@@ -704,6 +704,110 @@ describe("Account", () => {
            expect(accThroughCaptcha.status_code).eq(200);
         });
 
+        it("should reject remove_account from email when passkey and 2FA are enabled.", async function () {
+            // Given: account with email AP, passkey AP added, 2FA enabled
+            const emailIdentity = getIdentity("0".repeat(30) + "01");
+            const passkeyIdentity = getIdentity("0".repeat(30) + "02");
+            const emailActor = await getActor(dfx.im!.id, emailIdentity, imIdl);
+
+            await dfx.im!.actor.add_email_and_principal_for_create_account_validation("passkey-delete-fail@test.test", emailIdentity.getPrincipal().toText(), 25n);
+            await emailActor.create_account({
+                access_point: [{ icon: "Icon", device: "Device", pub_key: emailIdentity.getPrincipal().toText(), browser: "Browser", device_type: { Email: null }, credential_id: [] }],
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: ["passkey-delete-fail@test.test"],
+                name: [],
+                challenge_attempt: [],
+            });
+            await emailActor.create_access_point({ icon: "Icon", device: "Passkey", pub_key: passkeyIdentity.getPrincipal().toText(), browser: "", device_type: { Passkey: null }, credential_id: ["pk-cred-1"] });
+            await emailActor.update_2fa(true);
+
+            // When: email calls remove_account
+            const removeResponse: BoolHttpResponse = (await emailActor.remove_account()) as BoolHttpResponse;
+
+            // Then: 403 with passkey required
+            expect(removeResponse.status_code).eq(403);
+            expect(removeResponse.error[0]).contains("Unauthorised: passkey required to delete account");
+        });
+
+        it("should allow remove_account from passkey when passkey and 2FA are enabled.", async function () {
+            // Given: account with email AP, passkey AP added, 2FA enabled
+            const emailIdentity = getIdentity("0".repeat(30) + "03");
+            const passkeyIdentity = getIdentity("0".repeat(30) + "04");
+            const emailActor = await getActor(dfx.im!.id, emailIdentity, imIdl);
+            const passkeyActor = await getActor(dfx.im!.id, passkeyIdentity, imIdl);
+
+            await dfx.im!.actor.add_email_and_principal_for_create_account_validation("passkey-delete-ok@test.test", emailIdentity.getPrincipal().toText(), 25n);
+            await emailActor.create_account({
+                access_point: [{ icon: "Icon", device: "Device", pub_key: emailIdentity.getPrincipal().toText(), browser: "Browser", device_type: { Email: null }, credential_id: [] }],
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: ["passkey-delete-ok@test.test"],
+                name: [],
+                challenge_attempt: [],
+            });
+            await emailActor.create_access_point({ icon: "Icon", device: "Passkey", pub_key: passkeyIdentity.getPrincipal().toText(), browser: "", device_type: { Passkey: null }, credential_id: ["pk-cred-2"] });
+            await emailActor.update_2fa(true);
+
+            // When: passkey calls remove_account
+            const removeResponse: BoolHttpResponse = (await passkeyActor.remove_account()) as BoolHttpResponse;
+
+            // Then: status 200
+            expect(removeResponse.status_code).eq(200);
+            expect(removeResponse.data[0]).eq(true);
+        });
+
+        it("should reject remove_account from email when seed phrase exists.", async function () {
+            // Given: account with email AP and a Recovery AP added
+            const emailIdentity = getIdentity("0".repeat(30) + "05");
+            const recoveryIdentity = getIdentity("0".repeat(30) + "06");
+            const emailActor = await getActor(dfx.im!.id, emailIdentity, imIdl);
+
+            await dfx.im!.actor.add_email_and_principal_for_create_account_validation("recovery-delete-fail@test.test", emailIdentity.getPrincipal().toText(), 25n);
+            await emailActor.create_account({
+                access_point: [{ icon: "Icon", device: "Device", pub_key: emailIdentity.getPrincipal().toText(), browser: "Browser", device_type: { Email: null }, credential_id: [] }],
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: ["recovery-delete-fail@test.test"],
+                name: [],
+                challenge_attempt: [],
+            });
+            await emailActor.create_access_point({ icon: "document", device: "seedphrase", pub_key: recoveryIdentity.getPrincipal().toText(), browser: "", device_type: { Recovery: null }, credential_id: [] });
+
+            // When: email calls remove_account
+            const removeResponse: BoolHttpResponse = (await emailActor.remove_account()) as BoolHttpResponse;
+
+            // Then: 403 with seed phrase required
+            expect(removeResponse.status_code).eq(403);
+            expect(removeResponse.error[0]).contains("Unauthorised: seed phrase required to delete account");
+        });
+
+        it("should allow remove_account from recovery when seed phrase exists.", async function () {
+            // Given: account with email AP and a Recovery AP added
+            const emailIdentity = getIdentity("0".repeat(30) + "07");
+            const recoveryIdentity = getIdentity("0".repeat(30) + "08");
+            const emailActor = await getActor(dfx.im!.id, emailIdentity, imIdl);
+            const recoveryActor = await getActor(dfx.im!.id, recoveryIdentity, imIdl);
+
+            await dfx.im!.actor.add_email_and_principal_for_create_account_validation("recovery-delete-ok@test.test", emailIdentity.getPrincipal().toText(), 25n);
+            await emailActor.create_account({
+                access_point: [{ icon: "Icon", device: "Device", pub_key: emailIdentity.getPrincipal().toText(), browser: "Browser", device_type: { Email: null }, credential_id: [] }],
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: ["recovery-delete-ok@test.test"],
+                name: [],
+                challenge_attempt: [],
+            });
+            await emailActor.create_access_point({ icon: "document", device: "seedphrase", pub_key: recoveryIdentity.getPrincipal().toText(), browser: "", device_type: { Recovery: null }, credential_id: [] });
+
+            // When: recovery calls remove_account
+            const removeResponse: BoolHttpResponse = (await recoveryActor.remove_account()) as BoolHttpResponse;
+
+            // Then: status 200
+            expect(removeResponse.status_code).eq(200);
+            expect(removeResponse.data[0]).eq(true);
+        });
+
         it("Not test captcha should fail on create acc attempt", async function () {
             const request = {
                 'env': ["dev2"],
@@ -723,10 +827,10 @@ describe("Account", () => {
                 'test_captcha': [false],
                 'max_free_captcha_per_minute': [0],
             } as ConfigurationRequest;
-            await dfx.im.actor.configure(request);
+            await dfx.im!.actor.configure(request);
 
             const tempIdentity = Ed25519KeyIdentity.generate();
-            let actor = await getActor(dfx.im.id, tempIdentity, imIdl);
+            let actor = await getActor(dfx.im!.id, tempIdentity, imIdl);
             const deviceIdentity = Ed25519KeyIdentity.generate();
 
             const dd: AccessPointRequest = {
@@ -758,8 +862,8 @@ describe("Account", () => {
             try {
                 await actor.create_account(accountRequest) as HTTPAccountResponse;
                 fail("Should fail");
-            } catch (e) {
-                expect(e.message).contains("Incorrect captcha solution");
+            } catch (error) {
+                expect((error as any).message).contains("Incorrect captcha solution");
             }
 
             accountRequest = {
@@ -777,8 +881,8 @@ describe("Account", () => {
             try {
                 await actor.create_account(accountRequest) as HTTPAccountResponse;
                 fail("Should fail");
-            } catch (e) {
-                expect(e.message).contains("Solution is required");
+            } catch (error) {
+                expect((error as any).message).contains("Solution is required");
             }
 
             accountRequest = {
@@ -796,8 +900,8 @@ describe("Account", () => {
             try {
                 await actor.create_account(accountRequest) as HTTPAccountResponse;
                 fail("Should fail");
-            } catch (e) {
-                expect(e.message).contains("Incorrect captcha key");
+            } catch (error) {
+                expect((error as any).message).contains("Incorrect captcha key");
             }
         });
     });
