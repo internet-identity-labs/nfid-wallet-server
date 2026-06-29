@@ -156,11 +156,9 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
             Some(account) => account,
         };
 
-        if account.is2fa_enabled {
-            if !has_principal_for_device_type(&account, &principal, DeviceType::Passkey) {
-                return HttpResponse::error(403, "Unauthorised: passkey required to delete account");
-            }
-        } else if !has_principal_for_device_type(&account, &principal, DeviceType::Recovery) {
+        if account.is2fa_enabled && !is_authorized_for_device_type(&account, &principal, DeviceType::Passkey) {
+            return HttpResponse::error(403, "Unauthorised: passkey required to delete account");
+        } else if !is_authorized_for_device_type(&account, &principal, DeviceType::Recovery) {
             return HttpResponse::error(403, "Unauthorised: seed phrase required to delete account");
         }
 
@@ -264,7 +262,7 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
     }
 }
 
-fn has_principal_for_device_type(account: &Account, principal: &str, required: DeviceType) -> bool {
+fn is_authorized_for_device_type(account: &Account, principal: &str, required: DeviceType) -> bool {
     account.access_points.iter()
         .find(|ap| ap.device_type.eq(&required))
         .map_or(true, |device| device.principal_id.eq(principal))
