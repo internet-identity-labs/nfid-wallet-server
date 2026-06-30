@@ -47,14 +47,13 @@ describe("Account", () => {
             expect(DFX.CREATE_ACCOUNT_FULL()).eq(Expected.ERROR("Impossible to link this II anchor, please try another one.", "404"));
         });
 
-        it("should remove account and create new one.", async function () {
+        it("should remove account and block re-registration with same anchor.", async function () {
             expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.BOOL("true", "200"));
             expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.ERROR("Unable to remove Account", "404"));
-            expect(DFX.CREATE_ACCOUNT_2()).eq(Expected.ACCOUNT("null", dfx.root));
+            expect(DFX.CREATE_ACCOUNT_2()).eq(Expected.ERROR("Impossible to link this II anchor, please try another one.", "404"));
         });
 
-        it("should remove account and create new one with email and receive an error.", async function () {
-            expect(DFX.REMOVE_ACCOUNT("identity_manager")).eq(Expected.BOOL("true", "200"));
+        it("should create new account with email and receive a validation error.", async function () {
             expect(DFX.CREATE_ACCOUNT_WITH_EMAIL("12345", 'opt "test@test.test"')).contains("Email and principal are not valid.");
         });
     });
@@ -282,11 +281,99 @@ describe("Account", () => {
         });
 
 
-        it("should remove account.", async function () {
-            var response: BoolHttpResponse = (await dfx.im.actor.remove_account()) as BoolHttpResponse;
-            expect(response.status_code).eq(200);
-            expect(response.data[0]).eq(true);
-            expect(response.error).empty;
+        it("should remove account and verify it is no longer accessible.", async function () {
+            // Given: NFID account created in previous test
+            const identity = getIdentity("87654321876543218765432187654311");
+            const actor = await getActor(dfx.im.id, identity, imIdl);
+
+            // When: account is removed
+            const removeResponse: BoolHttpResponse = (await actor.remove_account()) as BoolHttpResponse;
+            expect(removeResponse.status_code).eq(200);
+            expect(removeResponse.data[0]).eq(true);
+            expect(removeResponse.error).empty;
+
+            // Then: get_account and re-removal both return generic 404
+            const getResponse: HTTPAccountResponse = (await actor.get_account()) as HTTPAccountResponse;
+            expect(getResponse.status_code).eq(404);
+            expect(getResponse.data).empty;
+            expect(getResponse.error[0]).eq("Unable to find Account");
+
+            const removeAgainResponse: BoolHttpResponse = (await actor.remove_account()) as BoolHttpResponse;
+            expect(removeAgainResponse.status_code).eq(404);
+            expect(removeAgainResponse.error[0]).eq("Unable to remove Account");
+        });
+
+        it("should remove account when called from an access point identity.", async function () {
+            // Given: account with owner and access point created
+            const ownerIdentity = getIdentity("11111111111111111111111111111111");
+            const accessPointIdentity = getIdentity("22222222222222222222222222222222");
+            const ownerActor = await getActor(dfx.im.id, ownerIdentity, imIdl);
+            const accessPointActor = await getActor(dfx.im.id, accessPointIdentity, imIdl);
+
+            await dfx.im.actor.add_email_and_principal_for_create_account_validation("remove-ap@test.test", ownerIdentity.getPrincipal().toText(), 25n);
+            await ownerActor.create_account({
+                access_point: [{ icon: "Icon", device: "Device", pub_key: ownerIdentity.getPrincipal().toText(), browser: "Browser", device_type: { Email: null }, credential_id: [] }],
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: ["remove-ap@test.test"],
+                name: [],
+                challenge_attempt: [],
+            });
+            await ownerActor.create_access_point({ icon: "Icon", device: "Device", pub_key: accessPointIdentity.getPrincipal().toText(), browser: "Browser", device_type: { Recovery: null }, credential_id: [] });
+
+            // When: access point identity triggers removal
+            const removeResponse: BoolHttpResponse = (await accessPointActor.remove_account()) as BoolHttpResponse;
+            expect(removeResponse.status_code).eq(200);
+            expect(removeResponse.data[0]).eq(true);
+            expect(removeResponse.error).empty;
+
+            // Then: both owner and access point get generic 404
+            const ownerResponse: HTTPAccountResponse = (await ownerActor.get_account()) as HTTPAccountResponse;
+            expect(ownerResponse.status_code).eq(404);
+            expect(ownerResponse.data).empty;
+            expect(ownerResponse.error[0]).eq("Unable to find Account");
+
+            const accessPointResponse: HTTPAccountResponse = (await accessPointActor.get_account()) as HTTPAccountResponse;
+            expect(accessPointResponse.status_code).eq(404);
+            expect(accessPointResponse.data).empty;
+            expect(accessPointResponse.error[0]).eq("Unable to find Account");
+        });
+
+        it("should not reuse NFID anchor after account deletion.", async function () {
+            // Given: first NFID account created and then soft-deleted
+            const firstIdentity = getIdentity("33333333333333333333333333333333");
+            const secondIdentity = getIdentity("44444444444444444444444444444444");
+            const firstActor = await getActor(dfx.im.id, firstIdentity, imIdl);
+            const secondActor = await getActor(dfx.im.id, secondIdentity, imIdl);
+
+            await dfx.im.actor.add_email_and_principal_for_create_account_validation("first-anchor@test.test", firstIdentity.getPrincipal().toText(), 25n);
+            const firstCreate: HTTPAccountResponse = (await firstActor.create_account({
+                access_point: [{ icon: "Icon", device: "Device", pub_key: firstIdentity.getPrincipal().toText(), browser: "Browser", device_type: { Email: null }, credential_id: [] }],
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: ["first-anchor@test.test"],
+                name: [],
+                challenge_attempt: [],
+            })) as HTTPAccountResponse;
+            const firstAnchor = firstCreate.data[0].anchor;
+
+            // When: first account deleted, second account created
+            await firstActor.remove_account();
+
+            await dfx.im.actor.add_email_and_principal_for_create_account_validation("second-anchor@test.test", secondIdentity.getPrincipal().toText(), 25n);
+            const secondCreate: HTTPAccountResponse = (await secondActor.create_account({
+                access_point: [{ icon: "Icon", device: "Device", pub_key: secondIdentity.getPrincipal().toText(), browser: "Browser", device_type: { Email: null }, credential_id: [] }],
+                wallet: [{ NFID: null }],
+                anchor: 0n,
+                email: ["second-anchor@test.test"],
+                name: [],
+                challenge_attempt: [],
+            })) as HTTPAccountResponse;
+            const secondAnchor = secondCreate.data[0].anchor;
+
+            // Then: second anchor is strictly incremented, not recycled
+            expect(secondAnchor).not.eq(firstAnchor);
+            expect(secondAnchor).eq(firstAnchor + 1n);
         });
 
         it("should backup and restore account.", async function () {

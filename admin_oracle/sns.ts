@@ -8,25 +8,40 @@ export class SnsParser {
         let isRequestNeeded = true
         let data = []
         while (isRequestNeeded) {
-            const response = await fetch(
-                `https://3r4gx-wqaaa-aaaaq-aaaia-cai.icp0.io/v1/sns/list/page/${page}/slow.json`
-            );
+            const url = `https://3r4gx-wqaaa-aaaaq-aaaia-cai.icp0.io/v1/sns/list/page/${page}/slow.json`;
+            console.log(`[sns] fetching page ${page}: ${url}`);
+            const response = await fetch(url);
+            console.log(`[sns] page ${page} status: ${response.status}`);
+            if (!response.ok) {
+                console.log(`[sns] page ${page} non-OK status, stopping pagination`);
+                isRequestNeeded = false;
+                page = page + 1;
+                continue;
+            }
             const generalCanisterInfos = await response.json() as any;
+            console.log(`[sns] page ${page} items: ${generalCanisterInfos?.length ?? 0}`);
             page = page + 1
-            if (!generalCanisterInfos || generalCanisterInfos.length === 0) {
+            if (!Array.isArray(generalCanisterInfos) || generalCanisterInfos.length === 0) {
                 isRequestNeeded = false
             } else {
                 data = data.concat(generalCanisterInfos)
             }
         }
-        const canisterPromises = data.map((l) => {
+        console.log(`[sns] total SNS entries: ${data.length}, starting canister detail fetch`);
+        const canisterPromises = data.map((l, i) => {
             if (l.derived_state.sns_tokens_per_icp === 0) {
                 return undefined
             }
-            return fetch(`https://sns-api.internetcomputer.org/api/v1/snses/${l.canister_ids.root_canister_id}`)
-                .then((a) => a.json())
+            const detailUrl = `https://sns-api.internetcomputer.org/api/v1/snses/${l.canister_ids.root_canister_id}`;
+            console.log(`[sns] [${i}] fetching canister detail: ${l.canister_ids.root_canister_id}`);
+            return fetch(detailUrl)
+                .then((a) => {
+                    console.log(`[sns] [${i}] canister detail status: ${a.status}`);
+                    return a.json();
+                })
                 .then((c: CanisterObject) => {
                     if (c.enabled === false) {
+                        console.log(`[sns] [${i}] canister disabled, skipping`);
                         return undefined
                     }
                     let can: ICRC1 = {
@@ -41,10 +56,18 @@ export class SnsParser {
                         root_canister_id: [l.canister_ids.root_canister_id],
                         date_added: BigInt(Date.now())
                     }
+                    console.log(`[sns] [${i}] parsed: ${can.symbol} (${can.ledger})`);
                     return can
+                })
+                .catch((e) => {
+                    console.error(`[sns] [${i}] failed to fetch ${l.canister_ids.root_canister_id}:`, e.message);
+                    return undefined;
                 });
         });
+        console.log(`[sns] waiting for ${canisterPromises.filter(Boolean).length} canister detail requests`);
         const canisters = await Promise.all(canisterPromises.filter((c) => c !== undefined)) as ICRC1[];
-        return canisters.filter((c) => c !== undefined) as ICRC1[];
+        const result = canisters.filter((c) => c !== undefined) as ICRC1[];
+        console.log(`[sns] done, total canisters: ${result.length}`);
+        return result;
     }
 }

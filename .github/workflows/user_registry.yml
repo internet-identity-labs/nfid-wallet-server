@@ -25,6 +25,7 @@ env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   CANISTER_NAME: ${{ github.event.inputs.canister_name }}
   CI_DEBUG: 'true'
+  DFX_WARNING: -mainnet_plaintext_identity
   RELEASE_TAG_REGEX: '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
 
 jobs:
@@ -38,10 +39,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
@@ -64,7 +65,7 @@ jobs:
           cache: true
 
       - name: Cache Maven packages
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/repository
           key: maven-canisters
@@ -179,10 +180,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
@@ -402,10 +403,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: internet-identity-labs/ci_libs
           ref: main
