@@ -43,6 +43,31 @@ impl PartialEq for ICRC1 {
     }
 }
 
+/// A vault canister created by the user through the vault manager.
+///
+/// Neither the vault nor the manager knows which user a vault belongs to: the vault
+/// is controlled by itself and the manager only records the payment. The association
+/// is kept here so a user can find their vaults from any device.
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug, Eq)]
+pub struct VaultCanister {
+    pub canister_id: String,
+    pub name: String,
+    pub created_at: u64,
+}
+
+/// A canister belongs to the set once, no matter how it was named.
+impl Hash for VaultCanister {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.canister_id.hash(state);
+    }
+}
+
+impl PartialEq for VaultCanister {
+    fn eq(&self, other: &Self) -> bool {
+        self.canister_id == other.canister_id
+    }
+}
+
 const DEFAULT_ADDRESS_BOOK_CONFIG: AddressBookConf = AddressBookConf {
     max_user_addresses: 50,
     max_name_length: 200,
@@ -53,6 +78,7 @@ thread_local! {
         im_canister: None
     }) };
     pub static ICRC_REGISTRY: RefCell<HashMap<String, HashSet<ICRC1>>> = RefCell::new(HashMap::default());
+    pub static VAULT_REGISTRY: RefCell<HashMap<String, HashSet<VaultCanister>>> = RefCell::new(HashMap::default());
 
     pub(crate) static ADDRESS_BOOK: RefCell<HashMap<String, AddressBookUser>> = RefCell::new(HashMap::default());
     pub(crate) static ADDRESS_BOOK_CONFIG: RefCell<AddressBookConf> = const { RefCell::new(DEFAULT_ADDRESS_BOOK_CONFIG) };
@@ -86,6 +112,34 @@ pub async fn remove_icrc1_canister(ledger_id: String, network: Option<u32>) {
             canisters.retain(|existing_canister| !(existing_canister.ledger == ledger_id && existing_canister.network == network.unwrap_or(0)));
         }
     });
+}
+
+/// Records a vault canister for the calling user. Storing the same canister again
+/// replaces the entry, which is how a vault gets renamed.
+#[update]
+pub async fn add_vault_canister(canister_id: String, name: String) {
+    let root = get_root_id().await;
+    VAULT_REGISTRY.with(|registry| {
+        let mut registry = registry.borrow_mut();
+        let vaults = registry.entry(root).or_insert_with(HashSet::new);
+        let created_at = vaults
+            .iter()
+            .find(|vault| vault.canister_id == canister_id)
+            .map(|vault| vault.created_at)
+            .unwrap_or_else(ic_cdk::api::time);
+        vaults.retain(|vault| vault.canister_id != canister_id);
+        vaults.insert(VaultCanister { canister_id, name, created_at });
+    });
+}
+
+/// Returns all vault canisters recorded for the calling user.
+#[query(composite = true)]
+pub async fn get_all_vault_canisters() -> Vec<VaultCanister> {
+    let root = get_root_id().await;
+    VAULT_REGISTRY.with(|registry| {
+        registry.borrow().get(&root).cloned().unwrap_or_default()
+            .into_iter().collect()
+    })
 }
 
 /// Invoked when the canister starts.
@@ -153,6 +207,7 @@ struct Memory {
     config: Conf,
     address_book: Option<HashMap<String, AddressBookUser>>,
     address_book_config: Option<AddressBookConf>,
+    vaults: Option<HashMap<String, HashSet<VaultCanister>>>,
 }
 
 /// Applies changes before the canister upgrade.
@@ -168,6 +223,7 @@ pub fn stable_save() {
     });
     let address_book = ADDRESS_BOOK.with(|book| book.borrow().clone());
     let address_book_config = ADDRESS_BOOK_CONFIG.with(|c| c.borrow().clone());
+    let vaults = VAULT_REGISTRY.with(|registry| registry.borrow().clone());
 
     let registry: HashMap<String, HashSet<ICRC1Memory>> = registry.into_iter().map(|(k, v)| (k, v.into_iter().map(|x| ICRC1Memory {
         state: x.state,
@@ -179,6 +235,7 @@ pub fn stable_save() {
         config,
         address_book: Some(address_book),
         address_book_config: Some(address_book_config),
+        vaults: Some(vaults),
     };
     storage::stable_save((mem,)).expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
@@ -189,7 +246,7 @@ pub fn stable_restore() {
     let (mem, ): (Memory, ) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
 
-    let Memory { config, registry, address_book, address_book_config } = mem;
+    let Memory { config, registry, address_book, address_book_config, vaults } = mem;
 
     CONFIG.with(|c| {
         *c.borrow_mut() = config.clone();
@@ -207,6 +264,9 @@ pub fn stable_restore() {
     });
     ADDRESS_BOOK_CONFIG.with(|c| {
         *c.borrow_mut() = address_book_config.unwrap_or(DEFAULT_ADDRESS_BOOK_CONFIG);
+    });
+    VAULT_REGISTRY.with(|registry| {
+        *registry.borrow_mut() = vaults.unwrap_or_default();
     });
 }
 

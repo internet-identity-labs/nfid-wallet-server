@@ -13,6 +13,12 @@ type ICRC1State = variant {
     Active
 };
 
+type VaultCanister = record {
+    canister_id : text;
+    name : text;
+    created_at : nat64
+};
+
 type AddressBookAddressType = variant {
     IcpAddress;
     IcpPrincipal;
@@ -49,6 +55,9 @@ service : (Conf) -> {
     get_canisters_by_root : (text) -> (vec ICRC1) query;
     remove_icrc1_canister : (text, opt nat32) -> ();
     store_icrc1_canister : (text, ICRC1State, opt nat32) -> ();
+
+    add_vault_canister : (text, text) -> ();
+    get_all_vault_canisters : () -> (vec VaultCanister) composite_query;
 
     address_book_save : (AddressBookUserAddress) -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError });
     address_book_delete : (text) -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError });

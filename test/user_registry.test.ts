@@ -40,6 +40,40 @@ describe("User Registry", () => {
         })
     });
 
+    describe("Vault canister Storage", () => {
+        let vault_id = "vault1";
+        let one_more_vault_id = "vault2";
+
+        it("Store/retrieve vault canisters", async function () {
+            await dfx.user_registry.actor.add_vault_canister(vault_id, "First vault");
+            await dfx.user_registry.actor.add_vault_canister(one_more_vault_id, "Second vault");
+
+            let vaults = await dfx.user_registry.actor.get_all_vault_canisters();
+            expect(vaults.length).eq(2);
+            expect(vaults.find((v) => v.canister_id === vault_id)?.name).eq("First vault");
+            expect(vaults.find((v) => v.canister_id === one_more_vault_id)?.name).eq("Second vault");
+            expect(vaults.find((v) => v.canister_id === vault_id)?.created_at).gt(0n);
+        })
+
+        it("Rename keeps one entry and the original creation time", async function () {
+            const before = await dfx.user_registry.actor.get_all_vault_canisters();
+            const created_at = before.find((v) => v.canister_id === vault_id).created_at;
+
+            await dfx.user_registry.actor.add_vault_canister(vault_id, "Renamed vault");
+
+            const vaults = await dfx.user_registry.actor.get_all_vault_canisters();
+            expect(vaults.length).eq(2);
+            expect(vaults.find((v) => v.canister_id === vault_id).name).eq("Renamed vault");
+            expect(vaults.find((v) => v.canister_id === vault_id).created_at).eq(created_at);
+        })
+
+        it("Vaults are not shared between users", async function () {
+            const other = await getTypedActor<UserRegistry>(dfx.user_registry.id, getIdentity("87654321876543218765432187654322"), userRegistryIdl);
+            const vaults = await other.get_all_vault_canisters();
+            expect(vaults.length).eq(0);
+        })
+    });
+
     describe("Address Book", () => {
 
         before(async () => {
