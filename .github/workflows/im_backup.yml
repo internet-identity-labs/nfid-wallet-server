@@ -36,6 +36,7 @@ env:
   TOTAL_ACCOUNTS: ${{ github.event.inputs.total_accounts }}
   BATCH_SIZE: ${{ github.event.inputs.batch_size }}
   CI_DEBUG: 'true'
+  DFX_WARNING: -mainnet_plaintext_identity
 
 jobs:
   backup:
@@ -48,10 +49,10 @@ jobs:
 
     steps:
       - name: Checkout nfid-wallet-server repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Checkout ci_libs repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: internet-identity-labs/ci_libs
           ref: main

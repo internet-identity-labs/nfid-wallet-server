@@ -77,6 +77,12 @@ impl BasicEntity {
         self.modified_date = ic_service::get_time();
         self.modified_date
     }
+    pub fn with_modified_now(self) -> BasicEntity {
+        BasicEntity {
+            created_date: self.created_date,
+            modified_date: ic_service::get_time(),
+        }
+    }
     pub fn new() -> BasicEntity {
         BasicEntity {
             created_date: ic_service::get_time(),
