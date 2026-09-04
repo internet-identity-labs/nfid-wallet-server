@@ -259,7 +259,7 @@ async fn get_account_by_anchor(
         None => WalletVariant::InternetIdentity,
         Some(x) => x,
     };
-    
+
     account_service.get_account_by_anchor(anchor, wv)
 }
 
@@ -295,7 +295,7 @@ async fn add_email_and_principal_for_create_account_validation(
 #[operator]
 async fn get_account_by_principal(princ: String) -> HttpResponse<AccountResponse> {
     let mut account_service = get_account_service();
-    
+
     account_service.get_account_by_principal(princ)
 }
 
@@ -336,11 +336,10 @@ async fn get_account() -> HttpResponse<AccountResponse> {
 }
 
 /// Removes the user account associated with the caller.
-/// Two-factor authentication (2FA) is required if enabled (via passkey).
-/// This method is deprecated as the flow is no longer in use.
+/// If the account has a passkey with 2FA enabled, the caller must use a passkey access point.
+/// Otherwise, if a seed phrase (recovery) access point exists, the caller must use it.
+/// If neither condition applies, any access point is allowed.
 #[update]
-#[two_f_a]
-#[deprecated()]
 async fn remove_account() -> HttpResponse<bool> {
     let mut account_service = get_account_service();
     account_service.remove_account()
