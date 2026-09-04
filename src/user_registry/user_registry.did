@@ -56,7 +56,7 @@ service : (Conf) -> {
     remove_icrc1_canister : (text, opt nat32) -> ();
     store_icrc1_canister : (text, ICRC1State, opt nat32) -> ();
 
-    add_vault_canister : (text, text) -> ();
+    add_vault_canister : (text, text, text) -> ();
     get_all_vault_canisters : () -> (vec VaultCanister) composite_query;
 
     address_book_save : (AddressBookUserAddress) -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError });

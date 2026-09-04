@@ -47,7 +47,7 @@ export const idlFactory = ({ IDL }) => {
         'created_at' : IDL.Nat64,
     });
     return IDL.Service({
-        'add_vault_canister' : IDL.Func([IDL.Text, IDL.Text], [], []),
+        'add_vault_canister' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [], []),
         'get_all_vault_canisters' : IDL.Func([], [IDL.Vec(VaultCanister)], ['composite_query']),
         'address_book_delete' : IDL.Func([IDL.Text], [Result_1], []),
         'address_book_delete_all' : IDL.Func([], [Result], []),

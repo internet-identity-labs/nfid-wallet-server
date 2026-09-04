@@ -79,6 +79,10 @@ thread_local! {
     }) };
     pub static ICRC_REGISTRY: RefCell<HashMap<String, HashSet<ICRC1>>> = RefCell::new(HashMap::default());
     pub static VAULT_REGISTRY: RefCell<HashMap<String, HashSet<VaultCanister>>> = RefCell::new(HashMap::default());
+    /// Global principal -> user root. A vault is paid for and controlled by the
+    /// user global principal, which is not an access point and therefore unknown to
+    /// the identity manager, so it is indexed here to answer with the same list.
+    pub static VAULT_PRINCIPALS: RefCell<HashMap<String, String>> = RefCell::new(HashMap::default());
 
     pub(crate) static ADDRESS_BOOK: RefCell<HashMap<String, AddressBookUser>> = RefCell::new(HashMap::default());
     pub(crate) static ADDRESS_BOOK_CONFIG: RefCell<AddressBookConf> = const { RefCell::new(DEFAULT_ADDRESS_BOOK_CONFIG) };
@@ -116,12 +120,18 @@ pub async fn remove_icrc1_canister(ledger_id: String, network: Option<u32>) {
 
 /// Records a vault canister for the calling user. Storing the same canister again
 /// replaces the entry, which is how a vault gets renamed.
+///
+/// `global_principal` is the principal that controls the vault. It is registered
+/// alongside so that the list can be read with either identity.
 #[update]
-pub async fn add_vault_canister(canister_id: String, name: String) {
-    let root = get_root_id().await;
+pub async fn add_vault_canister(canister_id: String, name: String, global_principal: String) {
+    let root = resolve_vault_root().await;
+    VAULT_PRINCIPALS.with(|principals| {
+        principals.borrow_mut().insert(global_principal, root.clone());
+    });
     VAULT_REGISTRY.with(|registry| {
         let mut registry = registry.borrow_mut();
-        let vaults = registry.entry(root).or_insert_with(HashSet::new);
+        let vaults = registry.entry(root.clone()).or_insert_with(HashSet::new);
         let created_at = vaults
             .iter()
             .find(|vault| vault.canister_id == canister_id)
@@ -132,10 +142,11 @@ pub async fn add_vault_canister(canister_id: String, name: String) {
     });
 }
 
-/// Returns all vault canisters recorded for the calling user.
+/// Returns all vault canisters recorded for the calling user, whether the call is
+/// signed by a device identity or by the global principal that owns the vaults.
 #[query(composite = true)]
 pub async fn get_all_vault_canisters() -> Vec<VaultCanister> {
-    let root = get_root_id().await;
+    let root = resolve_vault_root().await;
     VAULT_REGISTRY.with(|registry| {
         registry.borrow().get(&root).cloned().unwrap_or_default()
             .into_iter().collect()
@@ -208,6 +219,7 @@ struct Memory {
     address_book: Option<HashMap<String, AddressBookUser>>,
     address_book_config: Option<AddressBookConf>,
     vaults: Option<HashMap<String, HashSet<VaultCanister>>>,
+    vault_principals: Option<HashMap<String, String>>,
 }
 
 /// Applies changes before the canister upgrade.
@@ -224,6 +236,7 @@ pub fn stable_save() {
     let address_book = ADDRESS_BOOK.with(|book| book.borrow().clone());
     let address_book_config = ADDRESS_BOOK_CONFIG.with(|c| c.borrow().clone());
     let vaults = VAULT_REGISTRY.with(|registry| registry.borrow().clone());
+    let vault_principals = VAULT_PRINCIPALS.with(|p| p.borrow().clone());
 
     let registry: HashMap<String, HashSet<ICRC1Memory>> = registry.into_iter().map(|(k, v)| (k, v.into_iter().map(|x| ICRC1Memory {
         state: x.state,
@@ -236,6 +249,7 @@ pub fn stable_save() {
         address_book: Some(address_book),
         address_book_config: Some(address_book_config),
         vaults: Some(vaults),
+        vault_principals: Some(vault_principals),
     };
     storage::stable_save((mem,)).expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
@@ -246,7 +260,7 @@ pub fn stable_restore() {
     let (mem, ): (Memory, ) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
 
-    let Memory { config, registry, address_book, address_book_config, vaults } = mem;
+    let Memory { config, registry, address_book, address_book_config, vaults, vault_principals } = mem;
 
     CONFIG.with(|c| {
         *c.borrow_mut() = config.clone();
@@ -268,6 +282,9 @@ pub fn stable_restore() {
     VAULT_REGISTRY.with(|registry| {
         *registry.borrow_mut() = vaults.unwrap_or_default();
     });
+    VAULT_PRINCIPALS.with(|principals| {
+        *principals.borrow_mut() = vault_principals.unwrap_or_default();
+    });
 }
 
 
@@ -280,6 +297,20 @@ fn export_candid() -> String {
     __export_service()
 }
 
+
+/// User root behind the caller, which may be a device identity known to the identity
+/// manager or a global principal registered with a vault.
+///
+/// The index is checked first: it costs no inter-canister call, and a global principal
+/// has no access point, so asking the identity manager about one would trap.
+async fn resolve_vault_root() -> String {
+    let caller = caller().to_text();
+    let indexed = VAULT_PRINCIPALS.with(|p| p.borrow().get(&caller).cloned());
+    match indexed {
+        Some(root) => root,
+        None => get_root_id().await,
+    }
+}
 
 async fn get_root_id() -> String {
     match CONFIG.with(|c| c.borrow_mut().im_canister.clone()) {
