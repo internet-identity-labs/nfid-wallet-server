@@ -56,8 +56,8 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <ic4j.version>0.8.0</ic4j.version>
-        <slf4j.version>2.0.18</slf4j.version>
-        <lombok.version>1.18.46</lombok.version>
+        <slf4j.version>2.0.19</slf4j.version>
+        <lombok.version>1.18.48</lombok.version>
     </properties>
 
     <build>
@@ -65,7 +65,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.15.0</version>
+                <version>3.16.0</version>
                 <configuration>
                     <annotationProcessorPaths>
                         <path>
