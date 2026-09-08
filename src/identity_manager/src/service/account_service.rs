@@ -21,6 +21,7 @@ pub trait AccountServiceTrait {
     fn get_account_response(&mut self) -> HttpResponse<AccountResponse>;
     fn get_account(&mut self) -> Option<Account>;
     fn update_2fa(&mut self, state: bool) -> AccountResponse;
+    fn clear_email(&mut self);
     async fn create_account(
         &mut self,
         account_request: AccountRequest,
@@ -77,6 +78,13 @@ impl<T: AccountRepoTrait, A: AccessPointServiceTrait> AccountServiceTrait for Ac
                 self.account_repo.store_account(acc.clone());
                 account_to_account_response(acc)
             }
+        }
+    }
+
+    fn clear_email(&mut self) {
+        if let Some(mut account) = self.account_repo.get_account() {
+            account.email = None;
+            self.account_repo.store_account(account);
         }
     }
 

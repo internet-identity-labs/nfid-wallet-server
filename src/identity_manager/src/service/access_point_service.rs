@@ -6,7 +6,7 @@ use crate::mapper::access_point_mapper::{
 };
 use crate::repository::access_point_repo::{AccessPoint, AccessPointRepoTrait};
 use crate::requests::{AccessPointRequest, AccessPointResponse};
-use crate::response_mapper::{to_error_response, to_success_response, HttpResponse};
+use crate::response_mapper::{to_error_response, to_success_response, ErrorResponse, HttpResponse};
 use crate::service::account_service::AccountServiceTrait;
 use crate::{get_account_service, ic_service, AccessPointRemoveRequest, Account};
 use async_trait::async_trait;
@@ -172,6 +172,22 @@ impl<T: AccessPointRepoTrait> AccessPointServiceTrait for AccessPointService<T> 
                     .collect();
                 if aps.len() == content.len() {
                     return to_error_response("Access Point not exists.");
+                }
+                let email_device = content
+                    .iter()
+                    .find(|access_point| access_point.principal_id == principal)
+                    .map(|access_point| access_point.device_type.eq(&DeviceType::Email))
+                    .unwrap_or(false);
+                if email_device {
+                    let has_passkey = aps.iter().any(|x| x.device_type.eq(&DeviceType::Passkey));
+                    let has_recovery = aps.iter().any(|x| x.device_type.eq(&DeviceType::Recovery));
+                    if !(has_passkey && has_recovery) {
+                        return HttpResponse::error(
+                            403,
+                            "Unauthorised: passkey and recovery access points required to remove email access point",
+                        );
+                    }
+                    get_account_service().clear_email();
                 }
                 self.access_point_repo.store_access_points(aps.clone());
                 self.access_point_repo.remove_ap_index(principal);
