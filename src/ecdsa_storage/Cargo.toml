@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-candid = "0.10"
-candid_parser = "0.1.2"
-ic-cdk = "0.13.2"
+candid = "0.10.35"
+candid_parser = "0.1.4"
+ic-cdk = "0.13.6"
 ic-cdk-macros = "0.13.2"
 # other dependencies
 serde = { version = "1.0"}
 serde_cbor = "0.11"
-sha2 = "0.10"
-hex = "0.4"
+sha2 = "0.10.9"
+hex = "0.4.3"

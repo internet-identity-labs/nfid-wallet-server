@@ -14,9 +14,9 @@ canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev 
 internet_identity_interface = { git = "https://github.com/dfinity/internet-identity", rev = "0558bdf66e4c3b08db3d044dcec88a9e2b9e7d89" }
 
 # ic dependencies
-candid = "0.10"
-candid_parser = "0.1.2"
-ic-cdk = "0.16.0"
+candid = "0.10.35"
+candid_parser = "0.1.4"
+ic-cdk = "0.16.1"
 ic-cdk-macros = "0.16.0"
 ic-cdk-timers = "0.10.0"
 ic-certification = "2.2"
@@ -31,29 +31,29 @@ ic-types = { git = "https://github.com/dfinity/ic", rev = "e69bcc7b319cbb3ebc22e
 
 # other dependencies
 assert_matches = "1.5.0"
-base64 = "0.21"
-hex = "0.4"
+base64 = "0.22.1"
+hex = "0.4.3"
 include_dir = "0.7"
-lazy_static = "1.4"
-regex = "1.9"
+lazy_static = "1.5.0"
+regex = "1.12.3"
 serde = "1"
 serde_bytes = "0.11"
 serde_cbor = "0.11"
-sha2 = "0.10"
+sha2 = "0.10.9"
 
 
 # Captcha deps
-lodepng = "*"
+lodepng = "3.10.7"
 
-rand = { version = "*", default-features = false }
+rand = { version = "0.8.5", default-features = false }
 
-rand_core = { version = "*", default-features = false }
-rand_chacha = { version = "*", default-features = false }
+rand_core = { version = "0.6.4", default-features = false }
+rand_chacha = { version = "0.3.1", default-features = false }
 captcha = { git = "https://github.com/dfinity/captcha", rev = "9c0d2dd9bf519e255eaa239d9f4e9fdc83f65391" }
 
 
 [target.'cfg(all(target_arch = "wasm32", target_vendor = "unknown", target_os = "unknown"))'.dependencies]
-getrandom = { version = "0.2", features = ["custom"] }
+getrandom = { version = "0.2.17", features = ["custom"] }
 
 [dev-dependencies]
 hex-literal = "0.4"
