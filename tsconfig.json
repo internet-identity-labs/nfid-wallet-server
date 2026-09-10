@@ -1,9 +1,11 @@
 {
     "compilerOptions": {
       "lib": ["ESNext"],
+      "strict": false,
       "esModuleInterop": true,
       "allowSyntheticDefaultImports": true,
-      "moduleResolution": "node",
+      "module": "preserve",
+      "moduleResolution": "bundler",
       "noUnusedLocals": false,
       "noUnusedParameters": false,
       "removeComments": true,
