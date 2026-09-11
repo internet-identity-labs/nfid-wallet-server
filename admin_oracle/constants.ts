@@ -1,5 +1,5 @@
-import { JsonnableEd25519KeyIdentity } from "@dfinity/identity/lib/cjs/identity/ed25519";
-import { Principal } from "@dfinity/principal";
+import { JsonnableEd25519KeyIdentity } from "@icp-sdk/core/identity";
+import { Principal } from "@icp-sdk/core/principal";
 import { PromotionConfig } from "../test/idl/icrc1_oracle";
 
 export const CANISTER_ID = "ys266-uyaaa-aaaal-ajs4q-cai";

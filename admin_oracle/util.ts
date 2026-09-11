@@ -1,7 +1,7 @@
 import {Category} from "../test/idl/icrc1_oracle";
 import {CategoryCSV} from "./types";
-import {Actor, ActorMethod, HttpAgent, Identity} from "@dfinity/agent";
-import {IDL} from "@dfinity/candid";
+import {Actor, ActorMethod, HttpAgent, Identity} from "@icp-sdk/core/agent";
+import {IDL} from "@icp-sdk/core/candid";
 
 
 export function mapCategory(category: Category): CategoryCSV {

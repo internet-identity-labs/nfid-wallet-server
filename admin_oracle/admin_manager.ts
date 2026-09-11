@@ -1,9 +1,9 @@
 import { idlFactory as icrcOracle1Idl } from "../test/idl/icrc1_oracle_idl";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
 import { SnsParser } from "./sns";
 import { NativeParser } from "./native";
 import { ChainFusionParser } from "./chain_fusion";
-import { ActorMethod } from "@dfinity/agent";
+import { ActorMethod } from "@icp-sdk/core/agent";
 import { ICRC1 } from "../test/idl/icrc1_oracle";
 import { parse } from "json2csv";
 import * as fs from "fs";

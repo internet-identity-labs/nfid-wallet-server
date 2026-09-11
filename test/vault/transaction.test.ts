@@ -15,9 +15,9 @@ import {
 } from "../idl/vault";
 import { expect } from "chai";
 import { DFX } from "../constanst/dfx.const";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { fail } from "assert";
-import { AccountIdentifier, SubAccount } from "@dfinity/ledger-icp";
+import { AccountIdentifier, SubAccount } from "@icp-sdk/canisters/ledger/icp";
 
 
 describe.skip("Transaction", () => {

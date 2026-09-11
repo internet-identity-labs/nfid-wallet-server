@@ -11,7 +11,7 @@ import {
 } from "./idl/identity_manager";
 import {DFX} from "./constanst/dfx.const";
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
-import {Ed25519KeyIdentity} from "@dfinity/identity";
+import {Ed25519KeyIdentity} from "@icp-sdk/core/identity";
 import {fail} from "assert";
 import { _SERVICE as IdentityManagerType } from "./idl/identity_manager"
 import { verifyCertifiedResponse } from "./util/cert_verification";

@@ -16,11 +16,8 @@
     "metascraper-url": "^5.56.2"
   },
   "devDependencies": {
-    "@dfinity/agent": "2.4.1",
-    "@dfinity/candid": "2.4.1",
-    "@dfinity/identity": "2.4.1",
-    "@dfinity/ledger-icp": "^2.6.13",
-    "@dfinity/principal": "2.4.1",
+    "@icp-sdk/canisters": "^3.6.0",
+    "@icp-sdk/core": "^5.4.0",
     "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
     "@types/node": "^25.9.6",

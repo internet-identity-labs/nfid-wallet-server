@@ -1,8 +1,8 @@
-import * as Agent from "@dfinity/agent"
+import * as Agent from "@icp-sdk/core/agent"
 
 import { idlFactory as icrc1IDL } from "./idl/icrc1"
 import { _SERVICE as ICRC1ServiceIDL } from "./idl/icrc1.idl"
-import {HttpAgent} from "@dfinity/agent";
+import {HttpAgent} from "@icp-sdk/core/agent";
 
 export const agentBaseConfig = { host: "https://ic0.app" }
 

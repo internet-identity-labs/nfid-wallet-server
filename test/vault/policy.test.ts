@@ -4,8 +4,8 @@ import {Dfx} from "../type/dfx";
 import {App} from "../constanst/app.enum";
 import {Policy, PolicyRegisterRequest, Transaction, TransactionRegisterRequest, Vault, Wallet} from "../idl/vault";
 import {expect} from "chai";
-import { Principal } from "@dfinity/principal";
-import { AccountIdentifier, SubAccount } from "@dfinity/ledger-icp";
+import { Principal } from "@icp-sdk/core/principal";
+import { AccountIdentifier, SubAccount } from "@icp-sdk/canisters/ledger/icp";
 
 
 let memberAddress: string;

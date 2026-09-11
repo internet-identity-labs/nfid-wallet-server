@@ -4,7 +4,7 @@ import { Dfx } from "../type/dfx";
 import { App } from "../constanst/app.enum";
 import { Wallet } from "../idl/vault";
 import { expect } from "chai";
-import { AccountIdentifier, SubAccount } from "@dfinity/ledger-icp";
+import { AccountIdentifier, SubAccount } from "@icp-sdk/canisters/ledger/icp";
 
 let memberAddress: string;
 describe("Wallet", () => {

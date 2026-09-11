@@ -6,8 +6,9 @@ import {deploy} from "./util/deployment.util";
 import {DFX} from "./constanst/dfx.const";
 import {CertifiedKeyPairResponse, KeyPair, KeyPairResponse} from "./idl/ecdsa";
 import {fail} from "assert";
-import { compare, HttpAgent, lookup_path, LookupResultFound } from "@dfinity/agent";
-import {Principal} from "@dfinity/principal";
+import { HttpAgent, lookup_path, LookupPathResultFound } from "@icp-sdk/core/agent";
+import { compare } from "@icp-sdk/core/candid";
+import {Principal} from "@icp-sdk/core/principal";
 import {verifyCertification} from "./util/cert_verification";
 import * as crypto from "crypto";
 
@@ -90,8 +91,8 @@ async function verifyCertifiedResponse(certifiedResponse: CertifiedKeyPairRespon
     await agent.fetchRootKey();
     const tree = await verifyCertification({
         canisterId: Principal.fromText(dfx.ic_signer.id),
-        encodedCertificate: new Uint8Array(certifiedResponse.certificate).buffer,
-        encodedTree: new Uint8Array(certifiedResponse.witness).buffer,
+        encodedCertificate: new Uint8Array(certifiedResponse.certificate),
+        encodedTree: new Uint8Array(certifiedResponse.witness),
         rootKey: agent.rootKey,
         maxCertificateTimeOffsetMs: 50000,
     });
@@ -102,11 +103,11 @@ async function verifyCertifiedResponse(certifiedResponse: CertifiedKeyPairRespon
     const newOwnedString = certifiedResponse.response.key_pair[0].public_key + certifiedResponse.response.key_pair[0].private_key_encrypted;
     const sha256Result = crypto.createHash('sha256').update(newOwnedString).digest();
     const byteArray = new Uint8Array(sha256Result);
-    if (!equal(byteArray, (treeHash as LookupResultFound).value as ArrayBuffer)) {
+    if (!equal(byteArray, (treeHash as LookupPathResultFound).value)) {
         throw new Error('Response hash does not match');
     }
 }
 
-function equal(a: ArrayBuffer, b: ArrayBuffer): boolean {
+function equal(a: Uint8Array, b: Uint8Array): boolean {
     return compare(a, b) === 0;
 }

@@ -1,6 +1,6 @@
-import * as Agent from "@dfinity/agent";
-import {Actor, ActorMethod, HttpAgent, Identity} from "@dfinity/agent";
-import {Ed25519KeyIdentity} from "@dfinity/identity";
+import * as Agent from "@icp-sdk/core/agent";
+import {Actor, ActorMethod, HttpAgent, Identity} from "@icp-sdk/core/agent";
+import {Ed25519KeyIdentity} from "@icp-sdk/core/identity";
 import {Dfx} from "../type/dfx";
 import {idlFactory as imIdl} from "../idl/identity_manager_idl";
 import {idlFactory as vaultIdl} from "../idl/vault_idl";
@@ -13,7 +13,7 @@ import {idlFactory as nfidStorageIDL} from "../idl/nfid_storage_idl";
 import {idlFactory as swapTrsStorageIDL} from "../idl/swap_trs_storage_idl";
 import {TextEncoder} from "util";
 import {App} from "../constanst/app.enum";
-import {IDL} from "@dfinity/candid";
+import {IDL} from "@icp-sdk/core/candid";
 import {DFX} from "../constanst/dfx.const";
 import {execute} from "./call.util";
 import {AccessPointRequest, HTTPAccountRequest, _SERVICE as IdentityManagerType} from "../idl/identity_manager"

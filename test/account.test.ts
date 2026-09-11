@@ -18,7 +18,7 @@ import {DFX} from "./constanst/dfx.const";
 import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {idlFactory as iitIdl} from "./idl/internet_identity_test_idl";
 import {Expected} from "./constanst/expected.const";
-import {Ed25519KeyIdentity} from "@dfinity/identity";
+import {Ed25519KeyIdentity} from "@icp-sdk/core/identity";
 import {_SERVICE as InternetIdentityTest, DeviceData} from "./idl/internet_identity_test";
 import {fail} from "assert";
 

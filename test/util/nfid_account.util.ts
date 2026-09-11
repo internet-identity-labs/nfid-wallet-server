@@ -1,6 +1,6 @@
-import * as Agent from "@dfinity/agent";
+import * as Agent from "@icp-sdk/core/agent";
 import {expect} from "chai";
-import {Ed25519KeyIdentity} from "@dfinity/identity";
+import {Ed25519KeyIdentity} from "@icp-sdk/core/identity";
 import {Dfx} from "../type/dfx";
 import {BoolHttpResponse, HTTPAccountRequest, _SERVICE as IdentityManagerType} from "../idl/identity_manager";
 import {idlFactory as imIdl} from "../idl/identity_manager_idl";
