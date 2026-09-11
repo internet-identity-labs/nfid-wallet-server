@@ -3,7 +3,7 @@ import {deploy, getActor, getIdentity} from "./util/deployment.util";
 import {App} from "./constanst/app.enum";
 import {expect} from "chai";
 import {ICRC1, NeuronData, DiscoveryApp, DiscoveryVisitRequest, PromotionConfig, PromotionStatus, PlaceBidResult, HistoricalBid, UserDiscoveryApp} from "./idl/icrc1_oracle";
-import {Principal} from "@dfinity/principal";
+import {Principal} from "@icp-sdk/core/principal";
 import {idlFactory} from "./idl/icrc1_oracle_idl";
 import {fail} from "assert";
 import {DFX} from "./constanst/dfx.const";

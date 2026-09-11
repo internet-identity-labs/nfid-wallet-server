@@ -1,7 +1,7 @@
-import { ActorMethod } from "@dfinity/agent";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { ActorMethod } from "@icp-sdk/core/agent";
+import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
 import { Challenge, ChallengeResult, DeviceData, UserNumber } from "../idl/internet_identity_test";
-import * as Agent from "@dfinity/agent"
+import * as Agent from "@icp-sdk/core/agent"
 import {_SERVICE as InternetIdentityTest} from "../idl/internet_identity_test";
 
 export const register = async (actor: Agent.ActorSubclass<InternetIdentityTest>, identity: Ed25519KeyIdentity): Promise<bigint> => {

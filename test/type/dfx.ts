@@ -1,6 +1,6 @@
-import {ActorMethod, Identity} from "@dfinity/agent";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
-import * as Agent from "@dfinity/agent"
+import {ActorMethod, Identity} from "@icp-sdk/core/agent";
+import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
+import * as Agent from "@icp-sdk/core/agent"
 import {_SERVICE as IdentityManager} from "../idl/identity_manager";
 import {_SERVICE as InternetIdentityTest} from "../idl/internet_identity_test";
 import {_SERVICE as NfidStorageService} from "../idl/nfid_storage";

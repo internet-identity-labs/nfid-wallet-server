@@ -3,21 +3,20 @@ import {
   Certificate,
   HashTree,
   reconstruct,
-  compare,
   HttpAgent,
   lookup_path,
-  LookupResultFound,
-} from '@dfinity/agent';
-import { Principal } from '@dfinity/principal';
-import { PipeArrayBuffer, lebDecode } from '@dfinity/candid';
+  LookupPathResultFound,
+} from '@icp-sdk/core/agent';
+import { Principal } from '@icp-sdk/core/principal';
+import { PipeArrayBuffer, lebDecode, compare } from '@icp-sdk/core/candid';
 import { CertificateTimeError, CertificateVerificationError } from './error';
 import * as crypto from "crypto";
 
 export interface VerifyCertificationParams {
   canisterId: Principal;
-  encodedCertificate: ArrayBuffer;
-  encodedTree: ArrayBuffer;
-  rootKey: ArrayBuffer;
+  encodedCertificate: Uint8Array;
+  encodedTree: Uint8Array;
+  rootKey: Uint8Array;
   maxCertificateTimeOffsetMs: number;
 }
 
@@ -26,8 +25,8 @@ export async function verifyCertifiedResponse(certificate: Uint8Array | number[]
   await agent.fetchRootKey();
   const tree = await verifyCertification({
       canisterId: Principal.fromText(canisterId),
-      encodedCertificate: new Uint8Array(certificate).buffer,
-      encodedTree: new Uint8Array(witness).buffer,
+      encodedCertificate: new Uint8Array(certificate),
+      encodedTree: new Uint8Array(witness),
       rootKey: agent.rootKey,
       maxCertificateTimeOffsetMs: 50000,
   });
@@ -38,7 +37,7 @@ export async function verifyCertifiedResponse(certificate: Uint8Array | number[]
   }
   const sha256Result = crypto.createHash('sha256').update(newOwnedString).digest();
   const byteArray = new Uint8Array(sha256Result);
-  if (!equal(byteArray, (treeHash as LookupResultFound).value as ArrayBuffer)) {
+  if (!equal(byteArray, (treeHash as LookupPathResultFound).value)) {
       throw new Error('Response hash does not match');
   }
 }
@@ -53,7 +52,7 @@ export async function verifyCertification({
   const nowMs = Date.now();
   const certificate = await Certificate.create({
     certificate: encodedCertificate,
-    canisterId,
+    principal: { canisterId },
     rootKey,
   });
   const tree = Cbor.decode<HashTree>(encodedTree);
@@ -70,7 +69,7 @@ function validateCertificateTime(
   nowMs: number,
 ): void {
   const certificateTimeNs = lebDecode(
-    new PipeArrayBuffer((certificate.lookup(['time']) as LookupResultFound).value as ArrayBuffer),
+    new PipeArrayBuffer((certificate.lookup_path(['time']) as LookupPathResultFound).value),
   );
   const certificateTimeMs = Number(certificateTimeNs / BigInt(1_000_000));
 
@@ -93,7 +92,7 @@ async function validateTree(
   canisterId: Principal,
 ): Promise<void> {
   const treeRootHash = await reconstruct(tree);
-  const certifiedData = certificate.lookup([
+  const certifiedData = certificate.lookup_path([
     'canister',
     canisterId.toUint8Array(),
     'certified_data',
@@ -105,13 +104,13 @@ async function validateTree(
     );
   }
 
-  if (!equal((certifiedData as LookupResultFound).value as ArrayBuffer, treeRootHash)) {
+  if (!equal((certifiedData as LookupPathResultFound).value, treeRootHash)) {
     throw new CertificateVerificationError(
       'Tree root hash did not match the certified data in the certificate.',
     );
   }
 }
 
-function equal(a: ArrayBuffer, b: ArrayBuffer): boolean {
+function equal(a: Uint8Array, b: Uint8Array): boolean {
   return compare(a, b) === 0;
 }

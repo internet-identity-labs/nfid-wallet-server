@@ -7,7 +7,7 @@ import {idlFactory as imIdl} from "./idl/identity_manager_idl";
 import {idlFactory as swapStorageIDL} from "./idl/swap_trs_storage_idl";
 import {_SERVICE, SwapTransaction} from "./idl/swap_trs_storage";
 import {execute} from "./util/call.util";
-import * as Agent from "@dfinity/agent";
+import * as Agent from "@icp-sdk/core/agent";
 import {hasOwnProperty} from "../admin_oracle/util";
 
 describe("Swap Trs Storage test", () => {
