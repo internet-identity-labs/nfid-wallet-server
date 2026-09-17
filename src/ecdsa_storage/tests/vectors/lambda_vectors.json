@@ -1,0 +1,390 @@
+{
+  "generator": "sms-sender-serverless/tests/unit/services/legacy-signer-vectors.test.ts",
+  "libraries": {
+    "@dfinity/identity": "0.18.1",
+    "@dfinity/agent": "0.18.1"
+  },
+  "now_ms": 1767225600000,
+  "anonymous": [
+    {
+      "name": "dev/nfid-default-ttl",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "veszd-b7xoy-fim5q-sewtu-uzkjn-xclnc-adh2n-va4l5-wp3a4-36ryf-yqe",
+      "domain": "https://nfid.one",
+      "session_public_key": "302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63",
+      "targets": [],
+      "delegation_ttl_ms": null,
+      "expected_principal": "i3qgw-d3ubl-3wqwc-jzzpn-n3req-67r6f-kjruy-25s42-5lhxx-nls43-4qe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63\"},\"signature\":\"0e564d1807917935a8c286aeafc9fcc37737cc2a4d3c6f14e0ec0f37872b34326b6394f199ddb2ad589cbc6b34e36860b90aa96b35b4c4dedc571967a2499807\"}],\"publicKey\":\"302a300506032b6570032100fbf2c870a6ffa5bb387176ff6ff95651c184189523f6555b88469bdda769e2e5\"}"
+    },
+    {
+      "name": "dev/trailing-slash",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "veszd-b7xoy-fim5q-sewtu-uzkjn-xclnc-adh2n-va4l5-wp3a4-36ryf-yqe",
+      "domain": "https://nfid.one/",
+      "session_public_key": "302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63",
+      "targets": [],
+      "delegation_ttl_ms": null,
+      "expected_principal": "byuph-7hotv-qb6zg-yybyd-yiyv5-y2vrq-lcggf-pcqoi-uyway-no2hg-zqe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63\"},\"signature\":\"9440f5dde76f7f5d53e9739a9cd0b9cd28c7391e4aec4273d40670cfa7d49e73a3f3996af1c640c1eaf5ce3e30e36a7a7cad7fcbcabc065a946b9da312483b07\"}],\"publicKey\":\"302a300506032b657003210004cf932b6ab38fd092645f9d44e71e27d08c39eea48ffe05d5b8f949493cc646\"}"
+    },
+    {
+      "name": "dev/derivation-origin",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "epfbx-q3mts-5qtde-7gfx7-b2ogi-47ver-hrqi5-egs3a-mldyg-hwrt4-xae",
+      "domain": "https://qsgjb-riaaa-aaaaa-aaaga-cai.icp0.io",
+      "session_public_key": "302a300506032b65700321008942433f0071da9451bd730487d7f9bf1fc47d3ef90d181580c4223b5fcc35c3",
+      "targets": [
+        "ryjl3-tyaaa-aaaaa-aaaba-cai"
+      ],
+      "delegation_ttl_ms": 1800000,
+      "expected_principal": "4xpcf-cjdtt-wuxg7-cors2-zm2eh-2e7et-o4jmk-mupbx-4uycl-lhaao-cqe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188673f506565000\",\"pubkey\":\"302a300506032b65700321008942433f0071da9451bd730487d7f9bf1fc47d3ef90d181580c4223b5fcc35c3\",\"targets\":[\"00000000000000020101\"]},\"signature\":\"40ee4cec67488f3619bddb29270c6b65edf5b136d8cd044cca44e5eda26847bfff97509047a12afc3d2a55ffdaaf14b56a21a9f837f77119d87b6b6bf4b21807\"}],\"publicKey\":\"302a300506032b6570032100af9225992df32e2a3b19b1cc176d36a7cd9be85f453bd57aef819e752a3c5833\"}"
+    },
+    {
+      "name": "dev/localhost-p256-session",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "epfbx-q3mts-5qtde-7gfx7-b2ogi-47ver-hrqi5-egs3a-mldyg-hwrt4-xae",
+      "domain": "http://localhost:3000",
+      "session_public_key": "3059301306072a8648ce3d020106082a8648ce3d0301070342000481aae2775a0bf6a27279968abbbfb73842a5c69afed951c4107caa9fb865bd2ae62363108f36e1bb1f4882d5228a11d9f239d9586ff8e3d02cbad4a53d2fdc55",
+      "targets": [],
+      "delegation_ttl_ms": null,
+      "expected_principal": "3fxam-dttkw-7hmrr-mky76-ejo5o-ww62n-4n2cj-sdbie-3imnj-e2tbo-tqe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"3059301306072a8648ce3d020106082a8648ce3d0301070342000481aae2775a0bf6a27279968abbbfb73842a5c69afed951c4107caa9fb865bd2ae62363108f36e1bb1f4882d5228a11d9f239d9586ff8e3d02cbad4a53d2fdc55\"},\"signature\":\"daa110cb3540e9215871fecf2d98b05446213f200bab899d4b288d3e48c600101b739a7605299990b46eda110c2142a64cebe2ed58924ce897c12557b8b14d07\"}],\"publicKey\":\"302a300506032b6570032100d844d897e8d61259c4fac786a0860e5988f4fcade9ac54b8a6862d895d4e6f35\"}"
+    },
+    {
+      "name": "dev/unicode-domain-secp256k1-session",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "wnlfe-v7vk2-oiryx-eht76-ff6rs-fewl4-dnnfw-shrya-73jlk-2jdjw-fqe",
+      "domain": "https://пример.рф",
+      "session_public_key": "3056301006072a8648ce3d020106052b8104000a03420004f2a99233bfc2e4040b44e94a8fc0406cd4f456bbe0d879f4f077bf76aba76fb9097e0fccb3f3420a2548af37d3170167edbc02fbddf1ceb2f3c48e333d29445a",
+      "targets": [
+        "ryjl3-tyaaa-aaaaa-aaaba-cai",
+        "aaaaa-aa",
+        "2vxsx-fae"
+      ],
+      "delegation_ttl_ms": 2592000000,
+      "expected_principal": "pvo76-feg42-ypvlu-6g7c5-76dz6-wrm5w-2cuqy-ist5p-7c5ct-5ipmy-gae",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188fa7baf53c0000\",\"pubkey\":\"3056301006072a8648ce3d020106052b8104000a03420004f2a99233bfc2e4040b44e94a8fc0406cd4f456bbe0d879f4f077bf76aba76fb9097e0fccb3f3420a2548af37d3170167edbc02fbddf1ceb2f3c48e333d29445a\",\"targets\":[\"00000000000000020101\",\"\",\"04\"]},\"signature\":\"fed71e8e16af60b649ed6f705fb639cbb6d80ea123e8a4d0577ba6fd2cfed224c6ad56a866db15a2bf9ebdee949962c7b4bfccacc2597b8d06697b8c7b59ab04\"}],\"publicKey\":\"302a300506032b65700321001253f422d1af11a3dfbbca9186ee7d9aa2f57144512974b9fe4ecef7b1000b13\"}"
+    },
+    {
+      "name": "dev/empty-targets",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "veszd-b7xoy-fim5q-sewtu-uzkjn-xclnc-adh2n-va4l5-wp3a4-36ryf-yqe",
+      "domain": "https://nfid.one",
+      "session_public_key": "302a300506032b657003210036a760e2cd7b4647599ad80874cc191cbd342f06dfb8e93220e37aeb305901e7",
+      "targets": [],
+      "delegation_ttl_ms": null,
+      "expected_principal": "i3qgw-d3ubl-3wqwc-jzzpn-n3req-67r6f-kjruy-25s42-5lhxx-nls43-4qe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"302a300506032b657003210036a760e2cd7b4647599ad80874cc191cbd342f06dfb8e93220e37aeb305901e7\"},\"signature\":\"da692ef8268c70d9007165dbea5def5d6a77a0ea81812a9e8679ba399de94f4f1de267e7bfc3666359df9227fb5524677fc4a84cc59d389b224081e07c5edd02\"}],\"publicKey\":\"302a300506032b6570032100fbf2c870a6ffa5bb387176ff6ff95651c184189523f6555b88469bdda769e2e5\"}"
+    },
+    {
+      "name": "dev/odd-ttl",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "wnlfe-v7vk2-oiryx-eht76-ff6rs-fewl4-dnnfw-shrya-73jlk-2jdjw-fqe",
+      "domain": "https://dapp.example.com",
+      "session_public_key": "302a300506032b6570032100c5a33de612bfd6974236c1b1ce7f26b1758917f5ef0eb95d9f45c6550fe8ce9c",
+      "targets": [],
+      "delegation_ttl_ms": 123456789,
+      "expected_principal": "jwhtl-xcgwh-cuhz3-tmuqt-qocgd-ywaq2-lap5y-abtp6-sjgih-7abb7-eae",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"1886e29a7407af40\",\"pubkey\":\"302a300506032b6570032100c5a33de612bfd6974236c1b1ce7f26b1758917f5ef0eb95d9f45c6550fe8ce9c\"},\"signature\":\"26352237966b17b7b9c86603da77fe71eaf606e713eac81c8e7dde81f515cee59a06ade48a8872c667d99f79bbf841ab7dbb6deb263611d98d571b2c2724800a\"}],\"publicKey\":\"302a300506032b6570032100c899fc73d65498e9561ce83061759c025a58e051880cff0c20cf0e1e100001ea\"}"
+    },
+    {
+      "name": "distinct/nfid-default-ttl",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "veszd-b7xoy-fim5q-sewtu-uzkjn-xclnc-adh2n-va4l5-wp3a4-36ryf-yqe",
+      "domain": "https://nfid.one",
+      "session_public_key": "302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63",
+      "targets": [],
+      "delegation_ttl_ms": null,
+      "expected_principal": "crqwd-4zzzh-ct2gc-l3b3e-zs5om-hccz6-ory5z-hxdi4-66xzd-3aczj-kae",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63\"},\"signature\":\"a13eeabf38e1dd8f8b0d0e47c9565d63ccbb74c79426ba72da4883d866ec5da52202d4c184a95aa4d70ef1ee2d85843ea63c2c567400648d60d893ae23f1610c\"}],\"publicKey\":\"302a300506032b6570032100958eb8ad4109e9b82878a094801d8027ae7edbde3a436c5e2c495225ae969cc1\"}"
+    },
+    {
+      "name": "distinct/trailing-slash",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "veszd-b7xoy-fim5q-sewtu-uzkjn-xclnc-adh2n-va4l5-wp3a4-36ryf-yqe",
+      "domain": "https://nfid.one/",
+      "session_public_key": "302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63",
+      "targets": [],
+      "delegation_ttl_ms": null,
+      "expected_principal": "fmea6-arktp-lz4bo-3lyuj-tului-757sc-xmslm-fgz5q-foz2z-ikq3e-iae",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63\"},\"signature\":\"5c49949c0e2e32ba034f18f60389060a83292240fe6b8bc13474ccef331bc38d118fbf73e2e14c1ee165c4fc04a63bece6f5f1ada2594a9ee5fa8b1206bd6f0f\"}],\"publicKey\":\"302a300506032b6570032100333520317e3c124fd6e8c4bd49a63f24e3344d99d5743ae27c1a095ad1836dbd\"}"
+    },
+    {
+      "name": "distinct/derivation-origin",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "epfbx-q3mts-5qtde-7gfx7-b2ogi-47ver-hrqi5-egs3a-mldyg-hwrt4-xae",
+      "domain": "https://qsgjb-riaaa-aaaaa-aaaga-cai.icp0.io",
+      "session_public_key": "302a300506032b65700321008942433f0071da9451bd730487d7f9bf1fc47d3ef90d181580c4223b5fcc35c3",
+      "targets": [
+        "ryjl3-tyaaa-aaaaa-aaaba-cai"
+      ],
+      "delegation_ttl_ms": 1800000,
+      "expected_principal": "nf2et-jnw6j-eg2as-u2yf4-rje37-pwwsu-kcajt-f5tp5-na6i4-ci7m5-xqe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188673f506565000\",\"pubkey\":\"302a300506032b65700321008942433f0071da9451bd730487d7f9bf1fc47d3ef90d181580c4223b5fcc35c3\",\"targets\":[\"00000000000000020101\"]},\"signature\":\"518d67b3be68e9996fa35c7316b5b7750e2b7cc1fd0f41bcdcf150a7e0ff8c91a1add6c9bf1db59266ea4ca8f997b53227962643d8c0a18c1b9dc522bf87eb09\"}],\"publicKey\":\"302a300506032b65700321006334aad90db5183f3b2e58519d9d102d55daef5880ac7287c77889c4b69ed4ba\"}"
+    },
+    {
+      "name": "distinct/localhost-p256-session",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "epfbx-q3mts-5qtde-7gfx7-b2ogi-47ver-hrqi5-egs3a-mldyg-hwrt4-xae",
+      "domain": "http://localhost:3000",
+      "session_public_key": "3059301306072a8648ce3d020106082a8648ce3d0301070342000481aae2775a0bf6a27279968abbbfb73842a5c69afed951c4107caa9fb865bd2ae62363108f36e1bb1f4882d5228a11d9f239d9586ff8e3d02cbad4a53d2fdc55",
+      "targets": [],
+      "delegation_ttl_ms": null,
+      "expected_principal": "qjm7h-emfmu-pcs7t-qgvq2-a3uvw-rsmgu-6mawh-bn3qh-c5zu2-hxdfe-zqe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"3059301306072a8648ce3d020106082a8648ce3d0301070342000481aae2775a0bf6a27279968abbbfb73842a5c69afed951c4107caa9fb865bd2ae62363108f36e1bb1f4882d5228a11d9f239d9586ff8e3d02cbad4a53d2fdc55\"},\"signature\":\"8fd1f00a5e9894ebedc5755a14ca2973397f328735dc971c3a2149041b1b630de58388479d1478d9b3a0292ca1c5f6d16d671f3a93cf960220b62688b7968d07\"}],\"publicKey\":\"302a300506032b6570032100e02e11764e4b65da109fa3ae9634645a22d4cba40463526f08dc8f8c173fca03\"}"
+    },
+    {
+      "name": "distinct/unicode-domain-secp256k1-session",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "wnlfe-v7vk2-oiryx-eht76-ff6rs-fewl4-dnnfw-shrya-73jlk-2jdjw-fqe",
+      "domain": "https://пример.рф",
+      "session_public_key": "3056301006072a8648ce3d020106052b8104000a03420004f2a99233bfc2e4040b44e94a8fc0406cd4f456bbe0d879f4f077bf76aba76fb9097e0fccb3f3420a2548af37d3170167edbc02fbddf1ceb2f3c48e333d29445a",
+      "targets": [
+        "ryjl3-tyaaa-aaaaa-aaaba-cai",
+        "aaaaa-aa",
+        "2vxsx-fae"
+      ],
+      "delegation_ttl_ms": 2592000000,
+      "expected_principal": "ebewk-2e7cw-hmasl-r23ro-hbpkj-z5uvf-hrc4d-gdyco-fomvm-o5y52-6ae",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188fa7baf53c0000\",\"pubkey\":\"3056301006072a8648ce3d020106052b8104000a03420004f2a99233bfc2e4040b44e94a8fc0406cd4f456bbe0d879f4f077bf76aba76fb9097e0fccb3f3420a2548af37d3170167edbc02fbddf1ceb2f3c48e333d29445a\",\"targets\":[\"00000000000000020101\",\"\",\"04\"]},\"signature\":\"e3daae07cfeafa63e02ea1025bf8682ac439fa0f538d2ffe979763be20e949539c35ab9ac7cd2d38837544ca068a720a7b373068cd2e04546f88324d2cf81903\"}],\"publicKey\":\"302a300506032b657003210087762be6113d3816b85529671d81fb2e570ada22ee91803089f6da8d68ab7ce4\"}"
+    },
+    {
+      "name": "distinct/empty-targets",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "veszd-b7xoy-fim5q-sewtu-uzkjn-xclnc-adh2n-va4l5-wp3a4-36ryf-yqe",
+      "domain": "https://nfid.one",
+      "session_public_key": "302a300506032b657003210036a760e2cd7b4647599ad80874cc191cbd342f06dfb8e93220e37aeb305901e7",
+      "targets": [],
+      "delegation_ttl_ms": null,
+      "expected_principal": "crqwd-4zzzh-ct2gc-l3b3e-zs5om-hccz6-ory5z-hxdi4-66xzd-3aczj-kae",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"302a300506032b657003210036a760e2cd7b4647599ad80874cc191cbd342f06dfb8e93220e37aeb305901e7\"},\"signature\":\"a41d796643617ebf3fe0495f14f4c810ae77f6e8bc4a392d92159843d0a7745a22e28a0e06b17d85d81b6c3bea37eebc5107d736df395e706bba490388781905\"}],\"publicKey\":\"302a300506032b6570032100958eb8ad4109e9b82878a094801d8027ae7edbde3a436c5e2c495225ae969cc1\"}"
+    },
+    {
+      "name": "distinct/odd-ttl",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "wnlfe-v7vk2-oiryx-eht76-ff6rs-fewl4-dnnfw-shrya-73jlk-2jdjw-fqe",
+      "domain": "https://dapp.example.com",
+      "session_public_key": "302a300506032b6570032100c5a33de612bfd6974236c1b1ce7f26b1758917f5ef0eb95d9f45c6550fe8ce9c",
+      "targets": [],
+      "delegation_ttl_ms": 123456789,
+      "expected_principal": "gfxcq-uc44m-hskwp-u4ecr-fluwa-3idno-v5zl7-ovdku-mjl2x-gar65-sae",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"1886e29a7407af40\",\"pubkey\":\"302a300506032b6570032100c5a33de612bfd6974236c1b1ce7f26b1758917f5ef0eb95d9f45c6550fe8ce9c\"},\"signature\":\"b248e9467f86d28f47e5fa840d9a23771d2f9a51cf5504df0bda37df7899ea1b32b91add015e3fdf23cc7d7596743650d903f7066cc8cde9f87035b22854c409\"}],\"publicKey\":\"302a300506032b657003210053a1b9182df6909ca339beb4fddd2cda54063129c8454788ffd7f2d1c7a026f7\"}"
+    }
+  ],
+  "global": [
+    {
+      "name": "dev/single-target-default-ttl",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "veszd-b7xoy-fim5q-sewtu-uzkjn-xclnc-adh2n-va4l5-wp3a4-36ryf-yqe",
+      "public_key": "302a300506032b65700321002011936e042699e3eb6aae9c140293aa8a8c1cf96626dfd3ce906291f14dd416",
+      "private_key_encrypted": "8cea174ee2ccae5b55a547710597d6d7cbfb81ffaa05326d2a63efd686c5101597bd6b74328a3a73186cb145ed38a565c0ede01f6fee29cc3ad7cc7413c0c04412fb0beaa3933473aaeb829a0b8036558a3c97eca0d02edd79bee25f639a3cf3f252437f5adf03d0f5cf6ff69f509da55080b29f49c0dd1c6f06c82de5fd09f4c7a025f7a0d6c3c240240b480c0dd9e6",
+      "session_public_key": "302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63",
+      "targets": [
+        "ryjl3-tyaaa-aaaaa-aaaba-cai"
+      ],
+      "delegation_ttl_ms": null,
+      "expected_principal": "con3p-jjgy2-eedjf-rgvrw-uj6g3-4etwn-sdcqy-abapu-ykjj5-42w37-mqe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63\",\"targets\":[\"00000000000000020101\"]},\"signature\":\"1134613de197bd0741d9615e22cf1e0dc202ebfb9d8b85e38ef0b267d26c9fff64cddd91e802d4d1b1cf06c536bb5c0ef87be62b0dc84ed131a6edc2d7572f06\"}],\"publicKey\":\"302a300506032b65700321002011936e042699e3eb6aae9c140293aa8a8c1cf96626dfd3ce906291f14dd416\"}"
+    },
+    {
+      "name": "dev/many-targets",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "epfbx-q3mts-5qtde-7gfx7-b2ogi-47ver-hrqi5-egs3a-mldyg-hwrt4-xae",
+      "public_key": "302a300506032b65700321003e1f3a0b43f3f8426cf53792c6489f1b13bccb1344e38ce90e0def81eeaa9bc3",
+      "private_key_encrypted": "0a691a0db6adc5666cd9d46c50681de5cabe30a36f6c179872b1e9a0a0c72b4348d7bef569339924ab2ac28c3e8bc1508755f3d936d5d92e04d58cac9b641c041a4ad1d75df99317ad07751d78e9754edfccfdd588ea603a841ce350e8bd52d6d106636535948ad74514af86259d5ffa2dfd30cd8424707d7e9135b801b572578851a804d46eaf5dbabce4215a7033b4",
+      "session_public_key": "3059301306072a8648ce3d020106082a8648ce3d0301070342000481aae2775a0bf6a27279968abbbfb73842a5c69afed951c4107caa9fb865bd2ae62363108f36e1bb1f4882d5228a11d9f239d9586ff8e3d02cbad4a53d2fdc55",
+      "targets": [
+        "ryjl3-tyaaa-aaaaa-aaaba-cai",
+        "us7ed-qyaaa-aaaam-abpoa-cai",
+        "aaaaa-aa",
+        "2vxsx-fae"
+      ],
+      "delegation_ttl_ms": 1800000,
+      "expected_principal": "mayfj-uxijh-4s3ql-zsgii-tbfk3-wapkt-fnbrm-5pqq5-qe6h4-wn4wn-6qe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188673f506565000\",\"pubkey\":\"3059301306072a8648ce3d020106082a8648ce3d0301070342000481aae2775a0bf6a27279968abbbfb73842a5c69afed951c4107caa9fb865bd2ae62363108f36e1bb1f4882d5228a11d9f239d9586ff8e3d02cbad4a53d2fdc55\",\"targets\":[\"00000000000000020101\",\"0000000001800BDC0101\",\"\",\"04\"]},\"signature\":\"331820a9038cb85ec9e1e813ffb4127dc44c6f9581d0ca231b24fc535580bf68a6944e5ca22ff09a7f404af8d3f870df6482de6d4e8ad3a4302f0b8705b71706\"}],\"publicKey\":\"302a300506032b65700321003e1f3a0b43f3f8426cf53792c6489f1b13bccb1344e38ce90e0def81eeaa9bc3\"}"
+    },
+    {
+      "name": "dev/secp256k1-session-long-ttl",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "wnlfe-v7vk2-oiryx-eht76-ff6rs-fewl4-dnnfw-shrya-73jlk-2jdjw-fqe",
+      "public_key": "302a300506032b6570032100554554b4f0ae51d70bafd9a12a7a7d5c28d5a03a74a3c5ed9744442417593988",
+      "private_key_encrypted": "e8ae5c43a61aad1fcdc8ed4041502ba93806c321c01cfa00d7f6aaf8663646f6ccff27bab1a651dd6c63a16f24599f3ad146c05f44f6ebac534ff0be185c408e8480331c4a75061a04e6f08229178a13d3df2d9eb6ad977afa11822ef4cad4df296e5999f496a85eb23ad4480ac64cee05c1a550f160c6c7b575d9a15439277faed7041d3a66e617de62e1f78e92f9d3",
+      "session_public_key": "3056301006072a8648ce3d020106052b8104000a03420004f2a99233bfc2e4040b44e94a8fc0406cd4f456bbe0d879f4f077bf76aba76fb9097e0fccb3f3420a2548af37d3170167edbc02fbddf1ceb2f3c48e333d29445a",
+      "targets": [
+        "qsgjb-riaaa-aaaaa-aaaga-cai"
+      ],
+      "delegation_ttl_ms": 2592000000,
+      "expected_principal": "q2mcq-4w6rc-2wk6k-pwwjb-zybfu-zi4j5-ggvst-nhzvb-o65g3-7p2ay-fqe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188fa7baf53c0000\",\"pubkey\":\"3056301006072a8648ce3d020106052b8104000a03420004f2a99233bfc2e4040b44e94a8fc0406cd4f456bbe0d879f4f077bf76aba76fb9097e0fccb3f3420a2548af37d3170167edbc02fbddf1ceb2f3c48e333d29445a\",\"targets\":[\"000000000000000C0101\"]},\"signature\":\"353993b6edf080251c79105a5e41f911be4a889ca9e6d69fa9e18f8ae61eaabf32b436cee83808e88cccef37a56b1d12d84868c29729ecfb37a3264f8bf03d05\"}],\"publicKey\":\"302a300506032b6570032100554554b4f0ae51d70bafd9a12a7a7d5c28d5a03a74a3c5ed9744442417593988\"}"
+    },
+    {
+      "name": "dev/no-targets",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "veszd-b7xoy-fim5q-sewtu-uzkjn-xclnc-adh2n-va4l5-wp3a4-36ryf-yqe",
+      "public_key": "302a300506032b65700321002011936e042699e3eb6aae9c140293aa8a8c1cf96626dfd3ce906291f14dd416",
+      "private_key_encrypted": "8cea174ee2ccae5b55a547710597d6d7cbfb81ffaa05326d2a63efd686c5101597bd6b74328a3a73186cb145ed38a565c0ede01f6fee29cc3ad7cc7413c0c04412fb0beaa3933473aaeb829a0b8036558a3c97eca0d02edd79bee25f639a3cf3f252437f5adf03d0f5cf6ff69f509da55080b29f49c0dd1c6f06c82de5fd09f4c7a025f7a0d6c3c240240b480c0dd9e6",
+      "session_public_key": "302a300506032b657003210036a760e2cd7b4647599ad80874cc191cbd342f06dfb8e93220e37aeb305901e7",
+      "targets": [],
+      "delegation_ttl_ms": null,
+      "expected_principal": "con3p-jjgy2-eedjf-rgvrw-uj6g3-4etwn-sdcqy-abapu-ykjj5-42w37-mqe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"302a300506032b657003210036a760e2cd7b4647599ad80874cc191cbd342f06dfb8e93220e37aeb305901e7\"},\"signature\":\"93b0410f5af8678fd61e98db802065d10b2d0c9fcafefc1d2836f40616b24cfa219540f492c1f3c39c8e0ce87d7b9926f604eafee56bdd208ee5350368f71a0b\"}],\"publicKey\":\"302a300506032b65700321002011936e042699e3eb6aae9c140293aa8a8c1cf96626dfd3ce906291f14dd416\"}"
+    },
+    {
+      "name": "distinct/single-target-default-ttl",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "veszd-b7xoy-fim5q-sewtu-uzkjn-xclnc-adh2n-va4l5-wp3a4-36ryf-yqe",
+      "public_key": "302a300506032b65700321002011936e042699e3eb6aae9c140293aa8a8c1cf96626dfd3ce906291f14dd416",
+      "private_key_encrypted": "8477dffa519c30ba5cfd3086b96f80c0d381edd3bdd004b2d318cac6807830720d8fb2e0e69996a70b5983e881648f82a30854cf6c63f6b4db4344889817b4831830a5f934f1f437fd3272f3cec3d8eb0e3b141976ed57d5e0848ce2c86a5090be91a3f898c369a98b66767a3a951995592b40f11e09bbf4cd249a5a2b4553f3170f4b402e4b679ecfd6990b7e581f42",
+      "session_public_key": "302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63",
+      "targets": [
+        "ryjl3-tyaaa-aaaaa-aaaba-cai"
+      ],
+      "delegation_ttl_ms": null,
+      "expected_principal": "con3p-jjgy2-eedjf-rgvrw-uj6g3-4etwn-sdcqy-abapu-ykjj5-42w37-mqe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63\",\"targets\":[\"00000000000000020101\"]},\"signature\":\"1134613de197bd0741d9615e22cf1e0dc202ebfb9d8b85e38ef0b267d26c9fff64cddd91e802d4d1b1cf06c536bb5c0ef87be62b0dc84ed131a6edc2d7572f06\"}],\"publicKey\":\"302a300506032b65700321002011936e042699e3eb6aae9c140293aa8a8c1cf96626dfd3ce906291f14dd416\"}"
+    },
+    {
+      "name": "distinct/many-targets",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "epfbx-q3mts-5qtde-7gfx7-b2ogi-47ver-hrqi5-egs3a-mldyg-hwrt4-xae",
+      "public_key": "302a300506032b65700321003e1f3a0b43f3f8426cf53792c6489f1b13bccb1344e38ce90e0def81eeaa9bc3",
+      "private_key_encrypted": "3f61d3a0422e9ae4edcd6811575905fdce395be170236ad3c8f783ac32111df13fdbc3022523ad02a44dc4ac0eda1e8873fedf50cfb8b5ac2512835bcea1dfd13591f07734b14db2e53aa55faaeca662adf8a2467ee6a9e04d83d25a05ea7f7ab2c61af9bfa490218958d811ebe2adcbad523d549077f95b980350718bd2c769e62262237bd1896fc311c9c1c34c629f",
+      "session_public_key": "3059301306072a8648ce3d020106082a8648ce3d0301070342000481aae2775a0bf6a27279968abbbfb73842a5c69afed951c4107caa9fb865bd2ae62363108f36e1bb1f4882d5228a11d9f239d9586ff8e3d02cbad4a53d2fdc55",
+      "targets": [
+        "ryjl3-tyaaa-aaaaa-aaaba-cai",
+        "us7ed-qyaaa-aaaam-abpoa-cai",
+        "aaaaa-aa",
+        "2vxsx-fae"
+      ],
+      "delegation_ttl_ms": 1800000,
+      "expected_principal": "mayfj-uxijh-4s3ql-zsgii-tbfk3-wapkt-fnbrm-5pqq5-qe6h4-wn4wn-6qe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188673f506565000\",\"pubkey\":\"3059301306072a8648ce3d020106082a8648ce3d0301070342000481aae2775a0bf6a27279968abbbfb73842a5c69afed951c4107caa9fb865bd2ae62363108f36e1bb1f4882d5228a11d9f239d9586ff8e3d02cbad4a53d2fdc55\",\"targets\":[\"00000000000000020101\",\"0000000001800BDC0101\",\"\",\"04\"]},\"signature\":\"331820a9038cb85ec9e1e813ffb4127dc44c6f9581d0ca231b24fc535580bf68a6944e5ca22ff09a7f404af8d3f870df6482de6d4e8ad3a4302f0b8705b71706\"}],\"publicKey\":\"302a300506032b65700321003e1f3a0b43f3f8426cf53792c6489f1b13bccb1344e38ce90e0def81eeaa9bc3\"}"
+    },
+    {
+      "name": "distinct/secp256k1-session-long-ttl",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "wnlfe-v7vk2-oiryx-eht76-ff6rs-fewl4-dnnfw-shrya-73jlk-2jdjw-fqe",
+      "public_key": "302a300506032b6570032100554554b4f0ae51d70bafd9a12a7a7d5c28d5a03a74a3c5ed9744442417593988",
+      "private_key_encrypted": "b3aa5e8017f1a7992c741551e72d7e6012da51856dda8f5b3b1b784a9143a80529a8229620e449b81ac1ff6d07f86798a189938a31201dd3c975887d269a64783637c4815cb73d4eb58273df0d23b85478228b575b84fec61ac931395f2549a9774f5a2c79bd29e8b69e510b6ca730dc21efda0952fc9c597968fd90134b68dc2b101c7619212b15d88f204cb3687e78",
+      "session_public_key": "3056301006072a8648ce3d020106052b8104000a03420004f2a99233bfc2e4040b44e94a8fc0406cd4f456bbe0d879f4f077bf76aba76fb9097e0fccb3f3420a2548af37d3170167edbc02fbddf1ceb2f3c48e333d29445a",
+      "targets": [
+        "qsgjb-riaaa-aaaaa-aaaga-cai"
+      ],
+      "delegation_ttl_ms": 2592000000,
+      "expected_principal": "q2mcq-4w6rc-2wk6k-pwwjb-zybfu-zi4j5-ggvst-nhzvb-o65g3-7p2ay-fqe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188fa7baf53c0000\",\"pubkey\":\"3056301006072a8648ce3d020106052b8104000a03420004f2a99233bfc2e4040b44e94a8fc0406cd4f456bbe0d879f4f077bf76aba76fb9097e0fccb3f3420a2548af37d3170167edbc02fbddf1ceb2f3c48e333d29445a\",\"targets\":[\"000000000000000C0101\"]},\"signature\":\"353993b6edf080251c79105a5e41f911be4a889ca9e6d69fa9e18f8ae61eaabf32b436cee83808e88cccef37a56b1d12d84868c29729ecfb37a3264f8bf03d05\"}],\"publicKey\":\"302a300506032b6570032100554554b4f0ae51d70bafd9a12a7a7d5c28d5a03a74a3c5ed9744442417593988\"}"
+    },
+    {
+      "name": "distinct/no-targets",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "veszd-b7xoy-fim5q-sewtu-uzkjn-xclnc-adh2n-va4l5-wp3a4-36ryf-yqe",
+      "public_key": "302a300506032b65700321002011936e042699e3eb6aae9c140293aa8a8c1cf96626dfd3ce906291f14dd416",
+      "private_key_encrypted": "8477dffa519c30ba5cfd3086b96f80c0d381edd3bdd004b2d318cac6807830720d8fb2e0e69996a70b5983e881648f82a30854cf6c63f6b4db4344889817b4831830a5f934f1f437fd3272f3cec3d8eb0e3b141976ed57d5e0848ce2c86a5090be91a3f898c369a98b66767a3a951995592b40f11e09bbf4cd249a5a2b4553f3170f4b402e4b679ecfd6990b7e581f42",
+      "session_public_key": "302a300506032b657003210036a760e2cd7b4647599ad80874cc191cbd342f06dfb8e93220e37aeb305901e7",
+      "targets": [],
+      "delegation_ttl_ms": null,
+      "expected_principal": "con3p-jjgy2-eedjf-rgvrw-uj6g3-4etwn-sdcqy-abapu-ykjj5-42w37-mqe",
+      "expected_chain": "{\"delegations\":[{\"delegation\":{\"expiration\":\"188678de4f6b4000\",\"pubkey\":\"302a300506032b657003210036a760e2cd7b4647599ad80874cc191cbd342f06dfb8e93220e37aeb305901e7\"},\"signature\":\"93b0410f5af8678fd61e98db802065d10b2d0c9fcafefc1d2836f40616b24cfa219540f492c1f3c39c8e0ce87d7b9926f604eafee56bdd208ee5350368f71a0b\"}],\"publicKey\":\"302a300506032b65700321002011936e042699e3eb6aae9c140293aa8a8c1cf96626dfd3ce906291f14dd416\"}"
+    }
+  ],
+  "global_errors": [
+    {
+      "name": "dev/key-of-another-root",
+      "salts": {
+        "ecdsa_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft",
+        "anonymous_salt": "wK6wVLS49ny5FQ08HooQYFS8saPuAcF5VUeWLkkcj2x3OYgelDbEEsUkLUqAxKft"
+      },
+      "root_principal": "epfbx-q3mts-5qtde-7gfx7-b2ogi-47ver-hrqi5-egs3a-mldyg-hwrt4-xae",
+      "public_key": "302a300506032b65700321002011936e042699e3eb6aae9c140293aa8a8c1cf96626dfd3ce906291f14dd416",
+      "private_key_encrypted": "8cea174ee2ccae5b55a547710597d6d7cbfb81ffaa05326d2a63efd686c5101597bd6b74328a3a73186cb145ed38a565c0ede01f6fee29cc3ad7cc7413c0c04412fb0beaa3933473aaeb829a0b8036558a3c97eca0d02edd79bee25f639a3cf3f252437f5adf03d0f5cf6ff69f509da55080b29f49c0dd1c6f06c82de5fd09f4c7a025f7a0d6c3c240240b480c0dd9e6",
+      "session_public_key": "302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63",
+      "targets": [
+        "ryjl3-tyaaa-aaaaa-aaaba-cai"
+      ],
+      "delegation_ttl_ms": null
+    },
+    {
+      "name": "distinct/key-of-another-root",
+      "salts": {
+        "ecdsa_salt": "test-ecdsa-salt/Ωmega+=0123456789abcdef",
+        "anonymous_salt": "test-anonymous-salt:ключ#42"
+      },
+      "root_principal": "epfbx-q3mts-5qtde-7gfx7-b2ogi-47ver-hrqi5-egs3a-mldyg-hwrt4-xae",
+      "public_key": "302a300506032b65700321002011936e042699e3eb6aae9c140293aa8a8c1cf96626dfd3ce906291f14dd416",
+      "private_key_encrypted": "8477dffa519c30ba5cfd3086b96f80c0d381edd3bdd004b2d318cac6807830720d8fb2e0e69996a70b5983e881648f82a30854cf6c63f6b4db4344889817b4831830a5f934f1f437fd3272f3cec3d8eb0e3b141976ed57d5e0848ce2c86a5090be91a3f898c369a98b66767a3a951995592b40f11e09bbf4cd249a5a2b4553f3170f4b402e4b679ecfd6990b7e581f42",
+      "session_public_key": "302a300506032b6570032100e0138f413ab5942b167e0a9081f607ce701bc354de2cffc045f1304e3567fc63",
+      "targets": [
+        "ryjl3-tyaaa-aaaaa-aaaba-cai"
+      ],
+      "delegation_ttl_ms": null
+    }
+  ]
+}

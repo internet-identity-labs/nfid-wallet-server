@@ -1,147 +1,324 @@
-use std::cell::{Cell, RefCell};
+//! Signs delegations for legacy accounts (anchor < 200_000_000) instead of the AWS lambda
+//! (`sms-sender-serverless`): same keys, same principals, no key generation.
+//!
+//! Callers prove their account with the Identity Manager `get_root_certified` response they fetched
+//! themselves; the lambda salts are delivered encrypted (see `provisioning`) and global keys are
+//! imported from `signer_ic`.
 
-use candid::{candid_method, Principal};
-use candid::CandidType;
-use hex::encode;
-use ic_cdk::{call, caller, storage, trap};
-use ic_cdk_macros::{init, post_upgrade, pre_upgrade, update};
-use serde::Deserialize;
-use sha2::{Digest, Sha256};
-thread_local! {
-    static STATE: State = State::default();
+mod certified_root;
+mod legacy_signer;
+mod provisioning;
+mod state;
+
+use candid::{CandidType, Deserialize, Principal};
+use ic_cdk::api::management_canister::main::raw_rand;
+use ic_cdk::{init, post_upgrade, query, update};
+use serde_bytes::ByteBuf;
+
+use certified_root::{verify_certified_root, CertifiedRoot, MAINNET_ROOT_KEY_DER};
+use legacy_signer::{
+    anonymous_public_key, expiration_ns, sign_anonymous_delegation, sign_global_delegation,
+    DelegationChain,
+};
+use provisioning::SealedSalts;
+use state::GlobalKey;
+
+/// Newer accounts get delegations from the delegation factory.
+const LEGACY_ANCHOR_LIMIT: u64 = 200_000_000;
+/// Same limit as the delegation factory.
+const MAX_DELEGATION_TTL_MS: u64 = 30 * 24 * 3_600_000;
+
+#[derive(CandidType, Deserialize)]
+struct InitArgs {
+    im_canister: Principal,
+    /// For local replicas only; the mainnet key is used otherwise.
+    ic_root_key: Option<ByteBuf>,
 }
 
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct InitArgs {
-    pub im_canister: Principal,
-    pub salt: String,
-    pub ecdsa_salt: String,
+#[derive(CandidType, Deserialize)]
+struct AnonymousDelegationRequest {
+    certified_root: CertifiedRoot,
+    domain: String,
+    session_key: ByteBuf,
+    targets: Vec<Principal>,
+    delegation_ttl_ms: Option<u64>,
 }
 
-
-struct State {
-    im_canister: Cell<Option<Principal>>,
-    salt: RefCell<String>,
-    ecdsa_salt: RefCell<String>,
+#[derive(CandidType, Deserialize)]
+struct GlobalDelegationRequest {
+    certified_root: CertifiedRoot,
+    session_key: ByteBuf,
+    targets: Vec<Principal>,
+    delegation_ttl_ms: Option<u64>,
 }
 
+#[derive(CandidType, Deserialize)]
+struct AnonymousPrincipalRequest {
+    certified_root: CertifiedRoot,
+    domain: String,
+}
 
-impl Default for State {
-    fn default() -> Self {
-        Self {
-            im_canister: Cell::new(None),
-            salt: RefCell::new("".to_string()),
-            ecdsa_salt: RefCell::new("".to_string()),
+#[derive(CandidType, Deserialize)]
+struct CandidDelegation {
+    pubkey: ByteBuf,
+    expiration: u64,
+    targets: Option<Vec<Principal>>,
+}
+
+#[derive(CandidType, Deserialize)]
+struct CandidSignedDelegation {
+    delegation: CandidDelegation,
+    signature: ByteBuf,
+}
+
+#[derive(CandidType, Deserialize)]
+struct CandidDelegationChain {
+    delegations: Vec<CandidSignedDelegation>,
+    public_key: ByteBuf,
+}
+
+#[derive(CandidType, Deserialize)]
+struct ImportedKeyPair {
+    root: String,
+    public_key: String,
+    private_key_encrypted: String,
+}
+
+#[derive(CandidType, Deserialize)]
+struct Status {
+    im_canister: Option<Principal>,
+    custom_ic_root_key: bool,
+    salts_provisioned: bool,
+    salts_fingerprint: Option<String>,
+    provisioning_key_pending: bool,
+    global_keys: u64,
+}
+
+impl From<DelegationChain> for CandidDelegationChain {
+    fn from(chain: DelegationChain) -> Self {
+        CandidDelegationChain {
+            delegations: chain
+                .delegations
+                .into_iter()
+                .map(|signed| CandidSignedDelegation {
+                    delegation: CandidDelegation {
+                        pubkey: ByteBuf::from(signed.delegation.pubkey),
+                        expiration: signed.delegation.expiration,
+                        targets: signed.delegation.targets,
+                    },
+                    signature: ByteBuf::from(signed.signature),
+                })
+                .collect(),
+            public_key: ByteBuf::from(chain.public_key),
         }
     }
 }
 
-/// Invoked when the canister starts.
-/// Initializes the application with `InitArgs` parameters and stores them in persistent storage.
 #[init]
-#[candid_method(init)]
-fn init(maybe_arg: Option<InitArgs>) {
-    if let Some(arg) = maybe_arg {
-        init_im_canister(arg);
+fn init(args: Option<InitArgs>) {
+    apply_args(args);
+}
+
+#[post_upgrade]
+fn post_upgrade(args: Option<InitArgs>) {
+    apply_args(args);
+}
+
+fn apply_args(args: Option<InitArgs>) {
+    if let Some(args) = args {
+        state::update_config(|config| {
+            config.im_canister = Some(args.im_canister);
+            config.ic_root_key = args.ic_root_key.map(ByteBuf::into_vec);
+        });
     }
 }
 
+#[update]
+async fn get_anonymous_delegation(
+    request: AnonymousDelegationRequest,
+) -> Result<CandidDelegationChain, String> {
+    let root = authorize(&request.certified_root).await?;
+    let salts = state::salts().ok_or("Salts are not provisioned")?;
+    sign_anonymous_delegation(
+        &root,
+        &request.domain,
+        &salts,
+        &request.session_key,
+        &request.targets,
+        expiration(request.delegation_ttl_ms)?,
+    )
+    .map(Into::into)
+    .map_err(|e| e.to_string())
+}
 
 #[update]
-async fn get_salt() -> String {
-    let root = get_root_id().await;
-    let ecdsa_salt = STATE.with(|s| s.ecdsa_salt.borrow().clone());
-    let salted_key = format!("{}{}", root, ecdsa_salt);
-    sha2(&salted_key)
+async fn get_global_delegation(
+    request: GlobalDelegationRequest,
+) -> Result<CandidDelegationChain, String> {
+    let root = authorize(&request.certified_root).await?;
+    let salts = state::salts().ok_or("Salts are not provisioned")?;
+    let stored = state::global_key(&root).ok_or("No global key for this account")?;
+    sign_global_delegation(
+        &root,
+        &stored,
+        &salts.ecdsa_salt,
+        &request.session_key,
+        &request.targets,
+        expiration(request.delegation_ttl_ms)?,
+    )
+    .map(Into::into)
+    .map_err(|e| e.to_string())
 }
 
 #[update]
-async fn get_anon_salt(data: String) -> String {
-    let root = get_root_id().await;
-    let ecdsa_salt = STATE.with(|s| s.ecdsa_salt.borrow().clone());
-    let salt = STATE.with(|s: &State| s.salt.borrow().clone());
-    let salted_data = format!("{}{}{}{}", root, data, salt, ecdsa_salt);
-    sha2(&salted_data)
+async fn get_anonymous_principal(request: AnonymousPrincipalRequest) -> Result<Principal, String> {
+    let root = authorize(&request.certified_root).await?;
+    let salts = state::salts().ok_or("Salts are not provisioned")?;
+    Ok(Principal::self_authenticating(anonymous_public_key(
+        &root,
+        &request.domain,
+        &salts,
+    )))
 }
 
-
-/// Applies changes afterr the canister upgrade.
-#[post_upgrade]
-async fn post_upgrade(_maybe_arg: Option<InitArgs>) {
-    init_from_memory().await;
+/// Returns the X25519 key to seal the salts for `provision_salts`, creating it when needed.
+#[update]
+async fn get_provisioning_key() -> Result<String, String> {
+    require_controller()?;
+    if state::config().provisioning_secret.is_none() {
+        let (random,) = raw_rand()
+            .await
+            .map_err(|(code, message)| format!("raw_rand failed: {code:?} {message}"))?;
+        state::update_config(|config| {
+            config.provisioning_secret.get_or_insert(random);
+        });
+    }
+    let secret = provisioning_secret()?;
+    Ok(hex::encode(provisioning::public_key(&secret)))
 }
 
-/// Applies changes before the canister upgrade.
-#[pre_upgrade]
-async fn save_persistent_state() {
-    save_to_temp_memory().await;
-}
-
-
-pub fn init_im_canister(args: InitArgs) {
-    STATE.with(|s: &State| {
-        s.im_canister.set(Some(args.im_canister));
-        s.ecdsa_salt.replace(args.ecdsa_salt);
-        s.salt.replace(args.salt);
+#[update]
+fn provision_salts(sealed: SealedSalts) -> Result<(), String> {
+    require_controller()?;
+    let salts = provisioning::open_salts(&provisioning_secret()?, &ic_cdk::id(), &sealed)?;
+    state::update_config(|config| {
+        config.ecdsa_salt = Some(salts.ecdsa_salt);
+        config.anonymous_salt = Some(salts.anonymous_salt);
+        config.provisioning_secret = None;
     });
+    Ok(())
 }
 
-fn main() {}
-
-// Order dependent: do not move above any function annotated with #[candid_method]!
-candid::export_service!();
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-struct TempMemory {
-    im_canister: Option<Principal>,
-    ecdsa_salt: Option<String>,
-    salt: Option<String>,
+/// Copies records of `signer_ic` (`get_all_json`); returns the number of stored keys.
+#[update]
+fn import_global_keys(keys: Vec<ImportedKeyPair>) -> Result<u64, String> {
+    require_controller()?;
+    for key in &keys {
+        Principal::from_text(&key.root).map_err(|_| format!("Invalid root {}", key.root))?;
+        if hex::decode(&key.public_key).is_err() || hex::decode(&key.private_key_encrypted).is_err()
+        {
+            return Err(format!("Invalid key pair of {}", key.root));
+        }
+    }
+    for key in keys {
+        state::insert_global_key(
+            key.root,
+            GlobalKey {
+                public_key: key.public_key,
+                private_key_encrypted: key.private_key_encrypted,
+            },
+        );
+    }
+    Ok(state::global_keys_count())
 }
 
-
-pub fn get_im_canister() -> Principal {
-    STATE.with(|s: &State| {
-        s.im_canister.get().expect("IM canister not set")
+#[query]
+fn status() -> Result<Status, String> {
+    require_controller()?;
+    let config = state::config();
+    Ok(Status {
+        im_canister: config.im_canister,
+        custom_ic_root_key: config.ic_root_key.is_some(),
+        salts_provisioned: state::salts().is_some(),
+        salts_fingerprint: state::salts().as_ref().map(provisioning::fingerprint),
+        provisioning_key_pending: config.provisioning_secret.is_some(),
+        global_keys: state::global_keys_count(),
     })
 }
 
-pub async fn init_from_memory() {
-    let (mo, ): (TempMemory,) = storage::stable_restore()
-        .expect("Stable restore failed: unable to restore data from stable memory.");
-    STATE.with(|s: &State| {
-        s.im_canister.set(mo.im_canister);
-        s.ecdsa_salt.replace(mo.ecdsa_salt.unwrap());
-        s.salt.replace(mo.salt.unwrap());
-    });
+/// Verifies the caller's certified root and that the account is a legacy one.
+async fn authorize(certified_root: &CertifiedRoot) -> Result<String, String> {
+    let caller = ic_cdk::caller();
+    if caller == Principal::anonymous() {
+        return Err("Anonymous caller".into());
+    }
+    let config = state::config();
+    let im_canister = config
+        .im_canister
+        .ok_or("The Identity Manager canister is not configured")?;
+    let root_key = config
+        .ic_root_key
+        .unwrap_or_else(|| hex::decode(MAINNET_ROOT_KEY_DER).expect("valid constant"));
+    verify_certified_root(
+        &im_canister,
+        &root_key,
+        &caller,
+        certified_root,
+        u128::from(ic_cdk::api::time()),
+    )?;
+
+    let (anchor,): (Option<u64>,) =
+        ic_cdk::call(im_canister, "get_anchor_by_principal", (caller.to_text(),))
+            .await
+            .map_err(|(code, message)| {
+                format!("Identity Manager call failed: {code:?} {message}")
+            })?;
+    match anchor {
+        Some(anchor) if anchor < LEGACY_ANCHOR_LIMIT => Ok(certified_root.root.clone()),
+        Some(_) => Err("Not a legacy account".into()),
+        None => Err("Unknown access point".into()),
+    }
 }
 
-pub async fn save_to_temp_memory() {
-    let temp_memory = TempMemory {
-        im_canister: STATE.with(|s| s.im_canister.get()),
-        ecdsa_salt: STATE.with(|s| Some(s.ecdsa_salt.take())),
-        salt: STATE.with(|s| Some(s.salt.take())),
-    };
-    storage::stable_save((temp_memory,))
-        .expect("Stable save failed: unable to save data to stable memory.");
+fn expiration(delegation_ttl_ms: Option<u64>) -> Result<u64, String> {
+    expiration_ns(
+        ic_cdk::api::time() / 1_000_000,
+        delegation_ttl_ms.map(|ttl| ttl.min(MAX_DELEGATION_TTL_MS)),
+    )
+    .map_err(|e| e.to_string())
 }
 
-fn sha2(value: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(value);
-    encode(hasher.finalize()) // Convert bytes to hex string
+fn require_controller() -> Result<(), String> {
+    if ic_cdk::api::is_controller(&ic_cdk::caller()) {
+        Ok(())
+    } else {
+        Err("Unauthorized".into())
+    }
 }
 
-async fn get_root_id() -> String {
-    match STATE.with(|c| c.im_canister.get()) {
-        None => caller().to_text(), // Return caller for testing purposes when im_canister is None
-        Some(canister) => {
-            let princ = caller();
-            match call(canister, "get_root_by_principal", (princ.to_text(), 0)).await {
-                Ok((Some(root_id), )) => root_id,
-                Ok((None, )) => trap("No root found for this principal"),
-                Err((_, err)) => trap(&format!("Failed to request IM: {}", err)),
-            }
-        }
+fn provisioning_secret() -> Result<[u8; 32], String> {
+    state::config()
+        .provisioning_secret
+        .and_then(|secret| secret.try_into().ok())
+        .ok_or_else(|| "Call get_provisioning_key first".into())
+}
+
+ic_cdk::export_candid!();
+
+fn main() {}
+
+#[cfg(test)]
+mod tests {
+    use candid_parser::utils::{service_equal, CandidSource};
+    use std::path::Path;
+
+    #[test]
+    fn candid_interface_matches_did_file() {
+        let did = Path::new(env!("CARGO_MANIFEST_DIR")).join("ecdsa_storage.did");
+        service_equal(
+            CandidSource::Text(&super::__export_service()),
+            CandidSource::File(&did),
+        )
+        .unwrap();
     }
 }
