@@ -19,6 +19,9 @@ pub struct Config {
     pub ic_root_key: Option<Vec<u8>>,
     /// X25519 secret used once to receive the salts.
     pub provisioning_secret: Option<Vec<u8>>,
+    /// Principal allowed to load the salts and import the global keys once, without being a
+    /// controller: the migration lambda. Revoke it when the migration is done.
+    pub migrator: Option<Principal>,
     pub ecdsa_salt: Option<String>,
     pub anonymous_salt: Option<String>,
 }

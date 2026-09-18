@@ -140,6 +140,51 @@ mod tests {
         );
     }
 
+    /// The lambda seals the salts (sms-sender-serverless canister-migration.service.ts) and this canister
+    /// opens them, so both implementations are checked against one envelope.
+    #[test]
+    fn opens_an_envelope_sealed_by_the_lambda() {
+        #[derive(serde::Deserialize)]
+        struct Fixture {
+            canister_id: String,
+            recipient_secret: String,
+            recipient_public_key: String,
+            salts: FixtureSalts,
+            fingerprint: String,
+            sealed: SealedSalts,
+        }
+        #[derive(serde::Deserialize)]
+        struct FixtureSalts {
+            ecdsa_salt: String,
+            anonymous_salt: String,
+        }
+
+        let fixture: Fixture = serde_json::from_str(include_str!(
+            "../tests/fixtures/sealed_salts_from_lambda.json"
+        ))
+        .unwrap();
+        let secret: [u8; 32] = hex::decode(&fixture.recipient_secret)
+            .unwrap()
+            .try_into()
+            .unwrap();
+        assert_eq!(
+            hex::encode(public_key(&secret)),
+            fixture.recipient_public_key
+        );
+
+        let canister = Principal::from_text(&fixture.canister_id).unwrap();
+        let Ok(salts) = open_salts(&secret, &canister, &fixture.sealed) else {
+            panic!("cannot open the envelope sealed by the lambda");
+        };
+        assert_eq!(salts.ecdsa_salt, fixture.salts.ecdsa_salt);
+        assert_eq!(salts.anonymous_salt, fixture.salts.anonymous_salt);
+        assert_eq!(fingerprint(&salts), fixture.fingerprint);
+
+        // The envelope is bound to this canister only.
+        let other = Principal::from_text("zhr63-daaaa-aaaap-qbh4q-cai").unwrap();
+        assert!(open_salts(&secret, &other, &fixture.sealed).is_err());
+    }
+
     #[test]
     fn rejects_other_canister_key_or_tampering() {
         let secret = [7u8; 32];

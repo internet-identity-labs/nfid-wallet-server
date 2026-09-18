@@ -67,6 +67,7 @@ type ImportedKeyPair = record {
 
 type Status = record {
     im_canister : opt principal;
+    migrator : opt principal;
     custom_ic_root_key : bool;
     salts_provisioned : bool;
     salts_fingerprint : opt text;
@@ -80,6 +81,9 @@ service : (opt InitArgs) -> {
     get_anonymous_principal : (AnonymousPrincipalRequest) -> (variant { Ok : principal; Err : text });
 
     // Controllers only.
+    set_migrator : (opt principal) -> (variant { Ok; Err : text });
+
+    // Controllers and the migrator (see set_migrator).
     get_provisioning_key : () -> (variant { Ok : text; Err : text });
     provision_salts : (SealedSalts) -> (variant { Ok; Err : text });
     import_global_keys : (vec ImportedKeyPair) -> (variant { Ok : nat64; Err : text });

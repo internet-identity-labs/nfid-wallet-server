@@ -87,6 +87,7 @@ struct ImportedKeyPair {
 #[derive(CandidType, Deserialize)]
 struct Status {
     im_canister: Option<Principal>,
+    migrator: Option<Principal>,
     custom_ic_root_key: bool,
     salts_provisioned: bool,
     salts_fingerprint: Option<String>,
@@ -184,7 +185,7 @@ async fn get_anonymous_principal(request: AnonymousPrincipalRequest) -> Result<P
 /// Returns the X25519 key to seal the salts for `provision_salts`, creating it when needed.
 #[update]
 async fn get_provisioning_key() -> Result<String, String> {
-    require_controller()?;
+    require_controller_or_migrator()?;
     if state::config().provisioning_secret.is_none() {
         let (random,) = raw_rand()
             .await
@@ -199,7 +200,13 @@ async fn get_provisioning_key() -> Result<String, String> {
 
 #[update]
 fn provision_salts(sealed: SealedSalts) -> Result<(), String> {
-    require_controller()?;
+    // Loading them once is enough; replacing them would change every anonymous principal, so only a
+    // controller may do it again.
+    if state::salts().is_some() {
+        require_controller().map_err(|_| "Salts are already provisioned".to_string())?;
+    } else {
+        require_controller_or_migrator()?;
+    }
     let salts = provisioning::open_salts(&provisioning_secret()?, &ic_cdk::id(), &sealed)?;
     state::update_config(|config| {
         config.ecdsa_salt = Some(salts.ecdsa_salt);
@@ -212,12 +219,27 @@ fn provision_salts(sealed: SealedSalts) -> Result<(), String> {
 /// Copies records of `signer_ic` (`get_all_json`); returns the number of stored keys.
 #[update]
 fn import_global_keys(keys: Vec<ImportedKeyPair>) -> Result<u64, String> {
-    require_controller()?;
+    let is_controller = require_controller().is_ok();
+    if !is_controller {
+        require_controller_or_migrator()?;
+    }
     for key in &keys {
         Principal::from_text(&key.root).map_err(|_| format!("Invalid root {}", key.root))?;
         if hex::decode(&key.public_key).is_err() || hex::decode(&key.private_key_encrypted).is_err()
         {
             return Err(format!("Invalid key pair of {}", key.root));
+        }
+        // Re-importing the same record is fine, replacing a key with another one is not: that would
+        // change the user's global principal.
+        if let Some(stored) = state::global_key(&key.root) {
+            let same = stored.public_key == key.public_key
+                && stored.private_key_encrypted == key.private_key_encrypted;
+            if !same && !is_controller {
+                return Err(format!(
+                    "Another global key of {} is already stored",
+                    key.root
+                ));
+            }
         }
     }
     for key in keys {
@@ -234,10 +256,11 @@ fn import_global_keys(keys: Vec<ImportedKeyPair>) -> Result<u64, String> {
 
 #[query]
 fn status() -> Result<Status, String> {
-    require_controller()?;
+    require_controller_or_migrator()?;
     let config = state::config();
     Ok(Status {
         im_canister: config.im_canister,
+        migrator: config.migrator,
         custom_ic_root_key: config.ic_root_key.is_some(),
         salts_provisioned: state::salts().is_some(),
         salts_fingerprint: state::salts().as_ref().map(provisioning::fingerprint),
@@ -286,6 +309,23 @@ fn expiration(delegation_ttl_ms: Option<u64>) -> Result<u64, String> {
         delegation_ttl_ms.map(|ttl| ttl.min(MAX_DELEGATION_TTL_MS)),
     )
     .map_err(|e| e.to_string())
+}
+
+/// Grants or revokes the migration role (the lambda that loads the salts and imports the keys).
+#[update]
+fn set_migrator(migrator: Option<Principal>) -> Result<(), String> {
+    require_controller()?;
+    state::update_config(|config| config.migrator = migrator);
+    Ok(())
+}
+
+fn require_controller_or_migrator() -> Result<(), String> {
+    let caller = ic_cdk::caller();
+    if ic_cdk::api::is_controller(&caller) || state::config().migrator == Some(caller) {
+        Ok(())
+    } else {
+        Err("Unauthorized".into())
+    }
 }
 
 fn require_controller() -> Result<(), String> {
