@@ -1,9 +1,11 @@
 // Delivers the lambda salts to ecdsa_storage without exposing them in ingress messages.
 //
 //   node src/ecdsa_storage/scripts/provision-salts.mjs --network ic --identity <controller> --canister <id> \
-//        [--serverless-template <.serverless/cloudformation-template-update-stack.json>]
+//        [--aws-function sms-sender-serverless-prod-ecdsa_get_anonymous | --serverless-template <path>]
 //
-// Salts come from the deployed lambda template when given, otherwise from ECDSA_SALT and ANONYMOUS_SALT.
+// Salts are read from the deployed lambda configuration (--aws-function, needs AWS credentials), from a
+// serverless template (--serverless-template, dev/test), or from ECDSA_SALT and ANONYMOUS_SALT.
+// They are never printed: the script only reports the fingerprint the canister confirms.
 // The scheme must match src/provisioning.rs.
 import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
@@ -20,6 +22,8 @@ const { values: args } = parseArgs({
         identity: { type: "string" },
         canister: { type: "string" },
         "serverless-template": { type: "string" },
+        "aws-function": { type: "string" },
+        "aws-region": { type: "string", default: "us-east-1" },
     },
 });
 if (!args.identity || !args.canister) {
@@ -42,6 +46,27 @@ if (status.salts_fingerprint?.[0] !== expected && status.salts_fingerprint !== e
 console.log(`Salts provisioned to ${args.canister}, fingerprint ${expected}`);
 
 function readSalts() {
+    if (args["aws-function"]) {
+        const variables = JSON.parse(
+            execFileSync(
+                "aws",
+                [
+                    "lambda",
+                    "get-function-configuration",
+                    "--function-name",
+                    args["aws-function"],
+                    "--region",
+                    args["aws-region"],
+                    "--query",
+                    "Environment.Variables",
+                    "--output",
+                    "json",
+                ],
+                { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }
+            )
+        );
+        return { ecdsa_salt: variables.ECDSA_SALT, anonymous_salt: variables.ANONYMOUS_SALT };
+    }
     if (args["serverless-template"]) {
         const resources = JSON.parse(readFileSync(args["serverless-template"], "utf8")).Resources;
         const variables = resources.EcdsaUnderscoregetUnderscoreanonymousLambdaFunction.Properties.Environment.Variables;
