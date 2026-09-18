@@ -84,6 +84,12 @@ struct ImportedKeyPair {
     private_key_encrypted: String,
 }
 
+/// Subset of the Identity Manager `get_config` response.
+#[derive(CandidType, Deserialize)]
+struct IdentityManagerConfig {
+    lambda: Option<Principal>,
+}
+
 #[derive(CandidType, Deserialize)]
 struct Status {
     im_canister: Option<Principal>,
@@ -185,7 +191,7 @@ async fn get_anonymous_principal(request: AnonymousPrincipalRequest) -> Result<P
 /// Returns the X25519 key to seal the salts for `provision_salts`, creating it when needed.
 #[update]
 async fn get_provisioning_key() -> Result<String, String> {
-    require_controller_or_migrator()?;
+    require_migration_access().await?;
     if state::config().provisioning_secret.is_none() {
         let (random,) = raw_rand()
             .await
@@ -198,30 +204,32 @@ async fn get_provisioning_key() -> Result<String, String> {
     Ok(hex::encode(provisioning::public_key(&secret)))
 }
 
+/// Returns the fingerprint of the loaded salts, so the caller can check them without reading the state.
 #[update]
-fn provision_salts(sealed: SealedSalts) -> Result<(), String> {
+async fn provision_salts(sealed: SealedSalts) -> Result<String, String> {
     // Loading them once is enough; replacing them would change every anonymous principal, so only a
     // controller may do it again.
     if state::salts().is_some() {
         require_controller().map_err(|_| "Salts are already provisioned".to_string())?;
     } else {
-        require_controller_or_migrator()?;
+        require_migration_access().await?;
     }
     let salts = provisioning::open_salts(&provisioning_secret()?, &ic_cdk::id(), &sealed)?;
+    let fingerprint = provisioning::fingerprint(&salts);
     state::update_config(|config| {
         config.ecdsa_salt = Some(salts.ecdsa_salt);
         config.anonymous_salt = Some(salts.anonymous_salt);
         config.provisioning_secret = None;
     });
-    Ok(())
+    Ok(fingerprint)
 }
 
 /// Copies records of `signer_ic` (`get_all_json`); returns the number of stored keys.
 #[update]
-fn import_global_keys(keys: Vec<ImportedKeyPair>) -> Result<u64, String> {
+async fn import_global_keys(keys: Vec<ImportedKeyPair>) -> Result<u64, String> {
     let is_controller = require_controller().is_ok();
     if !is_controller {
-        require_controller_or_migrator()?;
+        require_migration_access().await?;
     }
     for key in &keys {
         Principal::from_text(&key.root).map_err(|_| format!("Invalid root {}", key.root))?;
@@ -257,6 +265,8 @@ fn import_global_keys(keys: Vec<ImportedKeyPair>) -> Result<u64, String> {
 #[query]
 fn status() -> Result<Status, String> {
     require_controller_or_migrator()?;
+    // A query cannot call the Identity Manager, so the lambda sees the results in the call responses.
+
     let config = state::config();
     Ok(Status {
         im_canister: config.im_canister,
@@ -311,7 +321,8 @@ fn expiration(delegation_ttl_ms: Option<u64>) -> Result<u64, String> {
     .map_err(|e| e.to_string())
 }
 
-/// Grants or revokes the migration role (the lambda that loads the salts and imports the keys).
+/// Grants or revokes the migration role. Not needed for the delegation lambda, which the Identity
+/// Manager already knows (`get_config().lambda`); this is for any other one-off migration caller.
 #[update]
 fn set_migrator(migrator: Option<Principal>) -> Result<(), String> {
     require_controller()?;
@@ -322,6 +333,25 @@ fn set_migrator(migrator: Option<Principal>) -> Result<(), String> {
 fn require_controller_or_migrator() -> Result<(), String> {
     let caller = ic_cdk::caller();
     if ic_cdk::api::is_controller(&caller) || state::config().migrator == Some(caller) {
+        Ok(())
+    } else {
+        Err("Unauthorized".into())
+    }
+}
+
+/// Migration calls are allowed for controllers, for an explicitly set migrator, and for the delegation
+/// lambda: the same principal that signs today, taken from the Identity Manager configuration.
+async fn require_migration_access() -> Result<(), String> {
+    if require_controller_or_migrator().is_ok() {
+        return Ok(());
+    }
+    let im_canister = state::config()
+        .im_canister
+        .ok_or("The Identity Manager canister is not configured")?;
+    let (im_config,): (IdentityManagerConfig,) = ic_cdk::call(im_canister, "get_config", ())
+        .await
+        .map_err(|(code, message)| format!("Identity Manager call failed: {code:?} {message}"))?;
+    if im_config.lambda == Some(ic_cdk::caller()) {
         Ok(())
     } else {
         Err("Unauthorized".into())

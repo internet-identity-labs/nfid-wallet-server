@@ -82,10 +82,12 @@ service : (opt InitArgs) -> {
 
     // Controllers only.
     set_migrator : (opt principal) -> (variant { Ok; Err : text });
-
-    // Controllers and the migrator (see set_migrator).
-    get_provisioning_key : () -> (variant { Ok : text; Err : text });
-    provision_salts : (SealedSalts) -> (variant { Ok; Err : text });
-    import_global_keys : (vec ImportedKeyPair) -> (variant { Ok : nat64; Err : text });
     status : () -> (variant { Ok : Status; Err : text }) query;
+
+    // Migration: controllers, the migrator, and the delegation lambda of the Identity Manager
+    // (get_config().lambda) — the principal that signs today.
+    get_provisioning_key : () -> (variant { Ok : text; Err : text });
+    // Returns the fingerprint of the loaded salts.
+    provision_salts : (SealedSalts) -> (variant { Ok : text; Err : text });
+    import_global_keys : (vec ImportedKeyPair) -> (variant { Ok : nat64; Err : text });
 };
