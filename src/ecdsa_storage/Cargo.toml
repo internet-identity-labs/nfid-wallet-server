@@ -1,15 +1,30 @@
 [package]
 name = "ecdsa_storage"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies]
-candid = "0.10.35"
-candid_parser = "0.1.4"
-ic-cdk = "0.13.6"
-ic-cdk-macros = "0.13.2"
-# other dependencies
-serde = { version = "1.0"}
-serde_cbor = "0.11"
-sha2 = "0.10.9"
-hex = "0.4.3"
+aes = "0.8"
+candid = "0.10"
+chacha20poly1305 = "0.10"
+ecb = { version = "0.1", features = ["alloc", "block-padding"] }
+ed25519-dalek = "2"
+hex = "0.4"
+ic-cbor = "2.6"
+ic-cdk = "0.16"
+ic-certificate-verification = "2.6"
+ic-certification = "2.6"
+ic-stable-structures = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_bytes = "0.11"
+serde_json = "1"
+sha2 = "0.10"
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+zeroize = "1"
+
+# Pulled in through rand_core; never called, randomness comes from raw_rand.
+[target.'cfg(all(target_arch = "wasm32", target_vendor = "unknown", target_os = "unknown"))'.dependencies]
+getrandom = { version = "0.2", features = ["custom"] }
+
+[dev-dependencies]
+candid_parser = "0.1"

@@ -1,11 +1,93 @@
 type InitArgs = record {
-    im_canister: principal;
-    salt: text;
-    ecdsa_salt: text
+    im_canister : principal;
+    // For local replicas only; the mainnet root key is used otherwise.
+    ic_root_key : opt blob;
 };
 
+// Response of the Identity Manager `get_root_certified`, requested by the caller itself.
+type CertifiedRoot = record {
+    root : text;
+    certificate : blob;
+    witness : blob;
+};
+
+type AnonymousDelegationRequest = record {
+    certified_root : CertifiedRoot;
+    domain : text;
+    session_key : blob;
+    // Empty means an unrestricted delegation.
+    targets : vec principal;
+    delegation_ttl_ms : opt nat64;
+};
+
+type GlobalDelegationRequest = record {
+    certified_root : CertifiedRoot;
+    session_key : blob;
+    // Empty means an unrestricted delegation.
+    targets : vec principal;
+    delegation_ttl_ms : opt nat64;
+};
+
+type AnonymousPrincipalRequest = record {
+    certified_root : CertifiedRoot;
+    domain : text;
+};
+
+type Delegation = record {
+    pubkey : blob;
+    expiration : nat64;
+    targets : opt vec principal;
+};
+
+type SignedDelegation = record {
+    delegation : Delegation;
+    signature : blob;
+};
+
+type DelegationChain = record {
+    delegations : vec SignedDelegation;
+    public_key : blob;
+};
+
+type DelegationResult = variant { Ok : DelegationChain; Err : text };
+
+// Hex-encoded X25519 + ChaCha20-Poly1305 envelope, see scripts/provision-salts.mjs.
+type SealedSalts = record {
+    ephemeral_public_key : text;
+    nonce : text;
+    ciphertext : text;
+};
+
+// A record of `signer_ic` `get_all_json`.
+type ImportedKeyPair = record {
+    root : text;
+    public_key : text;
+    private_key_encrypted : text;
+};
+
+type Status = record {
+    im_canister : opt principal;
+    migrator : opt principal;
+    custom_ic_root_key : bool;
+    salts_provisioned : bool;
+    salts_fingerprint : opt text;
+    provisioning_key_pending : bool;
+    global_keys : nat64;
+};
 
 service : (opt InitArgs) -> {
-    get_salt : () -> (text) ;
-    get_anon_salt : (text) -> (text) ;
-}
+    get_anonymous_delegation : (AnonymousDelegationRequest) -> (DelegationResult);
+    get_global_delegation : (GlobalDelegationRequest) -> (DelegationResult);
+    get_anonymous_principal : (AnonymousPrincipalRequest) -> (variant { Ok : principal; Err : text });
+
+    // Controllers only.
+    set_migrator : (opt principal) -> (variant { Ok; Err : text });
+    status : () -> (variant { Ok : Status; Err : text }) query;
+
+    // Migration: controllers, the migrator, and the delegation lambda of the Identity Manager
+    // (get_config().lambda) — the principal that signs today.
+    get_provisioning_key : () -> (variant { Ok : text; Err : text });
+    // Returns the fingerprint of the loaded salts.
+    provision_salts : (SealedSalts) -> (variant { Ok : text; Err : text });
+    import_global_keys : (vec ImportedKeyPair) -> (variant { Ok : nat64; Err : text });
+};
