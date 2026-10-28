@@ -421,7 +421,7 @@ jobs:
                 lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/dev";
                 ii_canister_id = opt principal "nprnb-waaaa-aaaaj-qax4a-cai";
                 lambda = opt principal "ritih-icnvs-i7b67-sc2vs-nwo2e-bvpe5-viznv-uqluj-xzcvs-6iqsp-fqe";
-                operator = opt principal "lh6kg-7ebfk-bwa26-zgl6l-l27vx-xnnr4-ow2n4-mm4cq-tfjky-rs5gq-5ae";
+                operator = opt principal "373ui-k7xme-tqyvf-okidr-q3bmr-zm63d-7qsov-uphfl-dlo27-e4ptm-5ae";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                 commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
                 whitelisted_canisters = opt vec { principal "gzqxf-kqaaa-aaaak-qakba-cai" };
