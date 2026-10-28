@@ -142,7 +142,7 @@ jobs:
 
       - name: PRE-BUILD => Write identity.
         env:
-          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+          DFX_ID_KEY: ${{ secrets.SIGNER_IC_DFX_ID_KEY }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
@@ -276,7 +276,7 @@ jobs:
 
       - name: PRE-DEPLOY => Write identity.
         env:
-          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+          DFX_ID_KEY: ${{ secrets.SIGNER_IC_DFX_ID_KEY }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
@@ -499,7 +499,7 @@ jobs:
 
       - name: PRE-RESTORE => Write identity.
         env:
-          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+          DFX_ID_KEY: ${{ secrets.SIGNER_IC_DFX_ID_KEY }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
