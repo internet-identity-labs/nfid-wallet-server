@@ -120,7 +120,7 @@ jobs:
 
       - name: Write identity.
         env:
-          ID_KEY: ${{ github.event.inputs.network_name == 'ic' && secrets.OPERATOR_ID_KEY || secrets.DFX_ID_KEY }}
+          ID_KEY: ${{ github.event.inputs.network_name == 'ic' && secrets.OPERATOR_ID_KEY || secrets.IDENTITY_MANAGER_DFX_ID_KEY }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
