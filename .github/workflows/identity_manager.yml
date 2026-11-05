@@ -16,7 +16,6 @@ on:
         type: choice
         options:
           - identity_manager
-          - test_im
       install_mode:
         description: 'Choose install mode (reinstall wipes canister memory)'
         default: upgrade
