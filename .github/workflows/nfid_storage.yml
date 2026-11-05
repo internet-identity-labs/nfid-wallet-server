@@ -17,6 +17,14 @@ on:
         type: choice
         options:
           - nfid_storage
+      install_mode:
+        description: 'Choose install mode (reinstall wipes canister memory)'
+        default: upgrade
+        required: true
+        type: choice
+        options:
+          - upgrade
+          - reinstall
       confirmation:
         description: 'For the ic deployment - confirm your choice by typing "Yes"'
         type: string
@@ -24,6 +32,7 @@ on:
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   CANISTER_NAME: ${{ github.event.inputs.canister_name }}
+  INSTALL_MODE: ${{ github.event.inputs.install_mode }}
   CI_DEBUG: 'true'
   DFX_WARNING: -mainnet_plaintext_identity
   RELEASE_TAG_REGEX: '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
@@ -317,7 +326,7 @@ jobs:
         with:
           name: ${{ env.CANISTER_WASM }}
 
-      - name: DEPLOY => Upgrade the canister.
+      - name: DEPLOY => Install the canister.
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
@@ -335,9 +344,9 @@ jobs:
 
           ci_echo_warn "IM ${NETWORK_NAME} ID: ${im_canister_id}" >&2
 
-          ci_echo_debug "dfx canister install --yes --network '${NETWORK_NAME}' --mode upgrade --argument '(opt record { im_canister = principal "${im_canister_id}" })' '${CANISTER_NAME}'" >&2
-          if ! result=$(dfx canister install --yes --network "${NETWORK_NAME}" --mode upgrade --argument "(opt record { im_canister = principal \"${im_canister_id}\" })" "${CANISTER_NAME}"); then
-            ci_echo_error "Upgrade failed ${result}" >&2
+          ci_echo_debug "dfx canister install --yes --network '${NETWORK_NAME}' --mode '${INSTALL_MODE}' --argument '(opt record { im_canister = principal "${im_canister_id}" })' '${CANISTER_NAME}'" >&2
+          if ! result=$(dfx canister install --yes --network "${NETWORK_NAME}" --mode "${INSTALL_MODE}" --argument "(opt record { im_canister = principal \"${im_canister_id}\" })" "${CANISTER_NAME}"); then
+            ci_echo_error "Install with mode '${INSTALL_MODE}' failed ${result}" >&2
             exit 1
           fi
 
@@ -348,7 +357,7 @@ jobs:
             ci_echo_error "${result}" >&2
             exit 1
           fi
-          ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
+          ci_echo_success "Canister '${CANISTER_NAME}' was installed with mode '${INSTALL_MODE}'" >&2
 
       - name: POST-DEPLOY => Cleaning.
         uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118 # v6.0.0

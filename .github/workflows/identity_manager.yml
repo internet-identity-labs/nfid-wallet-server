@@ -17,6 +17,14 @@ on:
         options:
           - identity_manager
           - test_im
+      install_mode:
+        description: 'Choose install mode (reinstall wipes canister memory)'
+        default: upgrade
+        required: true
+        type: choice
+        options:
+          - upgrade
+          - reinstall
       confirmation:
         description: 'For the ic deployment - confirm your choice by typing "Yes"'
         type: string
@@ -24,6 +32,7 @@ on:
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   CANISTER_NAME: ${{ github.event.inputs.canister_name }}
+  INSTALL_MODE: ${{ github.event.inputs.install_mode }}
   CI_DEBUG: 'true'
   DFX_WARNING: -mainnet_plaintext_identity
   RELEASE_TAG_REGEX: '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
@@ -326,7 +335,7 @@ jobs:
           ci_echo_info "Starting the canister '${CANISTER_NAME}'" >&2
           dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
-      - name: DEPLOY => Upgrade the canister.
+      - name: DEPLOY => Install the canister.
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
@@ -337,9 +346,9 @@ jobs:
             CI_DEBUG="true"
           fi
 
-          ci_echo_debug "dfx canister install --yes --network '${NETWORK_NAME}' --mode upgrade '${CANISTER_NAME}'" >&2
-          if ! result=$(dfx canister install --yes --network "${NETWORK_NAME}" --mode upgrade "${CANISTER_NAME}"); then
-            ci_echo_error "Upgrade failed ${result}" >&2
+          ci_echo_debug "dfx canister install --yes --network '${NETWORK_NAME}' --mode '${INSTALL_MODE}' '${CANISTER_NAME}'" >&2
+          if ! result=$(dfx canister install --yes --network "${NETWORK_NAME}" --mode "${INSTALL_MODE}" "${CANISTER_NAME}"); then
+            ci_echo_error "Install with mode '${INSTALL_MODE}' failed ${result}" >&2
             exit 1
           fi
 
@@ -350,7 +359,7 @@ jobs:
             ci_echo_error "${result}" >&2
             exit 1
           else
-            ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
+            ci_echo_success "Canister '${CANISTER_NAME}' was installed with mode '${INSTALL_MODE}'" >&2
           fi
 
       - name: DEPLOY => Send configuration to the canister.
