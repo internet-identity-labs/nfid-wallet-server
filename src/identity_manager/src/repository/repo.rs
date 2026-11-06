@@ -141,7 +141,7 @@ impl ConfigurationRepo {
 
     pub fn get_default_config() -> Configuration {
         let lambda =
-            Principal::from_text("ritih-icnvs-i7b67-sc2vs-nwo2e-bvpe5-viznv-uqluj-xzcvs-6iqsp-fqe")
+            Principal::from_text("4bthk-cagif-7bz6l-mbcgd-pxhts-zug4l-iobjz-pzfli-vk57e-ildp3-wae")
                 .expect("Failed to parse the lambda principal string.");
         Configuration {
             lambda_url: "https://d8m9ttp390ku4.cloudfront.net/dev".to_string(),
