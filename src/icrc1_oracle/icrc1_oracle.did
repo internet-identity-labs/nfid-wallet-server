@@ -153,6 +153,131 @@ type PlaceBidResult = variant {
     Err : PlaceBidError;
 };
 
+// ── ICRC-7 marketplace ─────────────────────────────────────────────────────
+
+type Account = record { owner : principal; subaccount : opt blob };
+
+type NftCollectionStatus = variant { Spam; Hidden; Verified; Community };
+
+type NftCollection = record {
+  status : NftCollectionStatus;
+  logo : opt text;
+  name : text;
+  canister_id : principal;
+  description : opt text;
+  date_added : nat64;
+  symbol : text;
+};
+
+type NftCollectionRequest = record {
+  logo : opt text;
+  name : text;
+  canister_id : principal;
+  description : opt text;
+  symbol : text;
+};
+
+type MarketplaceConfig = record {
+  min_price_e8s : nat;
+  icp_ledger : principal;
+  max_retries : nat32;
+};
+
+type ListingStatus = variant {
+  Sold;
+  Active;
+  Locked;
+  Cancelled;
+};
+
+type Listing = record {
+  id : nat64;
+  status : ListingStatus;
+  updated_at : nat64;
+  token_id : nat;
+  collection : principal;
+  created_at : nat64;
+  seller : principal;
+  price_e8s : nat;
+};
+
+type CreateListingArg = record {
+  token_id : nat;
+  collection : principal;
+  price_e8s : nat;
+};
+
+type TxStatus = variant {
+  Failed;
+  Refunded;
+  PayoutPending;
+  RefundPending;
+  NftTransferPending;
+  ClosedByAdmin;
+  PaymentPending;
+  Completed;
+};
+
+type MarketTx = record {
+  id : nat64;
+  nft_ts : opt nat64;
+  last_error : opt text;
+  status : TxStatus;
+  updated_at : nat64;
+  token_id : nat;
+  collection : principal;
+  settle_block : opt nat;
+  attempts : nat32;
+  fee_e8s : nat;
+  created_at : nat64;
+  seller : principal;
+  needs_review : bool;
+  payment_block : opt nat;
+  buyer : principal;
+  listing_id : nat64;
+  price_e8s : nat;
+  payment_ts : opt nat64;
+  nft_block : opt nat;
+  settle_ts : opt nat64;
+};
+
+type MarketplaceError = variant {
+  CallFailed : text;
+  CollectionNotAllowed;
+  ListingNotActive;
+  PaymentFailed : text;
+  InvalidTxState;
+  CollectionNotFound;
+  TxNotFound;
+  Unauthorized;
+  NotOwner;
+  NotApproved;
+  PurchaseInProgress;
+  NotConfigured;
+  CannotBuyOwnListing;
+  PriceTooLow : record { min_price_e8s : nat };
+  AlreadyListed : record { listing_id : nat64 };
+  NftUnavailable;
+  AnonymousCaller;
+  ListingNotFound;
+};
+
+type ListingSort = variant { PriceAsc; PriceDesc; Newest; Oldest };
+
+type ListingQuery = record {
+  collection : opt principal;
+  sort : opt ListingSort;
+  offset : nat64;
+  limit : nat64;
+};
+
+type ListingPage = record { items : vec Listing; total : nat64 };
+
+type ListingResult = variant { Ok : Listing; Err : MarketplaceError };
+
+type MarketTxResult = variant { Ok : MarketTx; Err : MarketplaceError };
+
+
 service : (opt Conf) -> {
     count_icrc1_canisters : () -> (nat64) query;
     get_all_icrc1_canisters : () -> (vec ICRC1) query;
@@ -179,4 +304,34 @@ service : (opt Conf) -> {
     veto_current_featured : () -> ();
     count_bid_history : () -> (nat64) query;
     get_bid_history_paginated : (nat64, nat64) -> (vec HistoricalBid) query;
+
+    // ICRC-7 marketplace: collections
+    store_nft_collection : (NftCollectionRequest) -> ();
+    get_nft_collection : (principal) -> (opt NftCollection) query;
+    count_nft_collections : () -> (nat64) query;
+    get_nft_collections_paginated : (nat64, nat64) -> (vec NftCollection) query;
+    replace_nft_collections : (vec NftCollection) -> ();
+    set_nft_collection_status : (principal, NftCollectionStatus) -> ();
+    remove_nft_collection : (principal) -> ();
+    // ICRC-7 marketplace: config
+    set_marketplace_config : (MarketplaceConfig) -> ();
+    get_marketplace_config : () -> (opt MarketplaceConfig) query;
+    get_marketplace_escrow : () -> (Account) query;
+    // ICRC-7 marketplace: listings
+    create_listing : (CreateListingArg) -> (ListingResult);
+    cancel_listing : (nat64) -> (ListingResult);
+    get_listings : (ListingQuery) -> (ListingPage) query;
+    get_listing : (nat64) -> (opt Listing) query;
+    get_listings_by_seller : (principal, nat64, nat64) -> (vec Listing) query;
+    // ICRC-7 marketplace: purchases
+    buy_listing : (nat64) -> (MarketTxResult);
+    get_marketplace_tx : (nat64) -> (opt MarketTx) query;
+    get_marketplace_txs_by_user : (principal, nat64, nat64) -> (vec MarketTx) query;
+    count_marketplace_txs : () -> (nat64) query;
+    // ICRC-7 marketplace: admin
+    get_marketplace_txs_paginated : (nat64, nat64) -> (vec MarketTx) query;
+    get_pending_marketplace_txs : () -> (vec MarketTx) query;
+    retry_marketplace_tx : (nat64, bool) -> (MarketTxResult);
+    close_marketplace_tx : (nat64, text) -> (MarketTxResult);
+    run_marketplace_clock : () -> (nat32);
 }
