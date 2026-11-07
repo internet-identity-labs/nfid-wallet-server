@@ -120,6 +120,16 @@
       "type": "custom",
       "wasm": "ledger.wasm",
       "candid": "ledger.public.did"
+    },
+    "icp_ledger": {
+      "type": "custom",
+      "candid": "script/marketplace/icp_ledger.did",
+      "wasm": "script/marketplace/wasm/icp_ledger.wasm.gz"
+    },
+    "nft_collection": {
+      "type": "custom",
+      "candid": "script/marketplace/core_nft.did",
+      "wasm": "script/marketplace/wasm/core_nft.wasm.gz"
     }
   },
   "defaults": {
