@@ -15,8 +15,12 @@ use crate::signer::{
     SelectedUtxosFeeResponse, TopUpCyclesLedgerRequest, MIN_CONFIRMATIONS_ACCEPTED_BTC_TX,
 };
 
+mod marketplace;
 mod signer;
 mod timer_service;
+
+#[allow(unused_imports)] // export_service! refers to endpoint types unqualified.
+use crate::marketplace::types::*;
 
 #[derive(CandidType, Deserialize, Clone, Debug, Hash, PartialEq, Eq, Serialize)]
 pub enum Category {
@@ -344,6 +348,7 @@ pub async fn init(conf: Option<Conf>) {
             storage.replace(conf);
         });
     }
+    marketplace::api::start_clock();
 }
 
 /// Returns all persisted ICRC1 canisters.
@@ -898,6 +903,8 @@ struct Memory {
     promotion_config: Option<PromotionConfig>,
     featured_slot: Option<FeaturedSlot>,
     bid_history: Option<Vec<HistoricalBid>>,
+    nft_collections: Option<Vec<NftCollection>>,
+    marketplace_config: Option<MarketplaceConfig>,
 }
 
 /// Applies changes prior to the canister upgrade.
@@ -945,16 +952,29 @@ pub fn stable_save() {
         promotion_config,
         featured_slot,
         bid_history: Some(bid_history),
+        nft_collections: Some(
+            marketplace::storage::COLLECTIONS.with(|c| c.borrow().values().cloned().collect()),
+        ),
+        marketplace_config: marketplace::storage::config(),
     };
-    storage::stable_save((mem,))
-        .expect("Stable save exited unexpectedly: unable to save data to stable memory.");
+    let bytes = candid::encode_one(&mem)
+        .expect("Stable save exited unexpectedly: unable to encode upgrade state.");
+    marketplace::storage::write_upgrade_blob(&bytes);
 }
 
 /// Applies changes following the canister upgrade.
 #[post_upgrade]
 pub fn stable_restore() {
-    let (mo,): (Memory,) = storage::stable_restore()
-        .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
+    // Releases before the marketplace saved state with `storage::stable_save`
+    // at raw offset 0. Read that before the MemoryManager claims the memory.
+    let mo: Memory = if marketplace::storage::has_memory_manager_layout() {
+        candid::decode_one(&marketplace::storage::read_upgrade_blob())
+            .expect("Stable restore exited unexpectedly: unable to decode upgrade state.")
+    } else {
+        let (mo,): (Memory,) = storage::stable_restore()
+            .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
+        mo
+    };
     CONFIG.with(|config| {
         let mut config = config.borrow_mut();
         *config = mo.config.clone();
@@ -1002,6 +1022,16 @@ pub fn stable_restore() {
     BID_HISTORY.with(|h| {
         *h.borrow_mut() = mo.bid_history.unwrap_or_default();
     });
+    marketplace::storage::COLLECTIONS.with(|c| {
+        *c.borrow_mut() = mo
+            .nft_collections
+            .unwrap_or_default()
+            .into_iter()
+            .map(|col| (col.canister_id, col))
+            .collect();
+    });
+    marketplace::storage::CONFIG.with(|c| *c.borrow_mut() = mo.marketplace_config);
+    marketplace::api::start_clock();
 }
 
 #[test]
@@ -1108,6 +1138,10 @@ async fn get_root_id() -> String {
             }
         }
     }
+}
+
+fn is_operator(principal: &Principal) -> bool {
+    CONFIG.with(|c| c.borrow().operator.as_ref() == Some(principal))
 }
 
 fn trap_if_not_authenticated_admin() {

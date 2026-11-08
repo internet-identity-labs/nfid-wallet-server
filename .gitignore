@@ -26,3 +26,6 @@ eth_secret_storage.wasm
 src/eth_secret_storage/eth_secret_storage.old.did
 
 *.wasm
+
+# Marketplace local test canisters (downloaded by script/marketplace/setup_local.sh)
+script/marketplace/wasm/
