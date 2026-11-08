@@ -65,7 +65,7 @@ jobs:
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
       - name: Install Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
@@ -211,7 +211,7 @@ jobs:
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
       - name: Install Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
@@ -454,7 +454,7 @@ jobs:
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
       - name: Install Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
