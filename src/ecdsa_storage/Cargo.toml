@@ -5,9 +5,9 @@ edition = "2021"
 
 [dependencies]
 candid = "0.10.35"
-candid_parser = "0.1.4"
-ic-cdk = "0.13.6"
-ic-cdk-macros = "0.13.2"
+candid_parser = "0.4.1"
+ic-cdk = "0.16.1"
+ic-cdk-macros = "0.16.0"
 # other dependencies
 serde = { version = "1.0"}
 serde_cbor = "0.11"
