@@ -16,7 +16,6 @@ on:
         type: choice
         options:
           - identity_manager
-          - test_im
       install_mode:
         description: 'Choose install mode (reinstall wipes canister memory)'
         default: upgrade
@@ -319,7 +318,7 @@ jobs:
           ci_echo_debug "snapshots_list='${snapshots_list}'" >&2
 
           if [ -n "${snapshots_list}" ]; then
-            snapshot_id="$(echo "${snapshots_list}"  | grep -o '[0-9a-z]\{36,\}' || true | head -n 1)"
+            snapshot_id="$(echo "${snapshots_list}"  | { grep -o '[0-9a-z]\{36,\}' || true; } | head -n 1)"
             ci_echo_debug "snapshot_id='${snapshot_id}'" >&2
           fi
 
