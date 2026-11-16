@@ -26,6 +26,7 @@ export interface AddressBookUserAddress {
 }
 export interface Conf { 'im_canister' : [] | [string] }
 export interface ICRC1 { 'state' : ICRC1State, 'ledger' : string, 'network' : number }
+export interface ICRC7Collection { 'canister_id' : string, 'state' : ICRC1State }
 export type ICRC1State = { 'Inactive' : null } |
     { 'Active' : null };
 export type Result = { 'Ok' : null } |
@@ -49,5 +50,8 @@ export interface _SERVICE {
     'get_canisters_by_root' : ActorMethod<[string], Array<ICRC1>>,
     'remove_icrc1_canister' : ActorMethod<[string], undefined>,
     'store_icrc1_canister' : ActorMethod<[string, ICRC1State, [] | [number]], undefined>,
+    'get_icrc7_collections_by_root' : ActorMethod<[string], Array<ICRC7Collection>>,
+    'remove_icrc7_collection' : ActorMethod<[string], undefined>,
+    'store_icrc7_collection' : ActorMethod<[string, ICRC1State], undefined>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

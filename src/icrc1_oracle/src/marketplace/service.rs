@@ -1,10 +1,13 @@
 //! Listing and purchase logic.
 //!
 //! Purchase steps (`TxStatus` names the step that runs next):
-//!   PaymentPending     buyer --ICP--> escrow        (icrc2_transfer_from)
+//!   PaymentPending     buyer --ICP--> escrow        (icrc2_transfer_from, price + fee)
 //!   NftTransferPending seller --NFT--> buyer        (icrc37_transfer_from)
-//!   PayoutPending      escrow --ICP--> seller       (icrc1_transfer)
-//!   RefundPending      escrow --ICP--> buyer        (icrc1_transfer)
+//!   PayoutPending      escrow --ICP--> seller       (icrc1_transfer, price)
+//!   RefundPending      escrow --ICP--> buyer        (icrc1_transfer, price)
+//!
+//! The buyer pays all ledger fees (approve, transfer_from and the payout fee
+//! held in escrow), so the seller receives exactly the listed price.
 //!
 //! Each step stores its `created_at_time` before the first attempt and reuses
 //! it on retries, so a repeat that already executed comes back as a duplicate.
@@ -247,6 +250,7 @@ pub async fn buy(env: &impl Env, caller: Principal, listing_id: u64) -> MarketRe
         buyer: caller,
         price_e8s: listing.price_e8s.clone(),
         fee_e8s: Nat::from(0u8),
+        escrow_e8s: None,
         status: TxStatus::PaymentPending,
         needs_review: false,
         attempts: 0,
@@ -310,6 +314,7 @@ pub async fn buy(env: &impl Env, caller: Principal, listing_id: u64) -> MarketRe
         return fail(tx, ListingStatus::Cancelled, err, env.now());
     }
 
+    tx.escrow_e8s = Some(tx.price_e8s.clone() + fee.clone());
     tx.fee_e8s = fee;
     tx.payment_ts = Some(env.now());
     tx.updated_at = env.now();
@@ -410,7 +415,7 @@ async fn step_payment(env: &impl Env, mut tx: MarketTx, cfg: &MarketplaceConfig)
             IcpTransferFrom {
                 from: Account::default_of(tx.buyer),
                 to: escrow(env),
-                amount: tx.price_e8s.clone(),
+                amount: escrow_amount(&tx),
                 fee: tx.fee_e8s.clone(),
                 memo: memo(MemoStep::Payment, tx.id),
                 created_at_time: ts,
@@ -492,8 +497,13 @@ fn start_refund(env: &impl Env, mut tx: MarketTx, err: String) -> Step {
     Step::Continue
 }
 
-/// Payout to the seller or refund to the buyer. Both get `price - fee`:
-/// the escrow pays the outgoing ledger fee.
+/// ICP held in escrow for the tx.
+fn escrow_amount(tx: &MarketTx) -> Nat {
+    tx.escrow_e8s.clone().unwrap_or_else(|| tx.price_e8s.clone())
+}
+
+/// Payout to the seller or refund to the buyer. Both get the escrowed amount
+/// minus the outgoing ledger fee, which is the price for new txs.
 async fn step_settle(
     env: &impl Env,
     mut tx: MarketTx,
@@ -507,8 +517,9 @@ async fn step_settle(
     } else {
         (tx.seller, MemoStep::Payout)
     };
-    let amount = if tx.price_e8s > tx.fee_e8s {
-        tx.price_e8s.clone() - tx.fee_e8s.clone()
+    let escrowed = escrow_amount(&tx);
+    let amount = if escrowed > tx.fee_e8s {
+        escrowed - tx.fee_e8s.clone()
     } else {
         Nat::from(0u8)
     };

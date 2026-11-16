@@ -43,6 +43,29 @@ impl PartialEq for ICRC1 {
     }
 }
 
+/// An ICRC-7 collection the user added to the wallet, with its visibility.
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug, PartialEq, Eq)]
+pub struct ICRC7Collection {
+    pub canister_id: String,
+    pub state: ICRC1State,
+}
+
+/// Collections one user can keep.
+const MAX_ICRC7_COLLECTIONS: usize = 500;
+
+/// Inserts the collection or updates its state. Returns false when the list is
+/// full and the collection is new.
+fn upsert_icrc7_collection(collections: &mut Vec<ICRC7Collection>, entry: ICRC7Collection) -> bool {
+    if let Some(existing) = collections.iter_mut().find(|c| c.canister_id == entry.canister_id) {
+        existing.state = entry.state;
+    } else if collections.len() >= MAX_ICRC7_COLLECTIONS {
+        return false;
+    } else {
+        collections.push(entry);
+    }
+    true
+}
+
 /// A vault canister created by the user through the vault manager.
 ///
 /// Neither the vault nor the manager knows which user a vault belongs to: the vault
@@ -78,6 +101,7 @@ thread_local! {
         im_canister: None
     }) };
     pub static ICRC_REGISTRY: RefCell<HashMap<String, HashSet<ICRC1>>> = RefCell::new(HashMap::default());
+    pub static ICRC7_REGISTRY: RefCell<HashMap<String, Vec<ICRC7Collection>>> = RefCell::new(HashMap::default());
     pub static VAULT_REGISTRY: RefCell<HashMap<String, HashSet<VaultCanister>>> = RefCell::new(HashMap::default());
     /// Global principal -> user root. A vault is paid for and controlled by the
     /// user global principal, which is not an access point and therefore unknown to
@@ -116,6 +140,40 @@ pub async fn remove_icrc1_canister(ledger_id: String, network: Option<u32>) {
             canisters.retain(|existing_canister| !(existing_canister.ledger == ledger_id && existing_canister.network == network.unwrap_or(0)));
         }
     });
+}
+
+/// Adds an ICRC-7 collection to the caller's wallet or changes its state
+/// (Active shows it, Inactive hides it).
+#[update]
+pub async fn store_icrc7_collection(canister_id: String, state: ICRC1State) {
+    if Principal::from_text(&canister_id).is_err() {
+        trap("Invalid collection canister id");
+    }
+    let root = get_root_id().await;
+    let stored = ICRC7_REGISTRY.with(|registry| {
+        let mut registry = registry.borrow_mut();
+        let collections = registry.entry(root).or_default();
+        upsert_icrc7_collection(collections, ICRC7Collection { canister_id, state })
+    });
+    if !stored {
+        trap("Too many collections");
+    }
+}
+
+#[update]
+pub async fn remove_icrc7_collection(canister_id: String) {
+    let root = get_root_id().await;
+    ICRC7_REGISTRY.with(|registry| {
+        if let Some(collections) = registry.borrow_mut().get_mut(&root) {
+            collections.retain(|c| c.canister_id != canister_id);
+        }
+    });
+}
+
+/// ICRC-7 collections stored for the user root, in the order they were added.
+#[query]
+pub fn get_icrc7_collections_by_root(root: String) -> Vec<ICRC7Collection> {
+    ICRC7_REGISTRY.with(|registry| registry.borrow().get(&root).cloned().unwrap_or_default())
 }
 
 /// Records a vault canister for the calling user. Storing the same canister again
@@ -220,6 +278,7 @@ struct Memory {
     address_book_config: Option<AddressBookConf>,
     vaults: Option<HashMap<String, HashSet<VaultCanister>>>,
     vault_principals: Option<HashMap<String, String>>,
+    icrc7_collections: Option<HashMap<String, Vec<ICRC7Collection>>>,
 }
 
 /// Applies changes before the canister upgrade.
@@ -237,6 +296,7 @@ pub fn stable_save() {
     let address_book_config = ADDRESS_BOOK_CONFIG.with(|c| c.borrow().clone());
     let vaults = VAULT_REGISTRY.with(|registry| registry.borrow().clone());
     let vault_principals = VAULT_PRINCIPALS.with(|p| p.borrow().clone());
+    let icrc7_collections = ICRC7_REGISTRY.with(|r| r.borrow().clone());
 
     let registry: HashMap<String, HashSet<ICRC1Memory>> = registry.into_iter().map(|(k, v)| (k, v.into_iter().map(|x| ICRC1Memory {
         state: x.state,
@@ -250,6 +310,7 @@ pub fn stable_save() {
         address_book_config: Some(address_book_config),
         vaults: Some(vaults),
         vault_principals: Some(vault_principals),
+        icrc7_collections: Some(icrc7_collections),
     };
     storage::stable_save((mem,)).expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
@@ -260,7 +321,7 @@ pub fn stable_restore() {
     let (mem, ): (Memory, ) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
 
-    let Memory { config, registry, address_book, address_book_config, vaults, vault_principals } = mem;
+    let Memory { config, registry, address_book, address_book_config, vaults, vault_principals, icrc7_collections } = mem;
 
     CONFIG.with(|c| {
         *c.borrow_mut() = config.clone();
@@ -285,11 +346,29 @@ pub fn stable_restore() {
     VAULT_PRINCIPALS.with(|principals| {
         *principals.borrow_mut() = vault_principals.unwrap_or_default();
     });
+    ICRC7_REGISTRY.with(|r| {
+        *r.borrow_mut() = icrc7_collections.unwrap_or_default();
+    });
 }
 
 
 #[test]
 fn sub_account_test() {}
+
+#[test]
+fn upsert_icrc7_collection_test() {
+    let entry = |id: &str, state| ICRC7Collection { canister_id: id.into(), state };
+    let mut list = vec![];
+    assert!(upsert_icrc7_collection(&mut list, entry("a", ICRC1State::Active)));
+    assert!(upsert_icrc7_collection(&mut list, entry("b", ICRC1State::Active)));
+    assert!(upsert_icrc7_collection(&mut list, entry("a", ICRC1State::Inactive)));
+    assert_eq!(list, vec![entry("a", ICRC1State::Inactive), entry("b", ICRC1State::Active)]);
+
+    let mut full: Vec<_> = (0..MAX_ICRC7_COLLECTIONS).map(|i| entry(&i.to_string(), ICRC1State::Active)).collect();
+    assert!(!upsert_icrc7_collection(&mut full, entry("new", ICRC1State::Active)));
+    assert!(upsert_icrc7_collection(&mut full, entry("0", ICRC1State::Inactive)));
+    assert_eq!(full.len(), MAX_ICRC7_COLLECTIONS);
+}
 export_service!();
 
 #[ic_cdk_macros::query(name = "__get_candid_interface")]

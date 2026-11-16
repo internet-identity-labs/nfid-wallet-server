@@ -40,6 +40,40 @@ describe("User Registry", () => {
         })
     });
 
+    describe("ICRC7 collection Storage", () => {
+        const collection = "vehwg-aiaaa-aaaag-aciuq-cai";
+        const one_more_collection = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
+        it("Store/retrieve collections and change their state", async function () {
+            const root = dfx.user.identity.getPrincipal().toText();
+            await dfx.user_registry.actor.store_icrc7_collection(collection, { 'Active': null });
+            await dfx.user_registry.actor.store_icrc7_collection(one_more_collection, { 'Active': null });
+            await dfx.user_registry.actor.store_icrc7_collection(collection, { 'Inactive': null });
+
+            const collections = await dfx.user_registry.actor.get_icrc7_collections_by_root(root);
+            expect(collections).deep.eq([
+                { canister_id: collection, state: { 'Inactive': null } },
+                { canister_id: one_more_collection, state: { 'Active': null } },
+            ]);
+        })
+
+        it("Rejects an invalid canister id", async function () {
+            try {
+                await dfx.user_registry.actor.store_icrc7_collection("not-a-principal", { 'Active': null });
+                expect.fail("Expected a trap");
+            } catch (e) {
+                expect(e.message).contains("Invalid collection canister id");
+            }
+        })
+
+        it("Remove collection", async function () {
+            const root = dfx.user.identity.getPrincipal().toText();
+            await dfx.user_registry.actor.remove_icrc7_collection(one_more_collection);
+            const collections = await dfx.user_registry.actor.get_icrc7_collections_by_root(root);
+            expect(collections.map((c) => c.canister_id)).deep.eq([collection]);
+        })
+    });
+
     describe("Vault canister Storage", () => {
         let vault_id = "vault1";
         let one_more_vault_id = "vault2";

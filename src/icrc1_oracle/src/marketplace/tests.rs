@@ -59,6 +59,7 @@ struct MockEnv {
     nft: RefCell<VecDeque<TransferOutcome>>,
     settle: RefCell<VecDeque<TransferOutcome>>,
     payment_ts: RefCell<Vec<u64>>,
+    payment_amounts: RefCell<Vec<Nat>>,
     settles: RefCell<Vec<Settle>>,
 }
 
@@ -73,6 +74,7 @@ impl MockEnv {
             nft: RefCell::default(),
             settle: RefCell::default(),
             payment_ts: RefCell::default(),
+            payment_amounts: RefCell::default(),
             settles: RefCell::default(),
         }
     }
@@ -104,7 +106,7 @@ impl Env for MockEnv {
     async fn icp_transfer_from(&self, l: Principal, a: IcpTransferFrom) -> TransferOutcome {
         assert_eq!(l, ledger());
         assert_eq!(a.to.subaccount, Some(ESCROW_SUBACCOUNT.to_vec()));
-        assert_eq!(a.amount, Nat::from(PRICE));
+        self.payment_amounts.borrow_mut().push(a.amount.clone());
         self.payment_ts.borrow_mut().push(a.created_at_time);
         self.payment.borrow_mut().pop_front().unwrap_or_else(ok)
     }
@@ -266,7 +268,7 @@ fn only_seller_or_admin_cancels() {
 // ── Purchase ───────────────────────────────────────────────────────────────
 
 #[test]
-fn buy_happy_path_pays_seller_price_minus_fee() {
+fn buy_happy_path_buyer_pays_fees_seller_gets_price() {
     setup(3);
     let env = MockEnv::new();
     let l = list(&env);
@@ -275,13 +277,15 @@ fn buy_happy_path_pays_seller_price_minus_fee() {
 
     assert_eq!(tx.status, TxStatus::Completed);
     assert_eq!(tx.fee_e8s, Nat::from(FEE));
+    assert_eq!(tx.escrow_e8s, Some(Nat::from(PRICE + FEE)));
+    assert_eq!(*env.payment_amounts.borrow(), vec![Nat::from(PRICE + FEE)]);
     assert!(tx.payment_block.is_some() && tx.nft_block.is_some() && tx.settle_block.is_some());
     assert_eq!(*env.owner.borrow(), Some(Account::default_of(buyer())));
     assert_eq!(
         env.settles.borrow()[0],
         Settle {
             to: Account::default_of(seller()),
-            amount: Nat::from(PRICE - FEE),
+            amount: Nat::from(PRICE),
             created_at_time: tx.settle_ts.unwrap(),
         }
     );
@@ -392,7 +396,7 @@ fn rejected_nft_transfer_refunds_buyer() {
 
     assert_eq!(tx.status, TxStatus::Refunded);
     assert_eq!(env.settles.borrow()[0].to, Account::default_of(buyer()));
-    assert_eq!(env.settles.borrow()[0].amount, Nat::from(PRICE - FEE));
+    assert_eq!(env.settles.borrow()[0].amount, Nat::from(PRICE));
     assert_eq!(
         storage::get_listing(l.id).unwrap().status,
         ListingStatus::Cancelled
@@ -486,7 +490,49 @@ fn bad_fee_on_payout_retries_with_expected_fee() {
 
     assert_eq!(tx.status, TxStatus::Completed);
     assert_eq!(tx.fee_e8s, Nat::from(20_000u64));
-    assert_eq!(env.settles.borrow()[1].amount, Nat::from(PRICE - 20_000));
+    // The escrow holds price + the old fee; a higher fee comes out of it.
+    assert_eq!(env.settles.borrow()[1].amount, Nat::from(PRICE + FEE - 20_000));
+}
+
+#[test]
+fn tx_made_before_escrow_field_keeps_old_amounts() {
+    setup(3);
+    let env = MockEnv::new();
+    let l = list(&env);
+    // A purchase stuck in payment and one stuck in payout, from the old code.
+    let legacy = |id: u64, status: TxStatus| MarketTx {
+        id,
+        listing_id: l.id,
+        collection: l.collection,
+        token_id: l.token_id.clone(),
+        seller: seller(),
+        buyer: buyer(),
+        price_e8s: Nat::from(PRICE),
+        fee_e8s: Nat::from(FEE),
+        escrow_e8s: None,
+        status,
+        needs_review: false,
+        attempts: 1,
+        last_error: None,
+        payment_block: None,
+        nft_block: None,
+        settle_block: None,
+        payment_ts: Some(5),
+        nft_ts: None,
+        settle_ts: Some(5),
+        created_at: 1,
+        updated_at: 1,
+    };
+    storage::save_tx(&legacy(100, TxStatus::PaymentPending));
+    storage::save_tx(&legacy(101, TxStatus::PayoutPending));
+
+    run(service::run_clock(&env));
+
+    // Same transfer as the first attempt, so the ledger dedups it.
+    assert_eq!(env.payment_amounts.borrow()[0], Nat::from(PRICE));
+    let payouts: Vec<_> = env.settles.borrow().iter().map(|s| s.amount.clone()).collect();
+    assert!(payouts.iter().all(|a| *a == Nat::from(PRICE - FEE)));
+    assert_eq!(storage::get_tx(101).unwrap().status, TxStatus::Completed);
 }
 
 #[test]
