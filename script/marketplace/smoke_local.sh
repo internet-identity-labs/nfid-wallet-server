@@ -3,7 +3,7 @@
 # mkt_seller / mkt_buyer identities from setup_local.sh:
 #   seller approves the oracle on the NFT (ICRC-37) and lists it,
 #   buyer approves ICP (ICRC-2) and buys,
-#   NFT ends up with the buyer and the seller receives price - fee.
+#   NFT ends up with the buyer and the seller receives the full price.
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
@@ -51,10 +51,10 @@ LISTING_ID="$(echo "$OUT" | grep -o 'id = [0-9_]*' | head -1 | grep -o '[0-9_]*$
 SELLER_BEFORE="$(icp_balance "$SELLER")"
 BUYER_BEFORE="$(icp_balance "$BUYER")"
 
-log "Buyer approves price + fee for the oracle"
+log "Buyer approves price + 2 * fee for the oracle"
 dfx canister call --identity mkt_buyer icp_ledger icrc2_approve "(record {
   spender = record { owner = principal \"$ORACLE\"; subaccount = null };
-  amount = $((PRICE + FEE)) : nat;
+  amount = $((PRICE + 2 * FEE)) : nat;
 })"
 
 log "Buyer buys listing $LISTING_ID"
@@ -67,11 +67,11 @@ echo "$OWNER" | grep -q "$BUYER" || fail "NFT owner is not the buyer: $OWNER"
 
 SELLER_AFTER="$(icp_balance "$SELLER")"
 BUYER_AFTER="$(icp_balance "$BUYER")"
-# Buyer pays approve fee + transfer_from fee on top of the price.
-[[ $((SELLER_AFTER - SELLER_BEFORE)) -eq $((PRICE - FEE)) ]] || fail "seller got $((SELLER_AFTER - SELLER_BEFORE))"
-[[ $((BUYER_BEFORE - BUYER_AFTER)) -eq $((PRICE + 2 * FEE)) ]] || fail "buyer paid $((BUYER_BEFORE - BUYER_AFTER))"
+# Buyer pays the price plus three fees: approve, transfer_from and payout.
+[[ $((SELLER_AFTER - SELLER_BEFORE)) -eq $PRICE ]] || fail "seller got $((SELLER_AFTER - SELLER_BEFORE))"
+[[ $((BUYER_BEFORE - BUYER_AFTER)) -eq $((PRICE + 3 * FEE)) ]] || fail "buyer paid $((BUYER_BEFORE - BUYER_AFTER))"
 ESCROW="$(dfx canister call icp_ledger icrc1_balance_of "$(dfx canister call icrc1_oracle get_marketplace_escrow)" \
   | grep -o '[0-9_]*' | head -1 | tr -d _)"
 [[ "$ESCROW" -eq 0 ]] || fail "escrow holds $ESCROW"
 
-log "OK: NFT $TOKEN_ID moved to the buyer, seller received $((PRICE - FEE)) e8s, escrow empty"
+log "OK: NFT $TOKEN_ID moved to the buyer, seller received $PRICE e8s, escrow empty"

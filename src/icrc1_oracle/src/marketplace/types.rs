@@ -176,6 +176,11 @@ pub struct MarketTx {
     pub buyer: Principal,
     pub price_e8s: Nat,
     pub fee_e8s: Nat,
+    /// ICP pulled from the buyer into escrow: `price + fee`, so the seller
+    /// gets the full price after the payout fee. Fixed at purchase, so a
+    /// retried payment repeats the same transfer. `None` for txs made before
+    /// this field existed: they escrowed only `price`.
+    pub escrow_e8s: Option<Nat>,
     pub status: TxStatus,
     /// Set when retries ran out; the clock skips the tx until an admin acts.
     pub needs_review: bool,

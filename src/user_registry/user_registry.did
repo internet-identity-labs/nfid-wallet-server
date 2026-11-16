@@ -13,6 +13,11 @@ type ICRC1State = variant {
     Active
 };
 
+type ICRC7Collection = record {
+    canister_id : text;
+    state : ICRC1State;
+};
+
 type VaultCanister = record {
     canister_id : text;
     name : text;
@@ -55,6 +60,10 @@ service : (Conf) -> {
     get_canisters_by_root : (text) -> (vec ICRC1) query;
     remove_icrc1_canister : (text, opt nat32) -> ();
     store_icrc1_canister : (text, ICRC1State, opt nat32) -> ();
+
+    get_icrc7_collections_by_root : (text) -> (vec ICRC7Collection) query;
+    remove_icrc7_collection : (text) -> ();
+    store_icrc7_collection : (text, ICRC1State) -> ();
 
     add_vault_canister : (text, text, text) -> ();
     get_all_vault_canisters : () -> (vec VaultCanister) composite_query;

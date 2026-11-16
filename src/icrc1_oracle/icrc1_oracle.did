@@ -229,6 +229,7 @@ type MarketTx = record {
   settle_block : opt nat;
   attempts : nat32;
   fee_e8s : nat;
+  escrow_e8s : opt nat;
   created_at : nat64;
   seller : principal;
   needs_review : bool;

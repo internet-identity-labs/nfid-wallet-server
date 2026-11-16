@@ -36,6 +36,10 @@ export const idlFactory = ({ IDL }) => {
         'Inactive' : IDL.Null,
         'Active' : IDL.Null,
     });
+    const ICRC7Collection = IDL.Record({
+        'canister_id' : IDL.Text,
+        'state' : ICRC1State,
+    });
     const ICRC1 = IDL.Record({
         'state' : ICRC1State,
         'ledger' : IDL.Text,
@@ -58,6 +62,9 @@ export const idlFactory = ({ IDL }) => {
         'get_canisters_by_root' : IDL.Func([IDL.Text], [IDL.Vec(ICRC1)], ['query']),
         'remove_icrc1_canister' : IDL.Func([IDL.Text], [], []),
         'store_icrc1_canister' : IDL.Func([IDL.Text, ICRC1State, IDL.Opt(IDL.Nat32)], [], []),
+        'get_icrc7_collections_by_root' : IDL.Func([IDL.Text], [IDL.Vec(ICRC7Collection)], ['query']),
+        'remove_icrc7_collection' : IDL.Func([IDL.Text], [], []),
+        'store_icrc7_collection' : IDL.Func([IDL.Text, ICRC1State], [], []),
     });
 };
 export const init = ({ IDL }) => {
