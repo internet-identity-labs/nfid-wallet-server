@@ -10,14 +10,15 @@ NFT marketplace inside `icrc1_oracle`, paid in ICP. Code: `src/icrc1_oracle/src/
    2. The seller calls `create_listing`. The oracle checks `icrc7_owner_of` and `icrc37_is_approved`.
    3. To change the price, cancel the listing and list again.
 3. **Purchase.**
-   1. The buyer calls `icrc2_approve` on the ICP ledger for `price + fee`.
+   1. The buyer calls `icrc2_approve` on the ICP ledger for `price + 2 × fee`.
    2. The buyer calls `buy_listing`. The oracle then:
       1. locks the listing;
       2. re-checks the owner and the approval;
-      3. pulls `price` into its escrow subaccount (`get_marketplace_escrow`);
+      3. pulls `price + fee` into its escrow subaccount (`get_marketplace_escrow`);
       4. moves the NFT to the buyer;
-      5. pays the seller `price - fee`.
-   3. If the NFT cannot be delivered, the buyer gets `price - fee` back.
+      5. pays the seller `price`: the escrowed fee covers the payout.
+   3. If the NFT cannot be delivered, the buyer gets `price` back.
+   4. The buyer pays three ledger fees in total (approve, transfer into escrow, payout), so a 1 ICP listing costs 1.0003 ICP and the seller gets 1 ICP.
 4. **Retries.** Every transfer keeps its `created_at_time` and `memo`, so a repeated attempt comes back as a duplicate instead of moving funds twice.
    - A timer runs every 5 minutes and retries purchases that are still pending (`TxStatus::*Pending`).
    - After `max_retries` failed attempts, the purchase gets `needs_review` and the timer skips it.

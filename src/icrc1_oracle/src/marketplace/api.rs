@@ -143,7 +143,8 @@ pub fn get_listings_by_seller(seller: Principal, offset: u64, limit: u64) -> Vec
 // ── Purchases ──────────────────────────────────────────────────────────────
 
 /// Buys a listing. The caller must first `icrc2_approve` this canister on the
-/// ICP ledger for `price_e8s + fee`.
+/// ICP ledger for `price_e8s + 2 * fee`: `price + fee` goes to escrow and the
+/// ledger charges `fee` for the transfer. The seller receives `price_e8s`.
 #[update]
 pub async fn buy_listing(listing_id: u64) -> MarketResult<MarketTx> {
     service::buy(&IcEnv, caller(), listing_id).await
