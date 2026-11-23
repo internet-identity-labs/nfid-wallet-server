@@ -38,6 +38,15 @@ export interface VaultCanister {
     'name' : string,
     'created_at' : bigint,
 }
+export interface Favorites {
+    'tokens' : Array<string>,
+    'contacts' : Array<string>,
+}
+export type FavoritesError = { 'EmptyId' : null } |
+    { 'IdTooLong' : null } |
+    { 'MaxFavoritesReached' : null };
+export type FavoritesResult = { 'Ok' : Favorites } |
+    { 'Err' : FavoritesError };
 export interface _SERVICE {
     'add_vault_canister' : ActorMethod<[string, string, string], undefined>,
     'get_all_vault_canisters' : ActorMethod<[], Array<VaultCanister>>,
@@ -53,5 +62,8 @@ export interface _SERVICE {
     'get_icrc7_collections_by_root' : ActorMethod<[string], Array<ICRC7Collection>>,
     'remove_icrc7_collection' : ActorMethod<[string], undefined>,
     'store_icrc7_collection' : ActorMethod<[string, ICRC1State], undefined>,
+    'favorites_get' : ActorMethod<[], Favorites>,
+    'favorites_set_token' : ActorMethod<[string, boolean], FavoritesResult>,
+    'favorites_set_contact' : ActorMethod<[string, boolean], FavoritesResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

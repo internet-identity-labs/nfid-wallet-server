@@ -1,4 +1,5 @@
 mod address_book;
+mod favorites;
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -11,6 +12,8 @@ use ic_cdk_macros::*;
 use serde::{Deserialize, Serialize};
 
 pub use address_book::*;
+pub use favorites::{Favorites, FavoritesError};
+use favorites::FavoriteKind;
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, Hash, PartialEq)]
 pub struct Conf {
@@ -110,6 +113,8 @@ thread_local! {
 
     pub(crate) static ADDRESS_BOOK: RefCell<HashMap<String, AddressBookUser>> = RefCell::new(HashMap::default());
     pub(crate) static ADDRESS_BOOK_CONFIG: RefCell<AddressBookConf> = const { RefCell::new(DEFAULT_ADDRESS_BOOK_CONFIG) };
+    /// User root -> favorite tokens and contacts.
+    pub(crate) static FAVORITES: RefCell<HashMap<String, Favorites>> = RefCell::new(HashMap::default());
 }
 
 
@@ -237,13 +242,21 @@ pub async fn address_book_save(user_address: AddressBookUserAddress) -> Result<V
 #[update]
 pub async fn address_book_delete(id: String) -> Result<Vec<AddressBookUserAddress>, AddressBookError> {
     let root_id = get_root_id().await;
-    address_book::service::delete(root_id, id).await
+    let result = address_book::service::delete(root_id.clone(), id.clone()).await;
+    if result.is_ok() {
+        favorites::service::remove_contacts(&root_id, &[id]);
+    }
+    result
 }
 
 #[update]
 pub async fn address_book_delete_all() -> Result<(), AddressBookError> {
     let root_id = get_root_id().await;
-    address_book::service::delete_all(root_id).await
+    let result = address_book::service::delete_all(root_id.clone()).await;
+    if result.is_ok() {
+        favorites::service::remove_all_contacts(&root_id);
+    }
+    result
 }
 
 #[query(composite = true)]
@@ -263,6 +276,29 @@ pub async fn address_book_set_config(config: AddressBookConf) -> Result<(), Addr
 }
 
 
+/// Favorite tokens and contacts of the calling user, in the order they were added.
+#[query(composite = true)]
+pub async fn favorites_get() -> Favorites {
+    let root_id = get_root_id().await;
+    favorites::service::get(&root_id)
+}
+
+/// Marks a token as favorite (`true`) or not (`false`). Returns the updated favorites.
+#[update]
+pub async fn favorites_set_token(id: String, favorite: bool) -> Result<Favorites, FavoritesError> {
+    let root_id = get_root_id().await;
+    favorites::service::set(root_id, FavoriteKind::Token, id, favorite)
+}
+
+/// Marks an address book contact as favorite (`true`) or not (`false`). Deleting the
+/// contact from the address book also removes it from favorites.
+#[update]
+pub async fn favorites_set_contact(id: String, favorite: bool) -> Result<Favorites, FavoritesError> {
+    let root_id = get_root_id().await;
+    favorites::service::set(root_id, FavoriteKind::Contact, id, favorite)
+}
+
+
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug, PartialEq, Eq, Hash)]
 pub struct ICRC1Memory {
     pub state: ICRC1State,
@@ -279,6 +315,7 @@ struct Memory {
     vaults: Option<HashMap<String, HashSet<VaultCanister>>>,
     vault_principals: Option<HashMap<String, String>>,
     icrc7_collections: Option<HashMap<String, Vec<ICRC7Collection>>>,
+    favorites: Option<HashMap<String, Favorites>>,
 }
 
 /// Applies changes before the canister upgrade.
@@ -297,6 +334,7 @@ pub fn stable_save() {
     let vaults = VAULT_REGISTRY.with(|registry| registry.borrow().clone());
     let vault_principals = VAULT_PRINCIPALS.with(|p| p.borrow().clone());
     let icrc7_collections = ICRC7_REGISTRY.with(|r| r.borrow().clone());
+    let favorites = FAVORITES.with(|f| f.borrow().clone());
 
     let registry: HashMap<String, HashSet<ICRC1Memory>> = registry.into_iter().map(|(k, v)| (k, v.into_iter().map(|x| ICRC1Memory {
         state: x.state,
@@ -311,6 +349,7 @@ pub fn stable_save() {
         vaults: Some(vaults),
         vault_principals: Some(vault_principals),
         icrc7_collections: Some(icrc7_collections),
+        favorites: Some(favorites),
     };
     storage::stable_save((mem,)).expect("Stable save exited unexpectedly: unable to save data to stable memory.");
 }
@@ -321,7 +360,7 @@ pub fn stable_restore() {
     let (mem, ): (Memory, ) = storage::stable_restore()
         .expect("Stable restore exited unexpectedly: unable to restore data from stable memory.");
 
-    let Memory { config, registry, address_book, address_book_config, vaults, vault_principals, icrc7_collections } = mem;
+    let Memory { config, registry, address_book, address_book_config, vaults, vault_principals, icrc7_collections, favorites } = mem;
 
     CONFIG.with(|c| {
         *c.borrow_mut() = config.clone();
@@ -348,6 +387,9 @@ pub fn stable_restore() {
     });
     ICRC7_REGISTRY.with(|r| {
         *r.borrow_mut() = icrc7_collections.unwrap_or_default();
+    });
+    FAVORITES.with(|f| {
+        *f.borrow_mut() = favorites.unwrap_or_default();
     });
 }
 

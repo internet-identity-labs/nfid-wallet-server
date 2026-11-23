@@ -56,6 +56,17 @@ type AddressBookConf = record {
     max_name_length : nat32
 };
 
+type Favorites = record {
+    tokens : vec text;
+    contacts : vec text
+};
+
+type FavoritesError = variant {
+    EmptyId;
+    IdTooLong;
+    MaxFavoritesReached
+};
+
 service : (Conf) -> {
     get_canisters_by_root : (text) -> (vec ICRC1) query;
     remove_icrc1_canister : (text, opt nat32) -> ();
@@ -74,4 +85,8 @@ service : (Conf) -> {
     address_book_find_all : () -> (variant { Ok : vec AddressBookUserAddress; Err : AddressBookError }) query;
     address_book_get_config : () -> (AddressBookConf) query;
     address_book_set_config : (AddressBookConf) -> (variant { Ok; Err : AddressBookError });
+
+    favorites_get : () -> (Favorites) composite_query;
+    favorites_set_token : (text, bool) -> (variant { Ok : Favorites; Err : FavoritesError });
+    favorites_set_contact : (text, bool) -> (variant { Ok : Favorites; Err : FavoritesError });
 }

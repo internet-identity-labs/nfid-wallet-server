@@ -50,6 +50,16 @@ export const idlFactory = ({ IDL }) => {
         'name' : IDL.Text,
         'created_at' : IDL.Nat64,
     });
+    const Favorites = IDL.Record({
+        'tokens' : IDL.Vec(IDL.Text),
+        'contacts' : IDL.Vec(IDL.Text),
+    });
+    const FavoritesError = IDL.Variant({
+        'EmptyId' : IDL.Null,
+        'IdTooLong' : IDL.Null,
+        'MaxFavoritesReached' : IDL.Null,
+    });
+    const FavoritesResult = IDL.Variant({ 'Ok' : Favorites, 'Err' : FavoritesError });
     return IDL.Service({
         'add_vault_canister' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [], []),
         'get_all_vault_canisters' : IDL.Func([], [IDL.Vec(VaultCanister)], ['composite_query']),
@@ -65,6 +75,9 @@ export const idlFactory = ({ IDL }) => {
         'get_icrc7_collections_by_root' : IDL.Func([IDL.Text], [IDL.Vec(ICRC7Collection)], ['query']),
         'remove_icrc7_collection' : IDL.Func([IDL.Text], [], []),
         'store_icrc7_collection' : IDL.Func([IDL.Text, ICRC1State], [], []),
+        'favorites_get' : IDL.Func([], [Favorites], ['composite_query']),
+        'favorites_set_token' : IDL.Func([IDL.Text, IDL.Bool], [FavoritesResult], []),
+        'favorites_set_contact' : IDL.Func([IDL.Text, IDL.Bool], [FavoritesResult], []),
     });
 };
 export const init = ({ IDL }) => {
