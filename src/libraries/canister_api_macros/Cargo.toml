@@ -11,7 +11,7 @@ proc-macro = true
 [dependencies]
 proc-macro2 = "1.0.107"
 quote = "1.0.47"
-syn = "2.0.119"
+syn = "3.0.5"
 ic-cdk = "0.16.1"
 ic-cdk-macros = "0.16.0"
 ic-types = "0.7.0"
