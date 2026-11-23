@@ -62,6 +62,9 @@ export function getActor(
     identity: Identity,
     idl: IDL.InterfaceFactory
 ): Record<string, ActorMethod> {
-    const agent: HttpAgent = new HttpAgent({host: "https://ic0.app", identity: identity});
+    // IC_HOST lets the CLI target a local replica (e.g. http://127.0.0.1:8000).
+    const host = process.env.IC_HOST ?? "https://ic0.app";
+    const isLocal = /localhost|127\.0\.0\.1/.test(host);
+    const agent: HttpAgent = HttpAgent.createSync({host, identity, shouldFetchRootKey: isLocal});
     return Actor.createActor(idl, {agent, canisterId: imCanisterId});
 };

@@ -17,13 +17,16 @@ import { DiscoveryStatus, DiscoveryApp as LocalDiscoveryApp } from "./discovery/
 import { discoveryService } from "./discovery/discovery.service";
 import { getMetadata } from "./metadata_service";
 import sharp from "sharp";
+import { MarketplaceAdmin } from "./marketplace";
 
 export class AdminManager {
     private actor: Record<string, ActorMethod>;
+    readonly marketplace: MarketplaceAdmin;
 
     constructor() {
         const adminEd = Ed25519KeyIdentity.fromParsedJson(KEY_PAIR);
         this.actor = getActor(CANISTER_ID, adminEd, icrcOracle1Idl);
+        this.marketplace = new MarketplaceAdmin(this.actor);
     }
 
     async addICTokens() {

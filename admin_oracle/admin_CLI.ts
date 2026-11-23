@@ -1,6 +1,7 @@
 #!/usr/bin/env -S npx tsx
 import { AdminManager } from "./admin_manager";
-import { PromotionEnv } from "./constants";
+import { MarketplaceEnv, PromotionEnv } from "./constants";
+import { statusName } from "./marketplace";
 
 function jsonStringify(value: unknown): string {
     return JSON.stringify(
@@ -69,6 +70,71 @@ async function run() {
             console.log(jsonStringify(history));
             break;
         }
+        // ── ICRC-7 marketplace ──────────────────────────────────────
+        case "formNftCollectionsCSV": {
+            const n = await adminManager.marketplace.formCollectionsCSV();
+            console.log(`${n} NFT collections written to CSV!!!`);
+            break;
+        }
+        case "uploadNftCollectionsCSV": {
+            const n = await adminManager.marketplace.uploadCollectionsCSV();
+            console.log(`${n} NFT collections have been uploaded!!!`);
+            break;
+        }
+        case "getNftCollections": {
+            const collections = await adminManager.marketplace.getCollections();
+            console.table(collections.map((c) => ({
+                canister_id: c.canister_id.toText(),
+                name: c.name,
+                symbol: c.symbol,
+                status: statusName(c.status),
+            })));
+            break;
+        }
+        case "setNftCollectionStatus":
+            await adminManager.marketplace.setCollectionStatus(process.argv[3], process.argv[4]);
+            console.log("NFT collection status has been updated!!!");
+            break;
+        case "removeNftCollection":
+            await adminManager.marketplace.removeCollection(process.argv[3]);
+            console.log("NFT collection has been removed!!!");
+            break;
+        case "setMarketplaceConfig": {
+            const env = process.argv[3] as MarketplaceEnv;
+            await adminManager.marketplace.setConfig(env);
+            console.log(`Marketplace config (${env}) has been uploaded!!!`);
+            break;
+        }
+        case "getMarketplaceConfig":
+            console.log(jsonStringify(await adminManager.marketplace.getConfig()));
+            break;
+        case "getListings":
+            console.log(jsonStringify(await adminManager.marketplace.getActiveListings(process.argv[3])));
+            break;
+        case "cancelListing":
+            console.log(jsonStringify(await adminManager.marketplace.cancelListing(BigInt(process.argv[3]))));
+            break;
+        case "getMarketplaceTxs":
+            console.log(jsonStringify(await adminManager.marketplace.getTxs(BigInt(process.argv[3] ?? 50))));
+            break;
+        case "getPendingTxs":
+            console.log(jsonStringify(await adminManager.marketplace.getPendingTxs()));
+            break;
+        case "retryTx":
+            console.log(jsonStringify(await adminManager.marketplace.retryTx(
+                BigInt(process.argv[3]),
+                process.argv[4] === "--reset-dedup",
+            )));
+            break;
+        case "closeTx":
+            console.log(jsonStringify(await adminManager.marketplace.closeTx(
+                BigInt(process.argv[3]),
+                process.argv.slice(4).join(" "),
+            )));
+            break;
+        case "runMarketplaceClock":
+            console.log(`Processed ${await adminManager.marketplace.runClock()} pending purchase(s)`);
+            break;
         default:
             console.log("Invalid method");
             break;

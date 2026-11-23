@@ -16,7 +16,14 @@ on:
         type: choice
         options:
           - identity_manager
-          - test_im
+      install_mode:
+        description: 'Choose install mode (reinstall wipes canister memory)'
+        default: upgrade
+        required: true
+        type: choice
+        options:
+          - upgrade
+          - reinstall
       confirmation:
         description: 'For the ic deployment - confirm your choice by typing "Yes"'
         type: string
@@ -24,6 +31,7 @@ on:
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   CANISTER_NAME: ${{ github.event.inputs.canister_name }}
+  INSTALL_MODE: ${{ github.event.inputs.install_mode }}
   CI_DEBUG: 'true'
   DFX_WARNING: -mainnet_plaintext_identity
   RELEASE_TAG_REGEX: '^v(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?(\.(0|[1-9][0-9]*))?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
@@ -138,7 +146,7 @@ jobs:
 
       - name: PRE-BUILD => Write identity.
         env:
-          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+          DFX_ID_KEY: ${{ secrets.IDENTITY_MANAGER_DFX_ID_KEY }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
@@ -281,7 +289,7 @@ jobs:
 
       - name: PRE-DEPLOY => Write identity.
         env:
-          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+          DFX_ID_KEY: ${{ secrets.IDENTITY_MANAGER_DFX_ID_KEY }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
@@ -310,7 +318,7 @@ jobs:
           ci_echo_debug "snapshots_list='${snapshots_list}'" >&2
 
           if [ -n "${snapshots_list}" ]; then
-            snapshot_id="$(echo "${snapshots_list}"  | grep -o '[0-9a-z]\{36,\}' || true | head -n 1)"
+            snapshot_id="$(echo "${snapshots_list}"  | { grep -o '[0-9a-z]\{36,\}' || true; } | head -n 1)"
             ci_echo_debug "snapshot_id='${snapshot_id}'" >&2
           fi
 
@@ -326,7 +334,7 @@ jobs:
           ci_echo_info "Starting the canister '${CANISTER_NAME}'" >&2
           dfx canister start --network "${NETWORK_NAME}" "${CANISTER_NAME}"
 
-      - name: DEPLOY => Upgrade the canister.
+      - name: DEPLOY => Install the canister.
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
@@ -337,9 +345,9 @@ jobs:
             CI_DEBUG="true"
           fi
 
-          ci_echo_debug "dfx canister install --yes --network '${NETWORK_NAME}' --mode upgrade '${CANISTER_NAME}'" >&2
-          if ! result=$(dfx canister install --yes --network "${NETWORK_NAME}" --mode upgrade "${CANISTER_NAME}"); then
-            ci_echo_error "Upgrade failed ${result}" >&2
+          ci_echo_debug "dfx canister install --yes --network '${NETWORK_NAME}' --mode '${INSTALL_MODE}' '${CANISTER_NAME}'" >&2
+          if ! result=$(dfx canister install --yes --network "${NETWORK_NAME}" --mode "${INSTALL_MODE}" "${CANISTER_NAME}"); then
+            ci_echo_error "Install with mode '${INSTALL_MODE}' failed ${result}" >&2
             exit 1
           fi
 
@@ -350,7 +358,7 @@ jobs:
             ci_echo_error "${result}" >&2
             exit 1
           else
-            ci_echo_success "Canister '${CANISTER_NAME}' was upgraded" >&2
+            ci_echo_success "Canister '${CANISTER_NAME}' was installed with mode '${INSTALL_MODE}'" >&2
           fi
 
       - name: DEPLOY => Send configuration to the canister.
@@ -420,8 +428,8 @@ jobs:
               record {
                 lambda_url = opt "https://d8m9ttp390ku4.cloudfront.net/dev";
                 ii_canister_id = opt principal "nprnb-waaaa-aaaaj-qax4a-cai";
-                lambda = opt principal "ritih-icnvs-i7b67-sc2vs-nwo2e-bvpe5-viznv-uqluj-xzcvs-6iqsp-fqe";
-                operator = opt principal "lh6kg-7ebfk-bwa26-zgl6l-l27vx-xnnr4-ow2n4-mm4cq-tfjky-rs5gq-5ae";
+                lambda = opt principal "4bthk-cagif-7bz6l-mbcgd-pxhts-zug4l-iobjz-pzfli-vk57e-ildp3-wae";
+                operator = opt principal "373ui-k7xme-tqyvf-okidr-q3bmr-zm63d-7qsov-uphfl-dlo27-e4ptm-5ae";
                 git_branch = opt "PLACEHOLDER_GITHUB_REF_NAME";
                 commit_hash = opt "PLACEHOLDER_GITHUB_SHA";
                 whitelisted_canisters = opt vec { principal "gzqxf-kqaaa-aaaak-qakba-cai" };
@@ -656,7 +664,7 @@ jobs:
 
       - name: PRE-RESTORE => Write identity.
         env:
-          DFX_ID_KEY: ${{ secrets.DFX_ID_KEY }}
+          DFX_ID_KEY: ${{ secrets.IDENTITY_MANAGER_DFX_ID_KEY }}
         run: |
           source "${{ github.workspace }}/ci_libs/CI_LIBS.sh"
 
