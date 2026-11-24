@@ -1,0 +1,16 @@
+{
+  "generator": "sms-sender-serverless/tests/unit/services/canister-migration-service.test.ts",
+  "canister_id": "qtgza-zqaaa-aaaay-aadjq-cai",
+  "recipient_secret": "0707070707070707070707070707070707070707070707070707070707070707",
+  "recipient_public_key": "13be4feaeaf204c7fd3358fc9c00721881d174278128227ec674f37f7fe97b6d",
+  "salts": {
+    "ecdsa_salt": "ecdsa-salt/Ωmega",
+    "anonymous_salt": "anonymous-salt:ключ"
+  },
+  "fingerprint": "27a2ea098067f729",
+  "sealed": {
+    "ephemeral_public_key": "57db4b359f23ae5e146e4e2512056704722506348c150c14753d0c933d04d421",
+    "nonce": "030303030303030303030303",
+    "ciphertext": "c1bc06ae634ad1a5980fac8bfae2791aaec98fb45f9a160396c57444dd34475ee96210b19430f59301785161491d163f8a5ab5864184a0c48ff18e60893e1fc3d1c19bde523960b548a533481983d4a15fda0d1d93cb6fe5a5a424f9d1"
+  }
+}

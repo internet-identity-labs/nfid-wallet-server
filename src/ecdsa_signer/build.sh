@@ -29,4 +29,7 @@ ic-wasm\
   "$CARGO_TARGET_DIR/$TARGET/release/ecdsa_signer.wasm" \
   -o "$REPO_DIR/../../ecdsa_signer.wasm" shrink
 
+ic-wasm "$REPO_DIR/../../ecdsa_signer.wasm" -o "$REPO_DIR/../../ecdsa_signer.wasm" \
+  metadata candid:service -f "$REPO_DIR/ecdsa_signer.did" -v public
+
 
