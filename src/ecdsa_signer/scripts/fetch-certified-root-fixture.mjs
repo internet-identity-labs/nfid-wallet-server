@@ -1,5 +1,5 @@
 // Fetches a real `get_root_certified` response from the Identity Manager for the certificate
-// verification tests: node src/ecdsa_storage/scripts/fetch-certified-root-fixture.mjs [im_canister_id]
+// verification tests: node src/ecdsa_signer/scripts/fetch-certified-root-fixture.mjs [im_canister_id]
 //
 // Uses the legacy test access point from nfid-frontend (packages/integration/src/lib/lambda/ecdsa.spec.ts).
 import { writeFileSync } from "node:fs";

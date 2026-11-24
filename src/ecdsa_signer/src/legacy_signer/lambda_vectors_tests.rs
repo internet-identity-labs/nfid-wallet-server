@@ -2,7 +2,7 @@
 //! (sms-sender-serverless/tests/unit/services/legacy-signer-vectors.test.ts).
 //!
 //! Regenerate: in sms-sender-serverless run
-//!   UPDATE_LEGACY_SIGNER_VECTORS=1 LEGACY_SIGNER_VECTORS_OUT=<identity-manager>/src/ecdsa_storage/tests/vectors/lambda_vectors.json npm run unit-test
+//!   UPDATE_LEGACY_SIGNER_VECTORS=1 LEGACY_SIGNER_VECTORS_OUT=<identity-manager>/src/ecdsa_signer/tests/vectors/lambda_vectors.json npm run unit-test
 
 use super::{
     anonymous_public_key, expiration_ns, sign_anonymous_delegation, sign_global_delegation,

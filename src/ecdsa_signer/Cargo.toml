@@ -1,21 +1,40 @@
 [package]
 name = "ecdsa_signer"
-version = "0.1.0"
-edition = "2018"
+version = "0.2.0"
+edition = "2021"
 
 [lib]
 path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-serde = "1"
-candid = "0.8"
-ic-cdk = "0.6"
-ic-cdk-macros = "0.6"
+serde = { version = "1", features = ["derive"] }
+candid = "0.10"
+ic-cdk = "0.16"
 sha256 = "1.1.1"
 hex = "0.4.3"
 serde_json = "1.0.82"
+# Kept at 0.3: the lambda verifies the get_kp_certified witnesses it produces.
 ic-certified-map = "0.3.2"
 anyhow = "1.0.71"
 serde_cbor = "0.11.2"
+serde_bytes = "0.11"
 
+# Legacy delegation signing (port of the AWS lambda, see src/legacy_signer).
+aes = "0.8"
+chacha20poly1305 = "0.10"
+ecb = { version = "0.1", features = ["alloc", "block-padding"] }
+ed25519-dalek = "2"
+ic-cbor = "2.6"
+ic-certificate-verification = "2.6"
+ic-certification = "2.6"
+sha2 = "0.10"
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+zeroize = "1"
+
+# Pulled in through rand_core; never called, randomness comes from raw_rand.
+[target.'cfg(all(target_arch = "wasm32", target_vendor = "unknown", target_os = "unknown"))'.dependencies]
+getrandom = { version = "0.2", features = ["custom"] }
+
+[dev-dependencies]
+candid_parser = "0.1"
