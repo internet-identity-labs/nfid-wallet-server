@@ -605,4 +605,81 @@ describe("User Registry", () => {
             }
         });
     });
+
+    describe("Favorites", () => {
+        const tokenIds = ["icp:ryjl3-tyaaa-aaaaa-aaaba-cai", "evm:1:0xdac17f958d2ee523a2206206994597c13d831ec7", "btc"];
+
+        beforeEach(async () => {
+            const current = await dfx.user_registry.actor.favorites_get();
+            for (const id of current.tokens) await dfx.user_registry.actor.favorites_set_token(id, false);
+            for (const id of current.contacts) await dfx.user_registry.actor.favorites_set_contact(id, false);
+            await dfx.user_registry.actor.address_book_delete_all();
+            await dfx.user_registry.actor.address_book_set_config({ max_user_addresses: 50, max_name_length: 200 });
+        });
+
+        it("should return empty favorites for a new user", async function () {
+            const favorites = await dfx.user_registry.actor.favorites_get();
+            expect(favorites).to.deep.equal({ tokens: [], contacts: [] });
+        });
+
+        it("should add favorite tokens in order and ignore duplicates", async function () {
+            for (const id of tokenIds) await dfx.user_registry.actor.favorites_set_token(id, true);
+            const result = await dfx.user_registry.actor.favorites_set_token(tokenIds[0], true);
+
+            expect(result).to.deep.equal({ Ok: { tokens: tokenIds, contacts: [] } });
+            expect(await dfx.user_registry.actor.favorites_get()).to.deep.equal({ tokens: tokenIds, contacts: [] });
+        });
+
+        it("should remove a favorite token and accept removing a missing one", async function () {
+            for (const id of tokenIds) await dfx.user_registry.actor.favorites_set_token(id, true);
+
+            const result = await dfx.user_registry.actor.favorites_set_token(tokenIds[1], false);
+            expect(result).to.deep.equal({ Ok: { tokens: [tokenIds[0], tokenIds[2]], contacts: [] } });
+
+            const missing = await dfx.user_registry.actor.favorites_set_token("unknown", false);
+            expect(missing).to.have.property("Ok");
+        });
+
+        it("should reject empty and too long ids", async function () {
+            expect(await dfx.user_registry.actor.favorites_set_token("  ", true)).to.have.nested.property("Err.EmptyId");
+            expect(await dfx.user_registry.actor.favorites_set_contact("x".repeat(257), true)).to.have.nested.property("Err.IdTooLong");
+        });
+
+        it("should drop a favorite contact when it is deleted from the address book", async function () {
+            const contact: AddressBookUserAddress = {
+                id: "fav-contact",
+                name: "Favorite contact",
+                addresses: [{ address_type: { 'ETH': null }, value: "0x0000000000000000000000000000000000000001" }]
+            };
+            await dfx.user_registry.actor.address_book_save(contact);
+            await dfx.user_registry.actor.favorites_set_contact(contact.id, true);
+            await dfx.user_registry.actor.favorites_set_token("btc", true);
+
+            await dfx.user_registry.actor.address_book_delete(contact.id);
+
+            expect(await dfx.user_registry.actor.favorites_get()).to.deep.equal({ tokens: ["btc"], contacts: [] });
+        });
+
+        it("should not share favorites between users", async function () {
+            await dfx.user_registry.actor.favorites_set_token("btc", true);
+            const otherIdentity = getIdentity("87654321876543218765432187654313");
+            const other = await getTypedActor<UserRegistry>(dfx.user_registry.id, otherIdentity, userRegistryIdl);
+
+            try {
+                await other.favorites_get();
+                expect.fail("Should have trapped");
+            } catch (error) {
+                expect(error.message).to.include("No root found for this principal");
+            }
+        });
+
+        it("should persist favorites after canister upgrade", async function () {
+            await dfx.user_registry.actor.favorites_set_token("btc", true);
+            await dfx.user_registry.actor.favorites_set_contact("addr-1", true);
+
+            DFX.UPGRADE_WITH_ARGUMENT('user_registry', `(record { im_canister = opt "${dfx.im.id}" })`);
+
+            expect(await dfx.user_registry.actor.favorites_get()).to.deep.equal({ tokens: ["btc"], contacts: ["addr-1"] });
+        });
+    });
 });
